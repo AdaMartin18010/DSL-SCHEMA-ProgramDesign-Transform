@@ -9,32 +9,32 @@
    - 引用完善
    - 已添加新文档引用
 
-2. ✅ **ai_prompt.md**（3517行）
+2. ✅ **view/ai_prompt.md**（3517行）
    - 格式统一，目录完整
    - 所有格式问题已修复
    - 行长度已优化
 
-3. ✅ **program.md**（973行）
+3. ✅ **view/program.md**（973行）
    - 格式统一，目录完整
    - 表格已优化
    - 行长度已优化
 
-4. ✅ **can_schema.md**（372行）
+4. ✅ **view/can_schema.md**（372行）
    - 格式统一，目录完整
    - 标题编号已统一
    - 行长度已优化
 
-5. ✅ **plc_schema.md**（344行）
+5. ✅ **view/plc_schema.md**（344行）
    - 格式统一，目录完整
    - 标题编号已统一
    - 行长度已优化
 
-6. ✅ **iot_schema.md**（430行）
+6. ✅ **view/iot_schema.md**（430行）
    - 格式统一，目录完整
    - 标题编号已统一
    - 行长度已优化
 
-7. ✅ **physics_schema.md**（1257行）
+7. ✅ **view/physics_schema.md**（1362行）
    - 格式统一，目录完整
    - 标题编号已统一
    - 行长度已优化
@@ -86,8 +86,8 @@
 
 ## 📈 统计数据
 
-- **总文档数**：约36个文件
-- **核心文档**：7个（README.md, ai_prompt.md, program.md, can_schema.md, plc_schema.md, iot_schema.md, physics_schema.md）
+- **总文档数**：约37个文件
+- **核心文档**：7个（README.md, view/ai_prompt.md, view/program.md, view/can_schema.md, view/plc_schema.md, view/iot_schema.md, view/physics_schema.md）
 - **分析文档**：8个
 - **理论文档**：5个
 - **实践文档**：4个

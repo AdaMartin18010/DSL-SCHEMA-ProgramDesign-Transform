@@ -163,13 +163,14 @@ DSL SCHEMA Programming Design Transform Interaction Sql NoSql
 ```text
 DSL-SCHEMA-ProgramDesign-Transform/
 ├── README.md                                    # 项目说明文档（本文档）
-├── ai_prompt.md                                 # 核心分析文档（DSL Schema转换理论）
-├── program.md                                   # 形式语言Schema转换编程语言问题论证
-├── can_schema.md                                # CAN协议Schema存在性论证与多维转换体系
-├── plc_schema.md                                # PLC Schema存在性论证与多维转换体系
-├── iot_schema.md                                # IoT传感器通信、参数与控制Schema存在性论证
-├── physics_schema.md                            # 物理领域Schema存在性论证（家用电器到工业系统）
 ├── LICENSE                                      # 许可证文件
+├── view/                                        # 核心文档目录
+│   ├── ai_prompt.md                            # 核心分析文档（DSL Schema转换理论）
+│   ├── program.md                               # 形式语言Schema转换编程语言问题论证
+│   ├── can_schema.md                            # CAN协议Schema存在性论证与多维转换体系
+│   ├── plc_schema.md                            # PLC Schema存在性论证与多维转换体系
+│   ├── iot_schema.md                            # IoT传感器通信、参数与控制Schema存在性论证
+│   └── physics_schema.md                        # 物理领域Schema存在性论证（家用电器到工业系统）
 ├── analysis/                                    # 对标分析文档目录
 │   ├── 00_Benchmarking_Summary.md              # 对标分析总结
 │   ├── 01_MCP_Protocol_Integration_Analysis.md # MCP协议集成对标分析
@@ -220,7 +221,7 @@ DSL-SCHEMA-ProgramDesign-Transform/
 - **工具链割裂**：各领域工具（如Swagger UI、
   AsyncAPI Generator）缺乏统一接口
 
-**参考文档**：`ai_prompt.md` 第一部分
+**参考文档**：`view/ai_prompt.md` 第一部分
 
 #### 3.1.2 基于MCP协议的标准化方案
 
@@ -258,9 +259,9 @@ DSL-SCHEMA-ProgramDesign-Transform/
 
 **参考文档**：
 
-- `ai_prompt.md` 第二部分
-- `can_schema.md` - CAN协议Schema存在性论证与多维转换体系
-- `physics_schema.md` - 物理领域Schema存在性论证
+- `view/ai_prompt.md` 第二部分
+- `view/can_schema.md` - CAN协议Schema存在性论证与多维转换体系
+- `view/physics_schema.md` - 物理领域Schema存在性论证
 
 #### 3.2.2 数据库与存储领域
 
@@ -268,7 +269,7 @@ DSL-SCHEMA-ProgramDesign-Transform/
 - **NoSQL**：MongoDB MQL、Redis命令、Cassandra CQL
 - **转换方案**：SQL ↔ GraphQL、SQL ↔ MongoDB MQL
 
-**参考文档**：`ai_prompt.md` 第二部分
+**参考文档**：`view/ai_prompt.md` 第二部分
 
 #### 3.2.3 DevOps与基础设施领域
 
@@ -279,8 +280,8 @@ DSL-SCHEMA-ProgramDesign-Transform/
 
 **参考文档**：
 
-- `ai_prompt.md` 第二部分
-- `plc_schema.md` - PLC Schema存在性论证与多维转换体系
+- `view/ai_prompt.md` 第二部分
+- `view/plc_schema.md` - PLC Schema存在性论证与多维转换体系
 
 #### 3.2.4 AI与机器学习领域
 
@@ -289,7 +290,7 @@ DSL-SCHEMA-ProgramDesign-Transform/
 - **PyTorch**：动态计算图
 - **转换方案**：TensorFlow ↔ ONNX、PyTorch ↔ TensorFlow
 
-**参考文档**：`ai_prompt.md` 第二部分
+**参考文档**：`view/ai_prompt.md` 第二部分
 
 #### 3.2.5 配置管理与编排领域
 
@@ -300,7 +301,7 @@ DSL-SCHEMA-ProgramDesign-Transform/
 - **Helm Charts**：Kubernetes应用包管理
 - **转换方案**：Kubernetes ↔ Docker Compose、Terraform ↔ CloudFormation
 
-**参考文档**：`ai_prompt.md` 第二部分
+**参考文档**：`view/ai_prompt.md` 第二部分
 
 ---
 
@@ -422,9 +423,10 @@ DSL-SCHEMA-ProgramDesign-Transform/
 **参考文档**：
 
 - `analysis/03_IoT_Schema_Transformation_Practices.md`
-- `iot_schema.md` - IoT传感器通信、参数与控制Schema
-- `can_schema.md` - CAN协议Schema（车载网络）
-- `plc_schema.md` - PLC Schema（工业自动化）
+- `view/iot_schema.md` - IoT传感器通信、参数与控制Schema
+- `view/can_schema.md` - CAN协议Schema（车载网络）
+- `view/plc_schema.md` - PLC Schema（工业自动化）
+- `view/physics_schema.md` - 物理领域Schema存在性论证
 
 #### 3.5.4 转换挑战与解决方案
 
@@ -701,9 +703,9 @@ type_safe(s_1) ⟹ type_safe(f(s_1))
   完整信息论分析
 - `theory/06_Formal_Verification_Proofs.md` 第10章 -
   信息论视角的形式化证明
-- `ai_prompt.md` 第13章 -
+- `view/ai_prompt.md` 第13章 -
   Schema转换的信息论形式化证明
-- `program.md` 第10.1节 -
+- `view/program.md` 第10.1节 -
   信息论视角的形式化证明
 - `analysis/06_Comprehensive_Integration_Analysis.md` 第2章 -
   信息论与形式语言理论的深度融合
@@ -759,7 +761,7 @@ type_safe(s_1) ⟹ type_safe(f(s_1))
   形式语言理论视角的形式化证明
 - `ai_prompt.md` 第14章 -
   Schema转换的形式语言理论形式化证明
-- `program.md` 第10.2节 -
+- `view/program.md` 第10.2节 -
   形式语言理论视角的形式化证明
 - `analysis/06_Comprehensive_Integration_Analysis.md` 第2章 -
   信息论与形式语言理论的深度融合
@@ -1052,7 +1054,7 @@ type_safe(s_1) ⟹ type_safe(f(s_1))
 
 ### 5.1 阅读顺序建议
 
-1. **入门**：阅读 `ai_prompt.md` 了解核心理论
+1. **入门**：阅读 `view/ai_prompt.md` 了解核心理论
 2. **实践**：查看 `analysis/` 目录下的对标分析文档
 3. **深入**：研究具体行业的Schema转换方案
 4. **理论**：学习 `theory/` 目录下的形式化证明和知识图谱
