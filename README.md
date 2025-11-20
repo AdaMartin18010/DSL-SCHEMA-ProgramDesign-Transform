@@ -168,6 +168,7 @@ DSL-SCHEMA-ProgramDesign-Transform/
 ├── can_schema.md                                # CAN协议Schema存在性论证与多维转换体系
 ├── plc_schema.md                                # PLC Schema存在性论证与多维转换体系
 ├── iot_schema.md                                # IoT传感器通信、参数与控制Schema存在性论证
+├── physics_schema.md                            # 物理领域Schema存在性论证（家用电器到工业系统）
 ├── LICENSE                                      # 许可证文件
 ├── analysis/                                    # 对标分析文档目录
 │   ├── 00_Benchmarking_Summary.md              # 对标分析总结
@@ -259,6 +260,7 @@ DSL-SCHEMA-ProgramDesign-Transform/
 
 - `ai_prompt.md` 第二部分
 - `can_schema.md` - CAN协议Schema存在性论证与多维转换体系
+- `physics_schema.md` - 物理领域Schema存在性论证
 
 #### 3.2.2 数据库与存储领域
 

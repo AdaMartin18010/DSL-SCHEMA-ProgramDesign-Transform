@@ -29,7 +29,12 @@
    - 标题编号已统一
    - 行长度已优化
 
-6. ✅ **iot_schema.md**（386行）
+6. ✅ **iot_schema.md**（430行）
+   - 格式统一，目录完整
+   - 标题编号已统一
+   - 行长度已优化
+
+7. ✅ **physics_schema.md**（1257行）
    - 格式统一，目录完整
    - 标题编号已统一
    - 行长度已优化
@@ -81,8 +86,8 @@
 
 ## 📈 统计数据
 
-- **总文档数**：约35个文件
-- **核心文档**：6个（README.md, ai_prompt.md, program.md, can_schema.md, plc_schema.md, iot_schema.md）
+- **总文档数**：约36个文件
+- **核心文档**：7个（README.md, ai_prompt.md, program.md, can_schema.md, plc_schema.md, iot_schema.md, physics_schema.md）
 - **分析文档**：8个
 - **理论文档**：5个
 - **实践文档**：4个
