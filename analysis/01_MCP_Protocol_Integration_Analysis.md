@@ -1,28 +1,60 @@
 # MCP协议与OpenAPI/AsyncAPI集成对标分析
 
-## 一、MCP协议现状与趋势（2024-2025）
+## 📑 目录
+
+- [MCP协议与OpenAPI/AsyncAPI集成对标分析](#mcp协议与openapiasyncapi集成对标分析)
+  - [📑 目录](#-目录)
+  - [1. MCP协议现状与趋势（2024-2025）](#1-mcp协议现状与趋势2024-2025)
+    - [1.1 Model Context Protocol (MCP) 核心定位](#11-model-context-protocol-mcp-核心定位)
+    - [1.2 对标项目分析](#12-对标项目分析)
+      - [**APISIX-MCP项目**](#apisix-mcp项目)
+      - [**OpenAPI MCP Server**](#openapi-mcp-server)
+    - [1.3 技术对标矩阵](#13-技术对标矩阵)
+  - [2. OpenAPI ↔ AsyncAPI转换现状](#2-openapi--asyncapi转换现状)
+    - [2.1 工具生态对比](#21-工具生态对比)
+      - [**AsyncAPI Generator**](#asyncapi-generator)
+      - [**OpenAPI-to-AsyncAPI CLI**](#openapi-to-asyncapi-cli)
+    - [2.2 转换挑战与解决方案](#22-转换挑战与解决方案)
+  - [3. IoT Schema集成现状](#3-iot-schema集成现状)
+    - [3.1 当前支持情况](#31-当前支持情况)
+    - [3.2 集成建议](#32-集成建议)
+  - [4. 对标结论与建议](#4-对标结论与建议)
+    - [4.1 技术成熟度评估](#41-技术成熟度评估)
+    - [4.2 推进建议](#42-推进建议)
+    - [4.3 参考资源](#43-参考资源)
+
+---
+
+## 1. MCP协议现状与趋势（2024-2025）
 
 ### 1.1 Model Context Protocol (MCP) 核心定位
 
-**MCP协议**作为"AI模型与工具的USB-C接口"，在2024-2025年呈现以下发展趋势：
+**MCP协议**作为"AI模型与工具的USB-C接口"，
+在2024-2025年呈现以下发展趋势：
 
-- **标准化进程**：MCP正在成为AI工具集成的标准协议，类似于USB-C在硬件领域的地位
-- **生态扩展**：从Claude Desktop扩展到VS Code、Cursor等主流IDE
-- **协议成熟度**：从实验性协议向生产级标准演进
+- **标准化进程**：
+  MCP正在成为AI工具集成的标准协议，
+  类似于USB-C在硬件领域的地位
+- **生态扩展**：
+  从Claude Desktop扩展到VS Code、Cursor等主流IDE
+- **协议成熟度**：
+  从实验性协议向生产级标准演进
 
-### 2.2 对标项目分析
+### 1.2 对标项目分析
 
 #### **APISIX-MCP项目**
 
 - **项目状态**：Apache APISIX官方支持，生产环境验证
 - **核心功能**：
   - OpenAPI 3.1 → MCP工具转换
-  - 自然语言操作API资源（创建路由、配置插件）
+  - 自然语言操作API资源
+    （创建路由、配置插件）
   - 自动化闭环验证
 - **效果数据**：
   - 配置准确率提升80%
   - 运维效率提高50%
-- **参考链接**：<https://apisix.apache.org/zh/blog/2025/04/01/embrace-intelligent-api-management-with-ai-and-mcp>
+- **参考链接**：
+  <https://apisix.apache.org/zh/blog/2025/04/01/embrace-intelligent-api-management-with-ai-and-mcp>
 
 #### **OpenAPI MCP Server**
 
@@ -31,9 +63,10 @@
   - 文件上传支持（multipart/form-data）
   - 参数自动处理
   - Claude Desktop集成
-- **参考链接**：<https://flowhunt.io/zh/mcp-servers/openapi-schema>
+- **参考链接**：
+  <https://flowhunt.io/zh/mcp-servers/openapi-schema>
 
-### 2.3 技术对标矩阵
+### 1.3 技术对标矩阵
 
 | 维度 | APISIX-MCP | OpenAPI MCP Server | 标准MCP协议 |
 |------|-----------|-------------------|------------|
@@ -44,7 +77,9 @@
 | **文件上传** | ✅ 支持 | ✅ 完整支持 | ✅ 协议支持 |
 | **生产就绪度** | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐ |
 
-## 二、OpenAPI ↔ AsyncAPI转换现状
+---
+
+## 2. OpenAPI ↔ AsyncAPI转换现状
 
 ### 2.1 工具生态对比
 
@@ -75,7 +110,9 @@
 | **数据格式** | JSON Schema适配 | 统一Schema语言 |
 | **工具链割裂** | 独立工具 | MCP统一接口 |
 
-## 三、IoT Schema集成现状
+---
+
+## 3. IoT Schema集成现状
 
 ### 3.1 当前支持情况
 
@@ -89,7 +126,9 @@
 2. **MCP工具扩展**：开发IoT Schema专用MCP Server
 3. **协议绑定**：支持MQTT、CoAP等IoT协议
 
-## 四、对标结论与建议
+---
+
+## 4. 对标结论与建议
 
 ### 4.1 技术成熟度评估
 
@@ -121,6 +160,6 @@
 
 ---
 
-**更新时间**：2025-01-XX
-**对标基准**：2024-2025技术趋势
-**维护状态**：持续更新
+**文档版本**：2.0
+**最后更新**：2025-01-21
+**维护者**：DSL Schema研究团队

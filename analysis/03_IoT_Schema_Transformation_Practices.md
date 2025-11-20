@@ -1,6 +1,45 @@
 # IoT Schema转换方案最新实践分析
 
-## 一、IoT Schema标准化现状（2024-2025）
+## 📑 目录
+
+- [IoT Schema转换方案最新实践分析](#iot-schema转换方案最新实践分析)
+  - [📑 目录](#-目录)
+  - [1. IoT Schema标准化现状（2024-2025）](#1-iot-schema标准化现状2024-2025)
+    - [1.1 标准规范对比](#11-标准规范对比)
+      - [**JSON Schema for IoT**](#json-schema-for-iot)
+      - [**W3C WoT Thing Description**](#w3c-wot-thing-description)
+      - [**OPC UA Information Model**](#opc-ua-information-model)
+    - [1.2 协议绑定现状](#12-协议绑定现状)
+  - [2. IoT Schema转换实践](#2-iot-schema转换实践)
+    - [2.1 IoT Schema → OpenAPI转换](#21-iot-schema--openapi转换)
+      - [**转换场景**](#转换场景)
+      - [**解决方案**](#解决方案)
+    - [2.2 IoT Schema → AsyncAPI转换](#22-iot-schema--asyncapi转换)
+      - [**转换场景**](#转换场景-1)
+      - [**转换示例**](#转换示例)
+    - [2.3 IoT Schema → SQL转换](#23-iot-schema--sql转换)
+      - [**转换逻辑**](#转换逻辑)
+    - [2.4 IoT Schema → 二进制协议转换](#24-iot-schema--二进制协议转换)
+      - [**场景：MQTT二进制负载**](#场景mqtt二进制负载)
+  - [3. 实际案例分析](#3-实际案例分析)
+    - [3.1 工业IoT平台（AWS IoT Core）](#31-工业iot平台aws-iot-core)
+    - [3.2 智能家居平台（Home Assistant）](#32-智能家居平台home-assistant)
+    - [3.3 边缘计算平台（KubeEdge）](#33-边缘计算平台kubeedge)
+  - [4. 转换挑战与解决方案](#4-转换挑战与解决方案)
+    - [4.1 挑战1：协议差异](#41-挑战1协议差异)
+    - [4.2 挑战2：实时性要求](#42-挑战2实时性要求)
+    - [4.3 挑战3：数据格式差异](#43-挑战3数据格式差异)
+  - [5. 最佳实践建议](#5-最佳实践建议)
+    - [5.1 Schema设计原则](#51-schema设计原则)
+    - [5.2 转换工具选择](#52-转换工具选择)
+    - [5.3 性能优化建议](#53-性能优化建议)
+  - [6. 未来趋势](#6-未来趋势)
+    - [6.1 标准化趋势](#61-标准化趋势)
+    - [6.2 技术趋势](#62-技术趋势)
+
+---
+
+## 1. IoT Schema标准化现状（2024-2025）
 
 ### 1.1 标准规范对比
 
@@ -36,7 +75,9 @@
 | **HTTP** | OpenAPI | 标准REST工具 | ⭐⭐⭐⭐⭐ |
 | **OPC UA** | OPC UA Schema | OPC UA SDK | ⭐⭐⭐⭐⭐ |
 
-## 二、IoT Schema转换实践
+---
+
+## 2. IoT Schema转换实践
 
 ### 2.1 IoT Schema → OpenAPI转换
 
@@ -196,7 +237,9 @@ fn to_bytes(data: &SensorData) -> Vec<u8> {
 }
 ```
 
-## 三、实际案例分析
+---
+
+## 3. 实际案例分析
 
 ### 3.1 工业IoT平台（AWS IoT Core）
 
@@ -243,7 +286,9 @@ fn to_bytes(data: &SensorData) -> Vec<u8> {
 - 云端统一管理
 - 支持设备离线场景
 
-## 四、转换挑战与解决方案
+---
+
+## 4. 转换挑战与解决方案
 
 ### 4.1 挑战1：协议差异
 
@@ -285,7 +330,9 @@ fn to_bytes(data: &SensorData) -> Vec<u8> {
 2. **Schema验证**：确保数据一致性
 3. **多格式支持**：同时支持JSON和二进制
 
-## 五、最佳实践建议
+---
+
+## 5. 最佳实践建议
 
 ### 5.1 Schema设计原则
 
@@ -320,7 +367,9 @@ fn to_bytes(data: &SensorData) -> Vec<u8> {
 3. **缓存策略**：缓存设备状态数据
 4. **异步处理**：使用消息队列解耦
 
-## 六、未来趋势
+---
+
+## 6. 未来趋势
 
 ### 6.1 标准化趋势
 
@@ -336,6 +385,6 @@ fn to_bytes(data: &SensorData) -> Vec<u8> {
 
 ---
 
-**更新时间**：2025-01-XX
-**对标基准**：2024-2025 IoT实践
-**维护状态**：持续更新
+**文档版本**：2.0
+**最后更新**：2025-01-21
+**维护者**：DSL Schema研究团队
