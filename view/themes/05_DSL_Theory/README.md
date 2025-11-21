@@ -21,10 +21,11 @@ DSL转换理论主题涵盖**DSL Schema转换的理论基础**，
 
 ### 1.1 主题范围
 
-- **信息论形式化证明**
-- **形式语言理论形式化证明**
-- **多维知识矩阵**
-- **思维导图**
+- **信息论分析**：信息熵、互信息、信道容量分析
+- **形式语言理论**：语法、语义、转换理论
+- **知识图谱**：知识表示、推理、应用
+- **多维知识矩阵**：多维度知识组织
+- **思维导图**：知识体系可视化
 
 ### 1.2 核心价值
 
@@ -46,18 +47,48 @@ DSL转换理论主题涵盖**DSL Schema转换的理论基础**，
 
 ### 2.2 形式语言理论视角
 
-- **语法结构**
-- **语义模型**
-- **转换理论**
-- **一致性证明**
+- **语法结构**：形式语法定义
+- **语义模型**：语义模型定义
+- **转换理论**：Schema转换理论
+- **一致性证明**：转换一致性证明
+
+### 2.3 知识图谱视角
+
+- **知识表示**：实体、关系、属性表示
+- **知识推理**：规则推理、图推理
+- **知识应用**：转换指导、质量评估
 
 ---
 
 ## 3. 子主题结构
 
-- `Information_Theory/` - 信息论分析
-- `Formal_Language_Theory/` - 形式语言理论
-- `Knowledge_Graph/` - 知识图谱
+### 3.1 信息论分析子主题
+
+- `Information_Theory/01_Overview.md` - 概述与核心概念
+- `Information_Theory/02_Formal_Definition.md` - 形式化定义
+- `Information_Theory/03_Standards.md` - 标准对标
+- `Information_Theory/04_Transformation.md` - 转换体系
+- `Information_Theory/05_Case_Studies.md` - 实践案例
+
+### 3.2 形式语言理论子主题
+
+- `Formal_Language_Theory/01_Overview.md` - 概述与核心概念
+- `Formal_Language_Theory/02_Formal_Definition.md` - 形式化定义
+- `Formal_Language_Theory/03_Standards.md` - 标准对标
+- `Formal_Language_Theory/04_Transformation.md` - 转换体系
+- `Formal_Language_Theory/05_Case_Studies.md` - 实践案例
+
+### 3.3 知识图谱子主题
+
+- `Knowledge_Graph/README.md` - 知识图谱概览
+- `Knowledge_Graph/01_Overview.md` - 概述与核心概念
+- `Knowledge_Graph/02_Formal_Definition.md` - 形式化定义
+- `Knowledge_Graph/03_Standards.md` - 标准对标
+- `Knowledge_Graph/04_Transformation.md` - 转换体系
+- `Knowledge_Graph/05_Case_Studies.md` - 实践案例
+
+### 3.4 跨主题文档
+
 - `Mind_Map.md` - 思维导图
 - `Knowledge_Matrix.md` - 多维知识矩阵
 - `Formal_Proofs.md` - 形式化证明
@@ -98,9 +129,19 @@ DSL转换理论主题涵盖**DSL Schema转换的理论基础**，
 
 ## 7. 参考文献
 
-- 信息论相关文献
-- 形式语言理论相关文献
-- Schema转换相关文献
+### 7.1 标准文档
+
+- W3C RDF 1.1 Concepts and Abstract Syntax
+- W3C OWL 2 Web Ontology Language
+- ISO/IEC 21838 Information technology - Top-level ontologies
+- W3C JSON-LD 1.1
+
+### 7.2 学术文献
+
+- 信息论在Schema转换中的应用
+- 形式语言理论形式化证明
+- 知识图谱在Schema转换中的应用
+- Schema转换理论与实践
 
 ---
 

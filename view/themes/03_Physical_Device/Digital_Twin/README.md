@@ -128,6 +128,11 @@ Digital_Twin_Schema = Physical_Schema ⊕ Digital_Model
 **参考文档**：
 
 - `../README.md` - 主题概览
+- `01_Overview.md` - 数字孪生Schema概述
+- `02_Formal_Definition.md` - 形式化定义
+- `03_Standards.md` - 标准对标
+- `04_Transformation.md` - 转换体系
+- `05_Case_Studies.md` - 实践案例
 - `../Electrical_Schema/` - 电气Schema
 - `../Mechanical_Schema/` - 机械Schema
 - `../Safety_Schema/` - 安全Schema

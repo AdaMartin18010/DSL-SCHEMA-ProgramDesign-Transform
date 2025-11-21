@@ -122,6 +122,11 @@ Schema_KG = {
 **参考文档**：
 
 - `../README.md` - 主题概览
+- `01_Overview.md` - 知识图谱Schema概述
+- `02_Formal_Definition.md` - 形式化定义
+- `03_Standards.md` - 标准对标
+- `04_Transformation.md` - 转换体系
+- `05_Case_Studies.md` - 实践案例
 - `../Information_Theory/` - 信息论分析
 - `../Formal_Language_Theory/` - 形式语言理论
 

@@ -34,7 +34,8 @@
 - **电气Schema**：电气特性、绝缘等级、安全标准
 - **机械Schema**：机械结构、运动特性、材料属性
 - **安全Schema**：安全等级、认证要求、合规性
-- **数字孪生**：物理到数字的映射和同步
+- **数字孪生**：物理到数字的映射和同步、实时同步、
+  预测分析、可视化
 
 ### 1.2 核心价值
 
@@ -76,10 +77,41 @@ Physical_Schema = (Electrical ⊕ Mechanical ⊕ Thermal
 
 ## 3. 子主题结构
 
-- `Electrical_Schema/` - 电气Schema
-- `Mechanical_Schema/` - 机械Schema
-- `Safety_Schema/` - 安全Schema
-- `Digital_Twin/` - 数字孪生
+### 3.1 电气Schema子主题
+
+- `Electrical_Schema/01_Overview.md` - 概述与核心概念
+- `Electrical_Schema/02_Formal_Definition.md` - 形式化定义
+- `Electrical_Schema/03_Standards.md` - 标准对标
+- `Electrical_Schema/04_Transformation.md` - 转换体系
+- `Electrical_Schema/05_Case_Studies.md` - 实践案例
+
+### 3.2 机械Schema子主题
+
+- `Mechanical_Schema/01_Overview.md` - 概述与核心概念
+- `Mechanical_Schema/02_Formal_Definition.md` - 形式化定义
+- `Mechanical_Schema/03_Standards.md` - 标准对标
+- `Mechanical_Schema/04_Transformation.md` - 转换体系
+- `Mechanical_Schema/05_Case_Studies.md` - 实践案例
+
+### 3.3 安全Schema子主题
+
+- `Safety_Schema/01_Overview.md` - 概述与核心概念
+- `Safety_Schema/02_Formal_Definition.md` - 形式化定义
+- `Safety_Schema/03_Standards.md` - 标准对标
+- `Safety_Schema/04_Transformation.md` - 转换体系
+- `Safety_Schema/05_Case_Studies.md` - 实践案例
+
+### 3.4 数字孪生子主题
+
+- `Digital_Twin/README.md` - 数字孪生概览
+- `Digital_Twin/01_Overview.md` - 概述与核心概念
+- `Digital_Twin/02_Formal_Definition.md` - 形式化定义
+- `Digital_Twin/03_Standards.md` - 标准对标
+- `Digital_Twin/04_Transformation.md` - 转换体系
+- `Digital_Twin/05_Case_Studies.md` - 实践案例
+
+### 3.5 跨主题文档
+
 - `Mind_Map.md` - 思维导图
 - `Knowledge_Matrix.md` - 多维知识矩阵
 - `Formal_Proofs.md` - 形式化证明
@@ -132,9 +164,19 @@ Physical_Schema = (Electrical ⊕ Mechanical ⊕ Thermal
 
 ## 7. 参考文献
 
-- IEC 60335-1:2020
-- GB/T 19903
-- 数字孪生技术标准
+### 7.1 标准文档
+
+- IEC 60335-1:2020 家用电器安全标准
+- GB/T 19903 工业设备控制标准
+- ISO/IEC 23247:2021 数字孪生参考架构
+- IEC 63278:2022 数字孪生系统标准
+- GB/T 41479-2022 数字孪生系统通用要求
+
+### 7.2 学术文献
+
+- 物理设备Schema形式化方法研究
+- 数字孪生技术标准研究
+- 物理到数字映射理论
 
 ---
 
