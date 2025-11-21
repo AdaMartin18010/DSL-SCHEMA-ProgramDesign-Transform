@@ -159,6 +159,78 @@ IoT Schema
         ├─ 设备监控
         ├─ 预测维护
         └─ 质量控制
+
+├─ 6. 国际标准体系
+    │
+    ├─ 6.1 W3C标准
+    │   ├─ W3C WoT (Web of Things)
+    │   ├─ JSON-LD (链接数据)
+    │   └─ RDF/OWL (语义Web)
+    │
+    ├─ 6.2 IEEE标准
+    │   ├─ IEEE 802.11 (WiFi)
+    │   ├─ IEEE 802.15.4 (Zigbee)
+    │   └─ IEEE 1451 (智能传感器)
+    │
+    ├─ 6.3 3GPP标准
+    │   ├─ NB-IoT (窄带物联网)
+    │   ├─ LTE-M (LTE-Machine)
+    │   └─ 5G IoT (5G物联网)
+    │
+    └─ 6.4 IETF标准
+        ├─ CoAP (受限应用协议)
+        ├─ 6LoWPAN (IPv6 over Low-Power)
+        └─ MQTT (消息队列)
+
+├─ 7. 行业标准体系
+    │
+    ├─ 7.1 物联网协议
+    │   ├─ MQTT (OASIS)
+    │   ├─ CoAP (IETF)
+    │   ├─ LoRaWAN (LoRa Alliance)
+    │   └─ Thread (Thread Group)
+    │
+    ├─ 7.2 工业物联网
+    │   ├─ OPC UA (OPC Foundation)
+    │   ├─ IO-Link (IO-Link Consortium)
+    │   └─ Modbus (Modbus Organization)
+    │
+    └─ 7.3 云平台标准
+        ├─ AWS IoT Core
+        ├─ Azure IoT Hub
+        └─ Google Cloud IoT
+
+├─ 8. 开源规范与框架
+    │
+    ├─ 8.1 Eclipse基金会
+    │   ├─ Eclipse Kura (边缘计算)
+    │   ├─ Eclipse Paho (MQTT客户端)
+    │   └─ Eclipse Leshan (CoAP服务器)
+    │
+    ├─ 8.2 Apache基金会
+    │   ├─ Apache Kafka (消息流)
+    │   └─ Apache Pulsar (消息队列)
+    │
+    └─ 8.3 其他开源
+        ├─ Node-RED (流程编程)
+        └─ Home Assistant (智能家居)
+
+└─ 9. 跨领域转换
+    │
+    ├─ 9.1 协议转换
+    │   ├─ MQTT ↔ CoAP
+    │   ├─ Modbus ↔ MQTT
+    │   └─ LoRaWAN ↔ HTTP
+    │
+    ├─ 9.2 数据格式转换
+    │   ├─ JSON ↔ XML
+    │   ├─ JSON ↔ Protobuf
+    │   └─ JSON ↔ CBOR
+    │
+    └─ 9.3 平台转换
+        ├─ AWS IoT ↔ Azure IoT
+        ├─ 边缘计算 ↔ 云端
+        └─ 本地 ↔ 云端
 ```
 
 ---

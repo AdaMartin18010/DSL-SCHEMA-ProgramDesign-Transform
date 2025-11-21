@@ -194,14 +194,44 @@ Cypher定义了图数据库查询的Schema。
 
 ## 4. 标准对比矩阵
 
+### 4.1 标准对比表
+
 | 标准 | 范围 | 数据模型 | 推理能力 | 查询语言 | 状态 |
 |------|------|----------|----------|----------|------|
-| W3C RDF | 通用 | 三元组 | 基础 | SPARQL | 已发布 |
-| W3C OWL | 通用 | 本体 | 强 | SPARQL | 已发布 |
-| ISO/IEC 21838 | 通用 | 顶层本体 | 中 | 多种 | 已发布 |
-| Schema.org | Web | 结构化数据 | 弱 | 无 | 已发布 |
-| JSON-LD | Web | JSON-RDF | 基础 | SPARQL | 已发布 |
-| Neo4j Cypher | 图数据库 | 属性图 | 中 | Cypher | 已发布 |
+| **W3C RDF** | 通用 | 三元组 | ⚠️ 基础 | ✅ SPARQL | ✅ 已发布 |
+| **W3C OWL** | 通用 | 本体 | ✅ 强 | ✅ SPARQL | ✅ 已发布 |
+| **ISO/IEC 21838** | 通用 | 顶层本体 | ⚠️ 中 | ⚠️ 多种 | ✅ 已发布 |
+| **Schema.org** | Web | 结构化数据 | ❌ 弱 | ❌ 无 | ✅ 已发布 |
+| **JSON-LD** | Web | JSON-RDF | ⚠️ 基础 | ✅ SPARQL | ✅ 已发布 |
+| **Neo4j Cypher** | 图数据库 | 属性图 | ⚠️ 中 | ✅ Cypher | ✅ 已发布 |
+| **Amazon Neptune** | 云平台 | 属性图 | ⚠️ 中 | ✅ Gremlin/SPARQL | ✅ 已发布 |
+| **Apache TinkerPop** | 图计算 | 属性图 | ⚠️ 中 | ✅ Gremlin | ✅ 已发布 |
+
+**说明**：
+
+- ✅：完全支持/已发布
+- ⚠️：部分支持/中等
+- ❌：不支持/弱
+
+### 4.2 Schema特性对比
+
+| 标准 | 实体定义 | 关系定义 | 属性定义 | 推理规则 | 扩展性 |
+|------|---------|---------|---------|---------|--------|
+| **W3C RDF** | ✅ 完整 | ✅ 完整 | ✅ 完整 | ⚠️ 基础 | ✅ 强 |
+| **W3C OWL** | ✅ 完整 | ✅ 完整 | ✅ 完整 | ✅ 完整 | ✅ 强 |
+| **JSON-LD** | ✅ 完整 | ✅ 完整 | ✅ 完整 | ⚠️ 基础 | ✅ 强 |
+| **Neo4j Cypher** | ✅ 完整 | ✅ 完整 | ✅ 完整 | ⚠️ 部分 | ✅ 强 |
+| **Schema.org** | ✅ 完整 | ✅ 完整 | ✅ 完整 | ❌ 无 | ⚠️ 有限 |
+
+### 4.3 工具链支持对比
+
+| 工具 | W3C RDF | W3C OWL | JSON-LD | Neo4j | 代码生成 |
+|------|---------|---------|---------|-------|---------|
+| **Apache Jena** | ✅ 完整 | ✅ 完整 | ✅ 完整 | ❌ 无 | ✅ 完整 |
+| **RDFLib** | ✅ 完整 | ⚠️ 部分 | ✅ 完整 | ❌ 无 | ✅ 完整 |
+| **Neo4j** | ⚠️ 部分 | ❌ 无 | ⚠️ 部分 | ✅ 完整 | ✅ 完整 |
+| **Amazon Neptune** | ⚠️ 部分 | ❌ 无 | ⚠️ 部分 | ✅ 完整 | ✅ 完整 |
+| **Apache TinkerPop** | ❌ 无 | ❌ 无 | ❌ 无 | ✅ 完整 | ✅ 完整 |
 
 ---
 
@@ -251,6 +281,33 @@ Cypher定义了图数据库查询的Schema。
 - 支持复杂推理
 - 促进AI应用
 
+### 5.2 标准化方向
+
+1. **统一性**：推动知识图谱Schema统一
+2. **互操作性**：增强不同平台互操作
+3. **可扩展性**：支持行业特定扩展
+4. **智能化**：加强AI知识图谱Schema定义
+
+### 5.3 2025-2026年展望
+
+#### 5.3.1 AI增强知识图谱
+
+- **趋势**：AI与知识图谱深度融合
+- **影响**：需要AI模型Schema定义
+- **标准**：W3C AI知识图谱标准（开发中）
+
+#### 5.3.2 量子知识图谱
+
+- **趋势**：量子计算在知识图谱中的应用
+- **影响**：需要量子特性Schema定义
+- **标准**：新兴标准制定中
+
+#### 5.3.3 联邦知识图谱
+
+- **趋势**：联邦学习与知识图谱融合
+- **影响**：需要联邦知识Schema定义
+- **标准**：新兴标准制定中
+
 ---
 
 ## 6. 参考文献
@@ -271,10 +328,22 @@ Cypher定义了图数据库查询的Schema。
 
 ### 6.3 在线资源
 
-- [W3C官网](https://www.w3.org/)
-- [Schema.org](https://schema.org/)
-- [Neo4j官网](https://neo4j.com/)
-- [JSON-LD Playground](https://json-ld.org/playground/)
+- **W3C官网**：<https://www.w3.org/>
+- **Schema.org**：<https://schema.org/>
+- **Neo4j官网**：<https://neo4j.com/>
+- **JSON-LD Playground**：
+  <https://json-ld.org/playground/>
+
+### 6.4 技术社区
+
+- **Apache Jena**：<https://jena.apache.org/>
+- **RDFLib**：<https://rdflib.readthedocs.io/>
+- **Amazon Neptune**：
+  <https://aws.amazon.com/neptune/>
+- **Apache TinkerPop**：
+  <https://tinkerpop.apache.org/>
+- **GitHub知识图谱工具**：
+  <https://github.com/apache/jena>
 
 ---
 

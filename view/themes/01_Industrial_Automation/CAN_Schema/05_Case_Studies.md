@@ -93,11 +93,153 @@ BO_ 61444 EngineSpeed: 8 Engine
 cantools generate_c_source --database-path j1939.dbc --output-dir src
 ```
 
+**生成的C代码示例**：
+
+```c
+// 自动生成的消息结构体
+struct EngineSpeed_t {
+    uint16_t EngineSpeed;        // 0-8031.875 rpm
+    uint8_t EngineSpeedValid;    // 0-1
+};
+
+// 自动生成的编码函数
+int encode_EngineSpeed(
+    struct EngineSpeed_t* src_p,
+    uint8_t dst_p[8],
+    size_t size)
+{
+    if (size < 8) {
+        return -1;
+    }
+
+    dst_p[0] = (uint8_t)(src_p->EngineSpeed & 0xFF);
+    dst_p[1] = (uint8_t)((src_p->EngineSpeed >> 8) & 0xFF);
+    dst_p[2] = (uint8_t)(src_p->EngineSpeedValid & 0x01);
+
+    return 0;
+}
+
+// 自动生成的解码函数
+int decode_EngineSpeed(
+    const uint8_t src_p[8],
+    size_t size,
+    struct EngineSpeed_t* dst_p)
+{
+    if (size < 8) {
+        return -1;
+    }
+
+    dst_p->EngineSpeed =
+        (uint16_t)(src_p[0] | (src_p[1] << 8));
+    dst_p->EngineSpeedValid =
+        (uint8_t)(src_p[2] & 0x01);
+
+    return 0;
+}
+```
+
+**Rust代码生成示例**：
+
+```rust
+// 自动生成的Rust结构体
+#[derive(Debug, Clone)]
+pub struct EngineSpeed {
+    pub engine_speed: u16,        // 0-8031.875 rpm
+    pub engine_speed_valid: bool,  // 0-1
+}
+
+impl EngineSpeed {
+    // 自动生成的编码函数
+    pub fn encode(&self) -> [u8; 8] {
+        let mut data = [0u8; 8];
+        data[0] = (self.engine_speed & 0xFF) as u8;
+        data[1] = ((self.engine_speed >> 8) & 0xFF) as u8;
+        data[2] = if self.engine_speed_valid { 1 } else { 0 };
+        data
+    }
+
+    // 自动生成的解码函数
+    pub fn decode(data: &[u8; 8]) -> Result<Self, DecodeError> {
+        if data.len() < 8 {
+            return Err(DecodeError::InvalidLength);
+        }
+
+        Ok(EngineSpeed {
+            engine_speed: u16::from_le_bytes([data[0], data[1]]),
+            engine_speed_valid: data[2] & 0x01 != 0,
+        })
+    }
+}
+```
+
 #### 步骤3：集成测试
 
-- 集成生成的代码到ECU项目
-- 进行总线测试
-- 验证通信正确性
+**集成测试代码**：
+
+```c
+// 集成测试示例
+void test_engine_speed_communication(void) {
+    struct EngineSpeed_t tx_msg = {0};
+    struct EngineSpeed_t rx_msg = {0};
+    uint8_t can_data[8];
+
+    // 设置发送数据
+    tx_msg.EngineSpeed = 2000;  // 2000 rpm
+    tx_msg.EngineSpeedValid = 1;
+
+    // 编码
+    encode_EngineSpeed(&tx_msg, can_data, 8);
+
+    // 发送CAN消息
+    can_send(0x61444, can_data, 8);
+
+    // 接收CAN消息
+    uint32_t can_id;
+    can_receive(&can_id, can_data, 8);
+
+    // 解码
+    decode_EngineSpeed(can_data, 8, &rx_msg);
+
+    // 验证
+    assert(rx_msg.EngineSpeed == 2000);
+    assert(rx_msg.EngineSpeedValid == 1);
+}
+```
+
+**Python集成测试**：
+
+```python
+import cantools
+import can
+
+def test_engine_speed_communication():
+    """测试发动机速度通信"""
+    db = cantools.database.load_file('j1939.dbc')
+    bus = can.interface.Bus('can0', bustype='socketcan')
+
+    # 创建消息
+    message = db.get_message_by_name('EngineSpeed')
+    data = message.encode({
+        'EngineSpeed': 2000,  # 2000 rpm
+        'EngineSpeedValid': 1
+    })
+
+    # 发送消息
+    can_msg = can.Message(
+        arbitration_id=message.frame_id,
+        data=data
+    )
+    bus.send(can_msg)
+
+    # 接收消息
+    received_msg = bus.recv(timeout=1.0)
+    decoded = message.decode(received_msg.data)
+
+    # 验证
+    assert decoded['EngineSpeed'] == 2000
+    assert decoded['EngineSpeedValid'] == 1
+    print("测试通过：发动机速度通信正常")
+```
 
 ### 2.3 Schema结构分析
 

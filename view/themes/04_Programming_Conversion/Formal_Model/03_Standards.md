@@ -217,16 +217,46 @@ GraphQL Schema
 
 ## 5. 标准对比矩阵
 
+### 5.1 标准对比表
+
 | 标准类型 | 标准名称 | 类型系统 | 代码生成 | 多语言支持 | 应用领域 |
 |---------|---------|---------|---------|-----------|----------|
-| Schema标准 | JSON Schema | ✓ | ✓ | ✓ | 数据验证 |
-| Schema标准 | OpenAPI | ✓ | ✓ | ✓ | API定义 |
-| Schema标准 | Protocol Buffers | ✓ | ✓ | ✓ | 序列化 |
-| Schema标准 | GraphQL Schema | ✓ | ✓ | ✓ | API查询 |
-| 语言标准 | Python | ✓ | - | - | 通用编程 |
-| 语言标准 | Rust | ✓ | - | - | 系统编程 |
-| 语言标准 | Java | ✓ | - | - | 企业应用 |
-| 语言标准 | Go | ✓ | - | - | 云原生 |
+| **Schema标准** | JSON Schema | ✅ | ✅ | ✅ | 数据验证 |
+| **Schema标准** | OpenAPI | ✅ | ✅ | ✅ | API定义 |
+| **Schema标准** | Protocol Buffers | ✅ | ✅ | ✅ | 序列化 |
+| **Schema标准** | GraphQL Schema | ✅ | ✅ | ✅ | API查询 |
+| **Schema标准** | AsyncAPI | ✅ | ✅ | ✅ | 异步API |
+| **语言标准** | Python | ✅ | ❌ | ❌ | 通用编程 |
+| **语言标准** | Rust | ✅ | ❌ | ❌ | 系统编程 |
+| **语言标准** | Java | ✅ | ❌ | ❌ | 企业应用 |
+| **语言标准** | Go | ✅ | ❌ | ❌ | 云原生 |
+| **语言标准** | TypeScript | ✅ | ❌ | ❌ | Web开发 |
+
+**说明**：
+
+- ✅：完全支持
+- ❌：不支持
+- ⚠️：部分支持
+
+### 5.2 Schema特性对比
+
+| 标准 | 类型定义 | 验证规则 | 序列化 | 文档生成 | 扩展性 |
+|------|---------|---------|--------|---------|--------|
+| **JSON Schema** | ✅ 完整 | ✅ 完整 | ✅ 完整 | ⚠️ 部分 | ✅ 强 |
+| **OpenAPI** | ✅ 完整 | ✅ 完整 | ✅ 完整 | ✅ 完整 | ✅ 强 |
+| **Protocol Buffers** | ✅ 完整 | ⚠️ 部分 | ✅ 完整 | ⚠️ 部分 | ✅ 强 |
+| **GraphQL Schema** | ✅ 完整 | ✅ 完整 | ✅ 完整 | ✅ 完整 | ✅ 强 |
+| **AsyncAPI** | ✅ 完整 | ✅ 完整 | ✅ 完整 | ✅ 完整 | ✅ 强 |
+
+### 5.3 工具链支持对比
+
+| 工具 | JSON Schema | OpenAPI | Protocol Buffers | GraphQL | 代码生成 |
+|------|------------|---------|----------------|---------|---------|
+| **OpenAPI Generator** | ⚠️ 部分 | ✅ 完整 | ❌ 无 | ❌ 无 | ✅ 50+语言 |
+| **protoc** | ❌ 无 | ❌ 无 | ✅ 完整 | ❌ 无 | ✅ 10+语言 |
+| **GraphQL Code Generator** | ❌ 无 | ⚠️ 部分 | ❌ 无 | ✅ 完整 | ✅ 多语言 |
+| **quicktype** | ✅ 完整 | ✅ 完整 | ⚠️ 部分 | ⚠️ 部分 | ✅ 多语言 |
+| **json-schema-codegen** | ✅ 完整 | ⚠️ 部分 | ❌ 无 | ❌ 无 | ✅ 多语言 |
 
 ---
 
@@ -252,6 +282,33 @@ GraphQL Schema
 - **互操作性**：更好的Schema互操作性
 - **工具链**：完善的工具链支持
 
+### 6.2 标准化方向
+
+1. **统一性**：推动跨Schema标准统一
+2. **互操作性**：增强不同Schema互操作
+3. **可扩展性**：支持新语言和框架扩展
+4. **智能化**：加强AI辅助代码生成
+
+### 6.3 2025-2026年展望
+
+#### 6.3.1 AI原生代码生成
+
+- **趋势**：AI直接生成代码
+- **影响**：需要AI模型Schema定义
+- **标准**：新兴标准制定中
+
+#### 6.3.2 量子编程语言
+
+- **趋势**：量子计算编程语言发展
+- **影响**：需要量子特性Schema定义
+- **标准**：Q#、Cirq等量子语言标准
+
+#### 6.3.3 形式化验证集成
+
+- **趋势**：代码生成与形式化验证集成
+- **影响**：需要形式化验证Schema定义
+- **标准**：Coq、Agda等证明助手标准
+
 ---
 
 ## 7. 参考文献
@@ -273,9 +330,21 @@ GraphQL Schema
 
 ### 7.3 在线资源
 
-- [Python官网](https://www.python.org/)
-- [Rust官网](https://www.rust-lang.org/)
-- [JSON Schema官网](https://json-schema.org/)
+- **Python官网**：<https://www.python.org/>
+- **Rust官网**：<https://www.rust-lang.org/>
+- **JSON Schema官网**：<https://json-schema.org/>
+- **OpenAPI官网**：<https://www.openapis.org/>
+- **Protocol Buffers**：<https://protobuf.dev/>
+
+### 7.4 技术社区
+
+- **OpenAPI Generator**：
+  <https://openapi-generator.tech/>
+- **quicktype**：<https://quicktype.io/>
+- **GraphQL Code Generator**：
+  <https://the-guild.dev/graphql/codegen>
+- **GitHub代码生成工具**：
+  <https://github.com/OpenAPITools/openapi-generator>
 
 ---
 

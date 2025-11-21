@@ -140,65 +140,86 @@ import paho.mqtt.client as mqtt
 import json
 import ssl
 from datetime import datetime
-from typing import Optional, Callable
+from typing import Optional, Callable, Dict, Any
 
 class SmartHomeMQTTClient:
     """智能家居MQTT客户端"""
 
     def __init__(self, broker: str, port: int = 1883,
                  client_id: str = None, username: str = None,
-                 password: str = None, ca_cert: str = None):
+                 password: str = None, tls_enabled: bool = True):
+        """初始化MQTT客户端"""
         self.broker = broker
         self.port = port
-        self.client_id = client_id or f"client_{datetime.now().timestamp()}"
+        self.client_id = client_id or f"smart_home_{datetime.now().timestamp()}"
+        self.username = username
+        self.password = password
+        self.tls_enabled = tls_enabled
 
         # 创建MQTT客户端
-        self.client = mqtt.Client(client_id=self.client_id)
+        self.client = mqtt.Client(
+            client_id=self.client_id,
+            clean_session=True
+        )
 
-        # 设置认证
-        if username and password:
-            self.client.username_pw_set(username, password)
-
-        # 设置TLS
-        if ca_cert:
-            self.client.tls_set(
-                ca_certs=ca_cert,
-                cert_reqs=ssl.CERT_REQUIRED,
-                tls_version=ssl.PROTOCOL_TLSv1_2
-            )
-            self.port = 8883
-
-        # 设置回调
+        # 设置回调函数
         self.client.on_connect = self._on_connect
         self.client.on_message = self._on_message
         self.client.on_disconnect = self._on_disconnect
 
+        # 配置TLS
+        if self.tls_enabled:
+            self.client.tls_set(
+                ca_certs="ca.crt",
+                certfile="client.crt",
+                keyfile="client.key",
+                tls_version=ssl.PROTOCOL_TLSv1_2
+            )
+
+        # 设置认证
+        if self.username and self.password:
+            self.client.username_pw_set(
+                self.username,
+                self.password
+            )
+
     def _on_connect(self, client, userdata, flags, rc):
         """连接回调"""
         if rc == 0:
-            print("MQTT连接成功")
+            print(f"连接成功: {self.broker}:{self.port}")
             # 订阅设备状态主题
-            client.subscribe("home/device/+/status", qos=1)
-            client.subscribe("home/device/+/event", qos=1)
+            self.client.subscribe("home/device/+/status", qos=1)
+            # 订阅设备事件主题
+            self.client.subscribe("home/device/+/event", qos=1)
         else:
-            print(f"MQTT连接失败，错误码: {rc}")
+            print(f"连接失败: {mqtt.error_string(rc)}")
 
     def _on_message(self, client, userdata, msg):
         """消息接收回调"""
         try:
-            payload = json.loads(msg.payload.decode('utf-8'))
-            print(f"收到消息 - 主题: {msg.topic}, 载荷: {payload}")
+            payload = json.loads(msg.payload.decode())
+            topic_parts = msg.topic.split('/')
+
+            if topic_parts[-1] == 'status':
+                self._handle_status_message(topic_parts[2], payload)
+            elif topic_parts[-1] == 'event':
+                self._handle_event_message(topic_parts[2], payload)
         except Exception as e:
-            print(f"消息解析错误: {e}")
+            print(f"消息处理错误: {e}")
 
     def _on_disconnect(self, client, userdata, rc):
         """断开连接回调"""
-        print("MQTT连接断开")
+        print(f"断开连接: {mqtt.error_string(rc)}")
 
     def connect(self):
-        """连接到MQTT Broker"""
+        """连接到MQTT代理"""
         self.client.connect(self.broker, self.port, keepalive=60)
         self.client.loop_start()
+
+    def disconnect(self):
+        """断开连接"""
+        self.client.loop_stop()
+        self.client.disconnect()
 
     def publish_status(self, device_id: str, status: str):
         """发布设备状态"""
@@ -206,34 +227,153 @@ class SmartHomeMQTTClient:
         payload = {
             "device_id": device_id,
             "status": status,
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now().isoformat()
         }
         self.client.publish(topic, json.dumps(payload), qos=1)
 
-    def publish_event(self, device_id: str, event_type: str,
-                     event_data: dict, severity: str = "info"):
-        """发布设备事件"""
-        topic = f"home/device/{device_id}/event"
-        payload = {
-            "device_id": device_id,
-            "event_type": event_type,
-            "event_data": event_data,
-            "severity": severity,
-            "timestamp": datetime.utcnow().isoformat()
-        }
-        self.client.publish(topic, json.dumps(payload), qos=1)
-
-    def send_control_command(self, device_id: str, command: str,
-                            parameters: dict = None):
-        """发送控制命令"""
+    def publish_control(self, device_id: str, command: str,
+                       parameters: Dict[str, Any] = None):
+        """发布设备控制命令"""
         topic = f"home/device/{device_id}/control"
         payload = {
             "device_id": device_id,
             "command": command,
             "parameters": parameters or {},
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now().isoformat()
         }
         self.client.publish(topic, json.dumps(payload), qos=1)
+
+    def _handle_status_message(self, device_id: str, payload: Dict):
+        """处理状态消息"""
+        print(f"设备 {device_id} 状态: {payload['status']}")
+
+    def _handle_event_message(self, device_id: str, payload: Dict):
+        """处理事件消息"""
+        print(f"设备 {device_id} 事件: {payload['event_type']} - "
+              f"{payload.get('severity', 'info')}")
+
+# 使用示例
+if __name__ == "__main__":
+    client = SmartHomeMQTTClient(
+        broker="mqtt.example.com",
+        port=8883,
+        username="smart_home",
+        password="password123",
+        tls_enabled=True
+    )
+
+    client.connect()
+
+    # 发布设备状态
+    client.publish_status("sensor_001", "online")
+
+    # 发布控制命令
+    client.publish_control(
+        "light_001",
+        "set_brightness",
+        {"brightness": 80}
+    )
+
+    # 保持连接
+    import time
+    time.sleep(60)
+
+    client.disconnect()
+```
+
+**Rust MQTT客户端实现**：
+
+```rust
+use rumqttc::{Client, MqttOptions, QoS, Event, Incoming};
+use serde::{Serialize, Deserialize};
+use std::time::Duration;
+
+#[derive(Debug, Serialize, Deserialize)]
+struct DeviceStatus {
+    device_id: String,
+    status: String,
+    timestamp: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct DeviceControl {
+    device_id: String,
+    command: String,
+    parameters: std::collections::HashMap<String, serde_json::Value>,
+    timestamp: String,
+}
+
+pub struct SmartHomeMQTTClient {
+    client: Client,
+}
+
+impl SmartHomeMQTTClient {
+    pub fn new(
+        broker: &str,
+        port: u16,
+        client_id: &str,
+    ) -> Result<Self, Box<dyn std::error::Error>> {
+        let mut mqtt_options = MqttOptions::new(client_id, broker, port);
+        mqtt_options.set_keep_alive(Duration::from_secs(60));
+        mqtt_options.set_clean_session(true);
+
+        let (client, mut connection) = Client::new(mqtt_options, 10);
+
+        // 订阅主题
+        client.subscribe("home/device/+/status", QoS::AtLeastOnce)?;
+        client.subscribe("home/device/+/event", QoS::AtLeastOnce)?;
+
+        Ok(SmartHomeMQTTClient { client })
+    }
+
+    pub fn publish_status(
+        &self,
+        device_id: &str,
+        status: &str,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        let topic = format!("home/device/{}/status", device_id);
+        let payload = DeviceStatus {
+            device_id: device_id.to_string(),
+            status: status.to_string(),
+            timestamp: chrono::Utc::now().to_rfc3339(),
+        };
+
+        let payload_json = serde_json::to_string(&payload)?;
+        self.client.publish(
+            &topic,
+            QoS::AtLeastOnce,
+            false,
+            payload_json.as_bytes(),
+        )?;
+
+        Ok(())
+    }
+
+    pub fn publish_control(
+        &self,
+        device_id: &str,
+        command: &str,
+        parameters: std::collections::HashMap<String, serde_json::Value>,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        let topic = format!("home/device/{}/control", device_id);
+        let payload = DeviceControl {
+            device_id: device_id.to_string(),
+            command: command.to_string(),
+            parameters,
+            timestamp: chrono::Utc::now().to_rfc3339(),
+        };
+
+        let payload_json = serde_json::to_string(&payload)?;
+        self.client.publish(
+            &topic,
+            QoS::AtLeastOnce,
+            false,
+            payload_json.as_bytes(),
+        )?;
+
+        Ok(())
+    }
+}
 ```
 
 ### 2.4 部署验证

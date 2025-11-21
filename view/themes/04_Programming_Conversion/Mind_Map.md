@@ -110,6 +110,72 @@
     ├─ 5.1 OpenAPI到Python
     ├─ 5.2 JSON Schema到Rust
     └─ 5.3 Protocol Buffers多语言
+
+├─ 6. 国际标准体系
+    │
+    ├─ 6.1 OMG标准
+    │   ├─ UML (统一建模语言)
+    │   ├─ MOF (元对象设施)
+    │   ├─ QVT (查询/视图/转换)
+    │   └─ SysML (系统建模语言)
+    │
+    ├─ 6.2 ISO/IEC标准
+    │   ├─ ISO/IEC 19510 (BPMN)
+    │   ├─ ISO/IEC 24744 (元模型)
+    │   └─ ISO/IEC 23247 (数字孪生)
+    │
+    └─ 6.3 W3C标准
+        ├─ JSON Schema
+        └─ JSON-LD
+
+├─ 7. 行业标准体系
+    │
+    ├─ 7.1 API设计标准
+    │   ├─ OpenAPI (RESTful API)
+    │   ├─ AsyncAPI (异步API)
+    │   └─ GraphQL (查询语言)
+    │
+    ├─ 7.2 数据序列化标准
+    │   ├─ Protocol Buffers
+    │   ├─ Apache Avro
+    │   └─ Apache Thrift
+    │
+    └─ 7.3 代码生成标准
+        ├─ OpenAPI Generator
+        ├─ Swagger Codegen
+        └─ quicktype
+
+├─ 8. 开源规范与框架
+    │
+    ├─ 8.1 Eclipse基金会
+    │   ├─ Eclipse EMF (建模框架)
+    │   ├─ Eclipse ATL (转换语言)
+    │   └─ Eclipse Epsilon (模型管理)
+    │
+    ├─ 8.2 Apache基金会
+    │   ├─ Apache Thrift
+    │   └─ Apache Avro
+    │
+    └─ 8.3 其他开源
+        ├─ quicktype (多语言代码生成)
+        └─ json-schema-codegen
+
+└─ 9. 跨领域转换
+    │
+    ├─ 9.1 模型驱动工程 (MDE)
+    │   ├─ MDA (模型驱动架构)
+    │   ├─ 元建模
+    │   └─ 模型转换
+    │
+    ├─ 9.2 领域特定语言 (DSL)
+    │   ├─ 外部DSL
+    │   ├─ 内部DSL
+    │   └─ DSL转换
+    │
+    └─ 9.3 代码生成工具
+        ├─ OpenAPI Generator
+        ├─ protoc
+        └─ quicktype
 ```
 
 ---

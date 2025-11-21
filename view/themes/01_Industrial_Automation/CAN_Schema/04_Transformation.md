@@ -222,16 +222,112 @@ parse: Code → DBC_Schema
 **C代码**：
 
 ```c
+// 原始C代码结构体
 struct EngineSpeed {
-    uint16_t Speed;
+    uint16_t Speed;        // 注释：发动机速度，单位rpm
+    uint8_t SpeedValid;   // 注释：有效性标志
 };
+
+// 编码函数（用于推断Schema）
+void encode_engine_speed(
+    const struct EngineSpeed* src,
+    uint8_t* dst)
+{
+    dst[0] = (uint8_t)(src->Speed & 0xFF);
+    dst[1] = (uint8_t)((src->Speed >> 8) & 0xFF);
+    dst[2] = src->SpeedValid & 0x01;
+}
 ```
 
-**解析后的DBC**：
+**代码分析过程**：
+
+```python
+import ast
+import re
+from typing import Dict, List
+
+def analyze_c_struct(c_code: str) -> Dict:
+    """分析C结构体，提取Schema信息"""
+    schema = {
+        "messages": [],
+        "signals": []
+    }
+
+    # 解析结构体定义
+    struct_pattern = r'struct\s+(\w+)\s*\{([^}]+)\}'
+    matches = re.finditer(struct_pattern, c_code, re.MULTILINE)
+
+    for match in matches:
+        struct_name = match.group(1)
+        struct_body = match.group(2)
+
+        # 解析字段
+        field_pattern = r'(\w+)\s+(\w+);'
+        fields = re.finditer(field_pattern, struct_body)
+
+        signals = []
+        start_bit = 0
+
+        for field in fields:
+            field_type = field.group(1)
+            field_name = field.group(2)
+
+            # 推断信号定义
+            signal_size = get_type_size(field_type)
+            signals.append({
+                "name": field_name,
+                "type": field_type,
+                "start_bit": start_bit,
+                "length": signal_size
+            })
+            start_bit += signal_size
+
+        schema["messages"].append({
+            "name": struct_name,
+            "signals": signals
+        })
+
+    return schema
+
+def get_type_size(c_type: str) -> int:
+    """获取C类型大小（位）"""
+    type_sizes = {
+        "uint8_t": 8,
+        "uint16_t": 16,
+        "uint32_t": 32,
+        "int8_t": 8,
+        "int16_t": 16,
+        "int32_t": 32,
+    }
+    return type_sizes.get(c_type, 8)
+
+# 使用示例
+c_code = """
+struct EngineSpeed {
+    uint16_t Speed;
+    uint8_t SpeedValid;
+};
+"""
+
+schema = analyze_c_struct(c_code)
+print(f"解析结果: {schema}")
+```
+
+**生成的DBC**：
 
 ```dbc
+VERSION ""
+
+NS_ :
+BS_:
+
 BO_ 123 EngineSpeed: 8 ECU
- SG_ Speed : 0|16@1+ (1,0) [0|65535] "" Node1
+ SG_ Speed : 0|16@1+ (1,0) [0|65535] "rpm" Node1
+ SG_ SpeedValid : 16|1@1+ (1,0) [0|1] "" Node1
+
+CM_ BO_ 123 "发动机速度消息";
+CM_ SG_ 123 Speed "发动机速度，单位rpm";
+CM_ SG_ 123 SpeedValid "有效性标志";
 ```
 
 ---

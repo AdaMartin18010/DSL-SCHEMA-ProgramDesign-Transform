@@ -19,15 +19,24 @@
     - [4.2 OPC UA for Digital Twin](#42-opc-ua-for-digital-twin)
     - [4.3 Digital Twin Consortium](#43-digital-twin-consortium)
   - [5. 标准对比矩阵](#5-标准对比矩阵)
+    - [5.1 标准对比表](#51-标准对比表)
+    - [5.2 Schema特性对比](#52-schema特性对比)
+    - [5.3 工具链支持对比](#53-工具链支持对比)
   - [6. 标准发展趋势](#6-标准发展趋势)
     - [6.1 2024-2025年趋势](#61-2024-2025年趋势)
       - [6.1.1 互操作性标准](#611-互操作性标准)
       - [6.1.2 数据模型标准](#612-数据模型标准)
       - [6.1.3 安全标准](#613-安全标准)
+    - [6.2 标准化方向](#62-标准化方向)
+    - [6.3 2025-2026年展望](#63-2025-2026年展望)
+      - [6.3.1 AI增强数字孪生](#631-ai增强数字孪生)
+      - [6.3.2 量子数字孪生](#632-量子数字孪生)
+      - [6.3.3 元宇宙数字孪生](#633-元宇宙数字孪生)
   - [7. 参考文献](#7-参考文献)
     - [7.1 标准文档](#71-标准文档)
     - [7.2 学术文献](#72-学术文献)
     - [7.3 在线资源](#73-在线资源)
+    - [7.4 技术社区](#74-技术社区)
 
 ---
 
@@ -236,14 +245,45 @@ Digital Twin Consortium定义了数字孪生的Schema。
 
 ## 5. 标准对比矩阵
 
+### 5.1 标准对比表
+
 | 标准 | 范围 | 架构 | 数据模型 | 互操作性 | 状态 |
 |------|------|------|----------|----------|------|
-| ISO/IEC 23247 | 通用 | 参考架构 | 基础模型 | 高 | 已发布 |
-| IEC 63278 | 工业 | 系统架构 | 工业模型 | 中 | 已发布 |
-| GB/T 41479 | 通用 | 系统要求 | 基础模型 | 中 | 已发布 |
-| IIC Digital Twin | 工业 | 架构框架 | 工业模型 | 高 | 发展中 |
-| OPC UA for DT | 工业 | 信息模型 | OPC UA模型 | 高 | 已发布 |
-| DT Consortium | 通用 | 参考架构 | 通用模型 | 高 | 发展中 |
+| **ISO/IEC 23247** | 通用 | 参考架构 | 基础模型 | ✅ 高 | ✅ 已发布 |
+| **IEC 63278** | 工业 | 系统架构 | 工业模型 | ⚠️ 中 | ✅ 已发布 |
+| **GB/T 41479** | 通用 | 系统要求 | 基础模型 | ⚠️ 中 | ✅ 已发布 |
+| **IIC Digital Twin** | 工业 | 架构框架 | 工业模型 | ✅ 高 | 🔄 发展中 |
+| **OPC UA for DT** | 工业 | 信息模型 | OPC UA模型 | ✅ 高 | ✅ 已发布 |
+| **DT Consortium** | 通用 | 参考架构 | 通用模型 | ✅ 高 | 🔄 发展中 |
+| **AWS IoT TwinMaker** | 云平台 | 云架构 | 云模型 | ✅ 高 | ✅ 已发布 |
+| **Azure Digital Twins** | 云平台 | 云架构 | 云模型 | ✅ 高 | ✅ 已发布 |
+
+**说明**：
+
+- ✅：完全支持/已发布
+- ⚠️：部分支持
+- 🔄：发展中
+
+### 5.2 Schema特性对比
+
+| 标准 | 物理实体模型 | 数字实体模型 | 数据同步 | 模型管理 | 扩展性 |
+|------|------------|------------|---------|---------|--------|
+| **ISO/IEC 23247** | ✅ 完整 | ✅ 完整 | ✅ 完整 | ✅ 完整 | ✅ 强 |
+| **IEC 63278** | ✅ 完整 | ✅ 完整 | ✅ 完整 | ✅ 完整 | ✅ 强 |
+| **OPC UA for DT** | ✅ 完整 | ✅ 完整 | ✅ 完整 | ✅ 完整 | ✅ 强 |
+| **AWS IoT TwinMaker** | ✅ 完整 | ✅ 完整 | ✅ 完整 | ✅ 完整 | ✅ 强 |
+| **Azure Digital Twins** | ✅ 完整 | ✅ 完整 | ✅ 完整 | ✅ 完整 | ✅ 强 |
+| **DT Consortium** | ✅ 完整 | ✅ 完整 | ⚠️ 部分 | ✅ 完整 | ✅ 强 |
+
+### 5.3 工具链支持对比
+
+| 工具 | ISO/IEC 23247 | IEC 63278 | OPC UA | AWS | Azure | 代码生成 |
+|------|---------------|-----------|--------|-----|-------|---------|
+| **AWS IoT TwinMaker** | ⚠️ 部分 | ⚠️ 部分 | ⚠️ 部分 | ✅ 完整 | ❌ 无 | ✅ 完整 |
+| **Azure Digital Twins** | ⚠️ 部分 | ⚠️ 部分 | ✅ 完整 | ❌ 无 | ✅ 完整 | ✅ 完整 |
+| **OPC UA SDK** | ⚠️ 部分 | ⚠️ 部分 | ✅ 完整 | ❌ 无 | ❌ 无 | ✅ 完整 |
+| **Digital Twin Platform** | ✅ 完整 | ✅ 完整 | ✅ 完整 | ⚠️ 部分 | ⚠️ 部分 | ✅ 完整 |
+| **OpenDT** | ⚠️ 部分 | ⚠️ 部分 | ⚠️ 部分 | ❌ 无 | ❌ 无 | ⚠️ 部分 |
 
 ---
 
@@ -293,6 +333,33 @@ Digital Twin Consortium定义了数字孪生的Schema。
 - 保护数据隐私
 - 建立信任机制
 
+### 6.2 标准化方向
+
+1. **统一性**：推动跨平台数字孪生Schema统一
+2. **互操作性**：增强不同平台互操作
+3. **可扩展性**：支持行业特定扩展
+4. **智能化**：加强AI数字孪生Schema定义
+
+### 6.3 2025-2026年展望
+
+#### 6.3.1 AI增强数字孪生
+
+- **趋势**：AI与数字孪生深度融合
+- **影响**：需要AI模型Schema定义
+- **标准**：ISO/IEC 23247 AI扩展
+
+#### 6.3.2 量子数字孪生
+
+- **趋势**：量子计算在数字孪生中的应用
+- **影响**：需要量子特性Schema定义
+- **标准**：新兴标准制定中
+
+#### 6.3.3 元宇宙数字孪生
+
+- **趋势**：数字孪生与元宇宙融合
+- **影响**：需要3D/VR Schema定义
+- **标准**：ISO/IEC 23090元宇宙标准扩展
+
 ---
 
 ## 7. 参考文献
@@ -313,11 +380,22 @@ Digital Twin Consortium定义了数字孪生的Schema。
 
 ### 7.3 在线资源
 
-- [ISO官网](https://www.iso.org/)
-- [IEC官网](https://webstore.iec.ch/)
-- [IIC官网](https://www.iiconsortium.org/)
-- [OPC Foundation](https://opcfoundation.org/)
-- [Digital Twin Consortium](https://www.digitaltwinconsortium.org/)
+- **ISO官网**：<https://www.iso.org/>
+- **IEC官网**：<https://webstore.iec.ch/>
+- **IIC官网**：<https://www.iiconsortium.org/>
+- **OPC Foundation**：<https://opcfoundation.org/>
+- **Digital Twin Consortium**：
+  <https://www.digitaltwinconsortium.org/>
+
+### 7.4 技术社区
+
+- **AWS IoT TwinMaker**：
+  <https://aws.amazon.com/iot-twinmaker/>
+- **Azure Digital Twins**：
+  <https://azure.microsoft.com/services/digital-twins/>
+- **OpenDT**：<https://www.opendt.org/>
+- **GitHub数字孪生工具**：
+  <https://github.com/Azure/azure-digital-twins>
 
 ---
 
