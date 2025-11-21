@@ -54,7 +54,7 @@
 ## 📁 最终文档结构
 
 ```
-view/themes/
+themes/
 ├── 01_Industrial_Automation/     ✅ 100%完成
 │   ├── README.md                 ✅
 │   ├── PLC_Schema/               ✅ 5/5完成

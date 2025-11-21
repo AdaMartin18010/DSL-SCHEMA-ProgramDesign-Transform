@@ -46,7 +46,7 @@
 **问题2：主题未充分展开**:
 
 - README中提到的很多主题缺少对应文档
-- view/themes下很多主题只有01_Overview.md
+- themes下很多主题只有01_Overview.md
 - 缺少02_Formal_Definition.md、03_Standards.md等
 
 **问题3：转换规则不够详细**:
@@ -168,7 +168,7 @@
 
 **目标文档**：
 
-- `view/themes/02_IoT_Schema/Communication_Schema/` 扩展
+- `themes/02_IoT_Schema/Communication_Schema/` 扩展
 
 ### 2.3 低优先级主题
 
@@ -185,7 +185,7 @@
 
 **目标文档**：
 
-- 扩展 `view/themes/03_Physical_Device/` 下的文档
+- 扩展 `themes/03_Physical_Device/` 下的文档
 
 #### 2.3.2 编程语言转换详细展开
 
@@ -200,7 +200,7 @@
 
 **目标文档**：
 
-- 扩展 `view/themes/04_Programming_Conversion/` 下的文档
+- 扩展 `themes/04_Programming_Conversion/` 下的文档
 
 ---
 
@@ -342,7 +342,7 @@
 ### 5.2 需要扩展的文档
 
 - `analysis/03_IoT_Schema_Transformation_Practices.md` - 需要详细化
-- `view/themes/` 下的主题文档 - 需要补充详细内容
+- `themes/` 下的主题文档 - 需要补充详细内容
 
 ---
 
