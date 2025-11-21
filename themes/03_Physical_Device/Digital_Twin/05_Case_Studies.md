@@ -583,7 +583,7 @@ class ProductDesignDigitalTwin:
 - `01_Overview.md` - 概述
 - `02_Formal_Definition.md` - 形式化定义
 - `03_Standards.md` - 标准对标
-- `04_Transformation.md` - 转换体系
+- `04_Transformation.md` - 转换体系（包含数据存储）
 
 **创建时间**：2025-01-21
-**最后更新**：2025-01-21
+**最后更新**：2025-01-21（扩展数字孪生数据存储与分析系统案例，新增PostgreSQL存储实践）

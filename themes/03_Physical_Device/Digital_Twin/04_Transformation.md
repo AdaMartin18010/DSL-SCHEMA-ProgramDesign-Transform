@@ -491,11 +491,330 @@ digital_twin = convert_to_digital_twin(physical_device_schema)
 
 ---
 
-## 9. 参考文献
+## 9. 数字孪生数据存储与分析
+
+### 9.1 PostgreSQL数字孪生数据存储
+
+**数字孪生模型和同步数据存储方案**：
+
+```python
+import psycopg2
+import json
+from typing import Dict, List, Optional
+from datetime import datetime, timedelta
+from dataclasses import dataclass
+
+@dataclass
+class TwinState:
+    """数字孪生状态"""
+    twin_id: str
+    physical_device_id: str
+    state_data: Dict
+    timestamp: datetime
+    sync_status: str = 'synced'
+
+@dataclass
+class SyncEvent:
+    """同步事件"""
+    twin_id: str
+    physical_device_id: str
+    sync_type: str
+    sync_data: Dict
+    timestamp: datetime
+    success: bool = True
+
+class DigitalTwinStorage:
+    """数字孪生数据存储系统"""
+
+    def __init__(self, connection_string: str):
+        self.conn = psycopg2.connect(connection_string)
+        self.cur = self.conn.cursor()
+        self._create_tables()
+
+    def _create_tables(self):
+        """创建数字孪生数据表"""
+        # 数字孪生定义表
+        self.cur.execute("""
+            CREATE TABLE IF NOT EXISTS digital_twins (
+                id SERIAL PRIMARY KEY,
+                twin_id VARCHAR(200) UNIQUE NOT NULL,
+                physical_device_id VARCHAR(200) NOT NULL,
+                twin_type VARCHAR(50) NOT NULL,
+                model_definition JSONB NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+
+        # 孪生状态表（时序数据）
+        self.cur.execute("""
+            CREATE TABLE IF NOT EXISTS twin_states (
+                id BIGSERIAL PRIMARY KEY,
+                twin_id VARCHAR(200) NOT NULL,
+                physical_device_id VARCHAR(200) NOT NULL,
+                state_data JSONB NOT NULL,
+                sync_status VARCHAR(50) DEFAULT 'synced',
+                timestamp TIMESTAMP NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (twin_id) REFERENCES digital_twins(twin_id)
+            )
+        """)
+
+        # 同步事件表
+        self.cur.execute("""
+            CREATE TABLE IF NOT EXISTS sync_events (
+                id BIGSERIAL PRIMARY KEY,
+                twin_id VARCHAR(200) NOT NULL,
+                physical_device_id VARCHAR(200) NOT NULL,
+                sync_type VARCHAR(50) NOT NULL,
+                sync_data JSONB NOT NULL,
+                success BOOLEAN DEFAULT TRUE,
+                error_message TEXT,
+                sync_duration_ms INTEGER,
+                timestamp TIMESTAMP NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (twin_id) REFERENCES digital_twins(twin_id)
+            )
+        """)
+
+        # 预测分析结果表
+        self.cur.execute("""
+            CREATE TABLE IF NOT EXISTS prediction_results (
+                id BIGSERIAL PRIMARY KEY,
+                twin_id VARCHAR(200) NOT NULL,
+                prediction_type VARCHAR(50) NOT NULL,
+                prediction_data JSONB NOT NULL,
+                confidence FLOAT,
+                timestamp TIMESTAMP NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (twin_id) REFERENCES digital_twins(twin_id)
+            )
+        """)
+
+        # 数字孪生统计表
+        self.cur.execute("""
+            CREATE TABLE IF NOT EXISTS twin_statistics (
+                id SERIAL PRIMARY KEY,
+                twin_id VARCHAR(200) NOT NULL,
+                statistic_type VARCHAR(50) NOT NULL,
+                time_window TIMESTAMP NOT NULL,
+                statistics JSONB NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (twin_id) REFERENCES digital_twins(twin_id),
+                UNIQUE(twin_id, statistic_type, time_window)
+            )
+        """)
+
+        # 创建索引
+        self.cur.execute("""
+            CREATE INDEX IF NOT EXISTS idx_states_twin_time
+            ON twin_states(twin_id, timestamp DESC)
+        """)
+        self.cur.execute("""
+            CREATE INDEX IF NOT EXISTS idx_sync_twin_time
+            ON sync_events(twin_id, timestamp DESC)
+        """)
+        self.cur.execute("""
+            CREATE INDEX IF NOT EXISTS idx_predictions_twin_time
+            ON prediction_results(twin_id, timestamp DESC)
+        """)
+
+        self.conn.commit()
+
+    def register_twin(self, twin_id: str, physical_device_id: str,
+                     twin_type: str, model_definition: Dict):
+        """注册数字孪生"""
+        self.cur.execute("""
+            INSERT INTO digital_twins
+            (twin_id, physical_device_id, twin_type, model_definition)
+            VALUES (%s, %s, %s, %s::jsonb)
+            ON CONFLICT (twin_id) DO UPDATE
+            SET physical_device_id = EXCLUDED.physical_device_id,
+                twin_type = EXCLUDED.twin_type,
+                model_definition = EXCLUDED.model_definition,
+                updated_at = CURRENT_TIMESTAMP
+        """, (twin_id, physical_device_id, twin_type,
+              json.dumps(model_definition)))
+        self.conn.commit()
+
+    def store_twin_state(self, state: TwinState):
+        """存储数字孪生状态"""
+        self.cur.execute("""
+            INSERT INTO twin_states
+            (twin_id, physical_device_id, state_data, sync_status, timestamp)
+            VALUES (%s, %s, %s::jsonb, %s, %s)
+        """, (state.twin_id, state.physical_device_id,
+              json.dumps(state.state_data), state.sync_status,
+              state.timestamp))
+        self.conn.commit()
+
+    def store_sync_event(self, event: SyncEvent, sync_duration_ms: int = None):
+        """存储同步事件"""
+        self.cur.execute("""
+            INSERT INTO sync_events
+            (twin_id, physical_device_id, sync_type, sync_data,
+             success, error_message, sync_duration_ms, timestamp)
+            VALUES (%s, %s, %s, %s::jsonb, %s, %s, %s, %s)
+        """, (event.twin_id, event.physical_device_id, event.sync_type,
+              json.dumps(event.sync_data), event.success,
+              None if event.success else "Sync failed",
+              sync_duration_ms, event.timestamp))
+        self.conn.commit()
+
+    def store_prediction_result(self, twin_id: str, prediction_type: str,
+                               prediction_data: Dict, confidence: float = None,
+                               timestamp: datetime = None):
+        """存储预测分析结果"""
+        if timestamp is None:
+            timestamp = datetime.utcnow()
+
+        self.cur.execute("""
+            INSERT INTO prediction_results
+            (twin_id, prediction_type, prediction_data, confidence, timestamp)
+            VALUES (%s, %s, %s::jsonb, %s, %s)
+        """, (twin_id, prediction_type, json.dumps(prediction_data),
+              confidence, timestamp))
+        self.conn.commit()
+
+    def calculate_statistics(self, twin_id: str,
+                            time_window: timedelta = timedelta(hours=1)) -> Dict:
+        """计算数字孪生统计信息"""
+        end_time = datetime.utcnow()
+        start_time = end_time - time_window
+
+        # 状态统计
+        self.cur.execute("""
+            SELECT
+                COUNT(*) as state_count,
+                COUNT(DISTINCT sync_status) as unique_statuses
+            FROM twin_states
+            WHERE twin_id = %s
+              AND timestamp >= %s
+              AND timestamp <= %s
+        """, (twin_id, start_time, end_time))
+
+        state_stats = self.cur.fetchone()
+
+        # 同步统计
+        self.cur.execute("""
+            SELECT
+                COUNT(*) as sync_count,
+                SUM(CASE WHEN success THEN 1 ELSE 0 END) as success_count,
+                AVG(sync_duration_ms) as avg_duration_ms
+            FROM sync_events
+            WHERE twin_id = %s
+              AND timestamp >= %s
+              AND timestamp <= %s
+        """, (twin_id, start_time, end_time))
+
+        sync_stats = self.cur.fetchone()
+
+        statistics = {
+            'states': {
+                'count': state_stats[0] if state_stats[0] else 0,
+                'unique_statuses': state_stats[1] if state_stats[1] else 0
+            },
+            'sync': {
+                'count': sync_stats[0] if sync_stats[0] else 0,
+                'success_count': sync_stats[1] if sync_stats[1] else 0,
+                'success_rate': (sync_stats[1] / sync_stats[0] * 100) if sync_stats[0] > 0 else 0,
+                'avg_duration_ms': float(sync_stats[2]) if sync_stats[2] else 0
+            }
+        }
+
+        # 存储统计结果
+        self.cur.execute("""
+            INSERT INTO twin_statistics
+            (twin_id, statistic_type, time_window, statistics)
+            VALUES (%s, %s, %s, %s::jsonb)
+            ON CONFLICT (twin_id, statistic_type, time_window) DO UPDATE
+            SET statistics = EXCLUDED.statistics
+        """, (twin_id, 'twin_statistics', end_time,
+              json.dumps(statistics)))
+        self.conn.commit()
+
+        return statistics
+
+    def analyze_sync_performance(self, twin_id: str,
+                                time_window: timedelta = timedelta(hours=24)) -> Dict:
+        """分析同步性能"""
+        end_time = datetime.utcnow()
+        start_time = end_time - time_window
+
+        self.cur.execute("""
+            SELECT
+                sync_type,
+                COUNT(*) as count,
+                AVG(sync_duration_ms) as avg_duration_ms,
+                SUM(CASE WHEN success THEN 1 ELSE 0 END) as success_count
+            FROM sync_events
+            WHERE twin_id = %s
+              AND timestamp >= %s
+              AND timestamp <= %s
+            GROUP BY sync_type
+        """, (twin_id, start_time, end_time))
+
+        performance = []
+        for row in self.cur.fetchall():
+            performance.append({
+                'sync_type': row[0],
+                'count': row[1],
+                'avg_duration_ms': float(row[2]) if row[2] else 0,
+                'success_count': row[3],
+                'success_rate': (row[3] / row[1] * 100) if row[1] > 0 else 0
+            })
+
+        return {
+            'twin_id': twin_id,
+            'time_window': time_window,
+            'performance': performance
+        }
+
+    def close(self):
+        """关闭连接"""
+        self.cur.close()
+        self.conn.close()
+```
+
+### 9.2 数字孪生数据分析查询
+
+**高级分析查询**：
+
+```python
+class DigitalTwinAnalyzer:
+    """数字孪生数据分析器"""
+
+    def __init__(self, storage: DigitalTwinStorage):
+        self.storage = storage
+
+    def analyze_twin_health(self, twin_id: str,
+                           time_window: timedelta = timedelta(hours=24)) -> Dict:
+        """分析数字孪生健康状态"""
+        stats = self.storage.calculate_statistics(twin_id, time_window)
+        perf = self.storage.analyze_sync_performance(twin_id, time_window)
+
+        # 计算健康分数
+        sync_success_rate = perf['performance'][0]['success_rate'] if perf['performance'] else 0
+
+        health_score = sync_success_rate
+
+        return {
+            'twin_id': twin_id,
+            'health_score': max(0, min(100, health_score)),
+            'sync_success_rate': sync_success_rate,
+            'statistics': stats,
+            'performance': perf
+        }
+```
+
+---
+
+## 10. 参考文献
 
 - ISO/IEC 23247:2021 Digital Twin - Reference Architecture
 - IEC 63278:2022 Digital Twin System
 - GB/T 41479-2022 数字孪生系统通用要求
+- PostgreSQL JSONB文档
 
 ---
 
@@ -507,4 +826,4 @@ digital_twin = convert_to_digital_twin(physical_device_schema)
 - `05_Case_Studies.md` - 实践案例
 
 **创建时间**：2025-01-21
-**最后更新**：2025-01-21
+**最后更新**：2025-01-21（扩展数字孪生数据存储和分析功能，新增PostgreSQL存储方案）
