@@ -233,7 +233,11 @@ DSL-SCHEMA-ProgramDesign-Transform/
 - **优势**：降低API管理认知成本，
   实现自动化闭环验证
 
-**参考文档**：`analysis/01_MCP_Protocol_Integration_Analysis.md`
+**参考文档**：
+
+- `analysis/01_MCP_Protocol_Integration_Analysis.md`（协议分析）
+- `analysis/08_MCP_Based_Schema_Transformation_Implementation_Guide.md`（实施指南）
+- `analysis/10_MCP_Work_Overview_and_Roadmap.md`（工作总览）
 
 #### 3.1.3 自然语言生成DSL的AI工具集成
 
@@ -564,6 +568,9 @@ DSL-SCHEMA-ProgramDesign-Transform/
 - `analysis/05_2025_Latest_Trends_Analysis.md`
 - `analysis/06_Comprehensive_Integration_Analysis.md`（综合整合）
 - `analysis/07_Advanced_Formal_Proofs_Integration.md`（高级形式化证明）
+- `analysis/08_MCP_Based_Schema_Transformation_Implementation_Guide.md`（MCP实施指南）
+- `analysis/09_MCP_Schema_Transformation_Quick_Reference.md`（快速参考）
+- `analysis/10_MCP_Work_Overview_and_Roadmap.md`（工作总览与路线图）
 
 ---
 
@@ -1052,13 +1059,37 @@ type_safe(s_1) ⟹ type_safe(f(s_1))
 
 ## 5. 快速开始
 
+**🚀 新手指南**：建议先阅读 `GETTING_STARTED.md` 获取快速入门指导
+
+**📑 文档索引**：查看 `DOCUMENT_INDEX.md` 快速查找文档
+
+**❓ 常见问题**：查看 `FAQ.md` 获取常见问题解答
+
+**🤝 贡献指南**：查看 `CONTRIBUTING.md` 了解如何贡献
+
+**📊 完成报告**：查看 `FINAL_COMPLETION_REPORT_2025-01-21.md` 了解项目完成情况
+
+**🎯 项目里程碑**：查看 `PROJECT_MILESTONES.md` 了解项目里程碑和进度
+
+**📊 项目状态**：查看 `PROJECT_STATUS.md` 快速了解项目当前状态
+
 ### 5.1 阅读顺序建议
+
+**推荐顺序**：
+
+1. **快速入门**：阅读 `GETTING_STARTED.md` 了解项目和学习路径
+2. **项目概览**：阅读 `README.md` 了解项目整体结构
+3. **选择路径**：根据角色选择学习路径（见 `GETTING_STARTED.md`）
+4. **深入学习**：按照选择的路径深入学习相关文档
+
+**传统路径**：
 
 1. **入门**：阅读 `view/ai_prompt.md` 了解核心理论
 2. **实践**：查看 `analysis/` 目录下的对标分析文档
 3. **深入**：研究具体行业的Schema转换方案
 4. **理论**：学习 `theory/` 目录下的形式化证明和知识图谱
 5. **实践**：参考 `practices/` 目录下的性能优化和安全实践
+6. **代码模板**：参考 `practices/13_MCP_Code_Templates.md` 获取即用代码模板
 
 ### 5.2 核心概念
 
