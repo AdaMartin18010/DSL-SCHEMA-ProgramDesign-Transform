@@ -48,9 +48,12 @@
       - [7.1.2 语义验证](#712-语义验证)
       - [7.1.3 等价性验证](#713-等价性验证)
     - [7.2 验证工具](#72-验证工具)
-  - [8. 实践案例](#8-实践案例)
-    - [8.1 案例1：西门子S7-1200项目导出](#81-案例1西门子s7-1200项目导出)
-    - [8.2 案例2：跨平台程序转换](#82-案例2跨平台程序转换)
+  - [8. PLC数据存储与分析](#8-plc数据存储与分析)
+    - [8.1 PostgreSQL PLC数据存储](#81-postgresql-plc数据存储)
+    - [8.2 PLC数据分析查询](#82-plc数据分析查询)
+  - [9. 实践案例](#9-实践案例)
+    - [9.1 案例1：西门子S7-1200项目导出](#91-案例1西门子s7-1200项目导出)
+    - [9.2 案例2：跨平台程序转换](#92-案例2跨平台程序转换)
 
 ---
 
@@ -400,9 +403,386 @@ schema Example_Program {
 
 ---
 
-## 8. 实践案例
+## 8. PLC数据存储与分析
 
-### 8.1 案例1：西门子S7-1200项目导出
+### 8.1 PostgreSQL PLC数据存储
+
+**PLC项目数据和运行时数据存储方案**：
+
+```python
+import psycopg2
+import json
+from typing import Dict, List, Optional
+from datetime import datetime, timedelta
+from dataclasses import dataclass
+
+@dataclass
+class PLCTask:
+    """PLC任务"""
+    name: str
+    priority: int
+    cycle_time_ms: int
+    trigger_type: str
+    programs: List[str]
+
+@dataclass
+class PLCVariable:
+    """PLC变量"""
+    name: str
+    data_type: str
+    address: str
+    value: any
+    timestamp: datetime
+
+class PLCDatabaseStorage:
+    """PLC数据存储系统"""
+
+    def __init__(self, connection_string: str):
+        self.conn = psycopg2.connect(connection_string)
+        self.cur = self.conn.cursor()
+        self._create_tables()
+
+    def _create_tables(self):
+        """创建PLC数据表"""
+        # PLC项目表
+        self.cur.execute("""
+            CREATE TABLE IF NOT EXISTS plc_projects (
+                id SERIAL PRIMARY KEY,
+                project_name VARCHAR(200) UNIQUE NOT NULL,
+                version VARCHAR(50),
+                standard VARCHAR(100),
+                definition JSONB NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+
+        # POU表
+        self.cur.execute("""
+            CREATE TABLE IF NOT EXISTS plc_pous (
+                id SERIAL PRIMARY KEY,
+                project_name VARCHAR(200) NOT NULL,
+                pou_name VARCHAR(200) NOT NULL,
+                pou_type VARCHAR(50) NOT NULL,
+                language VARCHAR(50) NOT NULL,
+                variables JSONB NOT NULL,
+                implementation TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (project_name) REFERENCES plc_projects(project_name),
+                UNIQUE(project_name, pou_name)
+            )
+        """)
+
+        # 变量定义表
+        self.cur.execute("""
+            CREATE TABLE IF NOT EXISTS plc_variables (
+                id SERIAL PRIMARY KEY,
+                project_name VARCHAR(200) NOT NULL,
+                variable_name VARCHAR(200) NOT NULL,
+                variable_type VARCHAR(50) NOT NULL,
+                data_type VARCHAR(50) NOT NULL,
+                address VARCHAR(100),
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (project_name) REFERENCES plc_projects(project_name),
+                UNIQUE(project_name, variable_name)
+            )
+        """)
+
+        # 任务表
+        self.cur.execute("""
+            CREATE TABLE IF NOT EXISTS plc_tasks (
+                id SERIAL PRIMARY KEY,
+                project_name VARCHAR(200) NOT NULL,
+                task_name VARCHAR(200) NOT NULL,
+                priority INTEGER NOT NULL,
+                cycle_time_ms INTEGER NOT NULL,
+                trigger_type VARCHAR(50) NOT NULL,
+                programs JSONB NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (project_name) REFERENCES plc_projects(project_name),
+                UNIQUE(project_name, task_name)
+            )
+        """)
+
+        # 运行时值表
+        self.cur.execute("""
+            CREATE TABLE IF NOT EXISTS plc_runtime_values (
+                id BIGSERIAL PRIMARY KEY,
+                project_name VARCHAR(200) NOT NULL,
+                variable_name VARCHAR(200) NOT NULL,
+                data_type VARCHAR(50) NOT NULL,
+                address VARCHAR(100),
+                value JSONB NOT NULL,
+                timestamp TIMESTAMP NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (project_name, variable_name)
+                REFERENCES plc_variables(project_name, variable_name)
+            )
+        """)
+
+        # 统计表
+        self.cur.execute("""
+            CREATE TABLE IF NOT EXISTS plc_statistics (
+                id SERIAL PRIMARY KEY,
+                project_name VARCHAR(200) NOT NULL,
+                variable_name VARCHAR(200) NOT NULL,
+                time_window TIMESTAMP NOT NULL,
+                statistics JSONB NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (project_name, variable_name)
+                REFERENCES plc_variables(project_name, variable_name),
+                UNIQUE(project_name, variable_name, time_window)
+            )
+        """)
+
+        # 创建索引
+        self.cur.execute("""
+            CREATE INDEX IF NOT EXISTS idx_runtime_project_time
+            ON plc_runtime_values(project_name, timestamp DESC)
+        """)
+        self.cur.execute("""
+            CREATE INDEX IF NOT EXISTS idx_runtime_variable_time
+            ON plc_runtime_values(variable_name, timestamp DESC)
+        """)
+
+        self.conn.commit()
+
+    def store_project(self, project_name: str, version: str,
+                     standard: str, definition: Dict):
+        """存储PLC项目"""
+        self.cur.execute("""
+            INSERT INTO plc_projects
+            (project_name, version, standard, definition)
+            VALUES (%s, %s, %s, %s::jsonb)
+            ON CONFLICT (project_name) DO UPDATE
+            SET version = EXCLUDED.version,
+                standard = EXCLUDED.standard,
+                definition = EXCLUDED.definition,
+                updated_at = CURRENT_TIMESTAMP
+        """, (project_name, version, standard, json.dumps(definition)))
+        self.conn.commit()
+
+    def store_pou(self, project_name: str, pou_name: str, pou_type: str,
+                 language: str, variables: List[Dict], implementation: str = None):
+        """存储POU"""
+        self.cur.execute("""
+            INSERT INTO plc_pous
+            (project_name, pou_name, pou_type, language, variables, implementation)
+            VALUES (%s, %s, %s, %s, %s::jsonb, %s)
+            ON CONFLICT (project_name, pou_name) DO UPDATE
+            SET pou_type = EXCLUDED.pou_type,
+                language = EXCLUDED.language,
+                variables = EXCLUDED.variables,
+                implementation = EXCLUDED.implementation
+        """, (project_name, pou_name, pou_type, language,
+              json.dumps(variables), implementation))
+        self.conn.commit()
+
+    def store_variable(self, project_name: str, variable_name: str,
+                      variable_type: str, data_type: str, address: str = None):
+        """存储变量定义"""
+        self.cur.execute("""
+            INSERT INTO plc_variables
+            (project_name, variable_name, variable_type, data_type, address)
+            VALUES (%s, %s, %s, %s, %s)
+            ON CONFLICT (project_name, variable_name) DO UPDATE
+            SET variable_type = EXCLUDED.variable_type,
+                data_type = EXCLUDED.data_type,
+                address = EXCLUDED.address
+        """, (project_name, variable_name, variable_type, data_type, address))
+        self.conn.commit()
+
+    def store_task(self, project_name: str, task: PLCTask):
+        """存储任务"""
+        self.cur.execute("""
+            INSERT INTO plc_tasks
+            (project_name, task_name, priority, cycle_time_ms, trigger_type, programs)
+            VALUES (%s, %s, %s, %s, %s, %s::jsonb)
+            ON CONFLICT (project_name, task_name) DO UPDATE
+            SET priority = EXCLUDED.priority,
+                cycle_time_ms = EXCLUDED.cycle_time_ms,
+                trigger_type = EXCLUDED.trigger_type,
+                programs = EXCLUDED.programs
+        """, (project_name, task.name, task.priority, task.cycle_time_ms,
+              task.trigger_type, json.dumps(task.programs)))
+        self.conn.commit()
+
+    def store_runtime_values_batch(self, project_name: str,
+                                  variables: List[PLCVariable]):
+        """批量存储运行时值"""
+        for var in variables:
+            self.cur.execute("""
+                INSERT INTO plc_runtime_values
+                (project_name, variable_name, data_type, address, value, timestamp)
+                VALUES (%s, %s, %s, %s, %s::jsonb, %s)
+            """, (project_name, var.name, var.data_type, var.address,
+                  json.dumps(var.value), var.timestamp))
+        self.conn.commit()
+
+    def calculate_statistics(self, project_name: str, variable_name: str,
+                            time_window: timedelta = timedelta(hours=1)) -> Dict:
+        """计算统计信息"""
+        end_time = datetime.utcnow()
+        start_time = end_time - time_window
+
+        self.cur.execute("""
+            SELECT
+                COUNT(*) as count,
+                AVG((value->>'value')::float) as avg_value,
+                MIN((value->>'value')::float) as min_value,
+                MAX((value->>'value')::float) as max_value,
+                STDDEV((value->>'value')::float) as stddev_value
+            FROM plc_runtime_values
+            WHERE project_name = %s
+              AND variable_name = %s
+              AND timestamp >= %s
+              AND timestamp <= %s
+        """, (project_name, variable_name, start_time, end_time))
+
+        stats = self.cur.fetchone()
+
+        statistics = {
+            'count': stats[0] if stats[0] else 0,
+            'avg_value': float(stats[1]) if stats[1] else 0,
+            'min_value': float(stats[2]) if stats[2] else 0,
+            'max_value': float(stats[3]) if stats[3] else 0,
+            'stddev_value': float(stats[4]) if stats[4] else 0
+        }
+
+        # 存储统计结果
+        self.cur.execute("""
+            INSERT INTO plc_statistics
+            (project_name, variable_name, time_window, statistics)
+            VALUES (%s, %s, %s, %s::jsonb)
+            ON CONFLICT (project_name, variable_name, time_window) DO UPDATE
+            SET statistics = EXCLUDED.statistics
+        """, (project_name, variable_name, end_time, json.dumps(statistics)))
+        self.conn.commit()
+
+        return statistics
+
+    def find_anomalies(self, project_name: str, variable_name: str,
+                      threshold: float = 3.0) -> List[Dict]:
+        """查找异常值（基于3-sigma原则）"""
+        self.cur.execute("""
+            WITH stats AS (
+                SELECT
+                    AVG((value->>'value')::float) as mean,
+                    STDDEV((value->>'value')::float) as stddev
+                FROM plc_runtime_values
+                WHERE project_name = %s AND variable_name = %s
+            )
+            SELECT timestamp, value
+            FROM plc_runtime_values, stats
+            WHERE project_name = %s
+              AND variable_name = %s
+              AND ABS((value->>'value')::float - stats.mean) > %s * stats.stddev
+            ORDER BY timestamp DESC
+            LIMIT 100
+        """, (project_name, variable_name, project_name, variable_name, threshold))
+
+        anomalies = []
+        for row in self.cur.fetchall():
+            anomalies.append({
+                'timestamp': row[0],
+                'value': row[1]
+            })
+        return anomalies
+
+    def get_project_structure(self, project_name: str) -> Dict:
+        """获取项目结构"""
+        self.cur.execute("""
+            SELECT COUNT(*) FROM plc_pous WHERE project_name = %s
+        """, (project_name,))
+        pou_count = self.cur.fetchone()[0]
+
+        self.cur.execute("""
+            SELECT COUNT(*) FROM plc_tasks WHERE project_name = %s
+        """, (project_name,))
+        task_count = self.cur.fetchone()[0]
+
+        return {
+            'pous': pou_count,
+            'tasks': task_count
+        }
+
+    def close(self):
+        """关闭连接"""
+        self.cur.close()
+        self.conn.close()
+```
+
+### 8.2 PLC数据分析查询
+
+**PLC数据分析查询功能**：
+
+```python
+class PLCAnalyzer:
+    """PLC数据分析器"""
+
+    def __init__(self, storage: PLCDatabaseStorage):
+        self.storage = storage
+        self.cur = storage.cur
+        self.conn = storage.conn
+
+    def analyze_variable_trends(self, project_name: str, variable_name: str,
+                               time_window: timedelta) -> Dict:
+        """分析变量趋势"""
+        end_time = datetime.utcnow()
+        start_time = end_time - time_window
+
+        self.cur.execute("""
+            SELECT
+                DATE_TRUNC('minute', timestamp) as time_bucket,
+                AVG((value->>'value')::float) as avg_value
+            FROM plc_runtime_values
+            WHERE project_name = %s
+              AND variable_name = %s
+              AND timestamp >= %s
+              AND timestamp <= %s
+            GROUP BY time_bucket
+            ORDER BY time_bucket
+        """, (project_name, variable_name, start_time, end_time))
+
+        trends = []
+        for row in self.cur.fetchall():
+            trends.append({
+                'time': row[0],
+                'avg_value': float(row[1]) if row[1] else 0
+            })
+
+        return {'trends': trends}
+
+    def analyze_task_performance(self, project_name: str) -> Dict:
+        """分析任务性能"""
+        self.cur.execute("""
+            SELECT
+                task_name,
+                priority,
+                cycle_time_ms,
+                COUNT(*) as execution_count
+            FROM plc_tasks
+            WHERE project_name = %s
+            GROUP BY task_name, priority, cycle_time_ms
+        """, (project_name,))
+
+        performance = []
+        for row in self.cur.fetchall():
+            performance.append({
+                'task_name': row[0],
+                'priority': row[1],
+                'cycle_time_ms': row[2],
+                'execution_count': row[3]
+            })
+
+        return {'performance': performance}
+```
+
+---
+
+## 9. 实践案例
+
+### 9.1 案例1：西门子S7-1200项目导出
 
 **场景**：将TIA Portal项目导出为XML格式
 
@@ -415,7 +795,7 @@ schema Example_Program {
 
 **结果**：获得完整的PLC Schema XML文件
 
-### 8.2 案例2：跨平台程序转换
+### 9.2 案例2：跨平台程序转换
 
 **场景**：将CODESYS程序转换为TIA Portal格式
 
@@ -435,7 +815,7 @@ schema Example_Program {
 - `01_Overview.md` - 概述
 - `02_Formal_Definition.md` - 形式化定义
 - `03_Standards.md` - 标准对标
-- `05_Case_Studies.md` - 实践案例
+- `05_Case_Studies.md` - 实践案例（包含数据存储案例）
 
 **创建时间**：2025-01-21
-**最后更新**：2025-01-21
+**最后更新**：2025-01-21（扩展PLC数据存储和分析功能，新增PostgreSQL存储方案）

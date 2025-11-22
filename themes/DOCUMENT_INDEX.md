@@ -14,10 +14,14 @@
       - [通信Schema](#通信schema)
       - [控制Schema](#控制schema)
       - [安全Schema](#安全schema)
+      - [消息队列Schema](#消息队列schema)
+      - [可观测性Schema](#可观测性schema)
       - [跨主题文档](#跨主题文档-1)
     - [1.3 物理设备Schema（03\_Physical\_Device）](#13-物理设备schema03_physical_device)
       - [电气Schema](#电气schema)
       - [机械Schema](#机械schema)
+      - [CAD Schema](#cad-schema)
+      - [热学Schema](#热学schema)
       - [安全Schema](#安全schema-1)
       - [数字孪生](#数字孪生)
       - [跨主题文档](#跨主题文档-2)
@@ -25,6 +29,8 @@
       - [形式化模型](#形式化模型)
       - [语言映射](#语言映射)
       - [代码生成](#代码生成)
+      - [数据库Schema](#数据库schema)
+      - [序列化Schema](#序列化schema)
       - [跨主题文档](#跨主题文档-3)
     - [1.5 DSL转换理论（05\_DSL\_Theory）](#15-dsl转换理论05_dsl_theory)
       - [信息论分析](#信息论分析)
@@ -113,6 +119,22 @@
 - [转换体系](./02_IoT_Schema/Security_Schema/04_Transformation.md)
 - [实践案例](./02_IoT_Schema/Security_Schema/05_Case_Studies.md)
 
+#### 消息队列Schema
+
+- [概述](./02_IoT_Schema/Message_Queue_Schema/01_Overview.md)
+- [形式化定义](./02_IoT_Schema/Message_Queue_Schema/02_Formal_Definition.md)
+- [标准对标](./02_IoT_Schema/Message_Queue_Schema/03_Standards.md)
+- [转换体系](./02_IoT_Schema/Message_Queue_Schema/04_Transformation.md)
+- [实践案例](./02_IoT_Schema/Message_Queue_Schema/05_Case_Studies.md)
+
+#### 可观测性Schema
+
+- [概述](./02_IoT_Schema/Observability_Schema/01_Overview.md)
+- [形式化定义](./02_IoT_Schema/Observability_Schema/02_Formal_Definition.md)
+- [标准对标](./02_IoT_Schema/Observability_Schema/03_Standards.md)
+- [转换体系](./02_IoT_Schema/Observability_Schema/04_Transformation.md)
+- [实践案例](./02_IoT_Schema/Observability_Schema/05_Case_Studies.md)
+
 #### 跨主题文档
 
 - [思维导图](./02_IoT_Schema/Mind_Map.md)
@@ -136,6 +158,22 @@
 - [标准对标](./03_Physical_Device/Mechanical_Schema/03_Standards.md)
 - [转换体系](./03_Physical_Device/Mechanical_Schema/04_Transformation.md)
 - [实践案例](./03_Physical_Device/Mechanical_Schema/05_Case_Studies.md)
+
+#### CAD Schema
+
+- [概述](./03_Physical_Device/CAD_Schema/01_Overview.md)
+- [形式化定义](./03_Physical_Device/CAD_Schema/02_Formal_Definition.md)
+- [标准对标](./03_Physical_Device/CAD_Schema/03_Standards.md)
+- [转换体系](./03_Physical_Device/CAD_Schema/04_Transformation.md)
+- [实践案例](./03_Physical_Device/CAD_Schema/05_Case_Studies.md)
+
+#### 热学Schema
+
+- [概述](./03_Physical_Device/Thermal_Schema/01_Overview.md)
+- [形式化定义](./03_Physical_Device/Thermal_Schema/02_Formal_Definition.md)
+- [标准对标](./03_Physical_Device/Thermal_Schema/03_Standards.md)
+- [转换体系](./03_Physical_Device/Thermal_Schema/04_Transformation.md)
+- [实践案例](./03_Physical_Device/Thermal_Schema/05_Case_Studies.md)
 
 #### 安全Schema
 
@@ -185,6 +223,22 @@
 - [标准对标](./04_Programming_Conversion/Code_Generation/03_Standards.md)
 - [转换体系](./04_Programming_Conversion/Code_Generation/04_Transformation.md)
 - [实践案例](./04_Programming_Conversion/Code_Generation/05_Case_Studies.md)
+
+#### 数据库Schema
+
+- [概述](./04_Programming_Conversion/Database_Schema/01_Overview.md)
+- [形式化定义](./04_Programming_Conversion/Database_Schema/02_Formal_Definition.md)
+- [标准对标](./04_Programming_Conversion/Database_Schema/03_Standards.md)
+- [转换体系](./04_Programming_Conversion/Database_Schema/04_Transformation.md)
+- [实践案例](./04_Programming_Conversion/Database_Schema/05_Case_Studies.md)
+
+#### 序列化Schema
+
+- [概述](./04_Programming_Conversion/Serialization_Schema/01_Overview.md)
+- [形式化定义](./04_Programming_Conversion/Serialization_Schema/02_Formal_Definition.md)
+- [标准对标](./04_Programming_Conversion/Serialization_Schema/03_Standards.md)
+- [转换体系](./04_Programming_Conversion/Serialization_Schema/04_Transformation.md)
+- [实践案例](./04_Programming_Conversion/Serialization_Schema/05_Case_Studies.md)
 
 #### 跨主题文档
 
@@ -239,8 +293,12 @@
 - [通信Schema概述](./02_IoT_Schema/Communication_Schema/01_Overview.md)
 - [控制Schema概述](./02_IoT_Schema/Control_Schema/01_Overview.md)
 - [安全Schema概述](./02_IoT_Schema/Security_Schema/01_Overview.md)
+- [消息队列Schema概述](./02_IoT_Schema/Message_Queue_Schema/01_Overview.md)
+- [可观测性Schema概述](./02_IoT_Schema/Observability_Schema/01_Overview.md)
 - [电气Schema概述](./03_Physical_Device/Electrical_Schema/01_Overview.md)
 - [机械Schema概述](./03_Physical_Device/Mechanical_Schema/01_Overview.md)
+- [CAD Schema概述](./03_Physical_Device/CAD_Schema/01_Overview.md)
+- [热学Schema概述](./03_Physical_Device/Thermal_Schema/01_Overview.md)
 - [安全Schema概述](./03_Physical_Device/Safety_Schema/01_Overview.md)
 - [数字孪生Schema概述](./03_Physical_Device/Digital_Twin/01_Overview.md)
 - [形式化模型概述](./04_Programming_Conversion/Formal_Model/01_Overview.md)
@@ -262,6 +320,8 @@
 - [安全Schema形式化定义](./02_IoT_Schema/Security_Schema/02_Formal_Definition.md)
 - [电气Schema形式化定义](./03_Physical_Device/Electrical_Schema/02_Formal_Definition.md)
 - [机械Schema形式化定义](./03_Physical_Device/Mechanical_Schema/02_Formal_Definition.md)
+- [CAD Schema形式化定义](./03_Physical_Device/CAD_Schema/02_Formal_Definition.md)
+- [热学Schema形式化定义](./03_Physical_Device/Thermal_Schema/02_Formal_Definition.md)
 - [安全Schema形式化定义](./03_Physical_Device/Safety_Schema/02_Formal_Definition.md)
 - [数字孪生Schema形式化定义](./03_Physical_Device/Digital_Twin/02_Formal_Definition.md)
 - [形式化模型形式化定义](./04_Programming_Conversion/Formal_Model/02_Formal_Definition.md)
@@ -283,6 +343,8 @@
 - [安全Schema标准对标](./02_IoT_Schema/Security_Schema/03_Standards.md)
 - [电气Schema标准对标](./03_Physical_Device/Electrical_Schema/03_Standards.md)
 - [机械Schema标准对标](./03_Physical_Device/Mechanical_Schema/03_Standards.md)
+- [CAD Schema标准对标](./03_Physical_Device/CAD_Schema/03_Standards.md)
+- [热学Schema标准对标](./03_Physical_Device/Thermal_Schema/03_Standards.md)
 - [安全Schema标准对标](./03_Physical_Device/Safety_Schema/03_Standards.md)
 - [数字孪生Schema标准对标](./03_Physical_Device/Digital_Twin/03_Standards.md)
 - [形式化模型标准对标](./04_Programming_Conversion/Formal_Model/03_Standards.md)
@@ -304,6 +366,8 @@
 - [安全Schema转换体系](./02_IoT_Schema/Security_Schema/04_Transformation.md)
 - [电气Schema转换体系](./03_Physical_Device/Electrical_Schema/04_Transformation.md)
 - [机械Schema转换体系](./03_Physical_Device/Mechanical_Schema/04_Transformation.md)
+- [CAD Schema转换体系](./03_Physical_Device/CAD_Schema/04_Transformation.md)
+- [热学Schema转换体系](./03_Physical_Device/Thermal_Schema/04_Transformation.md)
 - [安全Schema转换体系](./03_Physical_Device/Safety_Schema/04_Transformation.md)
 - [数字孪生Schema转换体系](./03_Physical_Device/Digital_Twin/04_Transformation.md)
 - [形式化模型转换体系](./04_Programming_Conversion/Formal_Model/04_Transformation.md)
@@ -325,6 +389,8 @@
 - [安全Schema实践案例](./02_IoT_Schema/Security_Schema/05_Case_Studies.md)
 - [电气Schema实践案例](./03_Physical_Device/Electrical_Schema/05_Case_Studies.md)
 - [机械Schema实践案例](./03_Physical_Device/Mechanical_Schema/05_Case_Studies.md)
+- [CAD Schema实践案例](./03_Physical_Device/CAD_Schema/05_Case_Studies.md)
+- [热学Schema实践案例](./03_Physical_Device/Thermal_Schema/05_Case_Studies.md)
 - [安全Schema实践案例](./03_Physical_Device/Safety_Schema/05_Case_Studies.md)
 - [数字孪生Schema实践案例](./03_Physical_Device/Digital_Twin/05_Case_Studies.md)
 - [形式化模型实践案例](./04_Programming_Conversion/Formal_Model/05_Case_Studies.md)

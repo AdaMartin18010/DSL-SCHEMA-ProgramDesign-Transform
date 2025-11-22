@@ -14,9 +14,11 @@
   - [3. 子主题结构](#3-子主题结构)
     - [3.1 电气Schema子主题](#31-电气schema子主题)
     - [3.2 机械Schema子主题](#32-机械schema子主题)
-    - [3.3 安全Schema子主题](#33-安全schema子主题)
-    - [3.4 数字孪生子主题](#34-数字孪生子主题)
-    - [3.5 跨主题文档](#35-跨主题文档)
+    - [3.3 CAD Schema子主题](#33-cad-schema子主题)
+    - [3.4 热学Schema子主题](#34-热学schema子主题)
+    - [3.5 安全Schema子主题](#35-安全schema子主题)
+    - [3.6 数字孪生子主题](#36-数字孪生子主题)
+    - [3.7 跨主题文档](#37-跨主题文档)
   - [4. 知识体系](#4-知识体系)
     - [4.1 理论基础](#41-理论基础)
     - [4.2 实践方法](#42-实践方法)
@@ -40,6 +42,8 @@
 
 - **电气Schema**：电气特性、绝缘等级、安全标准
 - **机械Schema**：机械结构、运动特性、材料属性
+- **CAD Schema**：CAD设计、结构设计、机构设计、装配、工程图
+- **热学Schema**：温度特性、热传导、热容量、热辐射
 - **安全Schema**：安全等级、认证要求、合规性
 - **数字孪生**：物理到数字的映射和同步、实时同步、
   预测分析、可视化
@@ -100,7 +104,23 @@ Physical_Schema = (Electrical ⊕ Mechanical ⊕ Thermal
 - `Mechanical_Schema/04_Transformation.md` - 转换体系
 - `Mechanical_Schema/05_Case_Studies.md` - 实践案例
 
-### 3.3 安全Schema子主题
+### 3.3 CAD Schema子主题
+
+- `CAD_Schema/01_Overview.md` - 概述（CAD、结构设计、机构设计）
+- `CAD_Schema/02_Formal_Definition.md` - 形式化定义
+- `CAD_Schema/03_Standards.md` - 标准对标（ISO 10303 STEP、ISO 14649 STEP-NC、ISO 16792 MBD）
+- `CAD_Schema/04_Transformation.md` - 转换体系
+- `CAD_Schema/05_Case_Studies.md` - 实践案例
+
+### 3.4 热学Schema子主题
+
+- `Thermal_Schema/01_Overview.md` - 概述（温度、热传导、热容量、热辐射）
+- `Thermal_Schema/02_Formal_Definition.md` - 形式化定义
+- `Thermal_Schema/03_Standards.md` - 标准对标（IEC 60068、IEC 60335-1、ISO 7730、ISO 13786）
+- `Thermal_Schema/04_Transformation.md` - 转换体系
+- `Thermal_Schema/05_Case_Studies.md` - 实践案例
+
+### 3.5 安全Schema子主题
 
 - `Safety_Schema/01_Overview.md` - 概述与核心概念
 - `Safety_Schema/02_Formal_Definition.md` - 形式化定义
@@ -108,7 +128,7 @@ Physical_Schema = (Electrical ⊕ Mechanical ⊕ Thermal
 - `Safety_Schema/04_Transformation.md` - 转换体系
 - `Safety_Schema/05_Case_Studies.md` - 实践案例
 
-### 3.4 数字孪生子主题
+### 3.5 数字孪生子主题
 
 - `Digital_Twin/README.md` - 数字孪生概览
 - `Digital_Twin/01_Overview.md` - 概述与核心概念
@@ -117,7 +137,7 @@ Physical_Schema = (Electrical ⊕ Mechanical ⊕ Thermal
 - `Digital_Twin/04_Transformation.md` - 转换体系
 - `Digital_Twin/05_Case_Studies.md` - 实践案例
 
-### 3.5 跨主题文档
+### 3.6 跨主题文档
 
 - `Mind_Map.md` - 思维导图
 - `Knowledge_Matrix.md` - 多维知识矩阵

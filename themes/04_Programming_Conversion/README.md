@@ -64,9 +64,48 @@
 
 ## 3. 子主题结构
 
-- `Formal_Model/` - 形式化模型
-- `Language_Mapping/` - 语言映射
-- `Code_Generation/` - 代码生成
+### 3.1 形式化模型子主题
+
+- `Formal_Model/01_Overview.md` - 概述
+- `Formal_Model/02_Formal_Definition.md` - 形式化定义
+- `Formal_Model/03_Standards.md` - 标准对标
+- `Formal_Model/04_Transformation.md` - 转换体系
+- `Formal_Model/05_Case_Studies.md` - 实践案例
+
+### 3.2 语言映射子主题
+
+- `Language_Mapping/01_Overview.md` - 概述
+- `Language_Mapping/02_Formal_Definition.md` - 形式化定义
+- `Language_Mapping/03_Standards.md` - 标准对标
+- `Language_Mapping/04_Transformation.md` - 转换体系
+- `Language_Mapping/05_Case_Studies.md` - 实践案例
+
+### 3.3 代码生成子主题
+
+- `Code_Generation/01_Overview.md` - 概述
+- `Code_Generation/02_Formal_Definition.md` - 形式化定义
+- `Code_Generation/03_Standards.md` - 标准对标
+- `Code_Generation/04_Transformation.md` - 转换体系
+- `Code_Generation/05_Case_Studies.md` - 实践案例
+
+### 3.4 数据库Schema子主题
+
+- `Database_Schema/01_Overview.md` - 概述（SQLite、PostgreSQL）
+- `Database_Schema/02_Formal_Definition.md` - 形式化定义
+- `Database_Schema/03_Standards.md` - 标准对标
+- `Database_Schema/04_Transformation.md` - 转换体系
+- `Database_Schema/05_Case_Studies.md` - 实践案例
+
+### 3.5 序列化Schema子主题
+
+- `Serialization_Schema/01_Overview.md` - 概述（ASN.1、Protocol Buffers）
+- `Serialization_Schema/02_Formal_Definition.md` - 形式化定义
+- `Serialization_Schema/03_Standards.md` - 标准对标
+- `Serialization_Schema/04_Transformation.md` - 转换体系
+- `Serialization_Schema/05_Case_Studies.md` - 实践案例
+
+### 3.6 跨主题文档
+
 - `Mind_Map.md` - 思维导图
 - `Knowledge_Matrix.md` - 多维知识矩阵
 - `Formal_Proofs.md` - 形式化证明

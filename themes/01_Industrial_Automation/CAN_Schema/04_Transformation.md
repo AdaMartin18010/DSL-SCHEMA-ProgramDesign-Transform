@@ -45,9 +45,12 @@
       - [7.1.2 语义验证](#712-语义验证)
       - [7.1.3 等价性验证](#713-等价性验证)
     - [7.2 验证工具](#72-验证工具)
-  - [8. 实践案例](#8-实践案例)
-    - [8.1 案例1：DBC到C代码生成](#81-案例1dbc到c代码生成)
-    - [8.2 案例2：多DBC文件合并](#82-案例2多dbc文件合并)
+  - [8. CAN数据存储与分析](#8-can数据存储与分析)
+    - [8.1 PostgreSQL CAN数据存储](#81-postgresql-can数据存储)
+    - [8.2 CAN数据分析查询](#82-can数据分析查询)
+  - [9. 实践案例](#9-实践案例)
+    - [9.1 案例1：DBC到C代码生成](#91-案例1dbc到c代码生成)
+    - [9.2 案例2：多DBC文件合并](#92-案例2多dbc文件合并)
 
 ---
 
@@ -429,9 +432,373 @@ CM_ SG_ 123 SpeedValid "有效性标志";
 
 ---
 
-## 8. 实践案例
+## 8. CAN数据存储与分析
 
-### 8.1 案例1：DBC到C代码生成
+### 8.1 PostgreSQL CAN数据存储
+
+**CAN数据存储方案**：
+
+```python
+import psycopg2
+import json
+from typing import Dict, List, Optional
+from datetime import datetime, timedelta
+from dataclasses import dataclass
+
+@dataclass
+class CANMessage:
+    """CAN消息"""
+    can_id: int
+    timestamp: datetime
+    data: bytes
+    dlc: int
+
+@dataclass
+class DBCSignal:
+    """DBC信号定义"""
+    name: str
+    start_bit: int
+    length: int
+    byte_order: str
+    value_type: str
+    factor: float
+    offset: float
+    minimum: Optional[float]
+    maximum: Optional[float]
+    unit: str
+
+class CANDatabaseStorage:
+    """CAN数据存储系统"""
+
+    def __init__(self, connection_string: str):
+        self.conn = psycopg2.connect(connection_string)
+        self.cur = self.conn.cursor()
+        self._create_tables()
+
+    def _create_tables(self):
+        """创建CAN数据表"""
+        # DBC定义表
+        self.cur.execute("""
+            CREATE TABLE IF NOT EXISTS dbc_definitions (
+                id SERIAL PRIMARY KEY,
+                dbc_name VARCHAR(200) UNIQUE NOT NULL,
+                version VARCHAR(50),
+                definition JSONB NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+
+        # 消息定义表
+        self.cur.execute("""
+            CREATE TABLE IF NOT EXISTS message_definitions (
+                id SERIAL PRIMARY KEY,
+                dbc_name VARCHAR(200) NOT NULL,
+                message_id INTEGER NOT NULL,
+                message_name VARCHAR(200) NOT NULL,
+                dlc INTEGER NOT NULL,
+                signals JSONB NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (dbc_name) REFERENCES dbc_definitions(dbc_name),
+                UNIQUE(dbc_name, message_id)
+            )
+        """)
+
+        # 信号定义表
+        self.cur.execute("""
+            CREATE TABLE IF NOT EXISTS signal_definitions (
+                id SERIAL PRIMARY KEY,
+                dbc_name VARCHAR(200) NOT NULL,
+                message_id INTEGER NOT NULL,
+                signal_name VARCHAR(200) NOT NULL,
+                start_bit INTEGER NOT NULL,
+                length INTEGER NOT NULL,
+                byte_order VARCHAR(20) NOT NULL,
+                value_type VARCHAR(20) NOT NULL,
+                factor FLOAT NOT NULL,
+                offset FLOAT NOT NULL,
+                minimum FLOAT,
+                maximum FLOAT,
+                unit VARCHAR(50),
+                FOREIGN KEY (dbc_name, message_id)
+                REFERENCES message_definitions(dbc_name, message_id),
+                UNIQUE(dbc_name, message_id, signal_name)
+            )
+        """)
+
+        # CAN消息日志表
+        self.cur.execute("""
+            CREATE TABLE IF NOT EXISTS can_message_logs (
+                id BIGSERIAL PRIMARY KEY,
+                can_id INTEGER NOT NULL,
+                timestamp TIMESTAMP NOT NULL,
+                data BYTEA NOT NULL,
+                dlc INTEGER NOT NULL,
+                decoded_data JSONB,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+
+        # CAN统计表
+        self.cur.execute("""
+            CREATE TABLE IF NOT EXISTS can_statistics (
+                id SERIAL PRIMARY KEY,
+                can_id INTEGER NOT NULL,
+                time_window TIMESTAMP NOT NULL,
+                message_count BIGINT NOT NULL,
+                avg_interval_ms FLOAT,
+                bus_load_percent FLOAT,
+                statistics JSONB NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(can_id, time_window)
+            )
+        """)
+
+        # 创建索引
+        self.cur.execute("""
+            CREATE INDEX IF NOT EXISTS idx_logs_canid_time
+            ON can_message_logs(can_id, timestamp DESC)
+        """)
+        self.cur.execute("""
+            CREATE INDEX IF NOT EXISTS idx_stats_canid_time
+            ON can_statistics(can_id, time_window DESC)
+        """)
+
+        self.conn.commit()
+
+    def store_dbc_definition(self, dbc_name: str, version: str, definition: Dict):
+        """存储DBC定义"""
+        self.cur.execute("""
+            INSERT INTO dbc_definitions (dbc_name, version, definition)
+            VALUES (%s, %s, %s::jsonb)
+            ON CONFLICT (dbc_name) DO UPDATE
+            SET version = EXCLUDED.version,
+                definition = EXCLUDED.definition
+        """, (dbc_name, version, json.dumps(definition)))
+        self.conn.commit()
+
+    def store_message_definition(self, dbc_name: str, message_id: int,
+                                message_name: str, dlc: int, signals: List[DBCSignal]):
+        """存储消息定义"""
+        signals_json = [{
+            'name': s.name,
+            'start_bit': s.start_bit,
+            'length': s.length,
+            'byte_order': s.byte_order,
+            'value_type': s.value_type,
+            'factor': s.factor,
+            'offset': s.offset,
+            'minimum': s.minimum,
+            'maximum': s.maximum,
+            'unit': s.unit
+        } for s in signals]
+
+        self.cur.execute("""
+            INSERT INTO message_definitions
+            (dbc_name, message_id, message_name, dlc, signals)
+            VALUES (%s, %s, %s, %s, %s::jsonb)
+            ON CONFLICT (dbc_name, message_id) DO UPDATE
+            SET message_name = EXCLUDED.message_name,
+                dlc = EXCLUDED.dlc,
+                signals = EXCLUDED.signals
+        """, (dbc_name, message_id, message_name, dlc, json.dumps(signals_json)))
+
+        # 存储信号定义
+        for signal in signals:
+            self.cur.execute("""
+                INSERT INTO signal_definitions
+                (dbc_name, message_id, signal_name, start_bit, length,
+                 byte_order, value_type, factor, offset, minimum, maximum, unit)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                ON CONFLICT (dbc_name, message_id, signal_name) DO UPDATE
+                SET start_bit = EXCLUDED.start_bit,
+                    length = EXCLUDED.length,
+                    byte_order = EXCLUDED.byte_order,
+                    value_type = EXCLUDED.value_type,
+                    factor = EXCLUDED.factor,
+                    offset = EXCLUDED.offset,
+                    minimum = EXCLUDED.minimum,
+                    maximum = EXCLUDED.maximum,
+                    unit = EXCLUDED.unit
+            """, (dbc_name, message_id, signal.name, signal.start_bit,
+                  signal.length, signal.byte_order, signal.value_type,
+                  signal.factor, signal.offset, signal.minimum,
+                  signal.maximum, signal.unit))
+
+        self.conn.commit()
+
+    def store_message_logs_batch(self, messages: List[CANMessage],
+                                decoder_func=None):
+        """批量存储CAN消息日志"""
+        for msg in messages:
+            decoded_data = None
+            if decoder_func:
+                decoded_data = decoder_func(msg)
+
+            self.cur.execute("""
+                INSERT INTO can_message_logs
+                (can_id, timestamp, data, dlc, decoded_data)
+                VALUES (%s, %s, %s, %s, %s::jsonb)
+            """, (msg.can_id, msg.timestamp, msg.data, msg.dlc,
+                  json.dumps(decoded_data) if decoded_data else None))
+
+        self.conn.commit()
+
+    def calculate_statistics(self, can_id: int,
+                            time_window: timedelta = timedelta(minutes=1)) -> Dict:
+        """计算CAN消息统计信息"""
+        end_time = datetime.utcnow()
+        start_time = end_time - time_window
+
+        self.cur.execute("""
+            SELECT
+                COUNT(*) as message_count,
+                AVG(EXTRACT(EPOCH FROM (timestamp - LAG(timestamp)
+                    OVER (ORDER BY timestamp))) * 1000) as avg_interval_ms
+            FROM can_message_logs
+            WHERE can_id = %s
+              AND timestamp >= %s
+              AND timestamp <= %s
+        """, (can_id, start_time, end_time))
+
+        stats = self.cur.fetchone()
+
+        message_count = stats[0] if stats[0] else 0
+        avg_interval_ms = float(stats[1]) if stats[1] else 0
+
+        # 计算总线负载（假设500kbps）
+        bus_load = (message_count * 8 * 8) / (500000 * time_window.total_seconds()) * 100
+
+        statistics = {
+            'message_count': message_count,
+            'avg_interval_ms': avg_interval_ms,
+            'bus_load_percent': bus_load
+        }
+
+        # 存储统计结果
+        self.cur.execute("""
+            INSERT INTO can_statistics
+            (can_id, time_window, message_count, avg_interval_ms, bus_load_percent, statistics)
+            VALUES (%s, %s, %s, %s, %s, %s::jsonb)
+            ON CONFLICT (can_id, time_window) DO UPDATE
+            SET message_count = EXCLUDED.message_count,
+                avg_interval_ms = EXCLUDED.avg_interval_ms,
+                bus_load_percent = EXCLUDED.bus_load_percent,
+                statistics = EXCLUDED.statistics
+        """, (can_id, end_time, message_count, avg_interval_ms,
+              bus_load, json.dumps(statistics)))
+        self.conn.commit()
+
+        return statistics
+
+    def close(self):
+        """关闭连接"""
+        self.cur.close()
+        self.conn.close()
+```
+
+### 8.2 CAN数据分析查询
+
+**CAN数据分析查询功能**：
+
+```python
+class CANDataAnalyzer:
+    """CAN数据分析器"""
+
+    def __init__(self, storage: CANDatabaseStorage):
+        self.storage = storage
+        self.cur = storage.cur
+        self.conn = storage.conn
+
+    def analyze_message_frequency(self, can_id: int,
+                                 time_window: timedelta) -> Dict:
+        """分析消息频率"""
+        end_time = datetime.utcnow()
+        start_time = end_time - time_window
+
+        self.cur.execute("""
+            SELECT
+                COUNT(*) as total_messages,
+                MIN(timestamp) as first_message,
+                MAX(timestamp) as last_message,
+                COUNT(*) / EXTRACT(EPOCH FROM (%s - %s)) as messages_per_second
+            FROM can_message_logs
+            WHERE can_id = %s
+              AND timestamp >= %s
+              AND timestamp <= %s
+        """, (end_time, start_time, can_id, start_time, end_time))
+
+        result = self.cur.fetchone()
+        return {
+            'total_messages': result[0],
+            'first_message': result[1],
+            'last_message': result[2],
+            'messages_per_second': float(result[3]) if result[3] else 0
+        }
+
+    def analyze_bus_load(self, time_window: timedelta) -> Dict:
+        """分析总线负载"""
+        end_time = datetime.utcnow()
+        start_time = end_time - time_window
+
+        self.cur.execute("""
+            SELECT
+                can_id,
+                COUNT(*) as message_count,
+                COUNT(*) * 8 * 8 / EXTRACT(EPOCH FROM (%s - %s)) / 500000 * 100 as load_percent
+            FROM can_message_logs
+            WHERE timestamp >= %s
+              AND timestamp <= %s
+            GROUP BY can_id
+            ORDER BY load_percent DESC
+        """, (end_time, start_time, start_time, end_time))
+
+        results = []
+        for row in self.cur.fetchall():
+            results.append({
+                'can_id': row[0],
+                'message_count': row[1],
+                'load_percent': float(row[2]) if row[2] else 0
+            })
+
+        return {'bus_loads': results}
+
+    def detect_anomalies(self, can_id: int,
+                        expected_interval_ms: float,
+                        tolerance: float = 0.2) -> List[Dict]:
+        """检测异常消息间隔"""
+        self.cur.execute("""
+            WITH intervals AS (
+                SELECT
+                    timestamp,
+                    EXTRACT(EPOCH FROM (timestamp - LAG(timestamp)
+                        OVER (ORDER BY timestamp))) * 1000 as interval_ms
+                FROM can_message_logs
+                WHERE can_id = %s
+                ORDER BY timestamp DESC
+                LIMIT 1000
+            )
+            SELECT timestamp, interval_ms
+            FROM intervals
+            WHERE interval_ms IS NOT NULL
+              AND (interval_ms < %s OR interval_ms > %s)
+        """, (can_id, expected_interval_ms * (1 - tolerance),
+              expected_interval_ms * (1 + tolerance)))
+
+        anomalies = []
+        for row in self.cur.fetchall():
+            anomalies.append({
+                'timestamp': row[0],
+                'interval_ms': float(row[1]) if row[1] else 0
+            })
+
+        return anomalies
+```
+
+---
+
+## 9. 实践案例
+
+### 9.1 案例1：DBC到C代码生成
 
 **场景**：从DBC文件生成C代码用于嵌入式开发
 
@@ -444,7 +811,7 @@ CM_ SG_ 123 SpeedValid "有效性标志";
 
 **结果**：成功生成可用的C代码
 
-### 8.2 案例2：多DBC文件合并
+### 9.2 案例2：多DBC文件合并
 
 **场景**：将多个DBC文件合并为一个统一文件
 
@@ -464,7 +831,7 @@ CM_ SG_ 123 SpeedValid "有效性标志";
 - `01_Overview.md` - 概述
 - `02_Formal_Definition.md` - 形式化定义
 - `03_Standards.md` - 标准对标
-- `05_Case_Studies.md` - 实践案例
+- `05_Case_Studies.md` - 实践案例（包含数据存储案例）
 
 **创建时间**：2025-01-21
-**最后更新**：2025-01-21
+**最后更新**：2025-01-21（扩展CAN数据存储和分析功能，新增PostgreSQL存储方案）

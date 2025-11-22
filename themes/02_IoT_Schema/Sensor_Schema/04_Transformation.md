@@ -34,10 +34,13 @@
     - [7.1 语法验证](#71-语法验证)
     - [7.2 语义验证](#72-语义验证)
     - [7.3 性能验证](#73-性能验证)
-  - [8. 参考文献](#8-参考文献)
-    - [8.1 标准文档](#81-标准文档)
-    - [8.2 学术文献](#82-学术文献)
-    - [8.3 在线资源](#83-在线资源)
+  - [8. 传感器数据存储与分析](#8-传感器数据存储与分析)
+    - [8.1 PostgreSQL传感器数据存储](#81-postgresql传感器数据存储)
+    - [8.2 时序数据库集成 (TimescaleDB)](#82-时序数据库集成-timescaledb)
+  - [9. 参考文献](#9-参考文献)
+    - [9.1 标准文档](#91-标准文档)
+    - [9.2 学术文献](#92-学术文献)
+    - [9.3 在线资源](#93-在线资源)
 
 ---
 
@@ -388,25 +391,309 @@ impl TemperatureSensor {
 
 ---
 
-## 8. 参考文献
+## 8. 传感器数据存储与分析
 
-### 8.1 标准文档
+### 8.1 PostgreSQL传感器数据存储
+
+**传感器定义和读数数据存储方案**：
+
+```python
+import psycopg2
+import json
+from typing import Dict, List, Optional
+from datetime import datetime, timedelta
+from dataclasses import dataclass
+
+@dataclass
+class SensorReading:
+    """传感器读数"""
+    sensor_id: str
+    timestamp: datetime
+    value: float
+    unit: str
+    metadata: Dict = None
+
+class SensorDatabaseStorage:
+    """传感器数据存储系统"""
+
+    def __init__(self, connection_string: str):
+        self.conn = psycopg2.connect(connection_string)
+        self.cur = self.conn.cursor()
+        self._create_tables()
+
+    def _create_tables(self):
+        """创建传感器数据表"""
+        # 传感器定义表
+        self.cur.execute("""
+            CREATE TABLE IF NOT EXISTS sensor_definitions (
+                id SERIAL PRIMARY KEY,
+                sensor_id VARCHAR(200) UNIQUE NOT NULL,
+                sensor_name VARCHAR(200) NOT NULL,
+                sensor_type VARCHAR(100) NOT NULL,
+                unit VARCHAR(50),
+                range_min FLOAT,
+                range_max FLOAT,
+                definition JSONB NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+
+        # 传感器读数表
+        self.cur.execute("""
+            CREATE TABLE IF NOT EXISTS sensor_readings (
+                id BIGSERIAL PRIMARY KEY,
+                sensor_id VARCHAR(200) NOT NULL,
+                timestamp TIMESTAMP NOT NULL,
+                value FLOAT NOT NULL,
+                unit VARCHAR(50),
+                metadata JSONB,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (sensor_id) REFERENCES sensor_definitions(sensor_id)
+            )
+        """)
+
+        # 传感器统计表
+        self.cur.execute("""
+            CREATE TABLE IF NOT EXISTS sensor_statistics (
+                id SERIAL PRIMARY KEY,
+                sensor_id VARCHAR(200) NOT NULL,
+                time_window TIMESTAMP NOT NULL,
+                statistics JSONB NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (sensor_id) REFERENCES sensor_definitions(sensor_id),
+                UNIQUE(sensor_id, time_window)
+            )
+        """)
+
+        # 创建索引
+        self.cur.execute("""
+            CREATE INDEX IF NOT EXISTS idx_readings_sensor_time
+            ON sensor_readings(sensor_id, timestamp DESC)
+        """)
+
+        self.conn.commit()
+
+    def register_sensor(self, sensor_id: str, sensor_name: str,
+                       sensor_type: str, unit: str = None,
+                       range_min: float = None, range_max: float = None,
+                       definition: Dict = None):
+        """注册传感器"""
+        self.cur.execute("""
+            INSERT INTO sensor_definitions
+            (sensor_id, sensor_name, sensor_type, unit, range_min, range_max, definition)
+            VALUES (%s, %s, %s, %s, %s, %s, %s::jsonb)
+            ON CONFLICT (sensor_id) DO UPDATE
+            SET sensor_name = EXCLUDED.sensor_name,
+                sensor_type = EXCLUDED.sensor_type,
+                unit = EXCLUDED.unit,
+                range_min = EXCLUDED.range_min,
+                range_max = EXCLUDED.range_max,
+                definition = EXCLUDED.definition
+        """, (sensor_id, sensor_name, sensor_type, unit, range_min,
+              range_max, json.dumps(definition or {})))
+        self.conn.commit()
+
+    def store_reading(self, reading: SensorReading):
+        """存储传感器读数"""
+        self.cur.execute("""
+            INSERT INTO sensor_readings
+            (sensor_id, timestamp, value, unit, metadata)
+            VALUES (%s, %s, %s, %s, %s::jsonb)
+        """, (reading.sensor_id, reading.timestamp, reading.value,
+              reading.unit, json.dumps(reading.metadata) if reading.metadata else None))
+        self.conn.commit()
+
+    def store_readings_batch(self, readings: List[SensorReading]):
+        """批量存储传感器读数"""
+        for reading in readings:
+            self.cur.execute("""
+                INSERT INTO sensor_readings
+                (sensor_id, timestamp, value, unit, metadata)
+                VALUES (%s, %s, %s, %s, %s::jsonb)
+            """, (reading.sensor_id, reading.timestamp, reading.value,
+                  reading.unit, json.dumps(reading.metadata) if reading.metadata else None))
+        self.conn.commit()
+
+    def calculate_statistics(self, sensor_id: str,
+                            time_window: timedelta = timedelta(hours=1)) -> Dict:
+        """计算统计信息"""
+        end_time = datetime.utcnow()
+        start_time = end_time - time_window
+
+        self.cur.execute("""
+            SELECT
+                COUNT(*) as count,
+                AVG(value) as avg_value,
+                MIN(value) as min_value,
+                MAX(value) as max_value,
+                STDDEV(value) as stddev_value
+            FROM sensor_readings
+            WHERE sensor_id = %s
+              AND timestamp >= %s
+              AND timestamp <= %s
+        """, (sensor_id, start_time, end_time))
+
+        stats = self.cur.fetchone()
+
+        statistics = {
+            'count': stats[0] if stats[0] else 0,
+            'avg_value': float(stats[1]) if stats[1] else 0,
+            'min_value': float(stats[2]) if stats[2] else 0,
+            'max_value': float(stats[3]) if stats[3] else 0,
+            'stddev_value': float(stats[4]) if stats[4] else 0
+        }
+
+        # 存储统计结果
+        self.cur.execute("""
+            INSERT INTO sensor_statistics
+            (sensor_id, time_window, statistics)
+            VALUES (%s, %s, %s::jsonb)
+            ON CONFLICT (sensor_id, time_window) DO UPDATE
+            SET statistics = EXCLUDED.statistics
+        """, (sensor_id, end_time, json.dumps(statistics)))
+        self.conn.commit()
+
+        return statistics
+
+    def detect_anomalies(self, sensor_id: str, threshold: float = 3.0) -> List[Dict]:
+        """检测异常值（基于3-sigma原则）"""
+        self.cur.execute("""
+            WITH stats AS (
+                SELECT
+                    AVG(value) as mean,
+                    STDDEV(value) as stddev
+                FROM sensor_readings
+                WHERE sensor_id = %s
+            )
+            SELECT timestamp, value
+            FROM sensor_readings, stats
+            WHERE sensor_id = %s
+              AND ABS(value - stats.mean) > %s * stats.stddev
+            ORDER BY timestamp DESC
+            LIMIT 100
+        """, (sensor_id, sensor_id, threshold))
+
+        anomalies = []
+        for row in self.cur.fetchall():
+            anomalies.append({
+                'timestamp': row[0],
+                'value': float(row[1])
+            })
+        return anomalies
+
+    def close(self):
+        """关闭连接"""
+        self.cur.close()
+        self.conn.close()
+```
+
+### 8.2 时序数据库集成 (TimescaleDB)
+
+**TimescaleDB时序数据库集成方案**：
+
+```python
+class TimescaleDBSensorStorage:
+    """TimescaleDB传感器数据存储系统"""
+
+    def __init__(self, connection_string: str):
+        self.conn = psycopg2.connect(connection_string)
+        self.cur = self.conn.cursor()
+        self._setup_timescaledb()
+
+    def _setup_timescaledb(self):
+        """设置TimescaleDB"""
+        # 创建超表（hypertable）
+        self.cur.execute("""
+            CREATE TABLE IF NOT EXISTS sensor_readings_ts (
+                time TIMESTAMPTZ NOT NULL,
+                sensor_id VARCHAR(200) NOT NULL,
+                value FLOAT NOT NULL,
+                unit VARCHAR(50)
+            )
+        """)
+
+        # 转换为超表
+        self.cur.execute("""
+            SELECT create_hypertable('sensor_readings_ts', 'time',
+                if_not_exists => TRUE)
+        """)
+
+        # 创建索引
+        self.cur.execute("""
+            CREATE INDEX IF NOT EXISTS idx_readings_ts_sensor_time
+            ON sensor_readings_ts(sensor_id, time DESC)
+        """)
+
+        self.conn.commit()
+
+    def store_reading(self, sensor_id: str, timestamp: datetime,
+                     value: float, unit: str = None):
+        """存储传感器读数"""
+        self.cur.execute("""
+            INSERT INTO sensor_readings_ts
+            (time, sensor_id, value, unit)
+            VALUES (%s, %s, %s, %s)
+        """, (timestamp, sensor_id, value, unit))
+        self.conn.commit()
+
+    def query_time_series(self, sensor_id: str,
+                         start_time: datetime, end_time: datetime,
+                         interval: str = '1 minute') -> List[Dict]:
+        """查询时序数据"""
+        self.cur.execute("""
+            SELECT
+                time_bucket(%s, time) as bucket,
+                AVG(value) as avg_value,
+                MIN(value) as min_value,
+                MAX(value) as max_value
+            FROM sensor_readings_ts
+            WHERE sensor_id = %s
+              AND time >= %s
+              AND time <= %s
+            GROUP BY bucket
+            ORDER BY bucket
+        """, (interval, sensor_id, start_time, end_time))
+
+        results = []
+        for row in self.cur.fetchall():
+            results.append({
+                'time': row[0],
+                'avg_value': float(row[1]) if row[1] else 0,
+                'min_value': float(row[2]) if row[2] else 0,
+                'max_value': float(row[3]) if row[3] else 0
+            })
+        return results
+
+    def close(self):
+        """关闭连接"""
+        self.cur.close()
+        self.conn.close()
+```
+
+---
+
+## 9. 参考文献
+
+### 9.1 标准文档
 
 - GB/T 34068-2017 物联网总体技术 智能传感器接口规范
 - OpenAPI Specification 3.0
 - JSON Schema Specification
+- PostgreSQL JSONB文档
+- TimescaleDB文档
 
-### 8.2 学术文献
+### 9.2 学术文献
 
 - Schema转换理论与实践
 - 信息论在代码生成中的应用
 - 形式化方法在转换验证中的应用
 
-### 8.3 在线资源
+### 9.3 在线资源
 
 - [OpenAPI Generator](https://openapi-generator.tech/)
 - [JSON Schema Codegen](https://github.com/quicktype/quicktype)
 - [Protocol Buffers](https://developers.google.com/protocol-buffers)
+- [TimescaleDB](https://www.timescale.com/)
 
 ---
 
@@ -415,7 +702,7 @@ impl TemperatureSensor {
 - `01_Overview.md` - 概述
 - `02_Formal_Definition.md` - 形式化定义
 - `03_Standards.md` - 标准对标
-- `05_Case_Studies.md` - 实践案例
+- `05_Case_Studies.md` - 实践案例（包含数据存储案例）
 
 **创建时间**：2025-01-21
-**最后更新**：2025-01-21
+**最后更新**：2025-01-21（扩展传感器数据存储和分析功能，新增PostgreSQL和TimescaleDB存储方案）

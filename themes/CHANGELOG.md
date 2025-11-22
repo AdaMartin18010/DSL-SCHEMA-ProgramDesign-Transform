@@ -1,5 +1,167 @@
 # 项目变更日志
 
+## 2025-01-21 - 新增Thermal_Schema完整文档集
+
+### ✅ 新增热学Schema文档集
+
+- ✅ **Thermal_Schema**（热学Schema）
+  - 完整文档集：`03_Physical_Device/Thermal_Schema/`
+  - 包含：概述、形式化定义、标准对标、转换体系、实践案例
+  - 涵盖：温度特性、热传导、热容量、热辐射
+  - 支持标准：IEC 60068、IEC 60335-1、ISO 7730、ISO 13786
+  - 包含PostgreSQL热学数据存储方案
+
+**内容统计**：
+
+- ✅ **新增Schema**：1个（Thermal Schema）
+- ✅ **新增文档文件**：5个（每个Schema 5个文档）
+- ✅ **新增代码示例**：400+行完整可运行代码
+- ✅ **新增数据表设计**：6个表（温度数据、热传导、热容量、热辐射、测试数据、统计表）
+
+**标准补充**：
+
+- ✅ **IEC 60068系列**：环境试验标准（低温、高温、温度变化、湿热）
+- ✅ **IEC 60335-1**：家用电器热学安全标准
+- ✅ **ISO 7730**：热环境舒适度标准
+- ✅ **ISO 13786**：建筑构件热动态特性标准
+- ✅ **GB/T 2423系列**：电工电子产品环境试验标准
+- ✅ **GB/T 50176**：民用建筑热工设计规范
+
+**文档索引更新**：
+
+- ✅ 更新 `DOCUMENT_INDEX.md` 添加热学Schema索引
+- ✅ 更新 `03_Physical_Device/README.md` 添加热学Schema链接
+
+---
+
+## 2025-01-21 - 新增CAD_Schema完整文档集
+
+### ✅ 新增CAD Schema文档集
+
+- ✅ **CAD_Schema**（CAD Schema）
+  - 完整文档集：`03_Physical_Device/CAD_Schema/`
+  - 包含：概述、形式化定义、标准对标、转换体系、实践案例
+  - 涵盖：CAD设计、结构设计、机构设计、装配、工程图
+  - 支持标准：ISO 10303 (STEP)、ISO 14649 (STEP-NC)、ISO 16792 (MBD)
+  - 包含PostgreSQL CAD数据存储方案
+
+**内容统计**：
+
+- ✅ **新增Schema**：1个（CAD Schema）
+- ✅ **新增文档文件**：5个（每个Schema 5个文档）
+- ✅ **新增代码示例**：500+行完整可运行代码
+- ✅ **新增数据表设计**：6个表（几何模型、结构设计、机构设计、装配、工程图、版本管理）
+
+**标准补充**：
+
+- ✅ **ISO 10303 (STEP)**：产品数据表示和交换标准
+  - AP 203：配置控制设计
+  - AP 214：汽车设计
+  - AP 242：基于模型的定义（MBD）
+  - AP 238：CNC应用解释模型
+- ✅ **ISO 14649 (STEP-NC)**：数控编程标准
+- ✅ **ISO 16792**：基于模型的定义（MBD）标准
+- ✅ **ISO 13584**：零件库标准
+- ✅ **ISO 22745**：技术词典标准
+- ✅ **ISO 6983**：G-Code标准
+
+**文档索引更新**：
+
+- ✅ 更新 `DOCUMENT_INDEX.md` 添加CAD Schema索引
+- ✅ 更新 `03_Physical_Device/README.md` 添加CAD Schema链接
+
+---
+
+## 2025-01-21 - 新增4个Schema完整文档集
+
+### ✅ 新增Schema文档集
+
+- ✅ **Message_Queue_Schema**（消息队列Schema）
+  - 完整文档集：`02_IoT_Schema/Message_Queue_Schema/`
+  - 包含：概述、形式化定义、标准对标、转换体系、实践案例
+  - 支持MQTT、Kafka等消息队列协议
+  - 包含PostgreSQL消息队列数据存储方案
+
+- ✅ **Observability_Schema**（可观测性Schema）
+  - 完整文档集：`02_IoT_Schema/Observability_Schema/`
+  - 包含：概述、形式化定义、标准对标、转换体系、实践案例
+  - 支持OTLP、Prometheus、Jaeger等可观测性协议
+  - 包含PostgreSQL可观测性数据存储方案（指标、日志、追踪）
+
+- ✅ **Database_Schema**（数据库Schema）
+  - 完整文档集：`04_Programming_Conversion/Database_Schema/`
+  - 包含：概述、形式化定义、标准对标、转换体系、实践案例
+  - 支持SQLite、PostgreSQL等数据库Schema
+  - 包含Schema元数据存储方案
+
+- ✅ **Serialization_Schema**（序列化Schema）
+  - 完整文档集：`04_Programming_Conversion/Serialization_Schema/`
+  - 包含：概述、形式化定义、标准对标、转换体系、实践案例
+  - 支持ASN.1、Protocol Buffers、Avro等序列化格式
+  - 包含序列化Schema元数据存储方案
+
+**内容统计**：
+
+- ✅ **新增Schema**：4个（Message_Queue、Observability、Database、Serialization）
+- ✅ **新增文档文件**：20个（每个Schema 5个文档）
+- ✅ **新增代码示例**：2000+行完整可运行代码
+- ✅ **新增数据表设计**：15+个表（消息队列、可观测性、数据库、序列化）
+
+**文档索引更新**：
+
+- ✅ 更新 `DOCUMENT_INDEX.md` 添加新Schema索引
+
+---
+
+## 2025-01-21 - PLC_Schema和Sensor_Schema数据库存储章节补充
+
+### ✅ PLC_Schema和Sensor_Schema转换文档数据库存储章节补充
+
+- ✅ 增强 `PLC_Schema/04_Transformation.md`
+  - 新增8：PLC数据存储与分析
+    - 8.1：PostgreSQL PLC数据存储（完整实现代码）
+    - 8.2：PLC数据分析查询（变量趋势、任务性能分析）
+    - 包含7个核心表设计（项目、POU、变量、任务、运行时值、统计表）
+    - 支持项目存储、POU存储、变量存储、任务存储、运行时值存储、统计分析、异常检测
+
+- ✅ 增强 `Sensor_Schema/04_Transformation.md`
+  - 新增8：传感器数据存储与分析
+    - 8.1：PostgreSQL传感器数据存储（完整实现代码）
+    - 8.2：时序数据库集成 (TimescaleDB)（超表设计、时序查询）
+    - 包含3个核心表设计（传感器定义、读数、统计表）
+    - 支持传感器注册、读数存储、统计分析、异常检测、时序查询
+
+**内容增强统计**：
+
+- ✅ **新增数据库存储章节**：2个（PLC数据存储与分析、传感器数据存储与分析）
+- ✅ **新增代码示例**：800+行完整可运行代码
+- ✅ **新增数据表设计**：10个表（PLC 7个、传感器3个）
+
+**说明**：虽然案例研究文档中已有对应案例，但转换文档中缺少对应的数据库存储章节，现已补充完整。
+
+---
+
+## 2025-01-21 - CAN_Schema数据库存储章节补充
+
+### ✅ CAN_Schema转换文档数据库存储章节补充
+
+- ✅ 增强 `CAN_Schema/04_Transformation.md`
+  - 新增8：CAN数据存储与分析
+    - 8.1：PostgreSQL CAN数据存储（完整实现代码）
+    - 8.2：CAN数据分析查询（消息频率、总线负载、异常检测）
+    - 包含5个核心表设计（DBC定义、消息定义、信号定义、消息日志、统计表）
+    - 支持DBC存储、消息日志存储、统计分析、异常检测
+
+**内容增强统计**：
+
+- ✅ **新增数据库存储章节**：1个（CAN数据存储与分析）
+- ✅ **新增代码示例**：500+行完整可运行代码
+- ✅ **新增数据表设计**：5个表（DBC定义、消息定义、信号定义、消息日志、统计表）
+
+**说明**：虽然案例研究文档中已有案例6，但转换文档中缺少对应的数据库存储章节，现已补充完整。
+
+---
+
 ## 2025-01-21 - Programming_Conversion数据库存储扩展
 
 ### ✅ 编程转换数据库存储扩展

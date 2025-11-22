@@ -120,7 +120,23 @@ IoT Schema支持**七维转换**：
 - `Security_Schema/04_Transformation.md` - 转换体系
 - `Security_Schema/05_Case_Studies.md` - 实践案例
 
-### 3.5 跨主题文档
+### 3.5 消息队列Schema子主题
+
+- `Message_Queue_Schema/01_Overview.md` - 概述（MQTT、Kafka）
+- `Message_Queue_Schema/02_Formal_Definition.md` - 形式化定义
+- `Message_Queue_Schema/03_Standards.md` - 标准对标
+- `Message_Queue_Schema/04_Transformation.md` - 转换体系
+- `Message_Queue_Schema/05_Case_Studies.md` - 实践案例
+
+### 3.6 可观测性Schema子主题
+
+- `Observability_Schema/01_Overview.md` - 概述（OTLP、Prometheus）
+- `Observability_Schema/02_Formal_Definition.md` - 形式化定义
+- `Observability_Schema/03_Standards.md` - 标准对标
+- `Observability_Schema/04_Transformation.md` - 转换体系
+- `Observability_Schema/05_Case_Studies.md` - 实践案例
+
+### 3.7 跨主题文档
 
 - `Mind_Map.md` - 思维导图
 - `Knowledge_Matrix.md` - 多维知识矩阵
