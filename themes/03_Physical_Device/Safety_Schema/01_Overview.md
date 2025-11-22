@@ -188,6 +188,8 @@ Safety_Schema = (SafetyLevel ⊕ SafetyFunction
 - `../README.md` - 主题概览
 - `../Electrical_Schema/` - 电气Schema
 - `../Mechanical_Schema/` - 机械Schema
+- `../Thermal_Schema/` - 热学Schema
+- `../CAD_Schema/` - CAD Schema
 
 **创建时间**：2025-01-21
 **最后更新**：2025-01-21

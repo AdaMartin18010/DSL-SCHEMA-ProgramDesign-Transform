@@ -258,6 +258,7 @@ CAD Schema
 
 - `../README.md` - 主题概览
 - `../Mechanical_Schema/` - 机械Schema
+- `../Thermal_Schema/` - 热学Schema
 - `02_Formal_Definition.md` - 形式化定义
 - `03_Standards.md` - 标准对标
 

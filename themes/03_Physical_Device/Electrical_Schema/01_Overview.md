@@ -188,6 +188,7 @@ Electrical_Schema = (Voltage ⊕ Current ⊕ Power ⊕ Insulation)
 - `02_Formal_Definition.md` - 形式化定义
 - `03_Standards.md` - 标准对标
 - `../Mechanical_Schema/` - 机械Schema
+- `../Thermal_Schema/` - 热学Schema
 - `../Safety_Schema/` - 安全Schema
 
 **创建时间**：2025-01-21

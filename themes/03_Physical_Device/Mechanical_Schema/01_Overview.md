@@ -186,6 +186,8 @@ Mechanical_Schema = (Structure ⊕ Motion ⊕ Material
 
 - `../README.md` - 主题概览
 - `../Electrical_Schema/` - 电气Schema
+- `../Thermal_Schema/` - 热学Schema
+- `../CAD_Schema/` - CAD Schema
 - `02_Formal_Definition.md` - 形式化定义
 - `03_Standards.md` - 标准对标
 

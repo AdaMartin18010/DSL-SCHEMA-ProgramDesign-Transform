@@ -37,6 +37,10 @@
       - [形式语言理论](#形式语言理论)
       - [知识图谱](#知识图谱)
       - [跨主题文档](#跨主题文档-4)
+    - [1.6 金融服务Schema（06\_Financial\_Services）](#16-金融服务schema06_financial_services)
+      - [SWIFT Schema](#swift-schema)
+    - [1.7 工作流与BPM Schema（14\_Workflow\_BPM）](#17-工作流与bpm-schema14_workflow_bpm)
+      - [BPMN Schema](#bpmn-schema)
   - [2. 按文档类型索引](#2-按文档类型索引)
     - [2.1 概述文档（01\_Overview.md）](#21-概述文档01_overviewmd)
     - [2.2 形式化定义（02\_Formal\_Definition.md）](#22-形式化定义02_formal_definitionmd)
@@ -279,6 +283,16 @@
 - [知识矩阵](./05_DSL_Theory/Knowledge_Matrix.md)
 - [形式化证明](./05_DSL_Theory/Formal_Proofs.md)
 
+### 1.6 金融服务Schema（06_Financial_Services）
+
+#### SWIFT Schema
+
+- [概述](./06_Financial_Services/SWIFT_Schema/01_Overview.md)
+- [形式化定义](./06_Financial_Services/SWIFT_Schema/02_Formal_Definition.md)
+- [标准对标](./06_Financial_Services/SWIFT_Schema/03_Standards.md)
+- [转换体系](./06_Financial_Services/SWIFT_Schema/04_Transformation.md)
+- [实践案例](./06_Financial_Services/SWIFT_Schema/05_Case_Studies.md)
+
 ---
 
 ## 2. 按文档类型索引
@@ -506,4 +520,5 @@
 - [项目总览](./README.md)
 - [快速参考指南](./QUICK_REFERENCE.md)
 - [术语表和缩写表](./GLOSSARY.md)
+- [行业覆盖分析报告](./INDUSTRY_COVERAGE_ANALYSIS.md)
 - [项目完成总结](./PROJECT_COMPLETION_SUMMARY.md)

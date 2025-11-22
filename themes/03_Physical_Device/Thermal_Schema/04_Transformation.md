@@ -91,7 +91,7 @@ class ThermalStorage:
                 id BIGSERIAL PRIMARY KEY,
                 device_id VARCHAR(200) NOT NULL,
                 sensor_location VARCHAR(200),
-                temperature FLOAT NOT NULL @unit("°C"),
+                temperature FLOAT NOT NULL,
                 temperature_type VARCHAR(50) NOT NULL,
                 timestamp TIMESTAMP NOT NULL,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -104,9 +104,9 @@ class ThermalStorage:
                 id SERIAL PRIMARY KEY,
                 device_id VARCHAR(200) NOT NULL,
                 material_name VARCHAR(200),
-                thermal_conductivity FLOAT @unit("W/(m·K)"),
-                thermal_resistance FLOAT @unit("K/W"),
-                heat_dissipation_capacity FLOAT @unit("W"),
+                thermal_conductivity FLOAT,
+                thermal_resistance FLOAT,
+                heat_dissipation_capacity FLOAT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
@@ -117,9 +117,9 @@ class ThermalStorage:
                 id SERIAL PRIMARY KEY,
                 device_id VARCHAR(200) NOT NULL,
                 material_name VARCHAR(200),
-                specific_heat FLOAT @unit("J/(kg·K)"),
-                heat_capacity FLOAT @unit("J/K)"),
-                thermal_inertia FLOAT @unit("s"),
+                specific_heat FLOAT,
+                heat_capacity FLOAT,
+                thermal_inertia FLOAT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
@@ -130,9 +130,9 @@ class ThermalStorage:
                 id SERIAL PRIMARY KEY,
                 device_id VARCHAR(200) NOT NULL,
                 surface_name VARCHAR(200),
-                emissivity FLOAT @range(0.0, 1.0),
-                absorptivity FLOAT @range(0.0, 1.0),
-                reflectivity FLOAT @range(0.0, 1.0),
+                emissivity FLOAT CHECK (emissivity >= 0.0 AND emissivity <= 1.0),
+                absorptivity FLOAT CHECK (absorptivity >= 0.0 AND absorptivity <= 1.0),
+                reflectivity FLOAT CHECK (reflectivity >= 0.0 AND reflectivity <= 1.0),
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)

@@ -224,6 +224,10 @@ graph TD
 **参考文档**：
 
 - `../README.md` - 主题概览
+- `../Electrical_Schema/` - 电气Schema
+- `../Mechanical_Schema/` - 机械Schema
+- `../Thermal_Schema/` - 热学Schema
+- `../CAD_Schema/` - CAD Schema
 - `02_Formal_Definition.md` - 形式化定义
 - `03_Standards.md` - 标准对标
 - `04_Transformation.md` - 转换体系
