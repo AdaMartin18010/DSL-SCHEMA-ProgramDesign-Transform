@@ -580,16 +580,223 @@ def validate_iso_9001_compliance(schema: dict) -> dict:
 
 ---
 
-## 6. 参考文献
+## 6. 机械数据存储与分析
 
-### 6.1 标准文档
+### 6.1 PostgreSQL机械数据存储
+
+**机械特性和监测数据存储方案**：
+
+```python
+import psycopg2
+import json
+from typing import Dict, List, Optional
+from datetime import datetime, timedelta
+from dataclasses import dataclass
+
+@dataclass
+class MechanicalReading:
+    """机械读数"""
+    device_id: str
+    position: Dict  # {x, y, z}
+    velocity: Dict  # {vx, vy, vz}
+    force: Dict  # {fx, fy, fz}
+    timestamp: datetime
+    status: str = 'normal'
+
+@dataclass
+class MechanicalEvent:
+    """机械事件"""
+    device_id: str
+    event_type: str
+    event_data: Dict
+    timestamp: datetime
+    severity: str = 'info'
+
+class MechanicalStorage:
+    """机械数据存储系统"""
+
+    def __init__(self, connection_string: str):
+        self.conn = psycopg2.connect(connection_string)
+        self.cur = self.conn.cursor()
+        self._create_tables()
+
+    def _create_tables(self):
+        """创建机械数据表"""
+        # 机械设备定义表
+        self.cur.execute("""
+            CREATE TABLE IF NOT EXISTS mechanical_devices (
+                id SERIAL PRIMARY KEY,
+                device_id VARCHAR(200) UNIQUE NOT NULL,
+                device_name VARCHAR(200) NOT NULL,
+                device_type VARCHAR(50) NOT NULL,
+                mechanical_specs JSONB NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+
+        # 机械读数表（时序数据）
+        self.cur.execute("""
+            CREATE TABLE IF NOT EXISTS mechanical_readings (
+                id BIGSERIAL PRIMARY KEY,
+                device_id VARCHAR(200) NOT NULL,
+                position JSONB NOT NULL,
+                velocity JSONB NOT NULL,
+                force JSONB NOT NULL,
+                status VARCHAR(50) DEFAULT 'normal',
+                timestamp TIMESTAMP NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (device_id) REFERENCES mechanical_devices(device_id)
+            )
+        """)
+
+        # 机械事件表
+        self.cur.execute("""
+            CREATE TABLE IF NOT EXISTS mechanical_events (
+                id BIGSERIAL PRIMARY KEY,
+                device_id VARCHAR(200) NOT NULL,
+                event_type VARCHAR(50) NOT NULL,
+                event_data JSONB NOT NULL,
+                severity VARCHAR(50) DEFAULT 'info',
+                timestamp TIMESTAMP NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (device_id) REFERENCES mechanical_devices(device_id)
+            )
+        """)
+
+        # 机械统计表
+        self.cur.execute("""
+            CREATE TABLE IF NOT EXISTS mechanical_statistics (
+                id SERIAL PRIMARY KEY,
+                device_id VARCHAR(200) NOT NULL,
+                statistic_type VARCHAR(50) NOT NULL,
+                time_window TIMESTAMP NOT NULL,
+                statistics JSONB NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (device_id) REFERENCES mechanical_devices(device_id),
+                UNIQUE(device_id, statistic_type, time_window)
+            )
+        """)
+
+        # 创建索引
+        self.cur.execute("""
+            CREATE INDEX IF NOT EXISTS idx_readings_device_time
+            ON mechanical_readings(device_id, timestamp DESC)
+        """)
+        self.cur.execute("""
+            CREATE INDEX IF NOT EXISTS idx_events_device_time
+            ON mechanical_events(device_id, timestamp DESC)
+        """)
+
+        self.conn.commit()
+
+    def register_device(self, device_id: str, device_name: str,
+                       device_type: str, mechanical_specs: Dict):
+        """注册机械设备"""
+        self.cur.execute("""
+            INSERT INTO mechanical_devices
+            (device_id, device_name, device_type, mechanical_specs)
+            VALUES (%s, %s, %s, %s::jsonb)
+            ON CONFLICT (device_id) DO UPDATE
+            SET device_name = EXCLUDED.device_name,
+                device_type = EXCLUDED.device_type,
+                mechanical_specs = EXCLUDED.mechanical_specs,
+                updated_at = CURRENT_TIMESTAMP
+        """, (device_id, device_name, device_type,
+              json.dumps(mechanical_specs)))
+        self.conn.commit()
+
+    def store_reading(self, reading: MechanicalReading):
+        """存储机械读数"""
+        self.cur.execute("""
+            INSERT INTO mechanical_readings
+            (device_id, position, velocity, force, status, timestamp)
+            VALUES (%s, %s::jsonb, %s::jsonb, %s::jsonb, %s, %s)
+        """, (reading.device_id, json.dumps(reading.position),
+              json.dumps(reading.velocity), json.dumps(reading.force),
+              reading.status, reading.timestamp))
+        self.conn.commit()
+
+    def store_event(self, event: MechanicalEvent):
+        """存储机械事件"""
+        self.cur.execute("""
+            INSERT INTO mechanical_events
+            (device_id, event_type, event_data, severity, timestamp)
+            VALUES (%s, %s, %s::jsonb, %s, %s)
+        """, (event.device_id, event.event_type,
+              json.dumps(event.event_data), event.severity,
+              event.timestamp))
+        self.conn.commit()
+
+    def calculate_statistics(self, device_id: str,
+                            time_window: timedelta = timedelta(hours=1)) -> Dict:
+        """计算机械统计信息"""
+        end_time = datetime.utcnow()
+        start_time = end_time - time_window
+
+        self.cur.execute("""
+            SELECT
+                COUNT(*) as reading_count,
+                AVG((position->>'x')::float) as avg_x,
+                AVG((position->>'y')::float) as avg_y,
+                AVG((position->>'z')::float) as avg_z,
+                AVG((velocity->>'vx')::float) as avg_vx,
+                AVG((force->>'fx')::float) as avg_fx
+            FROM mechanical_readings
+            WHERE device_id = %s
+              AND timestamp >= %s
+              AND timestamp <= %s
+        """, (device_id, start_time, end_time))
+
+        stats = self.cur.fetchone()
+
+        statistics = {
+            'reading_count': stats[0] if stats[0] else 0,
+            'avg_position': {
+                'x': float(stats[1]) if stats[1] else 0,
+                'y': float(stats[2]) if stats[2] else 0,
+                'z': float(stats[3]) if stats[3] else 0
+            },
+            'avg_velocity': {
+                'vx': float(stats[4]) if stats[4] else 0
+            },
+            'avg_force': {
+                'fx': float(stats[5]) if stats[5] else 0
+            }
+        }
+
+        # 存储统计结果
+        self.cur.execute("""
+            INSERT INTO mechanical_statistics
+            (device_id, statistic_type, time_window, statistics)
+            VALUES (%s, %s, %s, %s::jsonb)
+            ON CONFLICT (device_id, statistic_type, time_window) DO UPDATE
+            SET statistics = EXCLUDED.statistics
+        """, (device_id, 'mechanical_statistics', end_time,
+              json.dumps(statistics)))
+        self.conn.commit()
+
+        return statistics
+
+    def close(self):
+        """关闭连接"""
+        self.cur.close()
+        self.conn.close()
+```
+
+---
+
+## 7. 参考文献
+
+### 7.1 标准文档
 
 - ISO 9001:2015 Quality management systems
 - GB/T 19903 工业设备控制标准
 
-### 6.2 技术文档
+### 7.2 技术文档
 
 - 机械特性设计代码实现最佳实践
+- PostgreSQL JSONB文档
 
 ---
 
@@ -601,4 +808,4 @@ def validate_iso_9001_compliance(schema: dict) -> dict:
 - `05_Case_Studies.md` - 实践案例
 
 **创建时间**：2025-01-21
-**最后更新**：2025-01-21
+**最后更新**：2025-01-21（扩展机械数据存储和分析功能，新增PostgreSQL存储方案）

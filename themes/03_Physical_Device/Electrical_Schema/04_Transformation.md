@@ -13,9 +13,12 @@
   - [3. 转换实例](#3-转换实例)
   - [4. 转换工具](#4-转换工具)
   - [5. 转换验证](#5-转换验证)
-  - [6. 参考文献](#6-参考文献)
-    - [6.1 标准文档](#61-标准文档)
-    - [6.2 技术文档](#62-技术文档)
+  - [6. 电气数据存储与分析](#6-电气数据存储与分析)
+    - [6.1 PostgreSQL电气数据存储](#61-postgresql电气数据存储)
+    - [6.2 电气数据分析查询](#62-电气数据分析查询)
+  - [7. 参考文献](#7-参考文献)
+    - [7.1 标准文档](#71-标准文档)
+    - [7.2 技术文档](#72-技术文档)
 
 ---
 
@@ -248,16 +251,332 @@ class ElectricalDeviceMonitor:
 
 ---
 
-## 6. 参考文献
+## 6. 电气数据存储与分析
 
-### 6.1 标准文档
+### 6.1 PostgreSQL电气数据存储
+
+**电气特性和监测数据存储方案**：
+
+```python
+import psycopg2
+import json
+from typing import Dict, List, Optional
+from datetime import datetime, timedelta
+from dataclasses import dataclass
+
+@dataclass
+class ElectricalReading:
+    """电气读数"""
+    device_id: str
+    voltage: float
+    current: float
+    power: float
+    timestamp: datetime
+    status: str = 'normal'
+
+@dataclass
+class ElectricalEvent:
+    """电气事件"""
+    device_id: str
+    event_type: str
+    event_data: Dict
+    timestamp: datetime
+    severity: str = 'info'
+
+class ElectricalStorage:
+    """电气数据存储系统"""
+
+    def __init__(self, connection_string: str):
+        self.conn = psycopg2.connect(connection_string)
+        self.cur = self.conn.cursor()
+        self._create_tables()
+
+    def _create_tables(self):
+        """创建电气数据表"""
+        # 电气设备定义表
+        self.cur.execute("""
+            CREATE TABLE IF NOT EXISTS electrical_devices (
+                id SERIAL PRIMARY KEY,
+                device_id VARCHAR(200) UNIQUE NOT NULL,
+                device_name VARCHAR(200) NOT NULL,
+                device_type VARCHAR(50) NOT NULL,
+                electrical_specs JSONB NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+
+        # 电气读数表（时序数据）
+        self.cur.execute("""
+            CREATE TABLE IF NOT EXISTS electrical_readings (
+                id BIGSERIAL PRIMARY KEY,
+                device_id VARCHAR(200) NOT NULL,
+                voltage FLOAT NOT NULL,
+                current FLOAT NOT NULL,
+                power FLOAT NOT NULL,
+                status VARCHAR(50) DEFAULT 'normal',
+                timestamp TIMESTAMP NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (device_id) REFERENCES electrical_devices(device_id)
+            )
+        """)
+
+        # 电气事件表
+        self.cur.execute("""
+            CREATE TABLE IF NOT EXISTS electrical_events (
+                id BIGSERIAL PRIMARY KEY,
+                device_id VARCHAR(200) NOT NULL,
+                event_type VARCHAR(50) NOT NULL,
+                event_data JSONB NOT NULL,
+                severity VARCHAR(50) DEFAULT 'info',
+                timestamp TIMESTAMP NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (device_id) REFERENCES electrical_devices(device_id)
+            )
+        """)
+
+        # 电气统计表
+        self.cur.execute("""
+            CREATE TABLE IF NOT EXISTS electrical_statistics (
+                id SERIAL PRIMARY KEY,
+                device_id VARCHAR(200) NOT NULL,
+                statistic_type VARCHAR(50) NOT NULL,
+                time_window TIMESTAMP NOT NULL,
+                statistics JSONB NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (device_id) REFERENCES electrical_devices(device_id),
+                UNIQUE(device_id, statistic_type, time_window)
+            )
+        """)
+
+        # 创建索引
+        self.cur.execute("""
+            CREATE INDEX IF NOT EXISTS idx_readings_device_time
+            ON electrical_readings(device_id, timestamp DESC)
+        """)
+        self.cur.execute("""
+            CREATE INDEX IF NOT EXISTS idx_events_device_time
+            ON electrical_events(device_id, timestamp DESC)
+        """)
+
+        self.conn.commit()
+
+    def register_device(self, device_id: str, device_name: str,
+                       device_type: str, electrical_specs: Dict):
+        """注册电气设备"""
+        self.cur.execute("""
+            INSERT INTO electrical_devices
+            (device_id, device_name, device_type, electrical_specs)
+            VALUES (%s, %s, %s, %s::jsonb)
+            ON CONFLICT (device_id) DO UPDATE
+            SET device_name = EXCLUDED.device_name,
+                device_type = EXCLUDED.device_type,
+                electrical_specs = EXCLUDED.electrical_specs,
+                updated_at = CURRENT_TIMESTAMP
+        """, (device_id, device_name, device_type,
+              json.dumps(electrical_specs)))
+        self.conn.commit()
+
+    def store_reading(self, reading: ElectricalReading):
+        """存储电气读数"""
+        self.cur.execute("""
+            INSERT INTO electrical_readings
+            (device_id, voltage, current, power, status, timestamp)
+            VALUES (%s, %s, %s, %s, %s, %s)
+        """, (reading.device_id, reading.voltage, reading.current,
+              reading.power, reading.status, reading.timestamp))
+        self.conn.commit()
+
+    def store_event(self, event: ElectricalEvent):
+        """存储电气事件"""
+        self.cur.execute("""
+            INSERT INTO electrical_events
+            (device_id, event_type, event_data, severity, timestamp)
+            VALUES (%s, %s, %s::jsonb, %s, %s)
+        """, (event.device_id, event.event_type,
+              json.dumps(event.event_data), event.severity,
+              event.timestamp))
+        self.conn.commit()
+
+    def get_readings(self, device_id: str,
+                    start_time: datetime = None,
+                    end_time: datetime = None,
+                    limit: int = 1000) -> List[Dict]:
+        """获取电气读数历史"""
+        query = """
+            SELECT voltage, current, power, status, timestamp
+            FROM electrical_readings
+            WHERE device_id = %s
+        """
+        params = [device_id]
+
+        if start_time:
+            query += " AND timestamp >= %s"
+            params.append(start_time)
+
+        if end_time:
+            query += " AND timestamp <= %s"
+            params.append(end_time)
+
+        query += " ORDER BY timestamp DESC LIMIT %s"
+        params.append(limit)
+
+        self.cur.execute(query, params)
+        results = []
+        for row in self.cur.fetchall():
+            results.append({
+                'voltage': row[0],
+                'current': row[1],
+                'power': row[2],
+                'status': row[3],
+                'timestamp': row[4]
+            })
+        return results
+
+    def calculate_statistics(self, device_id: str,
+                            time_window: timedelta = timedelta(hours=1)) -> Dict:
+        """计算电气统计信息"""
+        end_time = datetime.utcnow()
+        start_time = end_time - time_window
+
+        self.cur.execute("""
+            SELECT
+                COUNT(*) as reading_count,
+                AVG(voltage) as avg_voltage,
+                AVG(current) as avg_current,
+                AVG(power) as avg_power,
+                MIN(voltage) as min_voltage,
+                MAX(voltage) as max_voltage,
+                MIN(current) as min_current,
+                MAX(current) as max_current,
+                MIN(power) as min_power,
+                MAX(power) as max_power
+            FROM electrical_readings
+            WHERE device_id = %s
+              AND timestamp >= %s
+              AND timestamp <= %s
+        """, (device_id, start_time, end_time))
+
+        stats = self.cur.fetchone()
+
+        statistics = {
+            'reading_count': stats[0] if stats[0] else 0,
+            'avg_voltage': float(stats[1]) if stats[1] else 0,
+            'avg_current': float(stats[2]) if stats[2] else 0,
+            'avg_power': float(stats[3]) if stats[3] else 0,
+            'min_voltage': float(stats[4]) if stats[4] else 0,
+            'max_voltage': float(stats[5]) if stats[5] else 0,
+            'min_current': float(stats[6]) if stats[6] else 0,
+            'max_current': float(stats[7]) if stats[7] else 0,
+            'min_power': float(stats[8]) if stats[8] else 0,
+            'max_power': float(stats[9]) if stats[9] else 0
+        }
+
+        # 存储统计结果
+        self.cur.execute("""
+            INSERT INTO electrical_statistics
+            (device_id, statistic_type, time_window, statistics)
+            VALUES (%s, %s, %s, %s::jsonb)
+            ON CONFLICT (device_id, statistic_type, time_window) DO UPDATE
+            SET statistics = EXCLUDED.statistics
+        """, (device_id, 'electrical_statistics', end_time,
+              json.dumps(statistics)))
+        self.conn.commit()
+
+        return statistics
+
+    def detect_anomalies(self, device_id: str,
+                        time_window: timedelta = timedelta(hours=24)) -> List[Dict]:
+        """检测电气异常"""
+        end_time = datetime.utcnow()
+        start_time = end_time - time_window
+
+        # 获取设备规格
+        self.cur.execute("""
+            SELECT electrical_specs FROM electrical_devices
+            WHERE device_id = %s
+        """, (device_id,))
+        device = self.cur.fetchone()
+        if not device:
+            return []
+
+        specs = device[0]
+        voltage_min = specs.get('voltage_range_min', 0)
+        voltage_max = specs.get('voltage_range_max', 1000)
+        current_max = specs.get('current_max', 100)
+
+        # 查找异常读数
+        self.cur.execute("""
+            SELECT voltage, current, power, timestamp
+            FROM electrical_readings
+            WHERE device_id = %s
+              AND timestamp >= %s
+              AND timestamp <= %s
+              AND (voltage < %s OR voltage > %s OR current > %s)
+            ORDER BY timestamp DESC
+        """, (device_id, start_time, end_time,
+              voltage_min, voltage_max, current_max))
+
+        anomalies = []
+        for row in self.cur.fetchall():
+            anomalies.append({
+                'voltage': row[0],
+                'current': row[1],
+                'power': row[2],
+                'timestamp': row[3],
+                'reason': 'voltage_out_of_range' if row[0] < voltage_min or row[0] > voltage_max
+                         else 'current_exceeded'
+            })
+        return anomalies
+
+    def close(self):
+        """关闭连接"""
+        self.cur.close()
+        self.conn.close()
+```
+
+### 6.2 电气数据分析查询
+
+**高级分析查询**：
+
+```python
+class ElectricalAnalyzer:
+    """电气数据分析器"""
+
+    def __init__(self, storage: ElectricalStorage):
+        self.storage = storage
+
+    def analyze_power_consumption(self, device_id: str,
+                                 time_window: timedelta = timedelta(hours=24)) -> Dict:
+        """分析功耗"""
+        stats = self.storage.calculate_statistics(device_id, time_window)
+
+        # 计算总能耗（假设采样间隔为1秒）
+        total_energy = stats['avg_power'] * time_window.total_seconds() / 3600  # kWh
+
+        return {
+            'device_id': device_id,
+            'time_window': time_window,
+            'avg_power': stats['avg_power'],
+            'max_power': stats['max_power'],
+            'min_power': stats['min_power'],
+            'total_energy_kwh': total_energy
+        }
+```
+
+---
+
+## 7. 参考文献
+
+### 7.1 标准文档
 
 - IEC 60335-1:2020 Household and similar electrical appliances
 - GB/T 19903 工业设备控制标准
 
-### 6.2 技术文档
+### 7.2 技术文档
 
 - 电气特性监测代码实现最佳实践
+- PostgreSQL JSONB文档
 
 ---
 
@@ -269,4 +588,4 @@ class ElectricalDeviceMonitor:
 - `05_Case_Studies.md` - 实践案例
 
 **创建时间**：2025-01-21
-**最后更新**：2025-01-21
+**最后更新**：2025-01-21（扩展电气数据存储和分析功能，新增PostgreSQL存储方案）

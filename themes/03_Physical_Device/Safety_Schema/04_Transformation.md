@@ -269,18 +269,263 @@ class SafetySystem:
 
 ---
 
-## 6. 参考文献
+## 6. 安全数据存储与分析
 
-### 6.1 标准文档
+### 6.1 PostgreSQL安全数据存储
+
+**安全特性和事件数据存储方案**：
+
+```python
+import psycopg2
+import json
+from typing import Dict, List, Optional
+from datetime import datetime, timedelta
+from dataclasses import dataclass
+
+@dataclass
+class SafetyEvent:
+    """安全事件"""
+    device_id: str
+    event_type: str
+    event_data: Dict
+    sil_level: str
+    timestamp: datetime
+    severity: str = 'info'
+
+@dataclass
+class SafetyInspection:
+    """安全检查"""
+    device_id: str
+    inspection_type: str
+    inspection_result: Dict
+    compliance_status: str
+    timestamp: datetime
+
+class SafetyStorage:
+    """安全数据存储系统"""
+
+    def __init__(self, connection_string: str):
+        self.conn = psycopg2.connect(connection_string)
+        self.cur = self.conn.cursor()
+        self._create_tables()
+
+    def _create_tables(self):
+        """创建安全数据表"""
+        # 安全设备定义表
+        self.cur.execute("""
+            CREATE TABLE IF NOT EXISTS safety_devices (
+                id SERIAL PRIMARY KEY,
+                device_id VARCHAR(200) UNIQUE NOT NULL,
+                device_name VARCHAR(200) NOT NULL,
+                device_type VARCHAR(50) NOT NULL,
+                safety_specs JSONB NOT NULL,
+                sil_level VARCHAR(10),
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+
+        # 安全事件表
+        self.cur.execute("""
+            CREATE TABLE IF NOT EXISTS safety_events (
+                id BIGSERIAL PRIMARY KEY,
+                device_id VARCHAR(200) NOT NULL,
+                event_type VARCHAR(50) NOT NULL,
+                event_data JSONB NOT NULL,
+                sil_level VARCHAR(10),
+                severity VARCHAR(50) DEFAULT 'info',
+                timestamp TIMESTAMP NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (device_id) REFERENCES safety_devices(device_id)
+            )
+        """)
+
+        # 安全检查表
+        self.cur.execute("""
+            CREATE TABLE IF NOT EXISTS safety_inspections (
+                id BIGSERIAL PRIMARY KEY,
+                device_id VARCHAR(200) NOT NULL,
+                inspection_type VARCHAR(50) NOT NULL,
+                inspection_result JSONB NOT NULL,
+                compliance_status VARCHAR(50) NOT NULL,
+                timestamp TIMESTAMP NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (device_id) REFERENCES safety_devices(device_id)
+            )
+        """)
+
+        # 安全统计表
+        self.cur.execute("""
+            CREATE TABLE IF NOT EXISTS safety_statistics (
+                id SERIAL PRIMARY KEY,
+                device_id VARCHAR(200) NOT NULL,
+                statistic_type VARCHAR(50) NOT NULL,
+                time_window TIMESTAMP NOT NULL,
+                statistics JSONB NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (device_id) REFERENCES safety_devices(device_id),
+                UNIQUE(device_id, statistic_type, time_window)
+            )
+        """)
+
+        # 创建索引
+        self.cur.execute("""
+            CREATE INDEX IF NOT EXISTS idx_events_device_time
+            ON safety_events(device_id, timestamp DESC)
+        """)
+        self.cur.execute("""
+            CREATE INDEX IF NOT EXISTS idx_inspections_device_time
+            ON safety_inspections(device_id, timestamp DESC)
+        """)
+
+        self.conn.commit()
+
+    def register_device(self, device_id: str, device_name: str,
+                       device_type: str, safety_specs: Dict,
+                       sil_level: str = None):
+        """注册安全设备"""
+        self.cur.execute("""
+            INSERT INTO safety_devices
+            (device_id, device_name, device_type, safety_specs, sil_level)
+            VALUES (%s, %s, %s, %s::jsonb, %s)
+            ON CONFLICT (device_id) DO UPDATE
+            SET device_name = EXCLUDED.device_name,
+                device_type = EXCLUDED.device_type,
+                safety_specs = EXCLUDED.safety_specs,
+                sil_level = EXCLUDED.sil_level,
+                updated_at = CURRENT_TIMESTAMP
+        """, (device_id, device_name, device_type,
+              json.dumps(safety_specs), sil_level))
+        self.conn.commit()
+
+    def store_event(self, event: SafetyEvent):
+        """存储安全事件"""
+        self.cur.execute("""
+            INSERT INTO safety_events
+            (device_id, event_type, event_data, sil_level, severity, timestamp)
+            VALUES (%s, %s, %s::jsonb, %s, %s, %s)
+        """, (event.device_id, event.event_type,
+              json.dumps(event.event_data), event.sil_level,
+              event.severity, event.timestamp))
+        self.conn.commit()
+
+    def store_inspection(self, inspection: SafetyInspection):
+        """存储安全检查"""
+        self.cur.execute("""
+            INSERT INTO safety_inspections
+            (device_id, inspection_type, inspection_result, compliance_status, timestamp)
+            VALUES (%s, %s, %s::jsonb, %s, %s)
+        """, (inspection.device_id, inspection.inspection_type,
+              json.dumps(inspection.inspection_result),
+              inspection.compliance_status, inspection.timestamp))
+        self.conn.commit()
+
+    def calculate_statistics(self, device_id: str,
+                            time_window: timedelta = timedelta(hours=1)) -> Dict:
+        """计算安全统计信息"""
+        end_time = datetime.utcnow()
+        start_time = end_time - time_window
+
+        # 事件统计
+        self.cur.execute("""
+            SELECT
+                COUNT(*) as event_count,
+                COUNT(DISTINCT event_type) as unique_event_types,
+                COUNT(CASE WHEN severity = 'error' THEN 1 END) as error_count
+            FROM safety_events
+            WHERE device_id = %s
+              AND timestamp >= %s
+              AND timestamp <= %s
+        """, (device_id, start_time, end_time))
+
+        event_stats = self.cur.fetchone()
+
+        # 检查统计
+        self.cur.execute("""
+            SELECT
+                COUNT(*) as inspection_count,
+                COUNT(CASE WHEN compliance_status = 'compliant' THEN 1 END) as compliant_count
+            FROM safety_inspections
+            WHERE device_id = %s
+              AND timestamp >= %s
+              AND timestamp <= %s
+        """, (device_id, start_time, end_time))
+
+        inspection_stats = self.cur.fetchone()
+
+        statistics = {
+            'events': {
+                'count': event_stats[0] if event_stats[0] else 0,
+                'unique_types': event_stats[1] if event_stats[1] else 0,
+                'error_count': event_stats[2] if event_stats[2] else 0
+            },
+            'inspections': {
+                'count': inspection_stats[0] if inspection_stats[0] else 0,
+                'compliant_count': inspection_stats[1] if inspection_stats[1] else 0,
+                'compliance_rate': (inspection_stats[1] / inspection_stats[0] * 100) if inspection_stats[0] > 0 else 0
+            }
+        }
+
+        # 存储统计结果
+        self.cur.execute("""
+            INSERT INTO safety_statistics
+            (device_id, statistic_type, time_window, statistics)
+            VALUES (%s, %s, %s, %s::jsonb)
+            ON CONFLICT (device_id, statistic_type, time_window) DO UPDATE
+            SET statistics = EXCLUDED.statistics
+        """, (device_id, 'safety_statistics', end_time,
+              json.dumps(statistics)))
+        self.conn.commit()
+
+        return statistics
+
+    def find_non_compliant_devices(self, time_window: timedelta = timedelta(days=30)) -> List[Dict]:
+        """查找不合规设备"""
+        end_time = datetime.utcnow()
+        start_time = end_time - time_window
+
+        self.cur.execute("""
+            SELECT DISTINCT device_id, device_name, sil_level
+            FROM safety_devices
+            WHERE device_id IN (
+                SELECT DISTINCT device_id
+                FROM safety_inspections
+                WHERE compliance_status != 'compliant'
+                  AND timestamp >= %s
+                  AND timestamp <= %s
+            )
+        """, (start_time, end_time))
+
+        devices = []
+        for row in self.cur.fetchall():
+            devices.append({
+                'device_id': row[0],
+                'device_name': row[1],
+                'sil_level': row[2]
+            })
+        return devices
+
+    def close(self):
+        """关闭连接"""
+        self.cur.close()
+        self.conn.close()
+```
+
+---
+
+## 7. 参考文献
+
+### 7.1 标准文档
 
 - IEC 61508:2010 Functional safety
 - IEC 60335-1:2020 Household and similar electrical appliances
 - GB/T 20438 功能安全标准
 
-### 6.2 技术文档
+### 7.2 技术文档
 
 - 安全代码实现最佳实践
 - 功能安全设计指南
+- PostgreSQL JSONB文档
 
 ---
 
@@ -292,4 +537,4 @@ class SafetySystem:
 - `05_Case_Studies.md` - 实践案例
 
 **创建时间**：2025-01-21
-**最后更新**：2025-01-21
+**最后更新**：2025-01-21（扩展安全数据存储和分析功能，新增PostgreSQL存储方案）
