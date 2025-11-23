@@ -41,6 +41,7 @@
       - [SWIFT Schema](#swift-schema)
     - [1.7 工作流与BPM Schema（14\_Workflow\_BPM）](#17-工作流与bpm-schema14_workflow_bpm)
       - [BPMN Schema](#bpmn-schema)
+      - [BPEL Schema](#bpel-schema)
   - [2. 按文档类型索引](#2-按文档类型索引)
     - [2.1 概述文档（01\_Overview.md）](#21-概述文档01_overviewmd)
     - [2.2 形式化定义（02\_Formal\_Definition.md）](#22-形式化定义02_formal_definitionmd)
@@ -293,6 +294,68 @@
 - [转换体系](./06_Financial_Services/SWIFT_Schema/04_Transformation.md)
 - [实践案例](./06_Financial_Services/SWIFT_Schema/05_Case_Studies.md)
 
+#### ISO 20022 Schema
+
+- [概述](./06_Financial_Services/ISO20022_Schema/01_Overview.md)
+- [形式化定义](./06_Financial_Services/ISO20022_Schema/02_Formal_Definition.md)
+- [标准对标](./06_Financial_Services/ISO20022_Schema/03_Standards.md)
+- [转换体系](./06_Financial_Services/ISO20022_Schema/04_Transformation.md)
+- [实践案例](./06_Financial_Services/ISO20022_Schema/05_Case_Studies.md)
+
+#### Payment Schema
+
+- [概述](./06_Financial_Services/Payment_Schema/01_Overview.md)
+- [形式化定义](./06_Financial_Services/Payment_Schema/02_Formal_Definition.md)
+- [标准对标](./06_Financial_Services/Payment_Schema/03_Standards.md)
+- [转换体系](./06_Financial_Services/Payment_Schema/04_Transformation.md)
+- [实践案例](./06_Financial_Services/Payment_Schema/05_Case_Studies.md)
+
+### 1.7 物流与供应链Schema（07_Logistics_Supply_Chain）
+
+#### GS1 Schema
+
+- [概述](./07_Logistics_Supply_Chain/GS1_Schema/01_Overview.md)
+- [形式化定义](./07_Logistics_Supply_Chain/GS1_Schema/02_Formal_Definition.md)
+- [标准对标](./07_Logistics_Supply_Chain/GS1_Schema/03_Standards.md)
+- [转换体系](./07_Logistics_Supply_Chain/GS1_Schema/04_Transformation.md)
+- [实践案例](./07_Logistics_Supply_Chain/GS1_Schema/05_Case_Studies.md)
+
+### 1.8 工作流与BPM Schema（14_Workflow_BPM）
+
+#### BPMN Schema
+
+- [概述](./14_Workflow_BPM/BPMN_Schema/01_Overview.md)
+- [形式化定义](./14_Workflow_BPM/BPMN_Schema/02_Formal_Definition.md)
+- [标准对标](./14_Workflow_BPM/BPMN_Schema/03_Standards.md)
+- [转换体系](./14_Workflow_BPM/BPMN_Schema/04_Transformation.md)
+- [实践案例](./14_Workflow_BPM/BPMN_Schema/05_Case_Studies.md)
+
+#### BPEL Schema
+
+- [概述](./14_Workflow_BPM/BPEL_Schema/01_Overview.md)
+- [形式化定义](./14_Workflow_BPM/BPEL_Schema/02_Formal_Definition.md)
+- [标准对标](./14_Workflow_BPM/BPEL_Schema/03_Standards.md)
+- [转换体系](./14_Workflow_BPM/BPEL_Schema/04_Transformation.md)
+- [实践案例](./14_Workflow_BPM/BPEL_Schema/05_Case_Studies.md)
+
+#### Workflow Engine Schema
+
+- [概述](./14_Workflow_BPM/Workflow_Engine_Schema/01_Overview.md)
+- [形式化定义](./14_Workflow_BPM/Workflow_Engine_Schema/02_Formal_Definition.md)
+- [标准对标](./14_Workflow_BPM/Workflow_Engine_Schema/03_Standards.md)
+- [转换体系](./14_Workflow_BPM/Workflow_Engine_Schema/04_Transformation.md)
+- [实践案例](./14_Workflow_BPM/Workflow_Engine_Schema/05_Case_Studies.md)
+
+### 1.8 ERP系统Schema（15_ERP_Systems）
+
+#### ERP Schema
+
+- [概述](./15_ERP_Systems/ERP_Schema/01_Overview.md)
+- [形式化定义](./15_ERP_Systems/ERP_Schema/02_Formal_Definition.md)
+- [标准对标](./15_ERP_Systems/ERP_Schema/03_Standards.md)
+- [转换体系](./15_ERP_Systems/ERP_Schema/04_Transformation.md)
+- [实践案例](./15_ERP_Systems/ERP_Schema/05_Case_Studies.md)
+
 ---
 
 ## 2. 按文档类型索引
@@ -522,3 +585,4 @@
 - [术语表和缩写表](./GLOSSARY.md)
 - [行业覆盖分析报告](./INDUSTRY_COVERAGE_ANALYSIS.md)
 - [项目完成总结](./PROJECT_COMPLETION_SUMMARY.md)
+- [文档扩展和深化计划](./DOCUMENT_EXPANSION_PLAN.md)

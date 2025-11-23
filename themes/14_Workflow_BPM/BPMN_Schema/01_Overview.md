@@ -25,6 +25,27 @@
     - [5.3 流程自动化](#53-流程自动化)
     - [5.4 BPMN数据存储与分析](#54-bpmn数据存储与分析)
   - [6. 思维导图](#6-思维导图)
+  - [1. 核心结论1](#1-核心结论1)
+    - [1.1 BPMN Schema定义](#11-bpmn-schema定义-1)
+    - [1.2 标准依据](#12-标准依据-1)
+  - [2. 概念定义1](#2-概念定义1)
+    - [2.1 BPMN Schema定义](#21-bpmn-schema定义-1)
+    - [2.2 核心特征](#22-核心特征-1)
+    - [2.3 Schema分类](#23-schema分类-1)
+  - [3. BPMN元素Schema1](#3-bpmn元素schema1)
+    - [3.1 流程定义Schema](#31-流程定义schema-1)
+    - [3.2 任务Schema](#32-任务schema-1)
+    - [3.3 网关Schema](#33-网关schema-1)
+    - [3.4 事件Schema](#34-事件schema-1)
+  - [4. 标准对标1](#4-标准对标1)
+    - [4.1 BPMN 2.0标准](#41-bpmn-20标准-1)
+    - [4.2 相关标准](#42-相关标准-1)
+  - [5. 应用场景1](#5-应用场景1)
+    - [5.1 业务流程建模](#51-业务流程建模-1)
+    - [5.2 工作流引擎](#52-工作流引擎-1)
+    - [5.3 流程自动化](#53-流程自动化-1)
+    - [5.4 BPMN数据存储与分析](#54-bpmn数据存储与分析-1)
+  - [6. 思维导图1](#6-思维导图1)
 
 ---
 
@@ -212,37 +233,6 @@ BPMN Schema
 **创建时间**：2025-01-21
 **最后更新**：2025-01-21
 
-
-## 📑 目录
-
-- [BPMN Schema概述](#bpmn-schema概述)
-  - [📑 目录](#-目录)
-  - [1. 核心结论](#1-核心结论)
-    - [1.1 BPMN Schema定义](#11-bpmn-schema定义)
-    - [1.2 标准依据](#12-标准依据)
-  - [2. 概念定义](#2-概念定义)
-    - [2.1 BPMN Schema定义](#21-bpmn-schema定义)
-    - [2.2 核心特征](#22-核心特征)
-    - [2.3 Schema分类](#23-schema分类)
-  - [3. BPMN元素Schema](#3-bpmn元素schema)
-    - [3.1 流程定义Schema](#31-流程定义schema)
-    - [3.2 任务Schema](#32-任务schema)
-    - [3.3 网关Schema](#33-网关schema)
-    - [3.4 事件Schema](#34-事件schema)
-  - [4. 标准对标](#4-标准对标)
-    - [4.1 BPMN 2.0标准](#41-bpmn-20标准)
-    - [4.2 相关标准](#42-相关标准)
-  - [5. 应用场景](#5-应用场景)
-    - [5.1 业务流程建模](#51-业务流程建模)
-    - [5.2 工作流引擎](#52-工作流引擎)
-    - [5.3 流程自动化](#53-流程自动化)
-    - [5.4 BPMN数据存储与分析](#54-bpmn数据存储与分析)
-  - [6. 思维导图](#6-思维导图)
-
----
-
-## 1. 核心结论
-
 **业务流程管理存在强制性的BPMN Schema体系**。
 
 ### 1.1 BPMN Schema定义
@@ -260,7 +250,7 @@ BPMN_Schema = (Process_Definition ⊕ Task ⊕ Gateway ⊕ Event) × Collaborati
 
 ---
 
-## 2. 概念定义
+## 2. 概念定义1
 
 ### 2.1 BPMN Schema定义
 
@@ -284,7 +274,7 @@ BPMN_Schema = (Process_Definition ⊕ Task ⊕ Gateway ⊕ Event) × Collaborati
 
 ---
 
-## 3. BPMN元素Schema
+## 3. BPMN元素Schema1
 
 ### 3.1 流程定义Schema
 
@@ -332,7 +322,7 @@ BPMN_Schema = (Process_Definition ⊕ Task ⊕ Gateway ⊕ Event) × Collaborati
 
 ---
 
-## 4. 标准对标
+## 4. 标准对标1
 
 ### 4.1 BPMN 2.0标准
 
@@ -348,7 +338,7 @@ BPMN_Schema = (Process_Definition ⊕ Task ⊕ Gateway ⊕ Event) × Collaborati
 
 ---
 
-## 5. 应用场景
+## 5. 应用场景1
 
 ### 5.1 业务流程建模
 
@@ -388,7 +378,7 @@ BPMN_Schema = (Process_Definition ⊕ Task ⊕ Gateway ⊕ Event) × Collaborati
 
 ---
 
-## 6. 思维导图
+## 6. 思维导图1
 
 ```text
 BPMN Schema

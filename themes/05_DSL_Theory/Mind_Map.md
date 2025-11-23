@@ -267,6 +267,7 @@ mindmap
 - `Formal_Language_Theory/` - 形式语言理论
 - `Knowledge_Graph/` - 知识图谱
 
+```text
 ├─ 8. 中国国家标准体系
     │
     ├─ 8.1 IT服务标准

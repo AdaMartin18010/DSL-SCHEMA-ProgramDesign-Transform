@@ -7,14 +7,41 @@
   - [1. 扩展概述](#1-扩展概述)
   - [2. 已完成的扩展](#2-已完成的扩展)
     - [2.1 DSL理论主题](#21-dsl理论主题)
+      - [2.1.1 Knowledge\_Graph（知识图谱）](#211-knowledge_graph知识图谱)
+      - [2.1.2 Information\_Theory（信息论）](#212-information_theory信息论)
+      - [2.1.3 Formal\_Language\_Theory（形式语言理论）](#213-formal_language_theory形式语言理论)
     - [2.2 IoT Schema主题](#22-iot-schema主题)
+      - [2.2.1 Sensor\_Schema（传感器Schema）](#221-sensor_schema传感器schema)
+      - [2.2.2 Communication\_Schema（通信Schema）](#222-communication_schema通信schema)
+      - [2.2.3 Control\_Schema（控制Schema）](#223-control_schema控制schema)
+      - [2.2.4 Security\_Schema（安全Schema）](#224-security_schema安全schema)
     - [2.3 工业自动化主题](#23-工业自动化主题)
+      - [2.3.1 CAN\_Schema（CAN总线Schema）](#231-can_schemacan总线schema)
+      - [2.3.2 PLC\_Schema（PLC Schema）](#232-plc_schemaplc-schema)
     - [2.4 物理设备主题](#24-物理设备主题)
+      - [2.4.1 Electrical\_Schema（电气Schema）](#241-electrical_schema电气schema)
+      - [2.4.2 Mechanical\_Schema（机械Schema）](#242-mechanical_schema机械schema)
+      - [2.4.3 Safety\_Schema（安全Schema）](#243-safety_schema安全schema)
+      - [2.4.4 Digital\_Twin（数字孪生）](#244-digital_twin数字孪生)
     - [2.5 编程转换主题](#25-编程转换主题)
+      - [2.5.1 Formal\_Model（形式化模型）](#251-formal_model形式化模型)
+      - [2.5.2 Language\_Mapping（语言映射）](#252-language_mapping语言映射)
+      - [2.5.3 Code\_Generation（代码生成）](#253-code_generation代码生成)
   - [3. 扩展统计](#3-扩展统计)
+    - [3.1 文件统计](#31-文件统计)
+    - [3.2 代码统计](#32-代码统计)
+    - [3.3 功能统计](#33-功能统计)
   - [4. 技术特性](#4-技术特性)
+    - [4.1 PostgreSQL特性](#41-postgresql特性)
+    - [4.2 TimescaleDB集成](#42-timescaledb集成)
+    - [4.3 图数据库集成](#43-图数据库集成)
   - [5. 性能指标](#5-性能指标)
+    - [5.1 存储性能](#51-存储性能)
+    - [5.2 查询性能](#52-查询性能)
   - [6. 后续计划](#6-后续计划)
+    - [6.1 功能增强](#61-功能增强)
+    - [6.2 性能优化](#62-性能优化)
+    - [6.3 监控告警](#63-监控告警)
 
 ---
 
@@ -40,12 +67,14 @@
 **文件**：`themes/05_DSL_Theory/Knowledge_Graph/04_Transformation.md`
 
 **新增内容**：
+
 - PostgreSQL JSONB存储方案
 - Apache AGE图数据库集成
 - Neo4j、ArangoDB、Amazon Neptune转换方案
 - 知识图谱转换性能对比
 
 **数据表设计**：
+
 - `schema_entities`：实体定义表
 - `schema_relations`：关系定义表
 - `schema_properties`：属性定义表
@@ -60,12 +89,14 @@
 **文件**：`themes/05_DSL_Theory/Information_Theory/04_Transformation.md`
 
 **新增内容**：
+
 - 信息熵数据存储
 - 转换损失数据存储
 - 互信息数据存储
 - 信息质量分析查询
 
 **数据表设计**：
+
 - `information_entropy`：信息熵表
 - `conversion_loss`：转换损失表
 - `mutual_information`：互信息表
@@ -80,12 +111,14 @@
 **文件**：`themes/05_DSL_Theory/Formal_Language_Theory/04_Transformation.md`
 
 **新增内容**：
+
 - 语法树存储
 - 解析结果存储
 - 语义模型存储
 - 语法树相似度查询
 
 **数据表设计**：
+
 - `syntax_trees`：语法树表
 - `parsing_results`：解析结果表
 - `semantic_models`：语义模型表
@@ -102,12 +135,14 @@
 **文件**：`themes/02_IoT_Schema/Sensor_Schema/04_Transformation.md`
 
 **新增内容**：
+
 - 传感器定义存储
 - 传感器读数存储（TimescaleDB）
 - 传感器统计计算
 - 异常检测
 
 **数据表设计**：
+
 - `sensor_definitions`：传感器定义表
 - `sensor_readings`：传感器读数表（时序数据）
 - `sensor_statistics`：统计表
@@ -121,6 +156,7 @@
 **文件**：`themes/02_IoT_Schema/Communication_Schema/04_Transformation.md`
 
 **新增内容**：
+
 - 协议配置存储
 - MQTT消息存储
 - Modbus寄存器存储
@@ -128,6 +164,7 @@
 - 协议转换日志
 
 **数据表设计**：
+
 - `protocol_configurations`：协议配置表
 - `mqtt_messages`：MQTT消息表
 - `modbus_registers`：Modbus寄存器表
@@ -144,6 +181,7 @@
 **文件**：`themes/02_IoT_Schema/Control_Schema/04_Transformation.md`
 
 **新增内容**：
+
 - 控制配置存储
 - 采样控制存储
 - 状态机状态存储
@@ -151,6 +189,7 @@
 - 参数配置历史
 
 **数据表设计**：
+
 - `control_configurations`：控制配置表
 - `sampling_controls`：采样控制表
 - `state_machine_states`：状态机状态表
@@ -167,6 +206,7 @@
 **文件**：`themes/02_IoT_Schema/Security_Schema/04_Transformation.md`
 
 **新增内容**：
+
 - 安全配置存储
 - 认证日志存储
 - 访问控制日志存储
@@ -174,6 +214,7 @@
 - 证书管理
 
 **数据表设计**：
+
 - `security_configurations`：安全配置表
 - `authentication_logs`：认证日志表
 - `access_control_logs`：访问控制日志表
@@ -192,6 +233,7 @@
 **文件**：`themes/01_Industrial_Automation/CAN_Schema/04_Transformation.md`
 
 **新增内容**：
+
 - DBC定义存储
 - 消息定义存储
 - 信号定义存储
@@ -199,6 +241,7 @@
 - CAN数据统计分析
 
 **数据表设计**：
+
 - `dbc_definitions`：DBC定义表
 - `message_definitions`：消息定义表
 - `signal_definitions`：信号定义表
@@ -214,6 +257,7 @@
 **文件**：`themes/01_Industrial_Automation/PLC_Schema/04_Transformation.md`
 
 **新增内容**：
+
 - PLC项目存储
 - POU定义存储
 - 变量定义存储
@@ -222,6 +266,7 @@
 - 运行时值存储
 
 **数据表设计**：
+
 - `plc_projects`：PLC项目表
 - `plc_pous`：POU表
 - `plc_variables`：变量表
@@ -241,12 +286,14 @@
 **文件**：`themes/03_Physical_Device/Electrical_Schema/04_Transformation.md`
 
 **新增内容**：
+
 - 电气设备定义存储
 - 电气读数存储
 - 电气事件存储
 - 功耗分析
 
 **数据表设计**：
+
 - `electrical_devices`：电气设备表
 - `electrical_readings`：电气读数表
 - `electrical_events`：电气事件表
@@ -261,12 +308,14 @@
 **文件**：`themes/03_Physical_Device/Mechanical_Schema/04_Transformation.md`
 
 **新增内容**：
+
 - 机械设备定义存储
 - 机械读数存储（位置、速度、力）
 - 机械事件存储
 - 机械性能分析
 
 **数据表设计**：
+
 - `mechanical_devices`：机械设备表
 - `mechanical_readings`：机械读数表
 - `mechanical_events`：机械事件表
@@ -281,12 +330,14 @@
 **文件**：`themes/03_Physical_Device/Safety_Schema/04_Transformation.md`
 
 **新增内容**：
+
 - 安全设备定义存储
 - 安全事件存储
 - 安全检查存储
 - 合规性监控
 
 **数据表设计**：
+
 - `safety_devices`：安全设备表
 - `safety_events`：安全事件表
 - `safety_inspections`：安全检查表
@@ -301,6 +352,7 @@
 **文件**：`themes/03_Physical_Device/Digital_Twin/04_Transformation.md`
 
 **新增内容**：
+
 - 数字孪生定义存储
 - 孪生状态存储
 - 同步事件存储
@@ -308,6 +360,7 @@
 - 健康状态分析
 
 **数据表设计**：
+
 - `digital_twins`：数字孪生表
 - `twin_states`：孪生状态表
 - `sync_events`：同步事件表
@@ -325,12 +378,14 @@
 **文件**：`themes/04_Programming_Conversion/Formal_Model/04_Transformation.md`
 
 **新增内容**：
+
 - 转换任务存储
 - 转换结果存储
 - 任务历史追踪
 - 转换统计
 
 **数据表设计**：
+
 - `conversion_tasks`：转换任务表
 - `conversion_results`：转换结果表
 - `conversion_statistics`：统计表
@@ -344,12 +399,14 @@
 **文件**：`themes/04_Programming_Conversion/Language_Mapping/04_Transformation.md`
 
 **新增内容**：
+
 - 映射规则存储
 - 映射结果存储
 - 规则管理
 - 映射统计
 
 **数据表设计**：
+
 - `mapping_rules`：映射规则表
 - `mapping_results`：映射结果表
 - `mapping_statistics`：统计表
@@ -363,12 +420,14 @@
 **文件**：`themes/04_Programming_Conversion/Code_Generation/04_Transformation.md`
 
 **新增内容**：
+
 - 代码生成任务存储
 - 生成代码存储
 - 代码版本管理
 - 生成统计
 
 **数据表设计**：
+
 - `code_generation_tasks`：代码生成任务表
 - `generated_code`：生成代码表
 - `code_generation_statistics`：统计表

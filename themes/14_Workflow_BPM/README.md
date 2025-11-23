@@ -28,7 +28,7 @@
 ### 1.1 主题范围
 
 - **BPMN Schema**：业务流程模型和标记法
-- **BPEL Schema**：Web服务业务流程执行语言（规划中）
+- **BPEL Schema**：Web服务业务流程执行语言
 - **Workflow Engine Schema**：工作流引擎Schema（规划中）
 
 ### 1.2 核心价值
@@ -66,6 +66,22 @@ Workflow_Schema = (Process_Definition ⊕ Task ⊕ Gateway ⊕ Event) × Executi
 - `BPMN_Schema/04_Transformation.md` - 转换体系
 - `BPMN_Schema/05_Case_Studies.md` - 实践案例
 
+### 3.2 BPEL Schema子主题
+
+- `BPEL_Schema/01_Overview.md` - 概述与核心概念
+- `BPEL_Schema/02_Formal_Definition.md` - 形式化定义
+- `BPEL_Schema/03_Standards.md` - 标准对标
+- `BPEL_Schema/04_Transformation.md` - 转换体系
+- `BPEL_Schema/05_Case_Studies.md` - 实践案例
+
+### 3.3 Workflow Engine Schema子主题
+
+- `Workflow_Engine_Schema/01_Overview.md` - 概述与核心概念
+- `Workflow_Engine_Schema/02_Formal_Definition.md` - 形式化定义
+- `Workflow_Engine_Schema/03_Standards.md` - 标准对标
+- `Workflow_Engine_Schema/04_Transformation.md` - 转换体系
+- `Workflow_Engine_Schema/05_Case_Studies.md` - 实践案例
+
 ---
 
 ## 4. 标准对标
@@ -74,7 +90,7 @@ Workflow_Schema = (Process_Definition ⊕ Task ⊕ Gateway ⊕ Event) × Executi
 
 - **BPMN 2.0**：业务流程模型和标记法标准
 - **ISO/IEC 19510**：BPMN国际标准
-- **WS-BPEL**：Web服务业务流程执行语言
+- **WS-BPEL 2.0**：Web服务业务流程执行语言标准
 
 ### 4.2 行业标准
 

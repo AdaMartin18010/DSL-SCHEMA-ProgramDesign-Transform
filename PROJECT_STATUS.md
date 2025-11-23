@@ -65,6 +65,14 @@
   - Serialization_Schema：ASN.1、Protobuf序列化Schema
   - CAD_Schema：CAD设计、结构设计、机构设计Schema（ISO 10303 STEP、ISO 14649 STEP-NC、ISO 16792 MBD）
   - Thermal_Schema：热学特性Schema（IEC 60068、IEC 60335-1、ISO 7730、ISO 13786）
+  - SWIFT_Schema：SWIFT金融消息Schema（SWIFT MT/MX、ISO 20022、SWIFT gpi）
+  - ISO20022_Schema：ISO 20022金融业务报文Schema（ISO 20022、SWIFT MX、SEPA）
+  - Payment_Schema：支付系统Schema（PCI DSS、ISO 8583、EMV、3D Secure）
+  - BPMN_Schema：业务流程模型和标记法Schema（BPMN 2.0、ISO/IEC 19510、XPDL、BPEL、DMN）
+  - BPEL_Schema：Web服务业务流程执行语言Schema（WS-BPEL 2.0、WSDL、SOAP、XPath）
+  - Workflow_Engine_Schema：工作流引擎Schema（BPMN 2.0、XPDL、Activiti、Camunda、jBPM）
+  - ERP_Schema：企业资源规划Schema（ISA-95、OAGIS、SAP、Oracle ERP）
+  - GS1_Schema：GS1全球统一标识系统Schema（GTIN、GLN、SSCC、EPCIS）
 - ✅ 实践案例文档代码示例增强（部分完成）
   - CAN_Schema：完整代码示例（C、Rust、Python）
   - Communication_Schema：完整代码示例（Python、Rust）
@@ -130,23 +138,25 @@
 
 ### 文档统计
 
-- **总文档数**：142个文件（23个子主题 × 5个文档类型 + 27个导航/索引文档）
-- **总行数**：约41,000+行
-- **标准文档**：115个（23个子主题 × 5个文档类型）
-- **导航文档**：27个（README、索引、术语表等）
-- **新增Schema**：7个（Message_Queue、Observability、Database、Serialization、CAD、Thermal、SWIFT）
+- **总文档数**：180个文件（33个子主题 × 5个文档类型 + 15个导航/索引文档）
+- **总行数**：约53,000+行
+- **标准文档**：165个（33个子主题 × 5个文档类型）
+- **导航文档**：15个（README、索引、术语表等）
+- **新增Schema**：14个（Message_Queue、Observability、Database、Serialization、CAD、Thermal、SWIFT、ISO20022、Payment、BPMN、BPEL、Workflow_Engine、ERP、GS1）
 
 ### 内容深度统计
 
-- **标准对比表**：66个详细对比表（子主题级）
+- **标准对比表**：70+个详细对比表（子主题级）
 - **跨领域对比矩阵**：50+个多维度对比矩阵（主题级）
-- **技术展望**：22个2025-2026年展望章节
+- **技术展望**：24+个2025-2026年展望章节
 - **技术社区**：115+个技术社区资源链接
 - **代码示例**：35+个完整可运行代码示例
 - **工具示例**：10+个工具使用示例
 - **数据库存储方案**：22+个（涵盖所有Schema类型）
 - **CAD相关标准**：6个（ISO 10303 STEP、ISO 14649 STEP-NC、ISO 16792 MBD、ISO 13584、ISO 22745、ISO 6983）
 - **热学相关标准**：5个（IEC 60068、IEC 60335-1、ISO 7730、ISO 13786、GB/T 2423）
+- **金融相关标准**：5个（SWIFT MT/MX、ISO 20022、SWIFT gpi、ISO 8583、PCI DSS）
+- **工作流相关标准**：10个（BPMN 2.0、ISO/IEC 19510、XPDL、WS-BPEL 2.0、DMN、WSDL、SOAP、XPath、BPEL4WS 1.1）
 - **标准检索文档**：4个综合标准检索和分析文档
   - STANDARDS_COMPREHENSIVE_ANALYSIS.md（全面标准检索）
   - CROSS_DOMAIN_STANDARDS_COMPARISON.md（跨领域对比）
