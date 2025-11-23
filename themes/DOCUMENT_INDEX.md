@@ -320,6 +320,14 @@
 - [转换体系](./07_Logistics_Supply_Chain/GS1_Schema/04_Transformation.md)
 - [实践案例](./07_Logistics_Supply_Chain/GS1_Schema/05_Case_Studies.md)
 
+#### EDI Schema
+
+- [概述](./07_Logistics_Supply_Chain/EDI_Schema/01_Overview.md)
+- [形式化定义](./07_Logistics_Supply_Chain/EDI_Schema/02_Formal_Definition.md)
+- [标准对标](./07_Logistics_Supply_Chain/EDI_Schema/03_Standards.md)
+- [转换体系](./07_Logistics_Supply_Chain/EDI_Schema/04_Transformation.md)
+- [实践案例](./07_Logistics_Supply_Chain/EDI_Schema/05_Case_Studies.md)
+
 ### 1.8 工作流与BPM Schema（14_Workflow_BPM）
 
 #### BPMN Schema

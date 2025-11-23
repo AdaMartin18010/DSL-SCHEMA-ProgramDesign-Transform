@@ -73,6 +73,7 @@
   - Workflow_Engine_Schema：工作流引擎Schema（BPMN 2.0、XPDL、Activiti、Camunda、jBPM）
   - ERP_Schema：企业资源规划Schema（ISA-95、OAGIS、SAP、Oracle ERP）
   - GS1_Schema：GS1全球统一标识系统Schema（GTIN、GLN、SSCC、EPCIS）
+  - EDI_Schema：电子数据交换Schema（EDI X12、EDIFACT）
 - ✅ 实践案例文档代码示例增强（部分完成）
   - CAN_Schema：完整代码示例（C、Rust、Python）
   - Communication_Schema：完整代码示例（Python、Rust）
@@ -138,11 +139,11 @@
 
 ### 文档统计
 
-- **总文档数**：180个文件（33个子主题 × 5个文档类型 + 15个导航/索引文档）
-- **总行数**：约53,000+行
-- **标准文档**：165个（33个子主题 × 5个文档类型）
-- **导航文档**：15个（README、索引、术语表等）
-- **新增Schema**：14个（Message_Queue、Observability、Database、Serialization、CAD、Thermal、SWIFT、ISO20022、Payment、BPMN、BPEL、Workflow_Engine、ERP、GS1）
+- **总文档数**：186个文件（34个子主题 × 5个文档类型 + 16个导航/索引文档）
+- **总行数**：约54,000+行
+- **标准文档**：170个（34个子主题 × 5个文档类型）
+- **导航文档**：16个（README、索引、术语表等）
+- **新增Schema**：15个（Message_Queue、Observability、Database、Serialization、CAD、Thermal、SWIFT、ISO20022、Payment、BPMN、BPEL、Workflow_Engine、ERP、GS1、EDI）
 
 ### 内容深度统计
 
