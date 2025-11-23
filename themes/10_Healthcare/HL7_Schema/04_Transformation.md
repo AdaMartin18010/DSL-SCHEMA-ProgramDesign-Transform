@@ -149,13 +149,36 @@ import json
 from typing import Dict, List, Optional
 from datetime import datetime
 
+import psycopg2
+import json
+import logging
+from datetime import datetime
+from typing import Dict, List, Optional
+
+logger = logging.getLogger(__name__)
+
 class HL7Storage:
-    """HL7数据存储系统"""
+    """HL7数据存储系统 - 增强错误处理"""
 
     def __init__(self, connection_string: str):
-        self.conn = psycopg2.connect(connection_string)
-        self.cur = self.conn.cursor()
-        self._create_tables()
+        # 输入验证
+        if not connection_string:
+            raise ValueError("Connection string cannot be empty")
+
+        if not isinstance(connection_string, str):
+            raise TypeError(f"Connection string must be a string, got {type(connection_string)}")
+
+        try:
+            self.conn = psycopg2.connect(connection_string)
+            self.cur = self.conn.cursor()
+            self._create_tables()
+            logger.info("HL7Storage initialized successfully")
+        except psycopg2.Error as e:
+            logger.error(f"Failed to connect to database: {e}")
+            raise ConnectionError(f"Failed to connect to database: {e}") from e
+        except Exception as e:
+            logger.error(f"Unexpected error initializing HL7Storage: {e}", exc_info=True)
+            raise RuntimeError(f"Failed to initialize HL7Storage: {e}") from e
 
     def _create_tables(self):
         """创建HL7数据表"""
@@ -232,18 +255,71 @@ class HL7Storage:
     def store_message(self, message_type: str, message_control_id: str,
                      message_content: str, sending_app: str = None,
                      sending_facility: str = None) -> int:
-        """存储HL7消息"""
-        self.cur.execute("""
-            INSERT INTO hl7_messages (
-                message_type, message_control_id, message_content,
-                sending_application, sending_facility
-            ) VALUES (%s, %s, %s, %s, %s)
-            ON CONFLICT (message_control_id) DO NOTHING
-            RETURNING id
-        """, (message_type, message_control_id, message_content,
-              sending_app, sending_facility))
-        result = self.cur.fetchone()
-        return result[0] if result else None
+        """存储HL7消息 - 增强错误处理"""
+        # 输入验证
+        if not message_type:
+            raise ValueError("Message type cannot be empty")
+
+        if not isinstance(message_type, str):
+            raise TypeError(f"Message type must be a string, got {type(message_type)}")
+
+        if len(message_type) > 20:
+            raise ValueError(f"Message type too long: {len(message_type)} (max 20)")
+
+        if not message_control_id:
+            raise ValueError("Message control ID cannot be empty")
+
+        if not isinstance(message_control_id, str):
+            raise TypeError(f"Message control ID must be a string, got {type(message_control_id)}")
+
+        if len(message_control_id) > 20:
+            raise ValueError(f"Message control ID too long: {len(message_control_id)} (max 20)")
+
+        if not message_content:
+            raise ValueError("Message content cannot be empty")
+
+        if not isinstance(message_content, str):
+            raise TypeError(f"Message content must be a string, got {type(message_content)}")
+
+        if sending_app is not None and len(sending_app) > 180:
+            raise ValueError(f"Sending application too long: {len(sending_app)} (max 180)")
+
+        if sending_facility is not None and len(sending_facility) > 180:
+            raise ValueError(f"Sending facility too long: {len(sending_facility)} (max 180)")
+
+        try:
+            self.cur.execute("""
+                INSERT INTO hl7_messages (
+                    message_type, message_control_id, message_content,
+                    sending_application, sending_facility
+                ) VALUES (%s, %s, %s, %s, %s)
+                ON CONFLICT (message_control_id) DO NOTHING
+                RETURNING id
+            """, (message_type, message_control_id, message_content,
+                  sending_app, sending_facility))
+
+            result = self.cur.fetchone()
+            self.conn.commit()
+
+            if result:
+                logger.info(f"Stored HL7 message: {message_control_id}")
+                return result[0]
+            else:
+                logger.warning(f"HL7 message {message_control_id} already exists")
+                return None
+
+        except psycopg2.IntegrityError as e:
+            logger.error(f"Integrity error storing HL7 message: {e}")
+            self.conn.rollback()
+            raise ValueError(f"Duplicate message control ID or constraint violation: {e}") from e
+        except psycopg2.Error as e:
+            logger.error(f"Database error storing HL7 message: {e}")
+            self.conn.rollback()
+            raise RuntimeError(f"Database operation failed: {e}") from e
+        except Exception as e:
+            logger.error(f"Unexpected error storing HL7 message: {e}", exc_info=True)
+            self.conn.rollback()
+            raise RuntimeError(f"Failed to store HL7 message: {e}") from e
 
     def get_message(self, message_control_id: str) -> Optional[str]:
         """获取HL7消息"""

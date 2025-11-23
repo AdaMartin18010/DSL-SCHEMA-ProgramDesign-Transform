@@ -42,6 +42,18 @@
     - [11.1 场景描述](#111-场景描述)
     - [11.2 Schema定义](#112-schema定义)
     - [11.3 实现代码](#113-实现代码)
+  - [12. 案例11：文档智能分析系统](#12-案例11文档智能分析系统)
+    - [12.1 场景描述](#121-场景描述)
+    - [12.2 Schema定义](#122-schema定义)
+    - [12.3 实现代码](#123-实现代码)
+  - [13. 案例12：流程自动化系统](#13-案例12流程自动化系统)
+    - [13.1 场景描述](#131-场景描述)
+    - [13.2 Schema定义](#132-schema定义)
+    - [13.3 实现代码](#133-实现代码)
+  - [14. 案例13：协作效率分析系统](#14-案例13协作效率分析系统)
+    - [14.1 场景描述](#141-场景描述)
+    - [14.2 Schema定义](#142-schema定义)
+    - [14.3 实现代码](#143-实现代码)
 
 ---
 
@@ -1557,6 +1569,536 @@ if __name__ == "__main__":
 - `02_Formal_Definition.md` - 形式化定义
 - `03_Standards.md` - 标准对标
 - `04_Transformation.md` - 转换体系
+
+---
+
+## 12. 案例11：文档智能分析系统
+
+### 12.1 场景描述
+
+**业务背景**：
+文档智能分析系统使用AI技术分析文档内容，
+提取关键信息、生成摘要、识别主题，提高文档处理效率。
+
+**技术挑战**：
+
+- 需要文档内容解析
+- 需要AI文本分析
+- 需要信息提取
+- 需要摘要生成
+
+**解决方案**：
+使用OA_Schema定义文档分析结构，
+使用AI模型进行文档分析，
+使用OAStorage存储分析结果。
+
+### 12.2 Schema定义
+
+**文档智能分析Schema**：
+
+```dsl
+schema DocumentIntelligentAnalysis {
+  analysis_session_id: String @value("DOC-ANALYSIS-20250121-001") @required
+  document_id: String @value("DOC-001") @required
+  analysis_time: DateTime @value("2025-01-21T10:00:00") @required
+
+  document_info: {
+    title: String @value("项目计划书")
+    document_type: Enum { Word } @value(Word)
+    word_count: Integer @value(5000)
+    page_count: Integer @value(10)
+  } @required
+
+  ai_analysis: {
+    summary: String @value("本文档描述了2025年Q1项目计划...")
+    key_topics: [String] @value(["项目管理", "资源分配", "时间规划"])
+    key_entities: [
+      {
+        entity_type: String @value("Person")
+        entity_name: String @value("张三")
+        mention_count: Integer @value(5)
+      }
+    ]
+    sentiment: Enum { Neutral } @value(Neutral)
+    language: String @value("zh-CN")
+  } @required
+
+  extracted_information: {
+    dates: [Date] @value(["2025-01-21", "2025-03-31"])
+    deadlines: [Date] @value(["2025-03-31"])
+    budget_info: {
+      total_budget: Decimal @value(1000000.0)
+      currency: String @value("RMB")
+    }
+    action_items: [
+      {
+        item: String @value("完成需求分析")
+        assignee: String @value("张三")
+        due_date: Date @value("2025-02-15")
+      }
+    ]
+  } @required
+} @standard("ODF/OOXML")
+```
+
+### 12.3 实现代码
+
+```python
+from oa_storage import OAStorage
+from datetime import datetime
+
+def document_intelligent_analysis():
+    """文档智能分析系统示例"""
+    storage = OAStorage("postgresql://user:password@localhost/oa_db")
+
+    # 文档信息
+    document_info = {
+        "document_id": "DOC-001",
+        "title": "项目计划书",
+        "document_type": "Word",
+        "word_count": 5000,
+        "page_count": 10
+    }
+
+    # AI文档分析（简化示例）
+    def analyze_document(document_id, content):
+        """AI文档分析"""
+        # 生成摘要（简化示例）
+        summary = "本文档描述了2025年Q1项目计划，包括项目目标、资源分配、时间规划等内容。"
+
+        # 提取关键主题
+        key_topics = ["项目管理", "资源分配", "时间规划"]
+
+        # 提取关键实体
+        key_entities = [
+            {
+                "entity_type": "Person",
+                "entity_name": "张三",
+                "mention_count": 5
+            }
+        ]
+
+        # 情感分析
+        sentiment = "Neutral"
+
+        # 提取信息
+        extracted_info = {
+            "dates": ["2025-01-21", "2025-03-31"],
+            "deadlines": ["2025-03-31"],
+            "budget_info": {
+                "total_budget": 1000000.0,
+                "currency": "RMB"
+            },
+            "action_items": [
+                {
+                    "item": "完成需求分析",
+                    "assignee": "张三",
+                    "due_date": "2025-02-15"
+                }
+            ]
+        }
+
+        return {
+            "summary": summary,
+            "key_topics": key_topics,
+            "key_entities": key_entities,
+            "sentiment": sentiment,
+            "language": "zh-CN",
+            "extracted_information": extracted_info
+        }
+
+    # 执行文档分析
+    content = "..."  # 文档内容
+    ai_analysis = analyze_document(document_info["document_id"], content)
+
+    # 存储分析结果
+    analysis_data = {
+        "analysis_session_id": "DOC-ANALYSIS-20250121-001",
+        "document_id": document_info["document_id"],
+        "analysis_time": datetime.now(),
+        "document_title": document_info["title"],
+        "document_type": document_info["document_type"],
+        "word_count": document_info["word_count"],
+        "summary": ai_analysis["summary"],
+        "key_topics": ai_analysis["key_topics"],
+        "key_entities": ai_analysis["key_entities"],
+        "sentiment": ai_analysis["sentiment"],
+        "extracted_dates": ai_analysis["extracted_information"]["dates"],
+        "extracted_deadlines": ai_analysis["extracted_information"]["deadlines"],
+        "budget_total": ai_analysis["extracted_information"]["budget_info"]["total_budget"],
+        "action_items": ai_analysis["extracted_information"]["action_items"]
+    }
+
+    # 存储到数据库
+    analysis_id = storage.store_document_analysis(analysis_data)
+    print(f"Document analysis stored: {analysis_id}")
+
+    print(f"\nDocument Intelligent Analysis Results:")
+    print(f"  Document: {document_info['title']}")
+    print(f"  Summary: {ai_analysis['summary'][:100]}...")
+    print(f"  Key topics: {', '.join(ai_analysis['key_topics'])}")
+    print(f"  Key entities: {len(ai_analysis['key_entities'])}")
+    print(f"  Action items: {len(ai_analysis['extracted_information']['action_items'])}")
+
+    return analysis_data
+
+if __name__ == "__main__":
+    document_intelligent_analysis()
+```
+
+---
+
+## 13. 案例12：流程自动化系统
+
+### 13.1 场景描述
+
+**业务背景**：
+流程自动化系统自动执行重复性业务流程，
+例如自动审批、自动通知、自动数据同步等。
+
+**技术挑战**：
+
+- 需要流程规则定义
+- 需要条件判断
+- 需要自动执行
+- 需要执行监控
+
+**解决方案**：
+使用OA_Schema定义流程自动化规则，
+使用BPMN引擎执行自动化流程，
+使用OAStorage存储自动化数据。
+
+### 13.2 Schema定义
+
+**流程自动化Schema**：
+
+```dsl
+schema ProcessAutomation {
+  automation_id: String @value("AUTO-PROC-20250121-001") @required
+  automation_name: String @value("自动审批流程") @required
+  process_id: String @value("PROC-001") @required
+
+  automation_rules: [
+    {
+      rule_id: String @value("RULE-001")
+      rule_name: String @value("金额自动审批")
+      condition: {
+        field: String @value("amount")
+        operator: Enum { LessThan } @value(LessThan)
+        value: Decimal @value(10000.0)
+      }
+      action: {
+        action_type: Enum { AutoApprove } @value(AutoApprove)
+        approver: String @value("SYSTEM")
+        notification: Boolean @value(true)
+      }
+    }
+  ] @required
+
+  automation_status: {
+    status: Enum { Active } @value(Active)
+    execution_count: Integer @value(50)
+    success_rate: Decimal @value(0.98) @range(0.0, 1.0)
+    last_executed: DateTime @value("2025-01-21T10:00:00")
+  } @required
+} @standard("BPMN")
+```
+
+### 13.3 实现代码
+
+```python
+from oa_storage import OAStorage
+from datetime import datetime
+
+def process_automation_system():
+    """流程自动化系统示例"""
+    storage = OAStorage("postgresql://user:password@localhost/oa_db")
+
+    # 自动化规则
+    automation_rules = [
+        {
+            "rule_id": "RULE-001",
+            "rule_name": "金额自动审批",
+            "condition": {
+                "field": "amount",
+                "operator": "LessThan",
+                "value": 10000.0
+            },
+            "action": {
+                "action_type": "AutoApprove",
+                "approver": "SYSTEM",
+                "notification": True
+            }
+        }
+    ]
+
+    # 检查自动化条件
+    def check_automation_condition(rule, process_data):
+        """检查自动化条件"""
+        field_value = process_data.get(rule["condition"]["field"])
+        operator = rule["condition"]["operator"]
+        threshold = rule["condition"]["value"]
+
+        if operator == "LessThan":
+            return field_value < threshold
+        elif operator == "GreaterThan":
+            return field_value > threshold
+        elif operator == "Equals":
+            return field_value == threshold
+        return False
+
+    # 执行自动化动作
+    def execute_automation_action(rule, process_id):
+        """执行自动化动作"""
+        action_type = rule["action"]["action_type"]
+
+        if action_type == "AutoApprove":
+            # 自动审批
+            storage.approve_process(process_id, rule["action"]["approver"])
+
+            # 发送通知
+            if rule["action"]["notification"]:
+                storage.send_notification(process_id, "流程已自动审批")
+
+            return True
+        return False
+
+    # 处理流程
+    process_data = {
+        "process_id": "PROC-001",
+        "amount": 5000.0,
+        "applicant": "USER-001"
+    }
+
+    # 检查并执行自动化
+    for rule in automation_rules:
+        if check_automation_condition(rule, process_data):
+            print(f"Automation rule triggered: {rule['rule_name']}")
+            result = execute_automation_action(rule, process_data["process_id"])
+
+            if result:
+                # 记录自动化执行
+                automation_data = {
+                    "automation_id": "AUTO-PROC-20250121-001",
+                    "automation_name": "自动审批流程",
+                    "process_id": process_data["process_id"],
+                    "rule_id": rule["rule_id"],
+                    "execution_time": datetime.now(),
+                    "status": "Success"
+                }
+
+                storage.store_automation_event(automation_data)
+                print(f"Automation executed successfully")
+
+    return automation_data
+
+if __name__ == "__main__":
+    process_automation_system()
+```
+
+---
+
+## 14. 案例13：协作效率分析系统
+
+### 14.1 场景描述
+
+**业务背景**：
+协作效率分析系统分析团队协作数据，
+评估协作效率，识别协作瓶颈，提供优化建议。
+
+**技术挑战**：
+
+- 需要协作数据收集
+- 需要效率指标计算
+- 需要瓶颈识别
+- 需要优化建议生成
+
+**解决方案**：
+使用OA_Schema整合协作数据，
+使用数据分析算法进行效率分析，
+使用OAStorage存储分析结果。
+
+### 14.2 Schema定义
+
+**协作效率分析Schema**：
+
+```dsl
+schema CollaborationEfficiencyAnalysis {
+  analysis_session_id: String @value("COLLAB-ANALYSIS-20250121-001") @required
+  team_id: String @value("TEAM-001") @required
+  analysis_period: {
+    start_date: Date @value("2025-01-01")
+    end_date: Date @value("2025-01-21")
+  } @required
+
+  collaboration_metrics: {
+    total_collaborations: Integer @value(150)
+    average_response_time: Decimal @value(2.5) @unit("hours")
+    collaboration_frequency: Decimal @value(7.1) @unit("per day")
+    document_sharing_count: Integer @value(80)
+    meeting_count: Integer @value(25)
+    average_meeting_duration: Decimal @value(45.0) @unit("minutes")
+  } @required
+
+  efficiency_analysis: {
+    overall_efficiency_score: Decimal @value(0.78) @range(0.0, 1.0)
+    efficiency_level: Enum { Good } @value(Good)
+    bottlenecks: [
+      {
+        bottleneck_type: String @value("Slow response time")
+        severity: Enum { Medium } @value(Medium)
+        impact: String @value("影响任务完成速度")
+      }
+    ]
+    recommendations: [
+      {
+        recommendation: String @value("优化响应时间")
+        priority: Enum { High } @value(High)
+        expected_improvement: Decimal @value(0.15)
+      }
+    ]
+  } @required
+} @standard("BPMN")
+```
+
+### 14.3 实现代码
+
+```python
+from oa_storage import OAStorage
+from datetime import datetime, date, timedelta
+
+def collaboration_efficiency_analysis():
+    """协作效率分析系统示例"""
+    storage = OAStorage("postgresql://user:password@localhost/oa_db")
+
+    # 协作指标数据
+    team_id = "TEAM-001"
+    start_date = date(2025, 1, 1)
+    end_date = date(2025, 1, 21)
+
+    collaboration_metrics = {
+        "total_collaborations": 150,
+        "average_response_time": 2.5,  # hours
+        "collaboration_frequency": 7.1,  # per day
+        "document_sharing_count": 80,
+        "meeting_count": 25,
+        "average_meeting_duration": 45.0  # minutes
+    }
+
+    # 效率分析算法
+    def analyze_efficiency(metrics):
+        """分析协作效率"""
+        efficiency_score = 0.0
+        bottlenecks = []
+        recommendations = []
+
+        # 响应时间评分
+        if metrics["average_response_time"] <= 1.0:
+            response_score = 1.0
+        elif metrics["average_response_time"] <= 2.0:
+            response_score = 0.8
+        else:
+            response_score = 0.6
+            bottlenecks.append({
+                "bottleneck_type": "Slow response time",
+                "severity": "Medium",
+                "impact": "影响任务完成速度"
+            })
+            recommendations.append({
+                "recommendation": "优化响应时间",
+                "priority": "High",
+                "expected_improvement": 0.15
+            })
+
+        # 协作频率评分
+        if metrics["collaboration_frequency"] >= 10:
+            frequency_score = 1.0
+        elif metrics["collaboration_frequency"] >= 5:
+            frequency_score = 0.8
+        else:
+            frequency_score = 0.6
+
+        # 会议效率评分
+        if metrics["average_meeting_duration"] <= 30:
+            meeting_score = 1.0
+        elif metrics["average_meeting_duration"] <= 60:
+            meeting_score = 0.8
+        else:
+            meeting_score = 0.6
+            bottlenecks.append({
+                "bottleneck_type": "Long meeting duration",
+                "severity": "Low",
+                "impact": "影响时间利用效率"
+            })
+            recommendations.append({
+                "recommendation": "优化会议时长",
+                "priority": "Medium",
+                "expected_improvement": 0.10
+            })
+
+        # 综合效率评分
+        efficiency_score = (
+            response_score * 0.4 +
+            frequency_score * 0.3 +
+            meeting_score * 0.3
+        )
+
+        # 确定效率等级
+        if efficiency_score >= 0.8:
+            efficiency_level = "Excellent"
+        elif efficiency_score >= 0.7:
+            efficiency_level = "Good"
+        elif efficiency_score >= 0.6:
+            efficiency_level = "Fair"
+        else:
+            efficiency_level = "Poor"
+
+        return {
+            "overall_efficiency_score": efficiency_score,
+            "efficiency_level": efficiency_level,
+            "bottlenecks": bottlenecks,
+            "recommendations": recommendations
+        }
+
+    # 执行效率分析
+    efficiency_analysis = analyze_efficiency(collaboration_metrics)
+
+    # 存储分析结果
+    analysis_data = {
+        "analysis_session_id": "COLLAB-ANALYSIS-20250121-001",
+        "team_id": team_id,
+        "analysis_start_date": start_date,
+        "analysis_end_date": end_date,
+        "total_collaborations": collaboration_metrics["total_collaborations"],
+        "average_response_time": collaboration_metrics["average_response_time"],
+        "collaboration_frequency": collaboration_metrics["collaboration_frequency"],
+        "document_sharing_count": collaboration_metrics["document_sharing_count"],
+        "meeting_count": collaboration_metrics["meeting_count"],
+        "average_meeting_duration": collaboration_metrics["average_meeting_duration"],
+        "overall_efficiency_score": efficiency_analysis["overall_efficiency_score"],
+        "efficiency_level": efficiency_analysis["efficiency_level"],
+        "bottlenecks": efficiency_analysis["bottlenecks"],
+        "recommendations": efficiency_analysis["recommendations"]
+    }
+
+    # 存储到数据库
+    analysis_id = storage.store_collaboration_analysis(analysis_data)
+    print(f"Collaboration efficiency analysis stored: {analysis_id}")
+
+    print(f"\nCollaboration Efficiency Analysis:")
+    print(f"  Team: {team_id}")
+    print(f"  Overall efficiency score: {efficiency_analysis['overall_efficiency_score']:.2f}")
+    print(f"  Efficiency level: {efficiency_analysis['efficiency_level']}")
+    print(f"  Bottlenecks: {len(efficiency_analysis['bottlenecks'])}")
+    print(f"  Recommendations: {len(efficiency_analysis['recommendations'])}")
+
+    return analysis_data
+
+if __name__ == "__main__":
+    collaboration_efficiency_analysis()
+```
+
+---
 
 **创建时间**：2025-01-21
 **最后更新**：2025-01-21

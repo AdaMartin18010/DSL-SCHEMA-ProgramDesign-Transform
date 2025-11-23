@@ -40,6 +40,14 @@
   - [11. 案例10：供应商质量评估](#11-案例10供应商质量评估)
     - [11.1 场景描述](#111-场景描述)
     - [11.2 实现代码](#112-实现代码)
+  - [12. 案例11：智能质量检测系统](#12-案例11智能质量检测系统)
+    - [12.1 场景描述](#121-场景描述)
+    - [12.2 Schema定义](#122-schema定义)
+    - [12.3 实现代码](#123-实现代码)
+  - [13. 案例12：供应链优化系统](#13-案例12供应链优化系统)
+    - [13.1 场景描述](#131-场景描述)
+    - [13.2 Schema定义](#132-schema定义)
+    - [13.3 实现代码](#133-实现代码)
 
 ---
 
@@ -1152,6 +1160,391 @@ if __name__ == "__main__":
 - `02_Formal_Definition.md` - 形式化定义
 - `03_Standards.md` - 标准对标
 - `04_Transformation.md` - 转换体系
+
+---
+
+## 12. 案例11：智能质量检测系统
+
+### 12.1 场景描述
+
+**业务背景**：
+智能质量检测系统使用AI和IoT传感器，
+自动检测食品质量，识别质量问题，提高检测效率和准确性。
+
+**技术挑战**：
+- 需要多传感器数据融合
+- 需要AI质量识别模型
+- 需要实时质量检测
+- 需要质量报告生成
+
+**解决方案**：
+使用Food_Industry_Schema整合传感器数据，
+使用AI模型进行质量检测，
+使用FoodIndustryStorage存储检测结果。
+
+### 12.2 Schema定义
+
+**智能质量检测Schema**：
+
+```dsl
+schema IntelligentQualityDetection {
+  detection_session_id: String @value("QUALITY-DET-20250121-001") @required
+  food_id: String @value("FOOD-001") @required
+  batch_number: String @value("BATCH20250121001") @required
+  detection_time: DateTime @value("2025-01-21T10:00:00") @required
+
+  sensor_data: {
+    temperature: Decimal @value(4.5) @unit("Celsius")
+    humidity: Decimal @value(65.0) @unit("%")
+    ph_value: Decimal @value(6.8)
+    color_score: Decimal @value(0.85) @range(0.0, 1.0)
+    texture_score: Decimal @value(0.78) @range(0.0, 1.0)
+    smell_score: Decimal @value(0.82) @range(0.0, 1.0)
+  } @required
+
+  ai_analysis: {
+    overall_quality_score: Decimal @value(0.82) @range(0.0, 1.0)
+    quality_grade: Enum { Good } @value(Good)
+    detected_issues: [
+      {
+        issue_type: String @value("Minor color variation")
+        severity: Enum { Low } @value(Low)
+        confidence: Decimal @value(0.75)
+      }
+    ]
+    recommendations: [
+      {
+        recommendation: String @value("继续监测颜色变化")
+        priority: Enum { Low } @value(Low)
+      }
+    ]
+  } @required
+
+  detection_result: {
+    passed: Boolean @value(true)
+    quality_status: Enum { Acceptable } @value(Acceptable)
+    certification: String @value("QC-20250121-001")
+  } @required
+} @standard("EPCIS")
+```
+
+### 12.3 实现代码
+
+```python
+from food_industry_storage import FoodIndustryStorage
+from datetime import datetime
+
+def intelligent_quality_detection():
+    """智能质量检测系统示例"""
+    storage = FoodIndustryStorage("postgresql://user:password@localhost/food_industry")
+
+    # 传感器数据
+    sensor_data = {
+        "temperature": 4.5,
+        "humidity": 65.0,
+        "ph_value": 6.8,
+        "color_score": 0.85,
+        "texture_score": 0.78,
+        "smell_score": 0.82
+    }
+
+    # AI质量检测算法
+    def detect_quality(sensor_data):
+        """AI质量检测"""
+        # 计算综合质量分数
+        overall_score = (
+            sensor_data["color_score"] * 0.3 +
+            sensor_data["texture_score"] * 0.3 +
+            sensor_data["smell_score"] * 0.2 +
+            (1.0 if 4.0 <= sensor_data["temperature"] <= 8.0 else 0.5) * 0.1 +
+            (1.0 if 6.5 <= sensor_data["ph_value"] <= 7.5 else 0.5) * 0.1
+        )
+
+        # 确定质量等级
+        if overall_score >= 0.9:
+            quality_grade = "Excellent"
+        elif overall_score >= 0.75:
+            quality_grade = "Good"
+        elif overall_score >= 0.60:
+            quality_grade = "Fair"
+        else:
+            quality_grade = "Poor"
+
+        # 检测问题
+        detected_issues = []
+        if sensor_data["color_score"] < 0.80:
+            detected_issues.append({
+                "issue_type": "Minor color variation",
+                "severity": "Low",
+                "confidence": 0.75
+            })
+
+        # 生成建议
+        recommendations = []
+        if sensor_data["color_score"] < 0.80:
+            recommendations.append({
+                "recommendation": "继续监测颜色变化",
+                "priority": "Low"
+            })
+
+        return {
+            "overall_quality_score": overall_score,
+            "quality_grade": quality_grade,
+            "detected_issues": detected_issues,
+            "recommendations": recommendations
+        }
+
+    # 执行质量检测
+    ai_analysis = detect_quality(sensor_data)
+
+    # 判断是否通过
+    passed = ai_analysis["overall_quality_score"] >= 0.60
+    quality_status = "Acceptable" if passed else "Rejected"
+
+    # 存储检测结果
+    detection_data = {
+        "detection_session_id": "QUALITY-DET-20250121-001",
+        "food_id": "FOOD-001",
+        "batch_number": "BATCH20250121001",
+        "detection_time": datetime.now(),
+        "temperature": sensor_data["temperature"],
+        "humidity": sensor_data["humidity"],
+        "ph_value": sensor_data["ph_value"],
+        "color_score": sensor_data["color_score"],
+        "texture_score": sensor_data["texture_score"],
+        "smell_score": sensor_data["smell_score"],
+        "overall_quality_score": ai_analysis["overall_quality_score"],
+        "quality_grade": ai_analysis["quality_grade"],
+        "detected_issues": ai_analysis["detected_issues"],
+        "recommendations": ai_analysis["recommendations"],
+        "passed": passed,
+        "quality_status": quality_status,
+        "certification": f"QC-{datetime.now().strftime('%Y%m%d')}-001"
+    }
+
+    # 存储到数据库
+    detection_id = storage.store_traceability_event(detection_data)
+    print(f"Quality detection stored: {detection_id}")
+
+    print(f"\nIntelligent Quality Detection Results:")
+    print(f"  Food ID: FOOD-001")
+    print(f"  Batch: BATCH20250121001")
+    print(f"  Overall quality score: {ai_analysis['overall_quality_score']:.2f}")
+    print(f"  Quality grade: {ai_analysis['quality_grade']}")
+    print(f"  Passed: {passed}")
+    print(f"  Quality status: {quality_status}")
+    print(f"  Detected issues: {len(ai_analysis['detected_issues'])}")
+    print(f"  Recommendations: {len(ai_analysis['recommendations'])}")
+
+    return detection_data
+
+if __name__ == "__main__":
+    intelligent_quality_detection()
+```
+
+---
+
+## 13. 案例12：供应链优化系统
+
+### 13.1 场景描述
+
+**业务背景**：
+供应链优化系统通过分析供应链数据，
+优化库存管理、物流配送、供应商选择，提高供应链效率。
+
+**技术挑战**：
+- 需要供应链数据整合
+- 需要优化算法
+- 需要实时监控
+- 需要效果评估
+
+**解决方案**：
+使用Food_Industry_Schema整合供应链数据，
+使用优化算法进行供应链优化，
+使用FoodIndustryStorage存储优化结果。
+
+### 13.2 Schema定义
+
+**供应链优化Schema**：
+
+```dsl
+schema SupplyChainOptimization {
+  optimization_session_id: String @value("SC-OPT-20250121-001") @required
+  optimization_date: Date @value("2025-01-21") @required
+
+  current_supply_chain: {
+    suppliers: [
+      {
+        supplier_id: String @value("SUPPLIER-001")
+        supplier_name: String @value("供应商A")
+        delivery_time: Integer @value(5) @unit("days")
+        cost_per_unit: Decimal @value(10.5)
+        quality_score: Decimal @value(0.85) @range(0.0, 1.0)
+        reliability: Decimal @value(0.90) @range(0.0, 1.0)
+      }
+    ]
+    inventory_levels: {
+      raw_materials: Integer @value(1000) @unit("units")
+      finished_products: Integer @value(500) @unit("units")
+      target_inventory: Integer @value(800) @unit("units")
+    }
+    logistics: {
+      average_delivery_time: Decimal @value(3.5) @unit("days")
+      transportation_cost: Decimal @value(5000.0) @unit("RMB/month")
+    }
+  } @required
+
+  optimization_results: {
+    recommended_suppliers: [String] @value(["SUPPLIER-001", "SUPPLIER-003"])
+    optimized_inventory_levels: {
+      raw_materials: Integer @value(800)
+      finished_products: Integer @value(600)
+    }
+    optimized_logistics: {
+      expected_delivery_time: Decimal @value(3.0)
+      expected_cost_reduction: Decimal @value(0.15) @unit("15% reduction")
+    }
+    expected_improvements: {
+      cost_reduction: Decimal @value(0.12) @unit("12% reduction")
+      efficiency_increase: Decimal @value(0.18) @unit("18% increase")
+      quality_improvement: Decimal @value(0.05) @unit("5% improvement")
+    }
+  } @required
+} @standard("EPCIS")
+```
+
+### 13.3 实现代码
+
+```python
+from food_industry_storage import FoodIndustryStorage
+from datetime import datetime
+
+def supply_chain_optimization():
+    """供应链优化系统示例"""
+    storage = FoodIndustryStorage("postgresql://user:password@localhost/food_industry")
+
+    # 当前供应链数据
+    suppliers = [
+        {
+            "supplier_id": "SUPPLIER-001",
+            "supplier_name": "供应商A",
+            "delivery_time": 5,
+            "cost_per_unit": 10.5,
+            "quality_score": 0.85,
+            "reliability": 0.90
+        },
+        {
+            "supplier_id": "SUPPLIER-002",
+            "supplier_name": "供应商B",
+            "delivery_time": 7,
+            "cost_per_unit": 9.8,
+            "quality_score": 0.78,
+            "reliability": 0.85
+        },
+        {
+            "supplier_id": "SUPPLIER-003",
+            "supplier_name": "供应商C",
+            "delivery_time": 4,
+            "cost_per_unit": 11.0,
+            "quality_score": 0.92,
+            "reliability": 0.95
+        }
+    ]
+
+    current_inventory = {
+        "raw_materials": 1000,
+        "finished_products": 500,
+        "target_inventory": 800
+    }
+
+    current_logistics = {
+        "average_delivery_time": 3.5,
+        "transportation_cost": 5000.0
+    }
+
+    # 供应链优化算法
+    def optimize_supply_chain(suppliers, inventory, logistics):
+        """优化供应链"""
+        # 供应商评分（综合考虑成本、质量、可靠性、交付时间）
+        supplier_scores = []
+        for supplier in suppliers:
+            score = (
+                (1.0 / supplier["cost_per_unit"]) * 0.3 +
+                supplier["quality_score"] * 0.3 +
+                supplier["reliability"] * 0.2 +
+                (1.0 / supplier["delivery_time"]) * 0.2
+            )
+            supplier_scores.append({
+                "supplier_id": supplier["supplier_id"],
+                "score": score
+            })
+
+        # 选择最优供应商
+        supplier_scores.sort(key=lambda x: x["score"], reverse=True)
+        recommended_suppliers = [s["supplier_id"] for s in supplier_scores[:2]]
+
+        # 优化库存水平
+        optimized_inventory = {
+            "raw_materials": inventory["target_inventory"],
+            "finished_products": int(inventory["target_inventory"] * 0.75)
+        }
+
+        # 优化物流
+        best_supplier = next(s for s in suppliers if s["supplier_id"] == recommended_suppliers[0])
+        optimized_logistics = {
+            "expected_delivery_time": best_supplier["delivery_time"] * 0.9,
+            "expected_cost_reduction": 0.15
+        }
+
+        # 预期改进
+        expected_improvements = {
+            "cost_reduction": 0.12,
+            "efficiency_increase": 0.18,
+            "quality_improvement": 0.05
+        }
+
+        return {
+            "recommended_suppliers": recommended_suppliers,
+            "optimized_inventory_levels": optimized_inventory,
+            "optimized_logistics": optimized_logistics,
+            "expected_improvements": expected_improvements
+        }
+
+    # 执行优化
+    optimization_results = optimize_supply_chain(suppliers, current_inventory, current_logistics)
+
+    # 存储优化结果
+    optimization_data = {
+        "optimization_session_id": "SC-OPT-20250121-001",
+        "optimization_date": datetime.now().date(),
+        "current_suppliers": suppliers,
+        "current_inventory": current_inventory,
+        "current_logistics": current_logistics,
+        "recommended_suppliers": optimization_results["recommended_suppliers"],
+        "optimized_inventory": optimization_results["optimized_inventory_levels"],
+        "optimized_logistics": optimization_results["optimized_logistics"],
+        "expected_improvements": optimization_results["expected_improvements"]
+    }
+
+    # 存储到数据库
+    optimization_id = storage.store_traceability_event(optimization_data)
+    print(f"Supply chain optimization stored: {optimization_id}")
+
+    print(f"\nSupply Chain Optimization Results:")
+    print(f"  Recommended suppliers: {', '.join(optimization_results['recommended_suppliers'])}")
+    print(f"  Optimized raw materials inventory: {optimization_results['optimized_inventory_levels']['raw_materials']}")
+    print(f"  Optimized finished products inventory: {optimization_results['optimized_inventory_levels']['finished_products']}")
+    print(f"  Expected delivery time: {optimization_results['optimized_logistics']['expected_delivery_time']:.1f} days")
+    print(f"  Expected cost reduction: {optimization_results['optimized_logistics']['expected_cost_reduction']*100:.1f}%")
+    print(f"  Expected efficiency increase: {optimization_results['expected_improvements']['efficiency_increase']*100:.1f}%")
+
+    return optimization_data
+
+if __name__ == "__main__":
+    supply_chain_optimization()
+```
+
+---
 
 **创建时间**：2025-01-21
 **最后更新**：2025-01-21

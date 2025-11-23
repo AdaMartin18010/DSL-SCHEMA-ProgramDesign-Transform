@@ -1628,13 +1628,36 @@ import json
 from typing import Dict, List, Optional
 from datetime import datetime
 
+import psycopg2
+import json
+import logging
+from datetime import datetime, date
+from typing import Dict, List, Optional
+
+logger = logging.getLogger(__name__)
+
 class FoodIndustryStorage:
-    """食品行业数据存储系统"""
+    """食品行业数据存储系统 - 增强错误处理"""
 
     def __init__(self, connection_string: str):
-        self.conn = psycopg2.connect(connection_string)
-        self.cur = self.conn.cursor()
-        self._create_tables()
+        # 输入验证
+        if not connection_string:
+            raise ValueError("Connection string cannot be empty")
+
+        if not isinstance(connection_string, str):
+            raise TypeError(f"Connection string must be a string, got {type(connection_string)}")
+
+        try:
+            self.conn = psycopg2.connect(connection_string)
+            self.cur = self.conn.cursor()
+            self._create_tables()
+            logger.info("FoodIndustryStorage initialized successfully")
+        except psycopg2.Error as e:
+            logger.error(f"Failed to connect to database: {e}")
+            raise ConnectionError(f"Failed to connect to database: {e}") from e
+        except Exception as e:
+            logger.error(f"Unexpected error initializing FoodIndustryStorage: {e}", exc_info=True)
+            raise RuntimeError(f"Failed to initialize FoodIndustryStorage: {e}") from e
 
     def _create_tables(self):
         """创建食品行业数据表"""
@@ -1877,60 +1900,220 @@ class FoodIndustryStorage:
         self.conn.commit()
 
     def store_food(self, food_data: Dict) -> int:
-        """存储食品信息"""
-        self.cur.execute("""
-            INSERT INTO foods (
-                food_id, gtin, food_name, food_category,
-                food_type, brand_name, manufacturer,
-                country_of_origin, food_description,
-                production_date, expiry_date, shelf_life_days,
-                storage_conditions
-            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-            ON CONFLICT (food_id) DO UPDATE SET
-                food_name = EXCLUDED.food_name,
-                updated_at = CURRENT_TIMESTAMP
-            RETURNING id
-        """, (
-            food_data.get("food_id"),
-            food_data.get("gtin"),
-            food_data.get("food_name"),
-            food_data.get("food_category"),
-            food_data.get("food_type"),
-            food_data.get("brand_name"),
-            food_data.get("manufacturer"),
-            food_data.get("country_of_origin"),
-            food_data.get("food_description"),
-            food_data.get("production_date"),
-            food_data.get("expiry_date"),
-            food_data.get("shelf_life_days"),
-            food_data.get("storage_conditions")
-        ))
-        return self.cur.fetchone()[0]
+        """存储食品信息 - 增强错误处理"""
+        # 输入验证
+        if not isinstance(food_data, dict):
+            raise TypeError(f"Food data must be a dictionary, got {type(food_data)}")
+
+        if not food_data:
+            raise ValueError("Food data cannot be empty")
+
+        food_id = food_data.get("food_id")
+        if not food_id:
+            raise ValueError("Food ID is required")
+
+        if not isinstance(food_id, str):
+            raise TypeError(f"Food ID must be a string, got {type(food_id)}")
+
+        if len(food_id) > 20:
+            raise ValueError(f"Food ID too long: {len(food_id)} (max 20)")
+
+        gtin = food_data.get("gtin")
+        if not gtin:
+            raise ValueError("GTIN is required")
+
+        if not isinstance(gtin, str):
+            raise TypeError(f"GTIN must be a string, got {type(gtin)}")
+
+        if len(gtin) > 14:
+            raise ValueError(f"GTIN too long: {len(gtin)} (max 14)")
+
+        food_name = food_data.get("food_name")
+        if not food_name:
+            raise ValueError("Food name is required")
+
+        if not isinstance(food_name, str):
+            raise TypeError(f"Food name must be a string, got {type(food_name)}")
+
+        if len(food_name) > 200:
+            raise ValueError(f"Food name too long: {len(food_name)} (max 200)")
+
+        manufacturer = food_data.get("manufacturer")
+        if not manufacturer:
+            raise ValueError("Manufacturer is required")
+
+        if not isinstance(manufacturer, str):
+            raise TypeError(f"Manufacturer must be a string, got {type(manufacturer)}")
+
+        # 验证日期
+        production_date = food_data.get("production_date")
+        if not production_date:
+            raise ValueError("Production date is required")
+
+        if not isinstance(production_date, date):
+            raise TypeError(f"Production date must be a date, got {type(production_date)}")
+
+        expiry_date = food_data.get("expiry_date")
+        if not expiry_date:
+            raise ValueError("Expiry date is required")
+
+        if not isinstance(expiry_date, date):
+            raise TypeError(f"Expiry date must be a date, got {type(expiry_date)}")
+
+        if expiry_date <= production_date:
+            raise ValueError(f"Expiry date ({expiry_date}) must be after production date ({production_date})")
+
+        # 验证国家代码
+        country_of_origin = food_data.get("country_of_origin")
+        if country_of_origin is not None:
+            if not isinstance(country_of_origin, str):
+                raise TypeError(f"Country of origin must be a string or None, got {type(country_of_origin)}")
+            if len(country_of_origin) != 2:
+                raise ValueError(f"Country code must be 2 characters long, got {len(country_of_origin)}")
+
+        try:
+            self.cur.execute("""
+                INSERT INTO foods (
+                    food_id, gtin, food_name, food_category,
+                    food_type, brand_name, manufacturer,
+                    country_of_origin, food_description,
+                    production_date, expiry_date, shelf_life_days,
+                    storage_conditions
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                ON CONFLICT (food_id) DO UPDATE SET
+                    food_name = EXCLUDED.food_name,
+                    updated_at = CURRENT_TIMESTAMP
+                RETURNING id
+            """, (
+                food_id,
+                gtin,
+                food_name,
+                food_data.get("food_category"),
+                food_data.get("food_type"),
+                food_data.get("brand_name"),
+                manufacturer,
+                country_of_origin,
+                food_data.get("food_description"),
+                production_date,
+                expiry_date,
+                food_data.get("shelf_life_days"),
+                food_data.get("storage_conditions")
+            ))
+
+            result = self.cur.fetchone()
+            if not result:
+                raise ValueError("Failed to store food data")
+
+            self.conn.commit()
+            logger.info(f"Stored food data: {food_id}")
+            return result[0]
+
+        except psycopg2.IntegrityError as e:
+            logger.error(f"Integrity error storing food data: {e}")
+            self.conn.rollback()
+            raise ValueError(f"Duplicate food ID or GTIN or constraint violation: {e}") from e
+        except psycopg2.Error as e:
+            logger.error(f"Database error storing food data: {e}")
+            self.conn.rollback()
+            raise RuntimeError(f"Database operation failed: {e}") from e
+        except Exception as e:
+            logger.error(f"Unexpected error storing food data: {e}", exc_info=True)
+            self.conn.rollback()
+            raise RuntimeError(f"Failed to store food data: {e}") from e
 
     def store_traceability_event(self, event_data: Dict) -> int:
-        """存储追溯事件"""
-        self.cur.execute("""
-            INSERT INTO traceability_events (
-                event_id, food_id, batch_number,
-                event_type, event_time, event_location,
-                event_operator, event_description, event_data
-            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s::jsonb)
-            ON CONFLICT (event_id) DO UPDATE SET
-                event_time = EXCLUDED.event_time
-            RETURNING id
-        """, (
-            event_data.get("event_id"),
-            event_data.get("food_id"),
-            event_data.get("batch_number"),
-            event_data.get("event_type"),
-            event_data.get("event_time"),
-            event_data.get("event_location"),
-            event_data.get("event_operator"),
-            event_data.get("event_description"),
-            json.dumps(event_data.get("event_data", {}))
-        ))
-        self.conn.commit()
-        return self.cur.fetchone()[0]
+        """存储追溯事件 - 增强错误处理"""
+        # 输入验证
+        if not isinstance(event_data, dict):
+            raise TypeError(f"Event data must be a dictionary, got {type(event_data)}")
+
+        if not event_data:
+            raise ValueError("Event data cannot be empty")
+
+        event_id = event_data.get("event_id")
+        if not event_id:
+            raise ValueError("Event ID is required")
+
+        if not isinstance(event_id, str):
+            raise TypeError(f"Event ID must be a string, got {type(event_id)}")
+
+        if len(event_id) > 20:
+            raise ValueError(f"Event ID too long: {len(event_id)} (max 20)")
+
+        food_id = event_data.get("food_id")
+        if not food_id:
+            raise ValueError("Food ID is required")
+
+        if not isinstance(food_id, str):
+            raise TypeError(f"Food ID must be a string, got {type(food_id)}")
+
+        batch_number = event_data.get("batch_number")
+        if not batch_number:
+            raise ValueError("Batch number is required")
+
+        if not isinstance(batch_number, str):
+            raise TypeError(f"Batch number must be a string, got {type(batch_number)}")
+
+        event_type = event_data.get("event_type")
+        if not event_type:
+            raise ValueError("Event type is required")
+
+        if not isinstance(event_type, str):
+            raise TypeError(f"Event type must be a string, got {type(event_type)}")
+
+        event_time = event_data.get("event_time")
+        if not event_time:
+            raise ValueError("Event time is required")
+
+        if not isinstance(event_time, datetime):
+            raise TypeError(f"Event time must be a datetime, got {type(event_time)}")
+
+        event_location = event_data.get("event_location")
+        if not event_location:
+            raise ValueError("Event location is required")
+
+        try:
+            self.cur.execute("""
+                INSERT INTO traceability_events (
+                    event_id, food_id, batch_number,
+                    event_type, event_time, event_location,
+                    event_operator, event_description, event_data
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s::jsonb)
+                ON CONFLICT (event_id) DO UPDATE SET
+                    event_time = EXCLUDED.event_time
+                RETURNING id
+            """, (
+                event_id,
+                food_id,
+                batch_number,
+                event_type,
+                event_time,
+                event_location,
+                event_data.get("event_operator"),
+                event_data.get("event_description"),
+                json.dumps(event_data.get("event_data", {}))
+            ))
+
+            result = self.cur.fetchone()
+            if not result:
+                raise ValueError("Failed to store traceability event")
+
+            self.conn.commit()
+            logger.info(f"Stored traceability event: {event_id}")
+            return result[0]
+
+        except psycopg2.IntegrityError as e:
+            logger.error(f"Integrity error storing traceability event: {e}")
+            self.conn.rollback()
+            raise ValueError(f"Duplicate event ID or foreign key constraint violation: {e}") from e
+        except psycopg2.Error as e:
+            logger.error(f"Database error storing traceability event: {e}")
+            self.conn.rollback()
+            raise RuntimeError(f"Database operation failed: {e}") from e
+        except Exception as e:
+            logger.error(f"Unexpected error storing traceability event: {e}", exc_info=True)
+            self.conn.rollback()
+            raise RuntimeError(f"Failed to store traceability event: {e}") from e
 
     def store_traceability_chain(self, chain_data: Dict) -> int:
         """存储追溯链"""

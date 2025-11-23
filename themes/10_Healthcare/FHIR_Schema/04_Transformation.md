@@ -149,13 +149,36 @@ import json
 from typing import Dict, List, Optional
 from datetime import datetime
 
+import psycopg2
+import json
+import logging
+from datetime import datetime
+from typing import Dict, List, Optional
+
+logger = logging.getLogger(__name__)
+
 class FHIRStorage:
-    """FHIR数据存储系统"""
+    """FHIR数据存储系统 - 增强错误处理"""
 
     def __init__(self, connection_string: str):
-        self.conn = psycopg2.connect(connection_string)
-        self.cur = self.conn.cursor()
-        self._create_tables()
+        # 输入验证
+        if not connection_string:
+            raise ValueError("Connection string cannot be empty")
+
+        if not isinstance(connection_string, str):
+            raise TypeError(f"Connection string must be a string, got {type(connection_string)}")
+
+        try:
+            self.conn = psycopg2.connect(connection_string)
+            self.cur = self.conn.cursor()
+            self._create_tables()
+            logger.info("FHIRStorage initialized successfully")
+        except psycopg2.Error as e:
+            logger.error(f"Failed to connect to database: {e}")
+            raise ConnectionError(f"Failed to connect to database: {e}") from e
+        except Exception as e:
+            logger.error(f"Unexpected error initializing FHIRStorage: {e}", exc_info=True)
+            raise RuntimeError(f"Failed to initialize FHIRStorage: {e}") from e
 
     def _create_tables(self):
         """创建FHIR数据表"""
@@ -216,19 +239,68 @@ class FHIRStorage:
 
     def store_resource(self, resource_type: str, resource_id: str,
                       resource_content: Dict, version_id: str = None) -> int:
-        """存储FHIR资源"""
-        self.cur.execute("""
-            INSERT INTO fhir_resources (
-                resource_type, resource_id, resource_content,
-                version_id, last_updated
-            ) VALUES (%s, %s, %s::jsonb, %s, CURRENT_TIMESTAMP)
-            ON CONFLICT (resource_type, resource_id) DO UPDATE SET
-                resource_content = EXCLUDED.resource_content,
-                version_id = EXCLUDED.version_id,
-                last_updated = CURRENT_TIMESTAMP
-            RETURNING id
-        """, (resource_type, resource_id, json.dumps(resource_content), version_id))
-        return self.cur.fetchone()[0]
+        """存储FHIR资源 - 增强错误处理"""
+        # 输入验证
+        if not resource_type:
+            raise ValueError("Resource type cannot be empty")
+
+        if not isinstance(resource_type, str):
+            raise TypeError(f"Resource type must be a string, got {type(resource_type)}")
+
+        if len(resource_type) > 50:
+            raise ValueError(f"Resource type too long: {len(resource_type)} (max 50)")
+
+        if not resource_id:
+            raise ValueError("Resource ID cannot be empty")
+
+        if not isinstance(resource_id, str):
+            raise TypeError(f"Resource ID must be a string, got {type(resource_id)}")
+
+        if len(resource_id) > 64:
+            raise ValueError(f"Resource ID too long: {len(resource_id)} (max 64)")
+
+        if not isinstance(resource_content, dict):
+            raise TypeError(f"Resource content must be a dictionary, got {type(resource_content)}")
+
+        if not resource_content:
+            raise ValueError("Resource content cannot be empty")
+
+        if version_id is not None and len(version_id) > 64:
+            raise ValueError(f"Version ID too long: {len(version_id)} (max 64)")
+
+        try:
+            self.cur.execute("""
+                INSERT INTO fhir_resources (
+                    resource_type, resource_id, resource_content,
+                    version_id, last_updated
+                ) VALUES (%s, %s, %s::jsonb, %s, CURRENT_TIMESTAMP)
+                ON CONFLICT (resource_type, resource_id) DO UPDATE SET
+                    resource_content = EXCLUDED.resource_content,
+                    version_id = EXCLUDED.version_id,
+                    last_updated = CURRENT_TIMESTAMP
+                RETURNING id
+            """, (resource_type, resource_id, json.dumps(resource_content), version_id))
+
+            result = self.cur.fetchone()
+            if not result:
+                raise ValueError("Failed to store FHIR resource")
+
+            self.conn.commit()
+            logger.info(f"Stored FHIR resource: {resource_type}/{resource_id}")
+            return result[0]
+
+        except psycopg2.IntegrityError as e:
+            logger.error(f"Integrity error storing FHIR resource: {e}")
+            self.conn.rollback()
+            raise ValueError(f"Duplicate resource or constraint violation: {e}") from e
+        except psycopg2.Error as e:
+            logger.error(f"Database error storing FHIR resource: {e}")
+            self.conn.rollback()
+            raise RuntimeError(f"Database operation failed: {e}") from e
+        except Exception as e:
+            logger.error(f"Unexpected error storing FHIR resource: {e}", exc_info=True)
+            self.conn.rollback()
+            raise RuntimeError(f"Failed to store FHIR resource: {e}") from e
 
     def get_resource(self, resource_type: str, resource_id: str) -> Optional[Dict]:
         """获取FHIR资源"""

@@ -839,33 +839,123 @@ class SceneManager:
                      conditions: List[Dict], actions: List[Dict],
                      time_conditions: List[Dict] = None,
                      condition_logic: str = "AND") -> str:
-        """创建场景 - 完整实现"""
-        scene_conditions = [SceneCondition(**c) for c in conditions]
-        scene_actions = [SceneAction(**a) for a in actions]
+        """创建场景 - 增强错误处理"""
+        # 输入验证
+        if not isinstance(scene_id, str):
+            raise TypeError(f"Scene ID must be a string, got {type(scene_id)}")
 
-        time_cond_objects = []
-        if time_conditions:
-            time_cond_objects = [TimeCondition(**tc) for tc in time_conditions]
+        if not scene_id or not scene_id.strip():
+            raise ValueError("Scene ID cannot be empty")
 
-        scene = SmartHomeScene(
-            scene_id, scene_name, scene_conditions, scene_actions,
-            time_cond_objects, condition_logic
-        )
-        scene.set_device_controller(self.device_controller)
-        self.scenes[scene_id] = scene
+        if len(scene_id) > 100:
+            raise ValueError(f"Scene ID too long: {len(scene_id)} (max 100)")
 
-        # 保存到数据库
-        self.storage.store_scene({
-            "scene_id": scene_id,
-            "scene_name": scene_name,
-            "conditions": conditions,
-            "actions": actions,
-            "time_conditions": time_conditions or [],
-            "condition_logic": condition_logic,
-            "enabled": True
-        })
+        if scene_id in self.scenes:
+            raise ValueError(f"Scene already exists: {scene_id}")
 
-        return scene_id
+        if not isinstance(scene_name, str):
+            raise TypeError(f"Scene name must be a string, got {type(scene_name)}")
+
+        if not scene_name or not scene_name.strip():
+            raise ValueError("Scene name cannot be empty")
+
+        if len(scene_name) > 200:
+            raise ValueError(f"Scene name too long: {len(scene_name)} (max 200)")
+
+        if not isinstance(conditions, list):
+            raise TypeError(f"Conditions must be a list, got {type(conditions)}")
+
+        if not conditions:
+            raise ValueError("Scene must have at least one condition")
+
+        if len(conditions) > 100:  # 防止异常大的条件列表
+            raise ValueError(f"Too many conditions: {len(conditions)} (max 100)")
+
+        if not isinstance(actions, list):
+            raise TypeError(f"Actions must be a list, got {type(actions)}")
+
+        if not actions:
+            raise ValueError("Scene must have at least one action")
+
+        if len(actions) > 100:  # 防止异常大的动作列表
+            raise ValueError(f"Too many actions: {len(actions)} (max 100)")
+
+        if time_conditions is not None:
+            if not isinstance(time_conditions, list):
+                raise TypeError(f"Time conditions must be a list, got {type(time_conditions)}")
+            if len(time_conditions) > 50:
+                raise ValueError(f"Too many time conditions: {len(time_conditions)} (max 50)")
+
+        if condition_logic not in ["AND", "OR"]:
+            raise ValueError(f"Invalid condition logic: {condition_logic} (must be AND or OR)")
+
+        try:
+            # 验证条件格式
+            scene_conditions = []
+            for idx, c in enumerate(conditions):
+                if not isinstance(c, dict):
+                    raise TypeError(f"Condition {idx} must be a dictionary, got {type(c)}")
+
+                required_fields = ["device_id", "attribute", "operator", "value"]
+                missing_fields = [f for f in required_fields if f not in c]
+                if missing_fields:
+                    raise ValueError(f"Condition {idx} missing required fields: {', '.join(missing_fields)}")
+
+                scene_conditions.append(SceneCondition(**c))
+
+            # 验证动作格式
+            scene_actions = []
+            for idx, a in enumerate(actions):
+                if not isinstance(a, dict):
+                    raise TypeError(f"Action {idx} must be a dictionary, got {type(a)}")
+
+                required_fields = ["device_id", "command", "parameters"]
+                missing_fields = [f for f in required_fields if f not in a]
+                if missing_fields:
+                    raise ValueError(f"Action {idx} missing required fields: {', '.join(missing_fields)}")
+
+                scene_actions.append(SceneAction(**a))
+
+            time_cond_objects = []
+            if time_conditions:
+                for idx, tc in enumerate(time_conditions):
+                    if not isinstance(tc, dict):
+                        raise TypeError(f"Time condition {idx} must be a dictionary, got {type(tc)}")
+                    time_cond_objects.append(TimeCondition(**tc))
+
+            scene = SmartHomeScene(
+                scene_id, scene_name, scene_conditions, scene_actions,
+                time_cond_objects, condition_logic
+            )
+            scene.set_device_controller(self.device_controller)
+            self.scenes[scene_id] = scene
+
+            # 保存到数据库
+            try:
+                self.storage.store_scene({
+                    "scene_id": scene_id,
+                    "scene_name": scene_name,
+                    "conditions": conditions,
+                    "actions": actions,
+                    "time_conditions": time_conditions or [],
+                    "condition_logic": condition_logic,
+                    "enabled": True
+                })
+            except Exception as db_error:
+                logger.error(f"Failed to save scene to database: {db_error}")
+                # 回滚：从内存中删除场景
+                del self.scenes[scene_id]
+                raise RuntimeError(f"Failed to save scene to database: {db_error}") from db_error
+
+            logger.info(f"Created scene: {scene_id}")
+            return scene_id
+
+        except (ValueError, TypeError) as e:
+            logger.error(f"Scene creation validation error: {e}")
+            raise
+        except Exception as e:
+            logger.error(f"Unexpected error creating scene {scene_id}: {e}", exc_info=True)
+            raise RuntimeError(f"Scene creation failed: {e}") from e
 
     def update_device_state(self, device_id: str, state: Dict):
         """更新设备状态并检查场景触发 - 完整实现"""
@@ -897,29 +987,71 @@ class SceneManager:
             logger.info(f"Scenes triggered: {triggered_scenes}")
 
     def execute_scene(self, scene_id: str, manual: bool = True) -> bool:
-        """手动执行场景 - 完整实现"""
+        """手动执行场景 - 增强错误处理"""
+        # 输入验证
+        if not isinstance(scene_id, str):
+            raise TypeError(f"Scene ID must be a string, got {type(scene_id)}")
+
+        if not scene_id or not scene_id.strip():
+            raise ValueError("Scene ID cannot be empty")
+
+        if not isinstance(manual, bool):
+            raise TypeError(f"Manual parameter must be a boolean, got {type(manual)}")
+
         scene = self.scenes.get(scene_id)
         if not scene:
             logger.error(f"Scene {scene_id} not found")
-            return False
+            raise ValueError(f"Scene not found: {scene_id}")
+
+        if not scene.enabled:
+            logger.warning(f"Scene {scene_id} is disabled")
+            raise ValueError(f"Scene is disabled: {scene_id}")
 
         try:
+            # 验证设备状态可用性
+            if not isinstance(self.device_states, dict):
+                raise ValueError("Device states must be a dictionary")
+
             result = scene.trigger(self.device_states)
+
+            if not isinstance(result, bool):
+                logger.warning(f"Scene {scene_id} trigger returned non-boolean result: {result}")
+                result = bool(result)
+
             if result:
                 # 记录执行历史
-                self.scene_execution_history.append({
+                execution_record = {
                     "scene_id": scene_id,
                     "trigger_time": datetime.now().isoformat(),
                     "trigger_type": "manual" if manual else "auto"
-                })
+                }
+                self.scene_execution_history.append(execution_record)
+
+                # 限制历史记录大小（防止内存溢出）
+                MAX_HISTORY_SIZE = 10000
+                if len(self.scene_execution_history) > MAX_HISTORY_SIZE:
+                    self.scene_execution_history = self.scene_execution_history[-MAX_HISTORY_SIZE:]
+
                 # 保存到数据库
-                self.storage.record_scene_execution(
-                    scene_id, "manual" if manual else "auto", result
-                )
+                try:
+                    self.storage.record_scene_execution(
+                        scene_id, "manual" if manual else "auto", result
+                    )
+                except Exception as db_error:
+                    logger.error(f"Failed to save scene execution to database: {db_error}")
+                    # 不中断执行，只记录错误
+
             return result
+
+        except ValueError as e:
+            logger.error(f"Scene execution validation error: {e}")
+            raise
+        except AttributeError as e:
+            logger.error(f"Scene execution attribute error: {e}")
+            raise RuntimeError(f"Scene execution failed due to missing attribute: {e}") from e
         except Exception as e:
-            logger.error(f"Error executing scene {scene_id}: {e}")
-            return False
+            logger.error(f"Unexpected error executing scene {scene_id}: {e}", exc_info=True)
+            raise RuntimeError(f"Scene execution failed: {e}") from e
 
     def get_scene(self, scene_id: str) -> Optional[SmartHomeScene]:
         """获取场景"""
@@ -1098,7 +1230,17 @@ class MatterSDKWrapper:
             self.device_ctrl = None
 
     def discover_devices(self, timeout: int = 10) -> List[Dict]:
-        """发现Matter设备 - 完整实现"""
+        """发现Matter设备 - 增强错误处理"""
+        # 输入验证
+        if not isinstance(timeout, int):
+            raise TypeError(f"Timeout must be an integer, got {type(timeout)}")
+
+        if timeout <= 0:
+            raise ValueError(f"Timeout must be positive, got {timeout}")
+
+        if timeout > 300:  # 最大5分钟
+            raise ValueError(f"Timeout too large: {timeout} seconds (max 300)")
+
         devices = []
 
         if not MATTER_SDK_AVAILABLE or not self.device_ctrl:
@@ -1164,9 +1306,15 @@ class MatterSDKWrapper:
             logger.info(f"Discovered {len(devices)} Matter devices")
             return devices
 
+        except TimeoutError as e:
+            logger.error(f"Device discovery timeout after {timeout} seconds: {e}")
+            raise TimeoutError(f"Device discovery timeout: {e}") from e
+        except ConnectionError as e:
+            logger.error(f"Connection error during device discovery: {e}")
+            raise ConnectionError(f"Device discovery connection failed: {e}") from e
         except Exception as e:
-            logger.error(f"Device discovery failed: {e}")
-            return devices
+            logger.error(f"Unexpected error during device discovery: {e}", exc_info=True)
+            raise RuntimeError(f"Device discovery failed: {e}") from e
 
     def _connect_and_read_device_info(self, node_info: Dict) -> Optional[Dict]:
         """连接设备并读取设备信息"""

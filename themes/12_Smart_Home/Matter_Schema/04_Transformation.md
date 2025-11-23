@@ -386,10 +386,26 @@ class MatterDeviceController:
         self.device_info: Optional[Dict] = None
 
     async def connect(self, timeout: int = 10) -> bool:
-        """连接到Matter设备 - 完整实现"""
+        """连接到Matter设备 - 增强错误处理"""
         """
         连接到Matter设备，支持重试和超时处理
         """
+        # 输入验证
+        if not isinstance(timeout, int):
+            raise TypeError(f"Timeout must be an integer, got {type(timeout)}")
+
+        if timeout <= 0:
+            raise ValueError(f"Timeout must be positive, got {timeout}")
+
+        if timeout > 300:  # 最大5分钟
+            raise ValueError(f"Timeout too large: {timeout} seconds (max 300)")
+
+        if not self.device_id:
+            raise ValueError("Device ID cannot be empty")
+
+        if not isinstance(self.device_id, str):
+            raise TypeError(f"Device ID must be a string, got {type(self.device_id)}")
+
         if self.connected:
             logger.debug(f"Device {self.device_id} already connected")
             return True
@@ -425,14 +441,30 @@ class MatterDeviceController:
                     logger.info(f"Connected to Matter device {self.device_id} (mock)")
                     return True
 
+            except TimeoutError as e:
+                self.last_error = f"Connection timeout: {e}"
+                logger.warning(f"Connection attempt {attempt + 1} timeout: {e}")
+                if attempt < self.max_retry_count - 1:
+                    await asyncio.sleep(1.0 * (attempt + 1))  # 指数退避
+                else:
+                    logger.error(f"Failed to connect to device {self.device_id} after {self.max_retry_count} attempts (timeout)")
+                    raise TimeoutError(f"Connection timeout after {self.max_retry_count} attempts: {e}") from e
+            except ConnectionError as e:
+                self.last_error = f"Connection error: {e}"
+                logger.warning(f"Connection attempt {attempt + 1} failed: {e}")
+                if attempt < self.max_retry_count - 1:
+                    await asyncio.sleep(1.0 * (attempt + 1))  # 指数退避
+                else:
+                    logger.error(f"Failed to connect to device {self.device_id} after {self.max_retry_count} attempts")
+                    raise ConnectionError(f"Connection failed after {self.max_retry_count} attempts: {e}") from e
             except Exception as e:
                 self.last_error = str(e)
                 logger.warning(f"Connection attempt {attempt + 1} failed: {e}")
                 if attempt < self.max_retry_count - 1:
                     await asyncio.sleep(1.0 * (attempt + 1))  # 指数退避
                 else:
-                    logger.error(f"Failed to connect to device {self.device_id} after {self.max_retry_count} attempts")
-                    return False
+                    logger.error(f"Failed to connect to device {self.device_id} after {self.max_retry_count} attempts: {e}", exc_info=True)
+                    raise RuntimeError(f"Connection failed after {self.max_retry_count} attempts: {e}") from e
 
         return False
 
@@ -454,12 +486,43 @@ class MatterDeviceController:
 
     async def read_attribute(self, cluster_id: int, attribute_id: int,
                             timeout: int = 5, retry_count: int = 2) -> Optional[Any]:
-        """读取设备属性 - 完整实现"""
+        """读取设备属性 - 增强错误处理"""
         """
         读取设备属性，支持重试和超时处理
         """
+        # 输入验证
+        if not isinstance(cluster_id, int):
+            raise TypeError(f"Cluster ID must be an integer, got {type(cluster_id)}")
+
+        if not (0 <= cluster_id <= 0xFFFF):
+            raise ValueError(f"Cluster ID out of range: {cluster_id} (must be 0-65535)")
+
+        if not isinstance(attribute_id, int):
+            raise TypeError(f"Attribute ID must be an integer, got {type(attribute_id)}")
+
+        if not (0 <= attribute_id <= 0xFFFF):
+            raise ValueError(f"Attribute ID out of range: {attribute_id} (must be 0-65535)")
+
+        if not isinstance(timeout, int):
+            raise TypeError(f"Timeout must be an integer, got {type(timeout)}")
+
+        if timeout <= 0:
+            raise ValueError(f"Timeout must be positive, got {timeout}")
+
+        if timeout > 60:
+            raise ValueError(f"Timeout too large: {timeout} seconds (max 60)")
+
+        if not isinstance(retry_count, int):
+            raise TypeError(f"Retry count must be an integer, got {type(retry_count)}")
+
+        if retry_count < 0:
+            raise ValueError(f"Retry count must be non-negative, got {retry_count}")
+
+        if retry_count > 10:
+            raise ValueError(f"Retry count too large: {retry_count} (max 10)")
+
         if not self.connected:
-            raise RuntimeError(f"Device {self.device_id} not connected")
+            raise ConnectionError(f"Device {self.device_id} not connected. Call connect() first.")
 
         for attempt in range(retry_count + 1):
             try:
@@ -571,15 +634,49 @@ class MatterDeviceController:
     async def send_command(self, cluster_id: int, command_id: int,
                           parameters: Dict = None, timeout: int = 5,
                           retry_count: int = 2) -> bool:
-        """发送命令到设备 - 完整实现"""
+        """发送命令到设备 - 增强错误处理"""
         """
         发送命令到设备，支持重试和超时处理
         """
-        if not self.connected:
-            raise RuntimeError(f"Device {self.device_id} not connected")
+        # 输入验证
+        if not isinstance(cluster_id, int):
+            raise TypeError(f"Cluster ID must be an integer, got {type(cluster_id)}")
 
-        if parameters is None:
+        if not (0 <= cluster_id <= 0xFFFF):
+            raise ValueError(f"Cluster ID out of range: {cluster_id} (must be 0-65535)")
+
+        if not isinstance(command_id, int):
+            raise TypeError(f"Command ID must be an integer, got {type(command_id)}")
+
+        if not (0 <= command_id <= 0xFF):
+            raise ValueError(f"Command ID out of range: {command_id} (must be 0-255)")
+
+        if parameters is not None:
+            if not isinstance(parameters, dict):
+                raise TypeError(f"Parameters must be a dictionary, got {type(parameters)}")
+        else:
             parameters = {}
+
+        if not isinstance(timeout, int):
+            raise TypeError(f"Timeout must be an integer, got {type(timeout)}")
+
+        if timeout <= 0:
+            raise ValueError(f"Timeout must be positive, got {timeout}")
+
+        if timeout > 60:
+            raise ValueError(f"Timeout too large: {timeout} seconds (max 60)")
+
+        if not isinstance(retry_count, int):
+            raise TypeError(f"Retry count must be an integer, got {type(retry_count)}")
+
+        if retry_count < 0:
+            raise ValueError(f"Retry count must be non-negative, got {retry_count}")
+
+        if retry_count > 10:
+            raise ValueError(f"Retry count too large: {retry_count} (max 10)")
+
+        if not self.connected:
+            raise ConnectionError(f"Device {self.device_id} not connected. Call connect() first.")
 
         command_record = {
             "cluster_id": cluster_id,
@@ -637,12 +734,46 @@ class MatterDeviceController:
     def subscribe_attribute(self, cluster_id: int, attribute_id: int,
                           callback: Callable[[Any], None], min_interval: int = 0,
                           max_interval: int = 60):
-        """订阅属性变化 - 完整实现"""
+        """订阅属性变化 - 增强错误处理"""
         """
         订阅属性变化，支持最小和最大间隔设置
         """
+        # 输入验证
+        if not isinstance(cluster_id, int):
+            raise TypeError(f"Cluster ID must be an integer, got {type(cluster_id)}")
+
+        if not (0 <= cluster_id <= 0xFFFF):
+            raise ValueError(f"Cluster ID out of range: {cluster_id} (must be 0-65535)")
+
+        if not isinstance(attribute_id, int):
+            raise TypeError(f"Attribute ID must be an integer, got {type(attribute_id)}")
+
+        if not (0 <= attribute_id <= 0xFFFF):
+            raise ValueError(f"Attribute ID out of range: {attribute_id} (must be 0-65535)")
+
+        if not callable(callback):
+            raise TypeError(f"Callback must be callable, got {type(callback)}")
+
+        if not isinstance(min_interval, int):
+            raise TypeError(f"Min interval must be an integer, got {type(min_interval)}")
+
+        if min_interval < 0:
+            raise ValueError(f"Min interval must be non-negative, got {min_interval}")
+
+        if not isinstance(max_interval, int):
+            raise TypeError(f"Max interval must be an integer, got {type(max_interval)}")
+
+        if max_interval <= 0:
+            raise ValueError(f"Max interval must be positive, got {max_interval}")
+
+        if max_interval > 3600:  # 最大1小时
+            raise ValueError(f"Max interval too large: {max_interval} seconds (max 3600)")
+
+        if min_interval > max_interval:
+            raise ValueError(f"Min interval ({min_interval}) cannot be greater than max interval ({max_interval})")
+
         if not self.connected:
-            raise RuntimeError(f"Device {self.device_id} not connected")
+            raise ConnectionError(f"Device {self.device_id} not connected. Call connect() first.")
 
         key = (cluster_id, attribute_id)
         self.attribute_subscriptions[key] = callback

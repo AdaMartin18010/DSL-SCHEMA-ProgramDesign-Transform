@@ -35,6 +35,18 @@
     - [9.1 场景描述](#91-场景描述)
     - [9.2 Schema定义](#92-schema定义)
     - [9.3 实现代码](#93-实现代码)
+  - [10. 案例9：大规模Thread网络管理](#10-案例9大规模thread网络管理)
+    - [10.1 场景描述](#101-场景描述)
+    - [10.2 Schema定义](#102-schema定义)
+    - [10.3 实现代码](#103-实现代码)
+  - [11. 案例10：Thread网络性能优化](#11-案例10thread网络性能优化)
+    - [11.1 场景描述](#111-场景描述)
+    - [11.2 Schema定义](#112-schema定义)
+    - [11.3 实现代码](#113-实现代码)
+  - [12. 案例11：Thread网络安全加固](#12-案例11thread网络安全加固)
+    - [12.1 场景描述](#121-场景描述)
+    - [12.2 Schema定义](#122-schema定义)
+    - [12.3 实现代码](#123-实现代码)
 
 ---
 
@@ -1162,6 +1174,592 @@ INFO:__main__:Routing recovered for node 000D6F0000654321: 5 routes
 - `02_Formal_Definition.md` - 形式化定义
 - `03_Standards.md` - 标准对标
 - `04_Transformation.md` - 转换体系
+
+---
+
+## 10. 案例9：大规模Thread网络管理
+
+### 10.1 场景描述
+
+**业务背景**：
+大规模Thread网络管理系统管理数百甚至数千个Thread节点，
+实现网络拓扑管理、节点监控、资源分配等功能。
+
+**技术挑战**：
+
+- 需要大规模网络拓扑管理
+- 需要高效的节点监控
+- 需要资源分配优化
+- 需要网络性能保证
+
+**解决方案**：
+使用Thread_Schema定义大规模网络管理结构，
+使用分布式管理架构进行网络管理，
+使用ThreadStorage存储网络数据。
+
+### 10.2 Schema定义
+
+**大规模Thread网络管理Schema**：
+
+```dsl
+schema LargeScaleThreadNetworkManagement {
+  management_session_id: String @value("LARGE-NET-20250121-001") @required
+  network_name: String @value("LargeScaleNetwork") @required
+  management_time: DateTime @value("2025-01-21T10:00:00") @required
+
+  network_scale: {
+    total_nodes: Integer @value(1000)
+    router_nodes: Integer @value(100)
+    end_devices: Integer @value(900)
+    network_depth: Integer @value(5)
+    average_children_per_router: Decimal @value(9.0)
+  } @required
+
+  network_topology: {
+    partitions: Integer @value(1)
+    isolated_nodes: Integer @value(5)
+    connectivity_rate: Decimal @value(0.995) @range(0.0, 1.0)
+    average_hops: Decimal @value(3.5)
+    max_hops: Integer @value(7)
+  } @required
+
+  management_strategies: {
+    hierarchical_management: Boolean @value(true)
+    distributed_monitoring: Boolean @value(true)
+    load_balancing: Boolean @value(true)
+    auto_scaling: Boolean @value(true)
+  } @required
+
+  performance_metrics: {
+    average_latency: Decimal @value(50.0) @unit("ms")
+    packet_loss_rate: Decimal @value(0.001) @range(0.0, 1.0)
+    network_throughput: Decimal @value(1000.0) @unit("packets/s")
+    resource_utilization: Decimal @value(0.75) @range(0.0, 1.0)
+  } @required
+} @standard("Thread")
+```
+
+### 10.3 实现代码
+
+```python
+from thread_storage import ThreadStorage
+from thread_network_manager import ThreadNetworkManager
+from datetime import datetime
+
+def large_scale_thread_network_management():
+    """大规模Thread网络管理示例"""
+    storage = ThreadStorage("postgresql://user:password@localhost/thread_db")
+    network_manager = ThreadNetworkManager()
+
+    # 网络规模
+    network_scale = {
+        "network_name": "LargeScaleNetwork",
+        "total_nodes": 1000,
+        "router_nodes": 100,
+        "end_devices": 900,
+        "network_depth": 5,
+        "average_children_per_router": 9.0
+    }
+
+    # 网络拓扑分析
+    def analyze_network_topology(network_name):
+        """分析网络拓扑"""
+        nodes = network_manager.get_all_nodes(network_name)
+
+        router_count = sum(1 for n in nodes if n.get("node_type") == "Router")
+        end_device_count = sum(1 for n in nodes if n.get("node_type") == "EndDevice")
+
+        # 计算网络深度
+        max_depth = 0
+        for node in nodes:
+            depth = calculate_node_depth(node, nodes)
+            max_depth = max(max_depth, depth)
+
+        # 计算连接率
+        connected_nodes = sum(1 for n in nodes if n.get("connected", False))
+        connectivity_rate = connected_nodes / len(nodes) if nodes else 0.0
+
+        # 计算平均跳数
+        total_hops = 0
+        hop_count = 0
+        for node in nodes:
+            if node.get("connected"):
+                hops = calculate_hops_to_border_router(node, nodes)
+                total_hops += hops
+                hop_count += 1
+        average_hops = total_hops / hop_count if hop_count > 0 else 0.0
+
+        return {
+            "partitions": 1,  # 简化：假设单分区
+            "isolated_nodes": len(nodes) - connected_nodes,
+            "connectivity_rate": connectivity_rate,
+            "average_hops": average_hops,
+            "max_hops": max_depth
+        }
+
+    def calculate_node_depth(node, nodes):
+        """计算节点深度"""
+        depth = 0
+        current = node
+        while current.get("parent_id"):
+            depth += 1
+            parent_id = current["parent_id"]
+            current = next((n for n in nodes if n["node_id"] == parent_id), None)
+            if not current:
+                break
+        return depth
+
+    def calculate_hops_to_border_router(node, nodes):
+        """计算到边界路由器的跳数"""
+        hops = 0
+        current = node
+        while current.get("parent_id"):
+            hops += 1
+            parent_id = current["parent_id"]
+            current = next((n for n in nodes if n["node_id"] == parent_id), None)
+            if not current or current.get("is_border_router"):
+                break
+        return hops
+
+    # 执行拓扑分析
+    topology = analyze_network_topology(network_scale["network_name"])
+
+    # 管理策略
+    management_strategies = {
+        "hierarchical_management": True,
+        "distributed_monitoring": True,
+        "load_balancing": True,
+        "auto_scaling": True
+    }
+
+    # 性能指标
+    performance_metrics = {
+        "average_latency": 50.0,
+        "packet_loss_rate": 0.001,
+        "network_throughput": 1000.0,
+        "resource_utilization": 0.75
+    }
+
+    # 存储管理数据
+    management_data = {
+        "management_session_id": "LARGE-NET-20250121-001",
+        "network_name": network_scale["network_name"],
+        "management_time": datetime.now(),
+        "total_nodes": network_scale["total_nodes"],
+        "router_nodes": network_scale["router_nodes"],
+        "end_devices": network_scale["end_devices"],
+        "network_depth": network_scale["network_depth"],
+        "partitions": topology["partitions"],
+        "isolated_nodes": topology["isolated_nodes"],
+        "connectivity_rate": topology["connectivity_rate"],
+        "average_hops": topology["average_hops"],
+        "max_hops": topology["max_hops"],
+        "hierarchical_management": management_strategies["hierarchical_management"],
+        "distributed_monitoring": management_strategies["distributed_monitoring"],
+        "load_balancing": management_strategies["load_balancing"],
+        "auto_scaling": management_strategies["auto_scaling"],
+        "average_latency": performance_metrics["average_latency"],
+        "packet_loss_rate": performance_metrics["packet_loss_rate"],
+        "network_throughput": performance_metrics["network_throughput"],
+        "resource_utilization": performance_metrics["resource_utilization"]
+    }
+
+    # 存储到数据库
+    management_id = storage.store_network_data(management_data)
+    print(f"Large-scale network management data stored: {management_id}")
+
+    print(f"\nLarge-Scale Thread Network Management:")
+    print(f"  Network: {network_scale['network_name']}")
+    print(f"  Total nodes: {network_scale['total_nodes']}")
+    print(f"  Router nodes: {network_scale['router_nodes']}")
+    print(f"  End devices: {network_scale['end_devices']}")
+    print(f"  Connectivity rate: {topology['connectivity_rate']*100:.2f}%")
+    print(f"  Average hops: {topology['average_hops']:.2f}")
+    print(f"  Average latency: {performance_metrics['average_latency']:.1f} ms")
+
+    return management_data
+
+if __name__ == "__main__":
+    large_scale_thread_network_management()
+```
+
+---
+
+## 11. 案例10：Thread网络性能优化
+
+### 11.1 场景描述
+
+**业务背景**：
+Thread网络性能优化系统监测和分析网络性能，
+识别性能瓶颈，优化网络配置，提高网络效率。
+
+**技术挑战**：
+
+- 需要性能数据收集
+- 需要性能分析算法
+- 需要优化策略
+- 需要效果评估
+
+**解决方案**：
+使用Thread_Schema收集性能数据，
+使用优化算法进行性能优化，
+使用ThreadStorage存储性能数据。
+
+### 11.2 Schema定义
+
+**Thread网络性能优化Schema**：
+
+```dsl
+schema ThreadNetworkPerformanceOptimization {
+  optimization_session_id: String @value("PERF-OPT-20250121-001") @required
+  network_name: String @value("OptimizedNetwork") @required
+  optimization_time: DateTime @value("2025-01-21T10:00:00") @required
+
+  performance_baseline: {
+    average_latency: Decimal @value(80.0) @unit("ms")
+    packet_loss_rate: Decimal @value(0.005) @range(0.0, 1.0)
+    network_throughput: Decimal @value(800.0) @unit("packets/s")
+    energy_consumption: Decimal @value(100.0) @unit("mW")
+  } @required
+
+  performance_bottlenecks: [
+    {
+      bottleneck_type: String @value("High latency")
+      location: String @value("Router-001")
+      severity: Enum { Medium } @value(Medium)
+      impact: Decimal @value(0.15) @unit("15% performance degradation")
+    }
+  ] @required
+
+  optimization_strategies: [
+    {
+      strategy: String @value("路由表优化")
+      expected_improvement: Decimal @value(0.20) @unit("20% latency reduction")
+      implementation_complexity: Enum { Medium } @value(Medium)
+    },
+    {
+      strategy: String @value("负载均衡")
+      expected_improvement: Decimal @value(0.15) @unit("15% throughput increase")
+      implementation_complexity: Enum { Low } @value(Low)
+    }
+  ] @required
+
+  optimization_results: {
+    latency_improvement: Decimal @value(0.18) @unit("18% reduction")
+    throughput_improvement: Decimal @value(0.12) @unit("12% increase")
+    energy_savings: Decimal @value(0.10) @unit("10% reduction")
+    overall_improvement: Decimal @value(0.15) @unit("15% improvement")
+  } @required
+} @standard("Thread")
+```
+
+### 11.3 实现代码
+
+```python
+from thread_storage import ThreadStorage
+from thread_network_manager import ThreadNetworkManager
+from datetime import datetime
+
+def thread_network_performance_optimization():
+    """Thread网络性能优化示例"""
+    storage = ThreadStorage("postgresql://user:password@localhost/thread_db")
+    network_manager = ThreadNetworkManager()
+
+    # 性能基线
+    performance_baseline = {
+        "network_name": "OptimizedNetwork",
+        "average_latency": 80.0,
+        "packet_loss_rate": 0.005,
+        "network_throughput": 800.0,
+        "energy_consumption": 100.0
+    }
+
+    # 性能瓶颈识别
+    def identify_bottlenecks(network_name):
+        """识别性能瓶颈"""
+        bottlenecks = []
+        nodes = network_manager.get_all_nodes(network_name)
+
+        for node in nodes:
+            node_latency = node.get("average_latency", 0)
+            node_load = node.get("load", 0)
+
+            # 识别高延迟节点
+            if node_latency > 100:
+                bottlenecks.append({
+                    "bottleneck_type": "High latency",
+                    "location": node["node_id"],
+                    "severity": "Medium",
+                    "impact": 0.15
+                })
+
+            # 识别高负载节点
+            if node_load > 0.8:
+                bottlenecks.append({
+                    "bottleneck_type": "High load",
+                    "location": node["node_id"],
+                    "severity": "High",
+                    "impact": 0.25
+                })
+
+        return bottlenecks
+
+    # 识别瓶颈
+    bottlenecks = identify_bottlenecks(performance_baseline["network_name"])
+
+    # 优化策略
+    optimization_strategies = []
+
+    if any(b["bottleneck_type"] == "High latency" for b in bottlenecks):
+        optimization_strategies.append({
+            "strategy": "路由表优化",
+            "expected_improvement": 0.20,
+            "implementation_complexity": "Medium"
+        })
+
+    if any(b["bottleneck_type"] == "High load" for b in bottlenecks):
+        optimization_strategies.append({
+            "strategy": "负载均衡",
+            "expected_improvement": 0.15,
+            "implementation_complexity": "Low"
+        })
+
+    # 执行优化（简化示例）
+    optimization_results = {
+        "latency_improvement": 0.18,
+        "throughput_improvement": 0.12,
+        "energy_savings": 0.10,
+        "overall_improvement": 0.15
+    }
+
+    # 存储优化数据
+    optimization_data = {
+        "optimization_session_id": "PERF-OPT-20250121-001",
+        "network_name": performance_baseline["network_name"],
+        "optimization_time": datetime.now(),
+        "baseline_latency": performance_baseline["average_latency"],
+        "baseline_packet_loss": performance_baseline["packet_loss_rate"],
+        "baseline_throughput": performance_baseline["network_throughput"],
+        "baseline_energy": performance_baseline["energy_consumption"],
+        "bottlenecks": bottlenecks,
+        "optimization_strategies": optimization_strategies,
+        "latency_improvement": optimization_results["latency_improvement"],
+        "throughput_improvement": optimization_results["throughput_improvement"],
+        "energy_savings": optimization_results["energy_savings"],
+        "overall_improvement": optimization_results["overall_improvement"]
+    }
+
+    # 存储到数据库
+    optimization_id = storage.store_network_data(optimization_data)
+    print(f"Performance optimization data stored: {optimization_id}")
+
+    print(f"\nThread Network Performance Optimization:")
+    print(f"  Network: {performance_baseline['network_name']}")
+    print(f"  Baseline latency: {performance_baseline['average_latency']:.1f} ms")
+    print(f"  Bottlenecks identified: {len(bottlenecks)}")
+    print(f"  Optimization strategies: {len(optimization_strategies)}")
+    print(f"  Latency improvement: {optimization_results['latency_improvement']*100:.1f}%")
+    print(f"  Throughput improvement: {optimization_results['throughput_improvement']*100:.1f}%")
+    print(f"  Overall improvement: {optimization_results['overall_improvement']*100:.1f}%")
+
+    return optimization_data
+
+if __name__ == "__main__":
+    thread_network_performance_optimization()
+```
+
+---
+
+## 12. 案例11：Thread网络安全加固
+
+### 12.1 场景描述
+
+**业务背景**：
+Thread网络安全加固系统增强网络安全性，
+实现安全策略管理、威胁检测、安全事件响应等功能。
+
+**技术挑战**：
+
+- 需要安全策略管理
+- 需要威胁检测
+- 需要安全事件响应
+- 需要安全审计
+
+**解决方案**：
+使用Thread_Schema定义安全策略，
+使用安全算法进行威胁检测，
+使用ThreadStorage存储安全数据。
+
+### 12.2 Schema定义
+
+**Thread网络安全加固Schema**：
+
+```dsl
+schema ThreadNetworkSecurityHardening {
+  security_session_id: String @value("SEC-HARDEN-20250121-001") @required
+  network_name: String @value("SecuredNetwork") @required
+  security_time: DateTime @value("2025-01-21T10:00:00") @required
+
+  security_policies: {
+    authentication_enabled: Boolean @value(true)
+    encryption_enabled: Boolean @value(true)
+    key_rotation_interval: Integer @value(30) @unit("days")
+    access_control_enabled: Boolean @value(true)
+    intrusion_detection_enabled: Boolean @value(true)
+  } @required
+
+  security_threats: [
+    {
+      threat_type: String @value("Unauthorized access attempt")
+      source_node: String @value("Node-001")
+      severity: Enum { Medium } @value(Medium)
+      detected_at: DateTime @value("2025-01-21T09:30:00")
+      status: Enum { Blocked } @value(Blocked)
+    }
+  ] @required
+
+  security_measures: [
+    {
+      measure: String @value("密钥轮换")
+      implementation_status: Enum { Implemented } @value(Implemented)
+      effectiveness: Decimal @value(0.90) @range(0.0, 1.0)
+    },
+    {
+      measure: String @value("访问控制列表")
+      implementation_status: Enum { Implemented } @value(Implemented)
+      effectiveness: Decimal @value(0.85) @range(0.0, 1.0)
+    }
+  ] @required
+
+  security_metrics: {
+    threat_detection_rate: Decimal @value(0.95) @range(0.0, 1.0)
+    false_positive_rate: Decimal @value(0.05) @range(0.0, 1.0)
+    security_incidents: Integer @value(3)
+    security_score: Decimal @value(0.88) @range(0.0, 1.0)
+  } @required
+} @standard("Thread")
+```
+
+### 12.3 实现代码
+
+```python
+from thread_storage import ThreadStorage
+from thread_network_manager import ThreadNetworkManager
+from datetime import datetime
+
+def thread_network_security_hardening():
+    """Thread网络安全加固示例"""
+    storage = ThreadStorage("postgresql://user:password@localhost/thread_db")
+    network_manager = ThreadNetworkManager()
+
+    # 安全策略
+    security_policies = {
+        "network_name": "SecuredNetwork",
+        "authentication_enabled": True,
+        "encryption_enabled": True,
+        "key_rotation_interval": 30,
+        "access_control_enabled": True,
+        "intrusion_detection_enabled": True
+    }
+
+    # 威胁检测
+    def detect_security_threats(network_name):
+        """检测安全威胁"""
+        threats = []
+        nodes = network_manager.get_all_nodes(network_name)
+
+        for node in nodes:
+            # 检测未授权访问尝试
+            unauthorized_attempts = node.get("unauthorized_attempts", 0)
+            if unauthorized_attempts > 0:
+                threats.append({
+                    "threat_type": "Unauthorized access attempt",
+                    "source_node": node["node_id"],
+                    "severity": "Medium" if unauthorized_attempts < 5 else "High",
+                    "detected_at": datetime.now(),
+                    "status": "Blocked"
+                })
+
+            # 检测异常行为
+            if node.get("anomaly_score", 0) > 0.7:
+                threats.append({
+                    "threat_type": "Anomalous behavior",
+                    "source_node": node["node_id"],
+                    "severity": "High",
+                    "detected_at": datetime.now(),
+                    "status": "Under investigation"
+                })
+
+        return threats
+
+    # 检测威胁
+    threats = detect_security_threats(security_policies["network_name"])
+
+    # 安全措施
+    security_measures = [
+        {
+            "measure": "密钥轮换",
+            "implementation_status": "Implemented",
+            "effectiveness": 0.90
+        },
+        {
+            "measure": "访问控制列表",
+            "implementation_status": "Implemented",
+            "effectiveness": 0.85
+        },
+        {
+            "measure": "入侵检测系统",
+            "implementation_status": "Implemented",
+            "effectiveness": 0.88
+        }
+    ]
+
+    # 安全指标
+    security_metrics = {
+        "threat_detection_rate": 0.95,
+        "false_positive_rate": 0.05,
+        "security_incidents": len(threats),
+        "security_score": 0.88
+    }
+
+    # 存储安全数据
+    security_data = {
+        "security_session_id": "SEC-HARDEN-20250121-001",
+        "network_name": security_policies["network_name"],
+        "security_time": datetime.now(),
+        "authentication_enabled": security_policies["authentication_enabled"],
+        "encryption_enabled": security_policies["encryption_enabled"],
+        "key_rotation_interval": security_policies["key_rotation_interval"],
+        "access_control_enabled": security_policies["access_control_enabled"],
+        "intrusion_detection_enabled": security_policies["intrusion_detection_enabled"],
+        "threats": threats,
+        "security_measures": security_measures,
+        "threat_detection_rate": security_metrics["threat_detection_rate"],
+        "false_positive_rate": security_metrics["false_positive_rate"],
+        "security_incidents": security_metrics["security_incidents"],
+        "security_score": security_metrics["security_score"]
+    }
+
+    # 存储到数据库
+    security_id = storage.store_network_data(security_data)
+    print(f"Security hardening data stored: {security_id}")
+
+    print(f"\nThread Network Security Hardening:")
+    print(f"  Network: {security_policies['network_name']}")
+    print(f"  Authentication: {'Enabled' if security_policies['authentication_enabled'] else 'Disabled'}")
+    print(f"  Encryption: {'Enabled' if security_policies['encryption_enabled'] else 'Disabled'}")
+    print(f"  Threats detected: {len(threats)}")
+    print(f"  Security measures: {len(security_measures)}")
+    print(f"  Threat detection rate: {security_metrics['threat_detection_rate']*100:.1f}%")
+    print(f"  Security score: {security_metrics['security_score']:.2f}")
+
+    return security_data
+
+if __name__ == "__main__":
+    thread_network_security_hardening()
+```
+
+---
 
 **创建时间**：2025-01-21
 **最后更新**：2025-01-21

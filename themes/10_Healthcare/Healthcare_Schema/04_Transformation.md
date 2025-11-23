@@ -536,13 +536,30 @@ import json
 from typing import Dict, List, Optional
 from datetime import datetime
 
+import psycopg2
+
 class HealthcareStorage:
-    """医疗数据存储系统"""
+    """医疗数据存储系统 - 增强错误处理"""
 
     def __init__(self, connection_string: str):
-        self.conn = psycopg2.connect(connection_string)
-        self.cur = self.conn.cursor()
-        self._create_tables()
+        # 输入验证
+        if not connection_string:
+            raise ValueError("Connection string cannot be empty")
+
+        if not isinstance(connection_string, str):
+            raise TypeError(f"Connection string must be a string, got {type(connection_string)}")
+
+        try:
+            self.conn = psycopg2.connect(connection_string)
+            self.cur = self.conn.cursor()
+            self._create_tables()
+            logger.info("HealthcareStorage initialized successfully")
+        except psycopg2.Error as e:
+            logger.error(f"Failed to connect to database: {e}")
+            raise ConnectionError(f"Failed to connect to database: {e}") from e
+        except Exception as e:
+            logger.error(f"Unexpected error initializing HealthcareStorage: {e}", exc_info=True)
+            raise RuntimeError(f"Failed to initialize HealthcareStorage: {e}") from e
 
     def _create_tables(self):
         """创建医疗数据表"""
@@ -654,72 +671,264 @@ class HealthcareStorage:
         self.conn.commit()
 
     def store_patient(self, patient_data: Dict) -> int:
-        """存储患者信息"""
-        self.cur.execute("""
-            INSERT INTO patients (
-                patient_id, name, gender, birth_date, id_number,
-                phone, email, address, insurance_type, insurance_number
-            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-            ON CONFLICT (patient_id) DO UPDATE SET
-                name = EXCLUDED.name,
-                gender = EXCLUDED.gender,
-                birth_date = EXCLUDED.birth_date,
-                phone = EXCLUDED.phone,
-                email = EXCLUDED.email,
-                address = EXCLUDED.address,
-                updated_at = CURRENT_TIMESTAMP
-            RETURNING id
-        """, (
-            patient_data.get("patient_id"),
-            patient_data.get("name"),
-            patient_data.get("gender"),
-            patient_data.get("birth_date"),
-            patient_data.get("id_number"),
-            patient_data.get("phone"),
-            patient_data.get("email"),
-            patient_data.get("address"),
-            patient_data.get("insurance_type"),
-            patient_data.get("insurance_number")
-        ))
-        return self.cur.fetchone()[0]
+        """存储患者信息 - 增强错误处理"""
+        # 输入验证
+        if not isinstance(patient_data, dict):
+            raise TypeError(f"Patient data must be a dictionary, got {type(patient_data)}")
+
+        if not patient_data:
+            raise ValueError("Patient data cannot be empty")
+
+        patient_id = patient_data.get("patient_id")
+        if not patient_id:
+            raise ValueError("Patient ID is required")
+
+        if not isinstance(patient_id, str):
+            raise TypeError(f"Patient ID must be a string, got {type(patient_id)}")
+
+        if len(patient_id) > 20:
+            raise ValueError(f"Patient ID too long: {len(patient_id)} (max 20)")
+
+        name = patient_data.get("name")
+        if not name:
+            raise ValueError("Patient name is required")
+
+        if not isinstance(name, str):
+            raise TypeError(f"Patient name must be a string, got {type(name)}")
+
+        if len(name) > 100:
+            raise ValueError(f"Patient name too long: {len(name)} (max 100)")
+
+        # 性别验证
+        gender = patient_data.get("gender")
+        if gender is not None:
+            if not isinstance(gender, str):
+                raise TypeError(f"Gender must be a string or None, got {type(gender)}")
+            if gender not in ['M', 'F', 'O', '']:
+                raise ValueError(f"Invalid gender: {gender}. Must be M, F, O, or empty")
+
+        # 邮箱格式验证
+        email = patient_data.get("email")
+        if email is not None:
+            if not isinstance(email, str):
+                raise TypeError(f"Email must be a string or None, got {type(email)}")
+            if '@' not in email:
+                raise ValueError(f"Invalid email format: {email}")
+            if len(email) > 100:
+                raise ValueError(f"Email too long: {len(email)} (max 100)")
+
+        try:
+            self.cur.execute("""
+                INSERT INTO patients (
+                    patient_id, name, gender, birth_date, id_number,
+                    phone, email, address, insurance_type, insurance_number
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                ON CONFLICT (patient_id) DO UPDATE SET
+                    name = EXCLUDED.name,
+                    gender = EXCLUDED.gender,
+                    birth_date = EXCLUDED.birth_date,
+                    phone = EXCLUDED.phone,
+                    email = EXCLUDED.email,
+                    address = EXCLUDED.address,
+                    updated_at = CURRENT_TIMESTAMP
+                RETURNING id
+            """, (
+                patient_id,
+                name,
+                gender,
+                patient_data.get("birth_date"),
+                patient_data.get("id_number"),
+                patient_data.get("phone"),
+                email,
+                patient_data.get("address"),
+                patient_data.get("insurance_type"),
+                patient_data.get("insurance_number")
+            ))
+
+            result = self.cur.fetchone()
+            if not result:
+                raise ValueError("Failed to store patient data")
+
+            self.conn.commit()
+            logger.info(f"Stored patient: {patient_id}")
+            return result[0]
+
+        except psycopg2.IntegrityError as e:
+            logger.error(f"Integrity error storing patient: {e}")
+            self.conn.rollback()
+            raise ValueError(f"Duplicate patient ID or constraint violation: {e}") from e
+        except psycopg2.Error as e:
+            logger.error(f"Database error storing patient: {e}")
+            self.conn.rollback()
+            raise RuntimeError(f"Database operation failed: {e}") from e
+        except Exception as e:
+            logger.error(f"Unexpected error storing patient: {e}", exc_info=True)
+            self.conn.rollback()
+            raise RuntimeError(f"Failed to store patient: {e}") from e
 
     def store_clinical_data(self, clinical_data: Dict) -> int:
-        """存储临床数据"""
-        self.cur.execute("""
-            INSERT INTO clinical_data (
-                patient_id, encounter_id, recorded_at,
-                data_type, data_content
-            ) VALUES (%s, %s, %s, %s, %s)
-            RETURNING id
-        """, (
-            clinical_data.get("patient_id"),
-            clinical_data.get("encounter_id"),
-            clinical_data.get("recorded_at"),
-            clinical_data.get("data_type"),
-            json.dumps(clinical_data.get("data_content"))
-        ))
-        return self.cur.fetchone()[0]
+        """存储临床数据 - 增强错误处理"""
+        # 输入验证
+        if not isinstance(clinical_data, dict):
+            raise TypeError(f"Clinical data must be a dictionary, got {type(clinical_data)}")
+
+        if not clinical_data:
+            raise ValueError("Clinical data cannot be empty")
+
+        patient_id = clinical_data.get("patient_id")
+        if not patient_id:
+            raise ValueError("Patient ID is required")
+
+        if not isinstance(patient_id, str):
+            raise TypeError(f"Patient ID must be a string, got {type(patient_id)}")
+
+        encounter_id = clinical_data.get("encounter_id")
+        if not encounter_id:
+            raise ValueError("Encounter ID is required")
+
+        if not isinstance(encounter_id, str):
+            raise TypeError(f"Encounter ID must be a string, got {type(encounter_id)}")
+
+        data_type = clinical_data.get("data_type")
+        if not data_type:
+            raise ValueError("Data type is required")
+
+        if not isinstance(data_type, str):
+            raise TypeError(f"Data type must be a string, got {type(data_type)}")
+
+        data_content = clinical_data.get("data_content")
+        if not data_content:
+            raise ValueError("Data content is required")
+
+        if not isinstance(data_content, dict):
+            raise TypeError(f"Data content must be a dictionary, got {type(data_content)}")
+
+        recorded_at = clinical_data.get("recorded_at")
+        if not recorded_at:
+            raise ValueError("Recorded at timestamp is required")
+
+        if not isinstance(recorded_at, datetime):
+            raise TypeError(f"Recorded at must be a datetime, got {type(recorded_at)}")
+
+        try:
+            self.cur.execute("""
+                INSERT INTO clinical_data (
+                    patient_id, encounter_id, recorded_at,
+                    data_type, data_content
+                ) VALUES (%s, %s, %s, %s, %s::jsonb)
+                RETURNING id
+            """, (
+                patient_id,
+                encounter_id,
+                recorded_at,
+                data_type,
+                json.dumps(data_content)
+            ))
+
+            result = self.cur.fetchone()
+            if not result:
+                raise ValueError("Failed to store clinical data")
+
+            self.conn.commit()
+            logger.info(f"Stored clinical data for patient {patient_id}, encounter {encounter_id}")
+            return result[0]
+
+        except psycopg2.IntegrityError as e:
+            logger.error(f"Integrity error storing clinical data: {e}")
+            self.conn.rollback()
+            raise ValueError(f"Foreign key constraint violation: {e}") from e
+        except psycopg2.Error as e:
+            logger.error(f"Database error storing clinical data: {e}")
+            self.conn.rollback()
+            raise RuntimeError(f"Database operation failed: {e}") from e
+        except Exception as e:
+            logger.error(f"Unexpected error storing clinical data: {e}", exc_info=True)
+            self.conn.rollback()
+            raise RuntimeError(f"Failed to store clinical data: {e}") from e
 
     def store_diagnosis(self, diagnosis_data: Dict) -> int:
-        """存储诊断记录"""
-        self.cur.execute("""
-            INSERT INTO diagnoses (
-                patient_id, encounter_id, diagnosis_code,
-                diagnosis_name, diagnosis_date, icd_version,
-                severity, status
-            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-            RETURNING id
-        """, (
-            diagnosis_data.get("patient_id"),
-            diagnosis_data.get("encounter_id"),
-            diagnosis_data.get("diagnosis_code"),
-            diagnosis_data.get("diagnosis_name"),
-            diagnosis_data.get("diagnosis_date"),
-            diagnosis_data.get("icd_version"),
-            diagnosis_data.get("severity"),
-            diagnosis_data.get("status")
-        ))
-        return self.cur.fetchone()[0]
+        """存储诊断记录 - 增强错误处理"""
+        # 输入验证
+        if not isinstance(diagnosis_data, dict):
+            raise TypeError(f"Diagnosis data must be a dictionary, got {type(diagnosis_data)}")
+
+        if not diagnosis_data:
+            raise ValueError("Diagnosis data cannot be empty")
+
+        patient_id = diagnosis_data.get("patient_id")
+        if not patient_id:
+            raise ValueError("Patient ID is required")
+
+        if not isinstance(patient_id, str):
+            raise TypeError(f"Patient ID must be a string, got {type(patient_id)}")
+
+        diagnosis_code = diagnosis_data.get("diagnosis_code")
+        if not diagnosis_code:
+            raise ValueError("Diagnosis code is required")
+
+        if not isinstance(diagnosis_code, str):
+            raise TypeError(f"Diagnosis code must be a string, got {type(diagnosis_code)}")
+
+        if len(diagnosis_code) > 20:
+            raise ValueError(f"Diagnosis code too long: {len(diagnosis_code)} (max 20)")
+
+        diagnosis_name = diagnosis_data.get("diagnosis_name")
+        if not diagnosis_name:
+            raise ValueError("Diagnosis name is required")
+
+        if not isinstance(diagnosis_name, str):
+            raise TypeError(f"Diagnosis name must be a string, got {type(diagnosis_name)}")
+
+        if len(diagnosis_name) > 200:
+            raise ValueError(f"Diagnosis name too long: {len(diagnosis_name)} (max 200)")
+
+        diagnosis_date = diagnosis_data.get("diagnosis_date")
+        if not diagnosis_date:
+            raise ValueError("Diagnosis date is required")
+
+        from datetime import date
+        if not isinstance(diagnosis_date, date):
+            raise TypeError(f"Diagnosis date must be a date, got {type(diagnosis_date)}")
+
+        try:
+            self.cur.execute("""
+                INSERT INTO diagnoses (
+                    patient_id, encounter_id, diagnosis_code,
+                    diagnosis_name, diagnosis_date, icd_version,
+                    severity, status
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                RETURNING id
+            """, (
+                patient_id,
+                diagnosis_data.get("encounter_id"),
+                diagnosis_code,
+                diagnosis_name,
+                diagnosis_date,
+                diagnosis_data.get("icd_version"),
+                diagnosis_data.get("severity"),
+                diagnosis_data.get("status")
+            ))
+
+            result = self.cur.fetchone()
+            if not result:
+                raise ValueError("Failed to store diagnosis")
+
+            self.conn.commit()
+            logger.info(f"Stored diagnosis for patient {patient_id}: {diagnosis_code}")
+            return result[0]
+
+        except psycopg2.IntegrityError as e:
+            logger.error(f"Integrity error storing diagnosis: {e}")
+            self.conn.rollback()
+            raise ValueError(f"Foreign key constraint violation: {e}") from e
+        except psycopg2.Error as e:
+            logger.error(f"Database error storing diagnosis: {e}")
+            self.conn.rollback()
+            raise RuntimeError(f"Database operation failed: {e}") from e
+        except Exception as e:
+            logger.error(f"Unexpected error storing diagnosis: {e}", exc_info=True)
+            self.conn.rollback()
+            raise RuntimeError(f"Failed to store diagnosis: {e}") from e
 
     def close(self):
         """关闭数据库连接"""
@@ -739,7 +948,17 @@ class HealthcareDataAnalyzer:
         self.storage = storage
 
     def analyze_patient_statistics(self, start_date: datetime, end_date: datetime) -> Dict:
-        """分析患者统计"""
+        """分析患者统计 - 增强错误处理"""
+        # 输入验证
+        if not isinstance(start_date, datetime):
+            raise TypeError(f"Start date must be a datetime, got {type(start_date)}")
+
+        if not isinstance(end_date, datetime):
+            raise TypeError(f"End date must be a datetime, got {type(end_date)}")
+
+        if start_date > end_date:
+            raise ValueError(f"Start date ({start_date}) cannot be after end date ({end_date})")
+
         cursor = self.storage.conn.cursor()
 
         # 患者总数

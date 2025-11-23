@@ -43,6 +43,14 @@
     - [11.1 场景描述](#111-场景描述)
     - [11.2 Schema定义](#112-schema定义)
     - [11.3 实现代码](#113-实现代码)
+  - [12. 案例11：智能航线规划系统](#12-案例11智能航线规划系统)
+    - [12.1 场景描述](#121-场景描述)
+    - [12.2 Schema定义](#122-schema定义)
+    - [12.3 实现代码](#123-实现代码)
+  - [13. 案例12：碳排放管理系统](#13-案例12碳排放管理系统)
+    - [13.1 场景描述](#131-场景描述)
+    - [13.2 Schema定义](#132-schema定义)
+    - [13.3 实现代码](#133-实现代码)
 
 ---
 
@@ -1220,6 +1228,368 @@ if __name__ == "__main__":
 - `02_Formal_Definition.md` - 形式化定义
 - `03_Standards.md` - 标准对标
 - `04_Transformation.md` - 转换体系
+
+---
+
+## 12. 案例11：智能航线规划系统
+
+### 12.1 场景描述
+
+**业务背景**：
+智能航线规划系统基于天气、海况、港口情况等数据，
+优化船舶航线，减少航行时间、降低燃料消耗、提高安全性。
+
+**技术挑战**：
+- 需要多源数据整合
+- 需要航线优化算法
+- 需要实时更新
+- 需要效果评估
+
+**解决方案**：
+使用Maritime_Schema整合航线数据，
+使用优化算法进行航线规划，
+使用MaritimeStorage存储航线数据。
+
+### 12.2 Schema定义
+
+**智能航线规划Schema**：
+
+```dsl
+schema IntelligentRoutePlanning {
+  planning_session_id: String @value("ROUTE-PLAN-20250121-001") @required
+  vessel_id: String @value("VESSEL-001") @required
+  planning_time: DateTime @value("2025-01-21T10:00:00") @required
+
+  route_requirements: {
+    origin_port: String @value("Shanghai")
+    destination_port: String @value("Singapore")
+    cargo_type: String @value("Container")
+    cargo_weight: Decimal @value(50000.0) @unit("tons")
+    deadline: DateTime @value("2025-01-28T00:00:00")
+  } @required
+
+  route_options: [
+    {
+      route_id: String @value("ROUTE-001")
+      waypoints: [
+        {
+          latitude: Decimal @value(31.2304)
+          longitude: Decimal @value(121.4737)
+          port_name: String @value("Shanghai")
+        },
+        {
+          latitude: Decimal @value(1.2897)
+          longitude: Decimal @value(103.8501)
+          port_name: String @value("Singapore")
+        }
+      ]
+      estimated_distance: Decimal @value(2500.0) @unit("nautical miles")
+      estimated_duration: Decimal @value(120.0) @unit("hours")
+      estimated_fuel_consumption: Decimal @value(500.0) @unit("tons")
+      estimated_cost: Decimal @value(50000.0) @unit("USD")
+      weather_risk: Enum { Low } @value(Low)
+      safety_score: Decimal @value(0.90) @range(0.0, 1.0)
+    }
+  ] @required
+
+  selected_route: {
+    route_id: String @value("ROUTE-001")
+    selection_reason: String @value("最优成本和时间平衡")
+    optimization_score: Decimal @value(0.88) @range(0.0, 1.0)
+  } @required
+} @standard("EDIFACT")
+```
+
+### 12.3 实现代码
+
+```python
+from maritime_storage import MaritimeStorage
+from datetime import datetime
+
+def intelligent_route_planning():
+    """智能航线规划系统示例"""
+    storage = MaritimeStorage("postgresql://user:password@localhost/maritime_db")
+
+    # 航线需求
+    route_requirements = {
+        "vessel_id": "VESSEL-001",
+        "origin_port": "Shanghai",
+        "destination_port": "Singapore",
+        "cargo_type": "Container",
+        "cargo_weight": 50000.0,
+        "deadline": datetime(2025, 1, 28, 0, 0, 0)
+    }
+
+    # 航线优化算法
+    def optimize_route(requirements):
+        """优化航线"""
+        route_options = []
+
+        # 生成多个航线选项（简化示例）
+        route1 = {
+            "route_id": "ROUTE-001",
+            "waypoints": [
+                {"latitude": 31.2304, "longitude": 121.4737, "port_name": "Shanghai"},
+                {"latitude": 1.2897, "longitude": 103.8501, "port_name": "Singapore"}
+            ],
+            "estimated_distance": 2500.0,
+            "estimated_duration": 120.0,
+            "estimated_fuel_consumption": 500.0,
+            "estimated_cost": 50000.0,
+            "weather_risk": "Low",
+            "safety_score": 0.90
+        }
+
+        route2 = {
+            "route_id": "ROUTE-002",
+            "waypoints": [
+                {"latitude": 31.2304, "longitude": 121.4737, "port_name": "Shanghai"},
+                {"latitude": 22.3193, "longitude": 114.1694, "port_name": "Hong Kong"},
+                {"latitude": 1.2897, "longitude": 103.8501, "port_name": "Singapore"}
+            ],
+            "estimated_distance": 2600.0,
+            "estimated_duration": 130.0,
+            "estimated_fuel_consumption": 520.0,
+            "estimated_cost": 52000.0,
+            "weather_risk": "Low",
+            "safety_score": 0.92
+        }
+
+        route_options = [route1, route2]
+
+        # 选择最优航线（综合考虑成本、时间、安全性）
+        best_route = None
+        best_score = 0.0
+
+        for route in route_options:
+            # 计算优化分数
+            cost_score = 1.0 / (route["estimated_cost"] / 10000.0)
+            time_score = 1.0 / (route["estimated_duration"] / 100.0)
+            safety_score = route["safety_score"]
+
+            optimization_score = (
+                cost_score * 0.4 +
+                time_score * 0.3 +
+                safety_score * 0.3
+            )
+
+            if optimization_score > best_score:
+                best_score = optimization_score
+                best_route = route
+
+        return {
+            "route_options": route_options,
+            "selected_route": best_route,
+            "optimization_score": best_score,
+            "selection_reason": "最优成本和时间平衡"
+        }
+
+    # 执行航线规划
+    route_planning = optimize_route(route_requirements)
+
+    # 存储航线规划数据
+    planning_data = {
+        "planning_session_id": "ROUTE-PLAN-20250121-001",
+        "vessel_id": route_requirements["vessel_id"],
+        "planning_time": datetime.now(),
+        "origin_port": route_requirements["origin_port"],
+        "destination_port": route_requirements["destination_port"],
+        "cargo_type": route_requirements["cargo_type"],
+        "cargo_weight": route_requirements["cargo_weight"],
+        "deadline": route_requirements["deadline"],
+        "selected_route_id": route_planning["selected_route"]["route_id"],
+        "selected_route_distance": route_planning["selected_route"]["estimated_distance"],
+        "selected_route_duration": route_planning["selected_route"]["estimated_duration"],
+        "selected_route_fuel": route_planning["selected_route"]["estimated_fuel_consumption"],
+        "selected_route_cost": route_planning["selected_route"]["estimated_cost"],
+        "optimization_score": route_planning["optimization_score"],
+        "selection_reason": route_planning["selection_reason"]
+    }
+
+    # 存储到数据库
+    planning_id = storage.store_vessel(planning_data)
+    print(f"Route planning stored: {planning_id}")
+
+    print(f"\nIntelligent Route Planning Results:")
+    print(f"  Vessel: {route_requirements['vessel_id']}")
+    print(f"  Route: {route_requirements['origin_port']} -> {route_requirements['destination_port']}")
+    print(f"  Selected route: {route_planning['selected_route']['route_id']}")
+    print(f"  Distance: {route_planning['selected_route']['estimated_distance']:.1f} nm")
+    print(f"  Duration: {route_planning['selected_route']['estimated_duration']:.1f} hours")
+    print(f"  Fuel consumption: {route_planning['selected_route']['estimated_fuel_consumption']:.1f} tons")
+    print(f"  Cost: ${route_planning['selected_route']['estimated_cost']:.2f}")
+    print(f"  Optimization score: {route_planning['optimization_score']:.2f}")
+
+    return planning_data
+
+if __name__ == "__main__":
+    intelligent_route_planning()
+```
+
+---
+
+## 13. 案例12：碳排放管理系统
+
+### 13.1 场景描述
+
+**业务背景**：
+碳排放管理系统监测和管理船舶碳排放，
+支持碳排放报告、碳减排优化、碳交易等功能。
+
+**技术挑战**：
+- 需要碳排放数据收集
+- 需要碳排放计算
+- 需要减排策略
+- 需要碳交易支持
+
+**解决方案**：
+使用Maritime_Schema整合碳排放数据，
+使用碳排放模型进行计算，
+使用MaritimeStorage存储碳排放数据。
+
+### 13.2 Schema定义
+
+**碳排放管理Schema**：
+
+```dsl
+schema CarbonEmissionManagement {
+  emission_session_id: String @value("CARBON-20250121-001") @required
+  vessel_id: String @value("VESSEL-001") @required
+  reporting_period: {
+    start_date: Date @value("2025-01-01")
+    end_date: Date @value("2025-01-21")
+  } @required
+
+  emission_data: {
+    total_fuel_consumption: Decimal @value(5000.0) @unit("tons")
+    fuel_type: Enum { HFO } @value(HFO)
+    emission_factor: Decimal @value(3.114) @unit("tons CO2/ton fuel")
+    total_co2_emissions: Decimal @value(15570.0) @unit("tons CO2")
+    distance_traveled: Decimal @value(10000.0) @unit("nautical miles")
+    cargo_carried: Decimal @value(50000.0) @unit("tons")
+    emission_intensity: Decimal @value(0.311) @unit("tons CO2/ton cargo")
+  } @required
+
+  emission_reduction: {
+    reduction_target: Decimal @value(0.10) @unit("10% reduction")
+    current_reduction: Decimal @value(0.05) @unit("5% reduction")
+    reduction_measures: [
+      {
+        measure: String @value("优化航线")
+        reduction_potential: Decimal @value(0.03)
+        implementation_status: Enum { Implemented } @value(Implemented)
+      },
+      {
+        measure: String @value("使用低硫燃料")
+        reduction_potential: Decimal @value(0.02)
+        implementation_status: Enum { Planned } @value(Planned)
+      }
+    ]
+  } @required
+
+  carbon_trading: {
+    carbon_credits_required: Decimal @value(1557.0) @unit("tons CO2")
+    carbon_price: Decimal @value(50.0) @unit("USD/ton CO2")
+    total_cost: Decimal @value(77850.0) @unit("USD")
+  } @required
+} @standard("EDIFACT")
+```
+
+### 13.3 实现代码
+
+```python
+from maritime_storage import MaritimeStorage
+from datetime import datetime, date
+
+def carbon_emission_management():
+    """碳排放管理系统示例"""
+    storage = MaritimeStorage("postgresql://user:password@localhost/maritime_db")
+
+    # 碳排放数据
+    emission_data = {
+        "vessel_id": "VESSEL-001",
+        "reporting_start_date": date(2025, 1, 1),
+        "reporting_end_date": date(2025, 1, 21),
+        "total_fuel_consumption": 5000.0,
+        "fuel_type": "HFO",
+        "emission_factor": 3.114,  # tons CO2 per ton fuel
+        "distance_traveled": 10000.0,
+        "cargo_carried": 50000.0
+    }
+
+    # 计算碳排放
+    total_co2_emissions = emission_data["total_fuel_consumption"] * emission_data["emission_factor"]
+    emission_intensity = total_co2_emissions / emission_data["cargo_carried"]
+
+    # 减排措施
+    reduction_measures = [
+        {
+            "measure": "优化航线",
+            "reduction_potential": 0.03,
+            "implementation_status": "Implemented"
+        },
+        {
+            "measure": "使用低硫燃料",
+            "reduction_potential": 0.02,
+            "implementation_status": "Planned"
+        }
+    ]
+
+    # 计算当前减排
+    implemented_reductions = sum(
+        m["reduction_potential"] for m in reduction_measures
+        if m["implementation_status"] == "Implemented"
+    )
+
+    reduction_target = 0.10
+    current_reduction = implemented_reductions
+
+    # 碳交易计算
+    carbon_credits_required = total_co2_emissions * (1 - current_reduction)
+    carbon_price = 50.0  # USD per ton CO2
+    total_cost = carbon_credits_required * carbon_price
+
+    # 存储碳排放数据
+    carbon_data = {
+        "emission_session_id": "CARBON-20250121-001",
+        "vessel_id": emission_data["vessel_id"],
+        "reporting_start_date": emission_data["reporting_start_date"],
+        "reporting_end_date": emission_data["reporting_end_date"],
+        "total_fuel_consumption": emission_data["total_fuel_consumption"],
+        "fuel_type": emission_data["fuel_type"],
+        "emission_factor": emission_data["emission_factor"],
+        "total_co2_emissions": total_co2_emissions,
+        "distance_traveled": emission_data["distance_traveled"],
+        "cargo_carried": emission_data["cargo_carried"],
+        "emission_intensity": emission_intensity,
+        "reduction_target": reduction_target,
+        "current_reduction": current_reduction,
+        "reduction_measures": reduction_measures,
+        "carbon_credits_required": carbon_credits_required,
+        "carbon_price": carbon_price,
+        "total_cost": total_cost
+    }
+
+    # 存储到数据库
+    carbon_id = storage.store_vessel(carbon_data)
+    print(f"Carbon emission data stored: {carbon_id}")
+
+    print(f"\nCarbon Emission Management:")
+    print(f"  Vessel: {emission_data['vessel_id']}")
+    print(f"  Total CO2 emissions: {total_co2_emissions:.1f} tons")
+    print(f"  Emission intensity: {emission_intensity:.3f} tons CO2/ton cargo")
+    print(f"  Reduction target: {reduction_target*100:.1f}%")
+    print(f"  Current reduction: {current_reduction*100:.1f}%")
+    print(f"  Carbon credits required: {carbon_credits_required:.1f} tons CO2")
+    print(f"  Total cost: ${total_cost:.2f}")
+
+    return carbon_data
+
+if __name__ == "__main__":
+    carbon_emission_management()
+```
+
+---
 
 **创建时间**：2025-01-21
 **最后更新**：2025-01-21

@@ -1592,13 +1592,36 @@ import json
 from typing import Dict, List, Optional
 from datetime import datetime
 
+import psycopg2
+import json
+import logging
+from datetime import datetime, date
+from typing import Dict, List, Optional
+
+logger = logging.getLogger(__name__)
+
 class MaritimeStorage:
-    """海运航运数据存储系统"""
+    """海运航运数据存储系统 - 增强错误处理"""
 
     def __init__(self, connection_string: str):
-        self.conn = psycopg2.connect(connection_string)
-        self.cur = self.conn.cursor()
-        self._create_tables()
+        # 输入验证
+        if not connection_string:
+            raise ValueError("Connection string cannot be empty")
+
+        if not isinstance(connection_string, str):
+            raise TypeError(f"Connection string must be a string, got {type(connection_string)}")
+
+        try:
+            self.conn = psycopg2.connect(connection_string)
+            self.cur = self.conn.cursor()
+            self._create_tables()
+            logger.info("MaritimeStorage initialized successfully")
+        except psycopg2.Error as e:
+            logger.error(f"Failed to connect to database: {e}")
+            raise ConnectionError(f"Failed to connect to database: {e}") from e
+        except Exception as e:
+            logger.error(f"Unexpected error initializing MaritimeStorage: {e}", exc_info=True)
+            raise RuntimeError(f"Failed to initialize MaritimeStorage: {e}") from e
 
     def _create_tables(self):
         """创建海运航运数据表"""
@@ -1918,36 +1941,139 @@ class MaritimeStorage:
         self.conn.commit()
 
     def store_vessel(self, vessel_data: Dict) -> int:
-        """存储船舶信息"""
-        self.cur.execute("""
-            INSERT INTO vessels (
-                vessel_id, imo_number, vessel_name, vessel_type,
-                flag_state, call_sign, mmsi, gross_tonnage,
-                net_tonnage, deadweight_tonnage, length_overall,
-                breadth, draft, year_built, builder
-            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-            ON CONFLICT (vessel_id) DO UPDATE SET
-                vessel_name = EXCLUDED.vessel_name,
-                updated_at = CURRENT_TIMESTAMP
-            RETURNING id
-        """, (
-            vessel_data.get("vessel_id"),
-            vessel_data.get("imo_number"),
-            vessel_data.get("vessel_name"),
-            vessel_data.get("vessel_type"),
-            vessel_data.get("flag_state"),
-            vessel_data.get("call_sign"),
-            vessel_data.get("mmsi"),
-            vessel_data.get("gross_tonnage"),
-            vessel_data.get("net_tonnage"),
-            vessel_data.get("deadweight_tonnage"),
-            vessel_data.get("length_overall"),
-            vessel_data.get("breadth"),
-            vessel_data.get("draft"),
-            vessel_data.get("year_built"),
-            vessel_data.get("builder")
-        ))
-        return self.cur.fetchone()[0]
+        """存储船舶信息 - 增强错误处理"""
+        # 输入验证
+        if not isinstance(vessel_data, dict):
+            raise TypeError(f"Vessel data must be a dictionary, got {type(vessel_data)}")
+
+        if not vessel_data:
+            raise ValueError("Vessel data cannot be empty")
+
+        vessel_id = vessel_data.get("vessel_id")
+        if not vessel_id:
+            raise ValueError("Vessel ID is required")
+
+        if not isinstance(vessel_id, str):
+            raise TypeError(f"Vessel ID must be a string, got {type(vessel_id)}")
+
+        if len(vessel_id) > 10:
+            raise ValueError(f"Vessel ID too long: {len(vessel_id)} (max 10)")
+
+        imo_number = vessel_data.get("imo_number")
+        if not imo_number:
+            raise ValueError("IMO number is required")
+
+        if not isinstance(imo_number, str):
+            raise TypeError(f"IMO number must be a string, got {type(imo_number)}")
+
+        if len(imo_number) != 7:
+            raise ValueError(f"IMO number must be 7 characters long, got {len(imo_number)}")
+
+        vessel_name = vessel_data.get("vessel_name")
+        if not vessel_name:
+            raise ValueError("Vessel name is required")
+
+        if not isinstance(vessel_name, str):
+            raise TypeError(f"Vessel name must be a string, got {type(vessel_name)}")
+
+        if len(vessel_name) > 200:
+            raise ValueError(f"Vessel name too long: {len(vessel_name)} (max 200)")
+
+        flag_state = vessel_data.get("flag_state")
+        if not flag_state:
+            raise ValueError("Flag state is required")
+
+        if not isinstance(flag_state, str):
+            raise TypeError(f"Flag state must be a string, got {type(flag_state)}")
+
+        if len(flag_state) != 2:
+            raise ValueError(f"Flag state must be 2 characters long, got {len(flag_state)}")
+
+        # 验证吨位
+        gross_tonnage = vessel_data.get("gross_tonnage")
+        if gross_tonnage is not None and gross_tonnage < 0:
+            raise ValueError(f"Gross tonnage cannot be negative: {gross_tonnage}")
+
+        net_tonnage = vessel_data.get("net_tonnage")
+        if net_tonnage is not None and net_tonnage < 0:
+            raise ValueError(f"Net tonnage cannot be negative: {net_tonnage}")
+
+        deadweight_tonnage = vessel_data.get("deadweight_tonnage")
+        if deadweight_tonnage is not None and deadweight_tonnage < 0:
+            raise ValueError(f"Deadweight tonnage cannot be negative: {deadweight_tonnage}")
+
+        # 验证尺寸
+        length_overall = vessel_data.get("length_overall")
+        if length_overall is not None and length_overall <= 0:
+            raise ValueError(f"Length overall must be positive: {length_overall}")
+
+        breadth = vessel_data.get("breadth")
+        if breadth is not None and breadth <= 0:
+            raise ValueError(f"Breadth must be positive: {breadth}")
+
+        draft = vessel_data.get("draft")
+        if draft is not None and draft <= 0:
+            raise ValueError(f"Draft must be positive: {draft}")
+
+        # 验证建造年份
+        year_built = vessel_data.get("year_built")
+        if year_built is not None:
+            if not isinstance(year_built, int):
+                raise TypeError(f"Year built must be an integer, got {type(year_built)}")
+            current_year = datetime.now().year
+            if year_built < 1800 or year_built > current_year:
+                raise ValueError(f"Year built out of range: {year_built} (must be 1800-{current_year})")
+
+        try:
+            self.cur.execute("""
+                INSERT INTO vessels (
+                    vessel_id, imo_number, vessel_name, vessel_type,
+                    flag_state, call_sign, mmsi, gross_tonnage,
+                    net_tonnage, deadweight_tonnage, length_overall,
+                    breadth, draft, year_built, builder
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                ON CONFLICT (vessel_id) DO UPDATE SET
+                    vessel_name = EXCLUDED.vessel_name,
+                    updated_at = CURRENT_TIMESTAMP
+                RETURNING id
+            """, (
+                vessel_id,
+                imo_number,
+                vessel_name,
+                vessel_data.get("vessel_type"),
+                flag_state,
+                vessel_data.get("call_sign"),
+                vessel_data.get("mmsi"),
+                gross_tonnage,
+                net_tonnage,
+                deadweight_tonnage,
+                length_overall,
+                breadth,
+                draft,
+                year_built,
+                vessel_data.get("builder")
+            ))
+
+            result = self.cur.fetchone()
+            if not result:
+                raise ValueError("Failed to store vessel data")
+
+            self.conn.commit()
+            logger.info(f"Stored vessel data: {vessel_id}")
+            return result[0]
+
+        except psycopg2.IntegrityError as e:
+            logger.error(f"Integrity error storing vessel data: {e}")
+            self.conn.rollback()
+            raise ValueError(f"Duplicate vessel ID or IMO number or constraint violation: {e}") from e
+        except psycopg2.Error as e:
+            logger.error(f"Database error storing vessel data: {e}")
+            self.conn.rollback()
+            raise RuntimeError(f"Database operation failed: {e}") from e
+        except Exception as e:
+            logger.error(f"Unexpected error storing vessel data: {e}", exc_info=True)
+            self.conn.rollback()
+            raise RuntimeError(f"Failed to store vessel data: {e}") from e
 
     def store_cargo(self, cargo_data: Dict) -> int:
         """存储货物信息"""

@@ -139,13 +139,37 @@ import json
 from typing import Dict, List, Optional
 from datetime import datetime
 
+import psycopg2
+import json
+import logging
+from datetime import datetime
+from typing import Dict, List, Optional
+from decimal import Decimal
+
+logger = logging.getLogger(__name__)
+
 class SWIFTStorage:
-    """SWIFT数据存储系统"""
+    """SWIFT数据存储系统 - 增强错误处理"""
 
     def __init__(self, connection_string: str):
-        self.conn = psycopg2.connect(connection_string)
-        self.cur = self.conn.cursor()
-        self._create_tables()
+        # 输入验证
+        if not connection_string:
+            raise ValueError("Connection string cannot be empty")
+
+        if not isinstance(connection_string, str):
+            raise TypeError(f"Connection string must be a string, got {type(connection_string)}")
+
+        try:
+            self.conn = psycopg2.connect(connection_string)
+            self.cur = self.conn.cursor()
+            self._create_tables()
+            logger.info("SWIFTStorage initialized successfully")
+        except psycopg2.Error as e:
+            logger.error(f"Failed to connect to database: {e}")
+            raise ConnectionError(f"Failed to connect to database: {e}") from e
+        except Exception as e:
+            logger.error(f"Unexpected error initializing SWIFTStorage: {e}", exc_info=True)
+            raise RuntimeError(f"Failed to initialize SWIFTStorage: {e}") from e
 
     def _create_tables(self):
         """创建SWIFT数据表"""
@@ -262,28 +286,128 @@ class SWIFTStorage:
     def store_mt_message(self, message_type: str, message_reference: str,
                         sender_bic: str, receiver_bic: str,
                         message_content: str, created_at: datetime):
-        """存储MT消息"""
-        self.cur.execute("""
-            INSERT INTO mt_messages
-            (message_type, message_reference, sender_bic, receiver_bic,
-             message_content, created_at)
-            VALUES (%s, %s, %s, %s, %s, %s)
-            ON CONFLICT (message_reference) DO NOTHING
-        """, (message_type, message_reference, sender_bic, receiver_bic,
-              message_content, created_at))
-        self.conn.commit()
+        """存储MT消息 - 增强错误处理"""
+        # 输入验证
+        if not message_type:
+            raise ValueError("Message type cannot be empty")
+
+        if not isinstance(message_type, str):
+            raise TypeError(f"Message type must be a string, got {type(message_type)}")
+
+        if len(message_type) > 10:
+            raise ValueError(f"Message type too long: {len(message_type)} (max 10)")
+
+        if not message_reference:
+            raise ValueError("Message reference cannot be empty")
+
+        if not isinstance(message_reference, str):
+            raise TypeError(f"Message reference must be a string, got {type(message_reference)}")
+
+        if len(message_reference) > 16:
+            raise ValueError(f"Message reference too long: {len(message_reference)} (max 16)")
+
+        if sender_bic is not None:
+            if not isinstance(sender_bic, str):
+                raise TypeError(f"Sender BIC must be a string or None, got {type(sender_bic)}")
+            if len(sender_bic) > 11:
+                raise ValueError(f"Sender BIC too long: {len(sender_bic)} (max 11)")
+
+        if receiver_bic is not None:
+            if not isinstance(receiver_bic, str):
+                raise TypeError(f"Receiver BIC must be a string or None, got {type(receiver_bic)}")
+            if len(receiver_bic) > 11:
+                raise ValueError(f"Receiver BIC too long: {len(receiver_bic)} (max 11)")
+
+        if not message_content:
+            raise ValueError("Message content cannot be empty")
+
+        if not isinstance(message_content, str):
+            raise TypeError(f"Message content must be a string, got {type(message_content)}")
+
+        if not isinstance(created_at, datetime):
+            raise TypeError(f"Created at must be a datetime, got {type(created_at)}")
+
+        try:
+            self.cur.execute("""
+                INSERT INTO mt_messages
+                (message_type, message_reference, sender_bic, receiver_bic,
+                 message_content, created_at)
+                VALUES (%s, %s, %s, %s, %s, %s)
+                ON CONFLICT (message_reference) DO NOTHING
+            """, (message_type, message_reference, sender_bic, receiver_bic,
+                  message_content, created_at))
+
+            self.conn.commit()
+            logger.info(f"Stored SWIFT MT message: {message_reference}")
+
+        except psycopg2.IntegrityError as e:
+            logger.error(f"Integrity error storing SWIFT MT message: {e}")
+            self.conn.rollback()
+            raise ValueError(f"Duplicate message reference or constraint violation: {e}") from e
+        except psycopg2.Error as e:
+            logger.error(f"Database error storing SWIFT MT message: {e}")
+            self.conn.rollback()
+            raise RuntimeError(f"Database operation failed: {e}") from e
+        except Exception as e:
+            logger.error(f"Unexpected error storing SWIFT MT message: {e}", exc_info=True)
+            self.conn.rollback()
+            raise RuntimeError(f"Failed to store SWIFT MT message: {e}") from e
 
     def store_mx_message(self, message_type: str, message_identification: str,
                         creation_date_time: datetime, message_content: Dict):
-        """存储MX消息"""
-        self.cur.execute("""
-            INSERT INTO mx_messages
-            (message_type, message_identification, creation_date_time, message_content)
-            VALUES (%s, %s, %s, %s::jsonb)
-            ON CONFLICT (message_identification) DO NOTHING
-        """, (message_type, message_identification, creation_date_time,
-              json.dumps(message_content)))
-        self.conn.commit()
+        """存储MX消息 - 增强错误处理"""
+        # 输入验证
+        if not message_type:
+            raise ValueError("Message type cannot be empty")
+
+        if not isinstance(message_type, str):
+            raise TypeError(f"Message type must be a string, got {type(message_type)}")
+
+        if len(message_type) > 50:
+            raise ValueError(f"Message type too long: {len(message_type)} (max 50)")
+
+        if not message_identification:
+            raise ValueError("Message identification cannot be empty")
+
+        if not isinstance(message_identification, str):
+            raise TypeError(f"Message identification must be a string, got {type(message_identification)}")
+
+        if len(message_identification) > 35:
+            raise ValueError(f"Message identification too long: {len(message_identification)} (max 35)")
+
+        if not isinstance(creation_date_time, datetime):
+            raise TypeError(f"Creation date time must be a datetime, got {type(creation_date_time)}")
+
+        if not isinstance(message_content, dict):
+            raise TypeError(f"Message content must be a dictionary, got {type(message_content)}")
+
+        if not message_content:
+            raise ValueError("Message content cannot be empty")
+
+        try:
+            self.cur.execute("""
+                INSERT INTO mx_messages
+                (message_type, message_identification, creation_date_time, message_content)
+                VALUES (%s, %s, %s, %s::jsonb)
+                ON CONFLICT (message_identification) DO NOTHING
+            """, (message_type, message_identification, creation_date_time,
+                  json.dumps(message_content)))
+
+            self.conn.commit()
+            logger.info(f"Stored SWIFT MX message: {message_identification}")
+
+        except psycopg2.IntegrityError as e:
+            logger.error(f"Integrity error storing SWIFT MX message: {e}")
+            self.conn.rollback()
+            raise ValueError(f"Duplicate message identification or constraint violation: {e}") from e
+        except psycopg2.Error as e:
+            logger.error(f"Database error storing SWIFT MX message: {e}")
+            self.conn.rollback()
+            raise RuntimeError(f"Database operation failed: {e}") from e
+        except Exception as e:
+            logger.error(f"Unexpected error storing SWIFT MX message: {e}", exc_info=True)
+            self.conn.rollback()
+            raise RuntimeError(f"Failed to store SWIFT MX message: {e}") from e
 
     def calculate_transaction_statistics(self, time_window: datetime):
         """计算交易统计信息"""

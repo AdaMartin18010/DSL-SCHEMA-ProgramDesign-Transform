@@ -144,13 +144,36 @@ import json
 from typing import Dict, List, Optional
 from datetime import datetime
 
+import psycopg2
+import json
+import logging
+from datetime import datetime
+from typing import Dict, List, Optional
+
+logger = logging.getLogger(__name__)
+
 class BPMNStorage:
-    """BPMN数据存储系统"""
+    """BPMN数据存储系统 - 增强错误处理"""
 
     def __init__(self, connection_string: str):
-        self.conn = psycopg2.connect(connection_string)
-        self.cur = self.conn.cursor()
-        self._create_tables()
+        # 输入验证
+        if not connection_string:
+            raise ValueError("Connection string cannot be empty")
+
+        if not isinstance(connection_string, str):
+            raise TypeError(f"Connection string must be a string, got {type(connection_string)}")
+
+        try:
+            self.conn = psycopg2.connect(connection_string)
+            self.cur = self.conn.cursor()
+            self._create_tables()
+            logger.info("BPMNStorage initialized successfully")
+        except psycopg2.Error as e:
+            logger.error(f"Failed to connect to database: {e}")
+            raise ConnectionError(f"Failed to connect to database: {e}") from e
+        except Exception as e:
+            logger.error(f"Unexpected error initializing BPMNStorage: {e}", exc_info=True)
+            raise RuntimeError(f"Failed to initialize BPMNStorage: {e}") from e
 
     def _create_tables(self):
         """创建BPMN数据表"""
@@ -250,49 +273,129 @@ class BPMNStorage:
     def store_process_definition(self, process_id: str, process_name: str,
                                  bpmn_xml: str, version: str = "1.0",
                                  metadata: Dict = None):
-        """存储流程定义"""
-        self.cur.execute("""
-            INSERT INTO process_definitions
-            (process_id, process_name, version, bpmn_xml, metadata)
-            VALUES (%s, %s, %s, %s, %s::jsonb)
-            ON CONFLICT (process_id) DO UPDATE
-            SET process_name = EXCLUDED.process_name,
-                version = EXCLUDED.version,
-                bpmn_xml = EXCLUDED.bpmn_xml,
-                metadata = EXCLUDED.metadata,
-                updated_at = CURRENT_TIMESTAMP
-        """, (process_id, process_name, version, bpmn_xml,
-              json.dumps(metadata or {})))
-        self.conn.commit()
+        """存储流程定义 - 增强错误处理"""
+        # 输入验证
+        if not process_id:
+            raise ValueError("Process ID cannot be empty")
+
+        if not isinstance(process_id, str):
+            raise TypeError(f"Process ID must be a string, got {type(process_id)}")
+
+        if len(process_id) > 200:
+            raise ValueError(f"Process ID too long: {len(process_id)} (max 200)")
+
+        if not process_name:
+            raise ValueError("Process name cannot be empty")
+
+        if not isinstance(process_name, str):
+            raise TypeError(f"Process name must be a string, got {type(process_name)}")
+
+        if len(process_name) > 200:
+            raise ValueError(f"Process name too long: {len(process_name)} (max 200)")
+
+        if not bpmn_xml:
+            raise ValueError("BPMN XML cannot be empty")
+
+        if not isinstance(bpmn_xml, str):
+            raise TypeError(f"BPMN XML must be a string, got {type(bpmn_xml)}")
+
+        if version is not None and len(version) > 50:
+            raise ValueError(f"Version too long: {len(version)} (max 50)")
+
+        if metadata is not None and not isinstance(metadata, dict):
+            raise TypeError(f"Metadata must be a dictionary or None, got {type(metadata)}")
+
+        try:
+            self.cur.execute("""
+                INSERT INTO process_definitions
+                (process_id, process_name, version, bpmn_xml, metadata)
+                VALUES (%s, %s, %s, %s, %s::jsonb)
+                ON CONFLICT (process_id) DO UPDATE
+                SET process_name = EXCLUDED.process_name,
+                    version = EXCLUDED.version,
+                    bpmn_xml = EXCLUDED.bpmn_xml,
+                    metadata = EXCLUDED.metadata,
+                    updated_at = CURRENT_TIMESTAMP
+            """, (process_id, process_name, version, bpmn_xml,
+                  json.dumps(metadata or {})))
+
+            self.conn.commit()
+            logger.info(f"Stored BPMN process definition: {process_id}")
+
+        except psycopg2.IntegrityError as e:
+            logger.error(f"Integrity error storing BPMN process definition: {e}")
+            self.conn.rollback()
+            raise ValueError(f"Duplicate process ID or constraint violation: {e}") from e
+        except psycopg2.Error as e:
+            logger.error(f"Database error storing BPMN process definition: {e}")
+            self.conn.rollback()
+            raise RuntimeError(f"Database operation failed: {e}") from e
+        except Exception as e:
+            logger.error(f"Unexpected error storing BPMN process definition: {e}", exc_info=True)
+            self.conn.rollback()
+            raise RuntimeError(f"Failed to store BPMN process definition: {e}") from e
 
     def calculate_process_statistics(self, process_id: str,
                                     time_window: datetime):
-        """计算流程统计信息"""
-        self.cur.execute("""
-            SELECT
-                COUNT(*) as total_instances,
-                COUNT(CASE WHEN status = 'COMPLETED' THEN 1 END) as completed,
-                COUNT(CASE WHEN status = 'RUNNING' THEN 1 END) as running,
-                COUNT(CASE WHEN status = 'SUSPENDED' THEN 1 END) as suspended,
-                AVG(EXTRACT(EPOCH FROM (end_time - start_time))) as avg_duration,
-                MIN(EXTRACT(EPOCH FROM (end_time - start_time))) as min_duration,
-                MAX(EXTRACT(EPOCH FROM (end_time - start_time))) as max_duration
-            FROM process_instances
-            WHERE process_id = %s AND created_at >= %s
-        """, (process_id, time_window))
+        """计算流程统计信息 - 增强错误处理"""
+        # 输入验证
+        if not process_id:
+            raise ValueError("Process ID cannot be empty")
 
-        stats = dict(zip([desc[0] for desc in self.cur.description],
-                         self.cur.fetchone()))
+        if not isinstance(process_id, str):
+            raise TypeError(f"Process ID must be a string, got {type(process_id)}")
 
-        # 存储统计信息
-        self.cur.execute("""
-            INSERT INTO process_statistics
-            (process_id, statistic_type, time_window, statistics)
-            VALUES (%s, %s, %s, %s::jsonb)
-            ON CONFLICT (process_id, statistic_type, time_window)
-            DO UPDATE SET statistics = EXCLUDED.statistics
-        """, (process_id, "performance", time_window, json.dumps(stats)))
-        self.conn.commit()
+        if not isinstance(time_window, datetime):
+            raise TypeError(f"Time window must be a datetime, got {type(time_window)}")
+
+        try:
+            self.cur.execute("""
+                SELECT
+                    COUNT(*) as total_instances,
+                    COUNT(CASE WHEN status = 'COMPLETED' THEN 1 END) as completed,
+                    COUNT(CASE WHEN status = 'RUNNING' THEN 1 END) as running,
+                    COUNT(CASE WHEN status = 'SUSPENDED' THEN 1 END) as suspended,
+                    AVG(EXTRACT(EPOCH FROM (end_time - start_time))) as avg_duration,
+                    MIN(EXTRACT(EPOCH FROM (end_time - start_time))) as min_duration,
+                    MAX(EXTRACT(EPOCH FROM (end_time - start_time))) as max_duration
+                FROM process_instances
+                WHERE process_id = %s AND created_at >= %s
+            """, (process_id, time_window))
+
+            result = self.cur.fetchone()
+            if not result:
+                stats = {
+                    'total_instances': 0, 'completed': 0, 'running': 0, 'suspended': 0,
+                    'avg_duration': None, 'min_duration': None, 'max_duration': None
+                }
+            else:
+                stats = dict(zip([desc[0] for desc in self.cur.description], result))
+                # Handle None values for duration statistics
+                stats['avg_duration'] = float(stats['avg_duration']) if stats['avg_duration'] is not None else None
+                stats['min_duration'] = float(stats['min_duration']) if stats['min_duration'] is not None else None
+                stats['max_duration'] = float(stats['max_duration']) if stats['max_duration'] is not None else None
+
+            # 存储统计信息
+            self.cur.execute("""
+                INSERT INTO process_statistics
+                (process_id, statistic_type, time_window, statistics)
+                VALUES (%s, %s, %s, %s::jsonb)
+                ON CONFLICT (process_id, statistic_type, time_window)
+                DO UPDATE SET statistics = EXCLUDED.statistics
+            """, (process_id, "performance", time_window, json.dumps(stats)))
+
+            self.conn.commit()
+            logger.info(f"Calculated process statistics for {process_id}")
+            return stats
+
+        except psycopg2.Error as e:
+            logger.error(f"Database error calculating process statistics: {e}")
+            self.conn.rollback()
+            raise RuntimeError(f"Database operation failed: {e}") from e
+        except Exception as e:
+            logger.error(f"Unexpected error calculating process statistics: {e}", exc_info=True)
+            self.conn.rollback()
+            raise RuntimeError(f"Failed to calculate process statistics: {e}") from e
 
         return stats
 ```

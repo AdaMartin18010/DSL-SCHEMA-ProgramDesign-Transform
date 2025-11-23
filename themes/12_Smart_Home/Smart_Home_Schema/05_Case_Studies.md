@@ -37,6 +37,14 @@
   - [10. 案例10：智慧家居数据存储系统](#10-案例10智慧家居数据存储系统)
     - [9.1 场景描述](#91-场景描述-1)
     - [9.2 实现代码](#92-实现代码)
+  - [11. 案例11：智能安防系统](#11-案例11智能安防系统)
+    - [11.1 场景描述](#111-场景描述)
+    - [11.2 Schema定义](#112-schema定义)
+    - [11.3 实现代码](#113-实现代码)
+  - [12. 案例12：智能健康监测系统](#12-案例12智能健康监测系统)
+    - [12.1 场景描述](#121-场景描述)
+    - [12.2 Schema定义](#122-schema定义)
+    - [12.3 实现代码](#123-实现代码)
 
 ---
 
@@ -1033,6 +1041,415 @@ INFO:__main__:设备 AC001 状态: {'state': {'temperature': 28, 'mode': 'Eco'},
 ### 9.2 实现代码
 
 详见 `04_Transformation.md` 第7章。
+
+---
+
+## 11. 案例11：智能安防系统
+
+### 11.1 场景描述
+
+**业务背景**：
+智能安防系统集成门锁、摄像头、传感器等设备，
+实现入侵检测、异常行为识别、自动报警等功能。
+
+**技术挑战**：
+- 需要多设备联动
+- 需要实时监控
+- 需要异常检测算法
+- 需要报警机制
+
+**解决方案**：
+使用Smart_Home_Schema整合安防设备，
+使用AI算法进行异常检测，
+使用SmartHomeStorage存储安防数据。
+
+### 11.2 Schema定义
+
+**智能安防Schema**：
+
+```dsl
+schema SmartSecurity {
+  security_session_id: String @value("SEC-20250121-001") @required
+  timestamp: DateTime @value("2025-01-21T22:00:00") @required
+
+  security_devices: {
+    door_lock: {
+      device_id: String @value("LOCK-001")
+      status: Enum { Locked } @value(Locked)
+      last_unlock_time: DateTime @value("2025-01-21T18:00:00")
+    }
+    camera: {
+      device_id: String @value("CAM-001")
+      status: Enum { Active } @value(Active)
+      motion_detected: Boolean @value(false)
+    }
+    motion_sensor: {
+      device_id: String @value("MOTION-001")
+      status: Enum { Active } @value(Active)
+      motion_detected: Boolean @value(false)
+    }
+    window_sensor: {
+      device_id: String @value("WINDOW-001")
+      status: Enum { Closed } @value(Closed)
+    }
+  } @required
+
+  security_status: {
+    overall_status: Enum { Secure } @value(Secure)
+    alert_level: Enum { Normal } @value(Normal)
+    active_alerts: Integer @value(0)
+  } @required
+
+  security_rules: [
+    {
+      rule_id: String @value("RULE-001")
+      rule_name: String @value("夜间入侵检测")
+      trigger_condition: String @value("motion_detected AND time > 22:00")
+      action: String @value("send_alert AND turn_on_lights")
+      enabled: Boolean @value(true)
+    }
+  ] @required
+} @standard("Matter")
+```
+
+### 11.3 实现代码
+
+```python
+from smart_home_storage import SmartHomeStorage
+from datetime import datetime, time
+
+def smart_security_system():
+    """智能安防系统示例"""
+    storage = SmartHomeStorage("postgresql://user:password@localhost/smart_home")
+
+    # 安防设备状态
+    security_devices = {
+        "door_lock": {
+            "device_id": "LOCK-001",
+            "status": "Locked",
+            "last_unlock_time": datetime(2025, 1, 21, 18, 0, 0)
+        },
+        "camera": {
+            "device_id": "CAM-001",
+            "status": "Active",
+            "motion_detected": False
+        },
+        "motion_sensor": {
+            "device_id": "MOTION-001",
+            "status": "Active",
+            "motion_detected": False
+        },
+        "window_sensor": {
+            "device_id": "WINDOW-001",
+            "status": "Closed"
+        }
+    }
+
+    # 安防规则
+    security_rules = [
+        {
+            "rule_id": "RULE-001",
+            "rule_name": "夜间入侵检测",
+            "trigger_condition": "motion_detected AND time > 22:00",
+            "action": "send_alert AND turn_on_lights",
+            "enabled": True
+        }
+    ]
+
+    # 检查安防状态
+    def check_security_status(devices, current_time):
+        """检查安防状态"""
+        overall_status = "Secure"
+        alert_level = "Normal"
+        active_alerts = 0
+
+        # 检查门锁状态
+        if devices["door_lock"]["status"] != "Locked":
+            overall_status = "Warning"
+            alert_level = "Medium"
+            active_alerts += 1
+
+        # 检查运动检测
+        if devices["motion_sensor"]["motion_detected"]:
+            if current_time.hour >= 22 or current_time.hour < 6:
+                overall_status = "Alert"
+                alert_level = "High"
+                active_alerts += 1
+
+        # 检查窗户传感器
+        if devices["window_sensor"]["status"] != "Closed":
+            overall_status = "Warning"
+            alert_level = "Medium"
+            active_alerts += 1
+
+        return {
+            "overall_status": overall_status,
+            "alert_level": alert_level,
+            "active_alerts": active_alerts
+        }
+
+    # 执行安防检查
+    current_time = datetime.now()
+    security_status = check_security_status(security_devices, current_time)
+
+    # 存储安防数据
+    security_data = {
+        "security_session_id": "SEC-20250121-001",
+        "timestamp": current_time,
+        "door_lock_status": security_devices["door_lock"]["status"],
+        "camera_status": security_devices["camera"]["status"],
+        "motion_sensor_status": security_devices["motion_sensor"]["status"],
+        "window_sensor_status": security_devices["window_sensor"]["status"],
+        "overall_status": security_status["overall_status"],
+        "alert_level": security_status["alert_level"],
+        "active_alerts": security_status["active_alerts"]
+    }
+
+    # 存储到数据库
+    security_id = storage.store_device_data(security_data)
+    print(f"Security data stored: {security_id}")
+
+    print(f"\nSmart Security Status:")
+    print(f"  Overall status: {security_status['overall_status']}")
+    print(f"  Alert level: {security_status['alert_level']}")
+    print(f"  Active alerts: {security_status['active_alerts']}")
+    print(f"  Door lock: {security_devices['door_lock']['status']}")
+    print(f"  Motion sensor: {'Motion detected' if security_devices['motion_sensor']['motion_detected'] else 'No motion'}")
+
+    return security_data
+
+if __name__ == "__main__":
+    smart_security_system()
+```
+
+---
+
+## 12. 案例12：智能健康监测系统
+
+### 12.1 场景描述
+
+**业务背景**：
+智能健康监测系统集成健康传感器、智能床垫、智能体重秤等设备，
+监测用户健康指标，提供健康建议和预警。
+
+**技术挑战**：
+- 需要多传感器数据融合
+- 需要健康数据分析
+- 需要异常检测
+- 需要健康报告生成
+
+**解决方案**：
+使用Smart_Home_Schema整合健康设备，
+使用AI算法进行健康分析，
+使用SmartHomeStorage存储健康数据。
+
+### 12.2 Schema定义
+
+**智能健康监测Schema**：
+
+```dsl
+schema SmartHealthMonitoring {
+  health_session_id: String @value("HEALTH-20250121-001") @required
+  user_id: String @value("USER-001") @required
+  timestamp: DateTime @value("2025-01-21T08:00:00") @required
+
+  health_metrics: {
+    weight: Decimal @value(70.5) @unit("kg")
+    bmi: Decimal @value(22.5)
+    heart_rate: Integer @value(72) @unit("bpm")
+    blood_pressure: {
+      systolic: Integer @value(120) @unit("mmHg")
+      diastolic: Integer @value(80) @unit("mmHg")
+    }
+    sleep_quality: {
+      sleep_duration: Decimal @value(7.5) @unit("hours")
+      deep_sleep_ratio: Decimal @value(0.25)
+      sleep_score: Decimal @value(0.85) @range(0.0, 1.0)
+    }
+    activity_level: {
+      steps: Integer @value(8500)
+      calories_burned: Integer @value(2200)
+      active_minutes: Integer @value(45)
+    }
+  } @required
+
+  health_analysis: {
+    overall_health_score: Decimal @value(0.82) @range(0.0, 1.0)
+    health_status: Enum { Good } @value(Good)
+    risk_factors: [
+      {
+        factor: String @value("Sedentary lifestyle")
+        severity: Enum { Low } @value(Low)
+        recommendation: String @value("增加日常活动量")
+      }
+    ]
+    recommendations: [
+      {
+        recommendation: String @value("保持当前运动量")
+        priority: Enum { Medium } @value(Medium)
+      }
+    ]
+  } @required
+} @standard("Matter")
+```
+
+### 12.3 实现代码
+
+```python
+from smart_home_storage import SmartHomeStorage
+from datetime import datetime
+
+def smart_health_monitoring():
+    """智能健康监测系统示例"""
+    storage = SmartHomeStorage("postgresql://user:password@localhost/smart_home")
+
+    # 健康指标数据
+    health_metrics = {
+        "weight": 70.5,
+        "bmi": 22.5,
+        "heart_rate": 72,
+        "blood_pressure": {
+            "systolic": 120,
+            "diastolic": 80
+        },
+        "sleep_quality": {
+            "sleep_duration": 7.5,
+            "deep_sleep_ratio": 0.25,
+            "sleep_score": 0.85
+        },
+        "activity_level": {
+            "steps": 8500,
+            "calories_burned": 2200,
+            "active_minutes": 45
+        }
+    }
+
+    # 健康分析算法
+    def analyze_health(metrics):
+        """分析健康状态"""
+        overall_score = 0.0
+        risk_factors = []
+        recommendations = []
+
+        # BMI评分
+        bmi = metrics["bmi"]
+        if 18.5 <= bmi <= 24.9:
+            bmi_score = 1.0
+        elif 25.0 <= bmi <= 29.9:
+            bmi_score = 0.7
+            risk_factors.append({
+                "factor": "Overweight",
+                "severity": "Medium",
+                "recommendation": "控制饮食，增加运动"
+            })
+        else:
+            bmi_score = 0.5
+            risk_factors.append({
+                "factor": "BMI异常",
+                "severity": "High",
+                "recommendation": "咨询医生"
+            })
+
+        # 心率评分
+        heart_rate = metrics["heart_rate"]
+        if 60 <= heart_rate <= 100:
+            hr_score = 1.0
+        else:
+            hr_score = 0.7
+            risk_factors.append({
+                "factor": "心率异常",
+                "severity": "Medium",
+                "recommendation": "监测心率变化"
+            })
+
+        # 睡眠评分
+        sleep_score = metrics["sleep_quality"]["sleep_score"]
+
+        # 活动评分
+        steps = metrics["activity_level"]["steps"]
+        if steps >= 10000:
+            activity_score = 1.0
+        elif steps >= 5000:
+            activity_score = 0.8
+            recommendations.append({
+                "recommendation": "增加日常活动量",
+                "priority": "Low"
+            })
+        else:
+            activity_score = 0.6
+            risk_factors.append({
+                "factor": "Sedentary lifestyle",
+                "severity": "Low",
+                "recommendation": "增加日常活动量"
+            })
+            recommendations.append({
+                "recommendation": "增加日常活动量",
+                "priority": "Medium"
+            })
+
+        # 综合评分
+        overall_score = (
+            bmi_score * 0.2 +
+            hr_score * 0.2 +
+            sleep_score * 0.3 +
+            activity_score * 0.3
+        )
+
+        # 确定健康状态
+        if overall_score >= 0.8:
+            health_status = "Excellent"
+        elif overall_score >= 0.7:
+            health_status = "Good"
+        elif overall_score >= 0.6:
+            health_status = "Fair"
+        else:
+            health_status = "Poor"
+
+        return {
+            "overall_health_score": overall_score,
+            "health_status": health_status,
+            "risk_factors": risk_factors,
+            "recommendations": recommendations
+        }
+
+    # 执行健康分析
+    health_analysis = analyze_health(health_metrics)
+
+    # 存储健康数据
+    health_data = {
+        "health_session_id": "HEALTH-20250121-001",
+        "user_id": "USER-001",
+        "timestamp": datetime.now(),
+        "weight": health_metrics["weight"],
+        "bmi": health_metrics["bmi"],
+        "heart_rate": health_metrics["heart_rate"],
+        "blood_pressure_systolic": health_metrics["blood_pressure"]["systolic"],
+        "blood_pressure_diastolic": health_metrics["blood_pressure"]["diastolic"],
+        "sleep_duration": health_metrics["sleep_quality"]["sleep_duration"],
+        "sleep_score": health_metrics["sleep_quality"]["sleep_score"],
+        "steps": health_metrics["activity_level"]["steps"],
+        "calories_burned": health_metrics["activity_level"]["calories_burned"],
+        "overall_health_score": health_analysis["overall_health_score"],
+        "health_status": health_analysis["health_status"],
+        "risk_factors": health_analysis["risk_factors"],
+        "recommendations": health_analysis["recommendations"]
+    }
+
+    # 存储到数据库
+    health_id = storage.store_device_data(health_data)
+    print(f"Health data stored: {health_id}")
+
+    print(f"\nSmart Health Monitoring Results:")
+    print(f"  Overall health score: {health_analysis['overall_health_score']:.2f}")
+    print(f"  Health status: {health_analysis['health_status']}")
+    print(f"  Risk factors: {len(health_analysis['risk_factors'])}")
+    print(f"  Recommendations: {len(health_analysis['recommendations'])}")
+
+    return health_data
+
+if __name__ == "__main__":
+    smart_health_monitoring()
+```
 
 ---
 

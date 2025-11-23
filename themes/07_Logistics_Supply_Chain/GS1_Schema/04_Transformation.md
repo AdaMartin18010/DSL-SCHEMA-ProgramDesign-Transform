@@ -463,16 +463,35 @@ class EPCISEventProcessor:
 
 ```python
 import psycopg2
+import json
+import logging
 from datetime import datetime
 from typing import List, Optional, Dict
 import uuid
 
+logger = logging.getLogger(__name__)
+
 class GS1Storage:
-    """GS1数据PostgreSQL存储类"""
+    """GS1数据PostgreSQL存储类 - 增强错误处理"""
 
     def __init__(self, connection_string: str):
-        self.conn = psycopg2.connect(connection_string)
-        self.create_tables()
+        # 输入验证
+        if not connection_string:
+            raise ValueError("Connection string cannot be empty")
+
+        if not isinstance(connection_string, str):
+            raise TypeError(f"Connection string must be a string, got {type(connection_string)}")
+
+        try:
+            self.conn = psycopg2.connect(connection_string)
+            self.create_tables()
+            logger.info("GS1Storage initialized successfully")
+        except psycopg2.Error as e:
+            logger.error(f"Failed to connect to database: {e}")
+            raise ConnectionError(f"Failed to connect to database: {e}") from e
+        except Exception as e:
+            logger.error(f"Unexpected error initializing GS1Storage: {e}", exc_info=True)
+            raise RuntimeError(f"Failed to initialize GS1Storage: {e}") from e
 
     def create_tables(self):
         """创建GS1数据存储表"""
@@ -620,81 +639,223 @@ class GS1Storage:
         cursor.close()
 
     def store_gtin(self, gtin_data: dict) -> str:
-        """存储GTIN数据"""
-        cursor = self.conn.cursor()
-        cursor.execute("""
-            INSERT INTO gtin_data (
-                gtin_type, gtin_identifier, company_prefix, item_reference,
-                check_digit, product_name, brand_name, product_category,
-                unit_of_measure, net_weight, gross_weight,
-                dimensions_length, dimensions_width, dimensions_height, dimensions_unit
-            ) VALUES (
-                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
-            ) ON CONFLICT (gtin_identifier) DO UPDATE SET
-                product_name = EXCLUDED.product_name,
-                brand_name = EXCLUDED.brand_name,
-                product_category = EXCLUDED.product_category,
-                updated_at = CURRENT_TIMESTAMP
-            RETURNING id
-        """, (
-            gtin_data.get("gtin_type"),
-            gtin_data.get("gtin_identifier"),
-            gtin_data.get("company_prefix"),
-            gtin_data.get("item_reference"),
-            gtin_data.get("check_digit"),
-            gtin_data.get("product_name"),
-            gtin_data.get("brand_name"),
-            gtin_data.get("product_category"),
-            gtin_data.get("unit_of_measure"),
-            gtin_data.get("net_weight"),
-            gtin_data.get("gross_weight"),
-            gtin_data.get("dimensions_length"),
-            gtin_data.get("dimensions_width"),
-            gtin_data.get("dimensions_height"),
-            gtin_data.get("dimensions_unit", "CM")
-        ))
-        gtin_id = cursor.fetchone()[0]
-        self.conn.commit()
-        cursor.close()
-        return str(gtin_id)
+        """存储GTIN数据 - 增强错误处理"""
+        # 输入验证
+        if not isinstance(gtin_data, dict):
+            raise TypeError(f"GTIN data must be a dictionary, got {type(gtin_data)}")
+
+        if not gtin_data:
+            raise ValueError("GTIN data cannot be empty")
+
+        gtin_identifier = gtin_data.get("gtin_identifier")
+        if not gtin_identifier:
+            raise ValueError("GTIN identifier is required")
+
+        if not isinstance(gtin_identifier, str):
+            raise TypeError(f"GTIN identifier must be a string, got {type(gtin_identifier)}")
+
+        if len(gtin_identifier) > 20:
+            raise ValueError(f"GTIN identifier too long: {len(gtin_identifier)} (max 20)")
+
+        gtin_type = gtin_data.get("gtin_type")
+        if not gtin_type:
+            raise ValueError("GTIN type is required")
+
+        if not isinstance(gtin_type, str):
+            raise TypeError(f"GTIN type must be a string, got {type(gtin_type)}")
+
+        valid_gtin_types = ['GTIN-8', 'GTIN-12', 'GTIN-13', 'GTIN-14']
+        if gtin_type not in valid_gtin_types:
+            raise ValueError(f"Invalid GTIN type: {gtin_type}. Must be one of {valid_gtin_types}")
+
+        # 验证重量和尺寸
+        net_weight = gtin_data.get("net_weight")
+        if net_weight is not None and net_weight < 0:
+            raise ValueError(f"Net weight cannot be negative: {net_weight}")
+
+        gross_weight = gtin_data.get("gross_weight")
+        if gross_weight is not None and gross_weight < 0:
+            raise ValueError(f"Gross weight cannot be negative: {gross_weight}")
+
+        if net_weight is not None and gross_weight is not None and net_weight > gross_weight:
+            raise ValueError(f"Net weight ({net_weight}) cannot be greater than gross weight ({gross_weight})")
+
+        for dim_field in ['dimensions_length', 'dimensions_width', 'dimensions_height']:
+            dim_value = gtin_data.get(dim_field)
+            if dim_value is not None and dim_value < 0:
+                raise ValueError(f"{dim_field} cannot be negative: {dim_value}")
+
+        try:
+            cursor = self.conn.cursor()
+            cursor.execute("""
+                INSERT INTO gtin_data (
+                    gtin_type, gtin_identifier, company_prefix, item_reference,
+                    check_digit, product_name, brand_name, product_category,
+                    unit_of_measure, net_weight, gross_weight,
+                    dimensions_length, dimensions_width, dimensions_height, dimensions_unit
+                ) VALUES (
+                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+                ) ON CONFLICT (gtin_identifier) DO UPDATE SET
+                    product_name = EXCLUDED.product_name,
+                    brand_name = EXCLUDED.brand_name,
+                    product_category = EXCLUDED.product_category,
+                    updated_at = CURRENT_TIMESTAMP
+                RETURNING id
+            """, (
+                gtin_type,
+                gtin_identifier,
+                gtin_data.get("company_prefix"),
+                gtin_data.get("item_reference"),
+                gtin_data.get("check_digit"),
+                gtin_data.get("product_name"),
+                gtin_data.get("brand_name"),
+                gtin_data.get("product_category"),
+                gtin_data.get("unit_of_measure"),
+                net_weight,
+                gross_weight,
+                gtin_data.get("dimensions_length"),
+                gtin_data.get("dimensions_width"),
+                gtin_data.get("dimensions_height"),
+                gtin_data.get("dimensions_unit", "CM")
+            ))
+
+            result = cursor.fetchone()
+            if not result:
+                raise ValueError("Failed to store GTIN data")
+
+            gtin_id = result[0]
+            self.conn.commit()
+            cursor.close()
+            logger.info(f"Stored GTIN data: {gtin_identifier}")
+            return str(gtin_id)
+
+        except psycopg2.IntegrityError as e:
+            logger.error(f"Integrity error storing GTIN data: {e}")
+            self.conn.rollback()
+            raise ValueError(f"Duplicate GTIN identifier or constraint violation: {e}") from e
+        except psycopg2.Error as e:
+            logger.error(f"Database error storing GTIN data: {e}")
+            self.conn.rollback()
+            raise RuntimeError(f"Database operation failed: {e}") from e
+        except Exception as e:
+            logger.error(f"Unexpected error storing GTIN data: {e}", exc_info=True)
+            self.conn.rollback()
+            raise RuntimeError(f"Failed to store GTIN data: {e}") from e
 
     def store_gln(self, gln_data: dict) -> str:
-        """存储GLN数据"""
-        cursor = self.conn.cursor()
-        cursor.execute("""
-            INSERT INTO gln_data (
-                location_identifier, location_type, location_name,
-                street_address, city, state_province, postal_code, country,
-                phone, email, website, latitude, longitude, parent_gln, gln_status
-            ) VALUES (
-                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
-            ) ON CONFLICT (location_identifier) DO UPDATE SET
-                location_name = EXCLUDED.location_name,
-                street_address = EXCLUDED.street_address,
-                city = EXCLUDED.city,
-                updated_at = CURRENT_TIMESTAMP
-            RETURNING id
-        """, (
-            gln_data.get("location_identifier"),
-            gln_data.get("location_type"),
-            gln_data.get("location_name"),
-            gln_data.get("street_address"),
-            gln_data.get("city"),
-            gln_data.get("state_province"),
-            gln_data.get("postal_code"),
-            gln_data.get("country"),
-            gln_data.get("phone"),
-            gln_data.get("email"),
-            gln_data.get("website"),
-            gln_data.get("latitude"),
-            gln_data.get("longitude"),
-            gln_data.get("parent_gln"),
-            gln_data.get("gln_status", "Active")
-        ))
-        gln_id = cursor.fetchone()[0]
-        self.conn.commit()
-        cursor.close()
-        return str(gln_id)
+        """存储GLN数据 - 增强错误处理"""
+        # 输入验证
+        if not isinstance(gln_data, dict):
+            raise TypeError(f"GLN data must be a dictionary, got {type(gln_data)}")
+
+        if not gln_data:
+            raise ValueError("GLN data cannot be empty")
+
+        location_identifier = gln_data.get("location_identifier")
+        if not location_identifier:
+            raise ValueError("Location identifier is required")
+
+        if not isinstance(location_identifier, str):
+            raise TypeError(f"Location identifier must be a string, got {type(location_identifier)}")
+
+        if len(location_identifier) != 13:
+            raise ValueError(f"Location identifier must be 13 characters long, got {len(location_identifier)}")
+
+        location_type = gln_data.get("location_type")
+        if not location_type:
+            raise ValueError("Location type is required")
+
+        if not isinstance(location_type, str):
+            raise TypeError(f"Location type must be a string, got {type(location_type)}")
+
+        location_name = gln_data.get("location_name")
+        if not location_name:
+            raise ValueError("Location name is required")
+
+        if not isinstance(location_name, str):
+            raise TypeError(f"Location name must be a string, got {type(location_name)}")
+
+        if len(location_name) > 255:
+            raise ValueError(f"Location name too long: {len(location_name)} (max 255)")
+
+        # 验证坐标
+        latitude = gln_data.get("latitude")
+        if latitude is not None:
+            if not isinstance(latitude, (int, float)):
+                raise TypeError(f"Latitude must be numeric, got {type(latitude)}")
+            if not (-90 <= latitude <= 90):
+                raise ValueError(f"Latitude out of range: {latitude} (must be -90 to 90)")
+
+        longitude = gln_data.get("longitude")
+        if longitude is not None:
+            if not isinstance(longitude, (int, float)):
+                raise TypeError(f"Longitude must be numeric, got {type(longitude)}")
+            if not (-180 <= longitude <= 180):
+                raise ValueError(f"Longitude out of range: {longitude} (must be -180 to 180)")
+
+        # 验证国家代码
+        country = gln_data.get("country")
+        if country is not None:
+            if not isinstance(country, str):
+                raise TypeError(f"Country must be a string, got {type(country)}")
+            if len(country) != 2:
+                raise ValueError(f"Country code must be 2 characters long, got {len(country)}")
+
+        try:
+            cursor = self.conn.cursor()
+            cursor.execute("""
+                INSERT INTO gln_data (
+                    location_identifier, location_type, location_name,
+                    street_address, city, state_province, postal_code, country,
+                    phone, email, website, latitude, longitude, parent_gln, gln_status
+                ) VALUES (
+                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+                ) ON CONFLICT (location_identifier) DO UPDATE SET
+                    location_name = EXCLUDED.location_name,
+                    street_address = EXCLUDED.street_address,
+                    city = EXCLUDED.city,
+                    updated_at = CURRENT_TIMESTAMP
+                RETURNING id
+            """, (
+                location_identifier,
+                location_type,
+                location_name,
+                gln_data.get("street_address"),
+                gln_data.get("city"),
+                gln_data.get("state_province"),
+                gln_data.get("postal_code"),
+                country,
+                gln_data.get("phone"),
+                gln_data.get("email"),
+                gln_data.get("website"),
+                latitude,
+                longitude,
+                gln_data.get("parent_gln"),
+                gln_data.get("gln_status", "Active")
+            ))
+
+            result = cursor.fetchone()
+            if not result:
+                raise ValueError("Failed to store GLN data")
+
+            gln_id = result[0]
+            self.conn.commit()
+            cursor.close()
+            logger.info(f"Stored GLN data: {location_identifier}")
+            return str(gln_id)
+
+        except psycopg2.IntegrityError as e:
+            logger.error(f"Integrity error storing GLN data: {e}")
+            self.conn.rollback()
+            raise ValueError(f"Duplicate location identifier or constraint violation: {e}") from e
+        except psycopg2.Error as e:
+            logger.error(f"Database error storing GLN data: {e}")
+            self.conn.rollback()
+            raise RuntimeError(f"Database operation failed: {e}") from e
+        except Exception as e:
+            logger.error(f"Unexpected error storing GLN data: {e}", exc_info=True)
+            self.conn.rollback()
+            raise RuntimeError(f"Failed to store GLN data: {e}") from e
 
     def store_sscc(self, sscc_data: dict) -> str:
         """存储SSCC数据"""
@@ -732,51 +893,82 @@ class GS1Storage:
         return str(sscc_id)
 
     def store_epcis_event(self, epcis_event: dict) -> str:
-        """存储EPCIS事件 - 完整实现"""
-        cursor = self.conn.cursor()
-        import json
+        """存储EPCIS事件 - 增强错误处理"""
+        # 输入验证
+        if not isinstance(epcis_event, dict):
+            raise TypeError(f"EPCIS event must be a dictionary, got {type(epcis_event)}")
 
-        # 插入EPCIS事件主记录
-        cursor.execute("""
-            INSERT INTO epcis_events (
-                event_id, event_time, event_timezone, event_type,
-                action, biz_step, disposition, read_point, biz_location,
-                parent_id, child_epcs, input_epcs, output_epcs, transformation_id
-            ) VALUES (
-                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s::jsonb, %s::jsonb, %s::jsonb, %s
-            ) ON CONFLICT (event_id) DO UPDATE SET
-                event_time = EXCLUDED.event_time,
-                event_type = EXCLUDED.event_type,
-                action = EXCLUDED.action,
-                biz_step = EXCLUDED.biz_step,
-                disposition = EXCLUDED.disposition,
-                read_point = EXCLUDED.read_point,
-                biz_location = EXCLUDED.biz_location,
-                parent_id = EXCLUDED.parent_id,
-                child_epcs = EXCLUDED.child_epcs,
-                input_epcs = EXCLUDED.input_epcs,
+        if not epcis_event:
+            raise ValueError("EPCIS event cannot be empty")
+
+        event_type = epcis_event.get("event_type")
+        if not event_type:
+            raise ValueError("Event type is required")
+
+        if not isinstance(event_type, str):
+            raise TypeError(f"Event type must be a string, got {type(event_type)}")
+
+        valid_event_types = ['ObjectEvent', 'AggregationEvent', 'TransactionEvent', 'TransformationEvent']
+        if event_type not in valid_event_types:
+            raise ValueError(f"Invalid event type: {event_type}. Must be one of {valid_event_types}")
+
+        event_time = epcis_event.get("event_time")
+        if not event_time:
+            raise ValueError("Event time is required")
+
+        if not isinstance(event_time, datetime):
+            raise TypeError(f"Event time must be a datetime, got {type(event_time)}")
+
+        event_id = epcis_event.get("event_id")
+        if event_id is not None and not isinstance(event_id, str):
+            raise TypeError(f"Event ID must be a string or None, got {type(event_id)}")
+
+        try:
+            cursor = self.conn.cursor()
+
+            # 插入EPCIS事件主记录
+            cursor.execute("""
+                INSERT INTO epcis_events (
+                    event_id, event_time, event_timezone, event_type,
+                    action, biz_step, disposition, read_point, biz_location,
+                    parent_id, child_epcs, input_epcs, output_epcs, transformation_id
+                ) VALUES (
+                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s::jsonb, %s::jsonb, %s::jsonb, %s
+                ) ON CONFLICT (event_id) DO UPDATE SET
+                    event_time = EXCLUDED.event_time,
+                    event_type = EXCLUDED.event_type,
+                    action = EXCLUDED.action,
+                    biz_step = EXCLUDED.biz_step,
+                    disposition = EXCLUDED.disposition,
+                    read_point = EXCLUDED.read_point,
+                    biz_location = EXCLUDED.biz_location,
+                    parent_id = EXCLUDED.parent_id,
+                    child_epcs = EXCLUDED.child_epcs,
+                    input_epcs = EXCLUDED.input_epcs,
                 output_epcs = EXCLUDED.output_epcs,
                 transformation_id = EXCLUDED.transformation_id
             RETURNING id
-        """, (
-            epcis_event.get("event_id"),
-            epcis_event.get("event_time"),
-            epcis_event.get("event_timezone"),
-            epcis_event.get("event_type"),
-            epcis_event.get("action"),
-            epcis_event.get("biz_step"),
-            epcis_event.get("disposition"),
-            epcis_event.get("read_point"),
-            epcis_event.get("biz_location"),
-            epcis_event.get("parent_id"),
-            json.dumps(epcis_event.get("child_epcs", [])),
-            json.dumps(epcis_event.get("input_epcs", [])),
-            json.dumps(epcis_event.get("output_epcs", [])),
-            epcis_event.get("transformation_id")
-        ))
+            """, (
+                event_id,
+                event_time,
+                epcis_event.get("event_timezone"),
+                event_type,
+                epcis_event.get("action"),
+                epcis_event.get("biz_step"),
+                epcis_event.get("disposition"),
+                epcis_event.get("read_point"),
+                epcis_event.get("biz_location"),
+                epcis_event.get("parent_id"),
+                json.dumps(epcis_event.get("child_epcs", [])),
+                json.dumps(epcis_event.get("input_epcs", [])),
+                json.dumps(epcis_event.get("output_epcs", [])),
+                epcis_event.get("transformation_id")
+            ))
 
-        result = cursor.fetchone()
-        if result:
+            result = cursor.fetchone()
+            if not result:
+                raise ValueError("Failed to store EPCIS event")
+
             event_db_id = result[0]
 
             # 删除旧的EPC列表（如果更新）
@@ -785,14 +977,26 @@ class GS1Storage:
             """, (event_db_id,))
 
             # 插入EPC列表（epc_list用于ObjectEvent和TransactionEvent）
-            for epc in epcis_event.get("epc_list", []):
+            epc_list = epcis_event.get("epc_list", [])
+            if not isinstance(epc_list, list):
+                raise TypeError(f"EPC list must be a list, got {type(epc_list)}")
+
+            for epc in epc_list:
+                if not isinstance(epc, str):
+                    raise TypeError(f"EPC must be a string, got {type(epc)}")
                 cursor.execute("""
                     INSERT INTO epcis_epc_list (event_id, epc)
                     VALUES (%s, %s)
                 """, (event_db_id, epc))
 
             # 插入child EPCs（用于AggregationEvent）
-            for epc in epcis_event.get("child_epcs", []):
+            child_epcs = epcis_event.get("child_epcs", [])
+            if not isinstance(child_epcs, list):
+                raise TypeError(f"Child EPCs must be a list, got {type(child_epcs)}")
+
+            for epc in child_epcs:
+                if not isinstance(epc, str):
+                    raise TypeError(f"EPC must be a string, got {type(epc)}")
                 cursor.execute("""
                     INSERT INTO epcis_epc_list (event_id, epc)
                     VALUES (%s, %s)
@@ -800,7 +1004,13 @@ class GS1Storage:
                 """, (event_db_id, epc))
 
             # 插入input EPCs（用于TransformationEvent）
-            for epc in epcis_event.get("input_epcs", []):
+            input_epcs = epcis_event.get("input_epcs", [])
+            if not isinstance(input_epcs, list):
+                raise TypeError(f"Input EPCs must be a list, got {type(input_epcs)}")
+
+            for epc in input_epcs:
+                if not isinstance(epc, str):
+                    raise TypeError(f"EPC must be a string, got {type(epc)}")
                 cursor.execute("""
                     INSERT INTO epcis_epc_list (event_id, epc)
                     VALUES (%s, %s)
@@ -808,7 +1018,13 @@ class GS1Storage:
                 """, (event_db_id, epc))
 
             # 插入output EPCs（用于TransformationEvent）
-            for epc in epcis_event.get("output_epcs", []):
+            output_epcs = epcis_event.get("output_epcs", [])
+            if not isinstance(output_epcs, list):
+                raise TypeError(f"Output EPCs must be a list, got {type(output_epcs)}")
+
+            for epc in output_epcs:
+                if not isinstance(epc, str):
+                    raise TypeError(f"EPC must be a string, got {type(epc)}")
                 cursor.execute("""
                     INSERT INTO epcis_epc_list (event_id, epc)
                     VALUES (%s, %s)
@@ -821,7 +1037,11 @@ class GS1Storage:
             """, (event_db_id,))
 
             # 插入业务交易列表
-            for biz_transaction in epcis_event.get("biz_transaction_list", []):
+            biz_transaction_list = epcis_event.get("biz_transaction_list", [])
+            if not isinstance(biz_transaction_list, list):
+                raise TypeError(f"Business transaction list must be a list, got {type(biz_transaction_list)}")
+
+            for biz_transaction in biz_transaction_list:
                 transaction_type = biz_transaction.get("type") if isinstance(biz_transaction, dict) else None
                 transaction_value = biz_transaction.get("bizTransaction") if isinstance(biz_transaction, dict) else str(biz_transaction)
                 cursor.execute("""
@@ -831,10 +1051,21 @@ class GS1Storage:
 
             self.conn.commit()
             cursor.close()
+            logger.info(f"Stored EPCIS event: {event_id or event_db_id}")
             return str(event_db_id)
-        else:
-            cursor.close()
-            return None
+
+        except psycopg2.IntegrityError as e:
+            logger.error(f"Integrity error storing EPCIS event: {e}")
+            self.conn.rollback()
+            raise ValueError(f"Duplicate event ID or constraint violation: {e}") from e
+        except psycopg2.Error as e:
+            logger.error(f"Database error storing EPCIS event: {e}")
+            self.conn.rollback()
+            raise RuntimeError(f"Database operation failed: {e}") from e
+        except Exception as e:
+            logger.error(f"Unexpected error storing EPCIS event: {e}", exc_info=True)
+            self.conn.rollback()
+            raise RuntimeError(f"Failed to store EPCIS event: {e}") from e
 
     def query_gtin_by_identifier(self, gtin_identifier: str) -> Optional[dict]:
         """根据GTIN标识符查询GTIN数据"""

@@ -189,60 +189,173 @@ class ISO8583Parser:
         }
 
     def parse_message(self, message_bytes: bytes) -> Dict:
-        """解析ISO 8583消息"""
-        offset = 0
+        """解析ISO 8583消息 - 增强错误处理"""
+        # 输入验证
+        if not isinstance(message_bytes, bytes):
+            raise TypeError(f"Message must be bytes, got {type(message_bytes)}")
 
-        # 解析消息长度（前2字节）
-        message_length = struct.unpack('>H', message_bytes[0:2])[0]
-        offset += 2
+        if not message_bytes:
+            raise ValueError("Message bytes cannot be empty")
 
-        # 解析MTI（4字节）
-        mti = message_bytes[offset:offset+4].decode('ascii')
-        offset += 4
+        # 最小消息长度检查（长度2字节 + MTI 4字节 + 位图16字节 = 22字节）
+        MIN_MESSAGE_LENGTH = 22
+        if len(message_bytes) < MIN_MESSAGE_LENGTH:
+            raise ValueError(f"Message too short: {len(message_bytes)} bytes (minimum {MIN_MESSAGE_LENGTH})")
 
-        # 解析位图（16字节）
-        bitmap = message_bytes[offset:offset+16]
-        offset += 16
+        try:
+            offset = 0
 
-        # 解析字段
-        fields = {}
-        for field_num in range(1, 129):
-            byte_index = (field_num - 1) // 8
-            bit_index = 7 - ((field_num - 1) % 8)
+            # 解析消息长度（前2字节）
+            if len(message_bytes) < 2:
+                raise ValueError("Insufficient bytes for message length")
 
-            if bitmap[byte_index] & (1 << bit_index):
-                if field_num in self.field_definitions:
-                    field_def = self.field_definitions[field_num]
-                    field_value, offset = self._parse_field(
-                        message_bytes, offset, field_num, field_def
-                    )
-                    fields[field_num] = {
-                        "name": field_def["name"],
-                        "value": field_value
-                    }
+            message_length = struct.unpack('>H', message_bytes[0:2])[0]
+            offset += 2
 
-        return {
-            "message_length": message_length,
-            "mti": mti,
-            "bitmap": bitmap.hex(),
-            "fields": fields
-        }
+            # 验证消息长度
+            if message_length < MIN_MESSAGE_LENGTH:
+                raise ValueError(f"Invalid message length: {message_length} (minimum {MIN_MESSAGE_LENGTH})")
+
+            if message_length > len(message_bytes):
+                raise ValueError(f"Message length ({message_length}) exceeds actual message size ({len(message_bytes)})")
+
+            # 解析MTI（4字节）
+            if len(message_bytes) < offset + 4:
+                raise ValueError("Insufficient bytes for MTI")
+
+            mti_bytes = message_bytes[offset:offset+4]
+            try:
+                mti = mti_bytes.decode('ascii')
+            except UnicodeDecodeError as e:
+                raise ValueError(f"Invalid MTI encoding: {e}") from e
+
+            # 验证MTI格式（4位数字）
+            if not mti.isdigit():
+                raise ValueError(f"Invalid MTI format: {mti} (must be 4 digits)")
+
+            offset += 4
+
+            # 解析位图（16字节）
+            if len(message_bytes) < offset + 16:
+                raise ValueError("Insufficient bytes for bitmap")
+
+            bitmap = message_bytes[offset:offset+16]
+            offset += 16
+
+            # 验证位图（至少第一个字节应该设置）
+            if bitmap[0] == 0:
+                raise ValueError("Invalid bitmap: no fields present")
+
+            # 解析字段
+            fields = {}
+            for field_num in range(1, 129):
+                byte_index = (field_num - 1) // 8
+                bit_index = 7 - ((field_num - 1) % 8)
+
+                if bitmap[byte_index] & (1 << bit_index):
+                    if field_num in self.field_definitions:
+                        field_def = self.field_definitions[field_num]
+                        try:
+                            field_value, offset = self._parse_field(
+                                message_bytes, offset, field_num, field_def
+                            )
+                            fields[field_num] = {
+                                "name": field_def["name"],
+                                "value": field_value
+                            }
+                        except (IndexError, ValueError) as e:
+                            logger.error(f"Error parsing field {field_num}: {e}")
+                            raise ValueError(f"Failed to parse field {field_num}: {e}") from e
+
+            return {
+                "message_length": message_length,
+                "mti": mti,
+                "bitmap": bitmap.hex(),
+                "fields": fields,
+                "field_count": len(fields)
+            }
+
+        except struct.error as e:
+            logger.error(f"Struct unpacking error: {e}")
+            raise ValueError(f"Invalid message format: {e}") from e
+        except (IndexError, ValueError) as e:
+            logger.error(f"Message parsing error: {e}")
+            raise ValueError(f"Failed to parse ISO 8583 message: {e}") from e
+        except Exception as e:
+            logger.error(f"Unexpected error parsing ISO 8583 message: {e}", exc_info=True)
+            raise RuntimeError(f"ISO 8583 message parsing failed: {e}") from e
 
     def _parse_field(self, message_bytes: bytes, offset: int,
                     field_num: int, field_def: Dict) -> tuple:
-        """解析字段"""
-        if field_def["type"] == "FIXED":
-            length = field_def["length"]
-            value = message_bytes[offset:offset+length].decode('ascii')
-            return value, offset + length
-        elif field_def["type"] == "LLVAR":
-            length_bytes = message_bytes[offset:offset+2]
-            length = int(length_bytes.decode('ascii'))
-            offset += 2
-            value = message_bytes[offset:offset+length].decode('ascii')
-            return value, offset + length
-        else:
-            raise ValueError(f"Unknown field type: {field_def['type']}")
+        """解析字段 - 增强错误处理"""
+        # 输入验证
+        if not isinstance(message_bytes, bytes):
+            raise TypeError(f"Message bytes must be bytes, got {type(message_bytes)}")
+
+        if not isinstance(offset, int) or offset < 0:
+            raise ValueError(f"Invalid offset: {offset}")
+
+        if offset >= len(message_bytes):
+            raise ValueError(f"Offset {offset} exceeds message length {len(message_bytes)}")
+
+        field_type = field_def.get("type")
+        if not field_type:
+            raise ValueError(f"Field {field_num} missing type definition")
+
+        try:
+            if field_type == "FIXED":
+                length = field_def.get("length")
+                if not length or length <= 0:
+                    raise ValueError(f"Field {field_num} has invalid length: {length}")
+
+                if offset + length > len(message_bytes):
+                    raise ValueError(f"Field {field_num} exceeds message bounds: offset {offset} + length {length} > {len(message_bytes)}")
+
+                try:
+                    value = message_bytes[offset:offset+length].decode('ascii')
+                except UnicodeDecodeError as e:
+                    raise ValueError(f"Field {field_num} encoding error: {e}") from e
+
+                return value, offset + length
+
+            elif field_type == "LLVAR":
+                # 读取长度字段（2字节）
+                if offset + 2 > len(message_bytes):
+                    raise ValueError(f"Insufficient bytes for field {field_num} length")
+
+                length_bytes = message_bytes[offset:offset+2]
+                try:
+                    length_str = length_bytes.decode('ascii')
+                    length = int(length_str)
+                except (UnicodeDecodeError, ValueError) as e:
+                    raise ValueError(f"Field {field_num} invalid length format: {e}") from e
+
+                if length < 0:
+                    raise ValueError(f"Field {field_num} negative length: {length}")
+
+                max_length = field_def.get("max_length", 999)
+                if length > max_length:
+                    raise ValueError(f"Field {field_num} length {length} exceeds max {max_length}")
+
+                offset += 2
+
+                if offset + length > len(message_bytes):
+                    raise ValueError(f"Field {field_num} data exceeds message bounds: offset {offset} + length {length} > {len(message_bytes)}")
+
+                try:
+                    value = message_bytes[offset:offset+length].decode('ascii')
+                except UnicodeDecodeError as e:
+                    raise ValueError(f"Field {field_num} encoding error: {e}") from e
+
+                return value, offset + length
+            else:
+                raise ValueError(f"Unknown field type for field {field_num}: {field_type}")
+
+        except ValueError:
+            raise
+        except Exception as e:
+            logger.error(f"Unexpected error parsing field {field_num}: {e}", exc_info=True)
+            raise RuntimeError(f"Field {field_num} parsing failed: {e}") from e
 ```
 
 ### 3.2 ISO 8583消息构建器
@@ -347,31 +460,86 @@ class PaymentProcessor:
         self.iso8583_parser = ISO8583Parser()
 
     def process_payment(self, payment_data: Dict) -> Dict:
-        """处理支付"""
-        payment_method = payment_data.get("payment_method", {}).get("method_type")
+        """处理支付 - 增强错误处理"""
+        # 输入验证
+        if not isinstance(payment_data, dict):
+            raise TypeError(f"Payment data must be a dictionary, got {type(payment_data)}")
 
-        if payment_method == "Cash":
-            return self._process_cash_payment(payment_data)
-        elif payment_method == "Card":
-            return self._process_card_payment(payment_data)
-        elif payment_method == "Mobile":
-            return self._process_mobile_payment(payment_data)
-        else:
-            return {
-                "payment_id": payment_data.get("payment_id"),
-                "result": {
-                    "result_code": "99",
-                    "result_message": "Unsupported payment method",
-                    "status": "Failed"
+        if not payment_data:
+            raise ValueError("Payment data cannot be empty")
+
+        # 必需字段验证
+        if "payment_id" not in payment_data:
+            raise ValueError("Payment data missing required field: payment_id")
+
+        payment_info = payment_data.get("payment_info", {})
+        if not payment_info:
+            raise ValueError("Payment data missing required field: payment_info")
+
+        payment_amount = payment_info.get("payment_amount")
+        if payment_amount is None:
+            raise ValueError("Payment info missing required field: payment_amount")
+
+        if not isinstance(payment_amount, (int, float)):
+            raise TypeError(f"Payment amount must be a number, got {type(payment_amount)}")
+
+        if payment_amount <= 0:
+            raise ValueError(f"Payment amount must be positive, got {payment_amount}")
+
+        if payment_amount > 999999.99:  # PCI DSS限制
+            raise ValueError(f"Payment amount exceeds maximum: {payment_amount} (max 999999.99)")
+
+        payment_method = payment_data.get("payment_method", {}).get("method_type")
+        if not payment_method:
+            raise ValueError("Payment method not specified")
+
+        try:
+            if payment_method == "Cash":
+                return self._process_cash_payment(payment_data)
+            elif payment_method == "Card":
+                return self._process_card_payment(payment_data)
+            elif payment_method == "Mobile":
+                return self._process_mobile_payment(payment_data)
+            else:
+                logger.warning(f"Unsupported payment method: {payment_method}")
+                return {
+                    "payment_id": payment_data.get("payment_id"),
+                    "result": {
+                        "result_code": "99",
+                        "result_message": f"Unsupported payment method: {payment_method}",
+                        "status": "Failed"
+                    }
                 }
-            }
+        except ValueError as e:
+            logger.error(f"Payment validation error: {e}")
+            raise
+        except Exception as e:
+            logger.error(f"Unexpected error processing payment: {e}", exc_info=True)
+            raise RuntimeError(f"Payment processing failed: {e}") from e
 
     def _process_cash_payment(self, payment_data: Dict) -> Dict:
-        """处理现金支付"""
-        payment_amount = payment_data.get("payment_info", {}).get("payment_amount", 0)
+        """处理现金支付 - 增强错误处理"""
+        payment_info = payment_data.get("payment_info", {})
+        payment_amount = payment_info.get("payment_amount", 0)
         paid_amount = payment_data.get("paid_amount", 0)
 
+        # 验证金额
+        if not isinstance(payment_amount, (int, float)) or payment_amount <= 0:
+            raise ValueError(f"Invalid payment amount: {payment_amount}")
+
+        if not isinstance(paid_amount, (int, float)) or paid_amount < 0:
+            raise ValueError(f"Invalid paid amount: {paid_amount}")
+
+        # 检查找零金额是否合理（防止异常大额找零）
+        if paid_amount > payment_amount:
+            change_amount = paid_amount - payment_amount
+            MAX_CHANGE = 10000.0  # 最大找零限制
+            if change_amount > MAX_CHANGE:
+                logger.warning(f"Large change amount: {change_amount}, payment: {payment_amount}, paid: {paid_amount}")
+                raise ValueError(f"Change amount too large: {change_amount} (max {MAX_CHANGE})")
+
         if paid_amount >= payment_amount:
+            change_amount = paid_amount - payment_amount
             return {
                 "payment_id": payment_data.get("payment_id"),
                 "result": {
@@ -379,33 +547,142 @@ class PaymentProcessor:
                     "result_message": "Payment successful",
                     "status": "Success"
                 },
-                "change_amount": paid_amount - payment_amount
+                "change_amount": round(change_amount, 2)
             }
         else:
+            shortfall = payment_amount - paid_amount
             return {
                 "payment_id": payment_data.get("payment_id"),
                 "result": {
                     "result_code": "51",
-                    "result_message": "Insufficient funds",
+                    "result_message": f"Insufficient funds: shortfall {shortfall:.2f}",
                     "status": "Failed"
-                }
+                },
+                "shortfall": round(shortfall, 2)
             }
 
     def _process_card_payment(self, payment_data: Dict) -> Dict:
-        """处理银行卡支付"""
-        # 构建ISO 8583消息
-        pan = payment_data.get("payment_info", {}).get("card_number_masked", "").replace(" ", "")
-        amount = str(int(payment_data.get("payment_info", {}).get("payment_amount", 0) * 100))
+        """处理银行卡支付 - 增强错误处理和安全验证"""
+        payment_info = payment_data.get("payment_info", {})
+
+        # 卡号验证
+        card_number_masked = payment_info.get("card_number_masked", "")
+        if not card_number_masked:
+            raise ValueError("Card number is required for card payment")
+
+        if not isinstance(card_number_masked, str):
+            raise TypeError(f"Card number must be a string, got {type(card_number_masked)}")
+
+        # 移除空格和格式化字符
+        pan = card_number_masked.replace(" ", "").replace("-", "")
+
+        # 验证PAN格式（Luhn算法检查）
+        if not self._validate_pan_format(pan):
+            raise ValueError(f"Invalid card number format: {card_number_masked}")
+
+        # 金额验证
+        payment_amount = payment_info.get("payment_amount", 0)
+        if not isinstance(payment_amount, (int, float)) or payment_amount <= 0:
+            raise ValueError(f"Invalid payment amount: {payment_amount}")
+
+        # 转换为最小货币单位（分）
+        amount_cents = int(payment_amount * 100)
+        if amount_cents <= 0 or amount_cents > 999999999999:  # ISO 8583字段4最大12位
+            raise ValueError(f"Payment amount out of range: {payment_amount}")
+
+        amount = str(amount_cents).zfill(12)
+
+        # Terminal ID验证
         terminal_id = payment_data.get("terminal_id", "00000001")
+        if not isinstance(terminal_id, str):
+            raise TypeError(f"Terminal ID must be a string, got {type(terminal_id)}")
+
+        if len(terminal_id) > 8:
+            raise ValueError(f"Terminal ID too long: {len(terminal_id)} (max 8)")
+
+        terminal_id = terminal_id.ljust(8)[:8]
+
+        # Merchant ID验证
         merchant_id = payment_data.get("merchant_id", "000000000000001")
+        if not isinstance(merchant_id, str):
+            raise TypeError(f"Merchant ID must be a string, got {type(merchant_id)}")
 
-        iso8583_msg = self.iso8583_builder.build_purchase_message(
-            pan, amount, terminal_id, merchant_id
-        )
+        if len(merchant_id) > 15:
+            raise ValueError(f"Merchant ID too long: {len(merchant_id)} (max 15)")
 
-        # 发送到支付网关（模拟）
-        # response = self._send_to_gateway(iso8583_msg)
-        # parsed_response = self.iso8583_parser.parse_message(response)
+        merchant_id = merchant_id.ljust(15)[:15]
+
+        try:
+            iso8583_msg = self.iso8583_builder.build_purchase_message(
+                pan, amount, terminal_id, merchant_id
+            )
+
+            if not iso8583_msg:
+                raise ValueError("Failed to build ISO 8583 message")
+
+            # 发送到支付网关（模拟）
+            # response = self._send_to_gateway(iso8583_msg)
+            # parsed_response = self.iso8583_parser.parse_message(response)
+
+            # 模拟成功响应
+            return {
+                "payment_id": payment_data.get("payment_id"),
+                "result": {
+                    "result_code": "00",
+                    "result_message": "Payment successful",
+                    "status": "Success"
+                },
+                "authorization_code": "AUTH123",
+                "transaction_id": f"TXN{datetime.now().strftime('%Y%m%d%H%M%S')}"
+            }
+
+        except ValueError as e:
+            logger.error(f"Card payment validation error: {e}")
+            raise
+        except Exception as e:
+            logger.error(f"Card payment processing error: {e}", exc_info=True)
+            raise RuntimeError(f"Card payment failed: {e}") from e
+
+    def _validate_pan_format(self, pan: str) -> bool:
+        """验证PAN格式（Luhn算法）"""
+        if not pan or not pan.isdigit():
+            return False
+
+        # 长度检查（通常13-19位）
+        if len(pan) < 13 or len(pan) > 19:
+            return False
+
+        # Luhn算法验证
+        digits = [int(d) for d in pan]
+
+        for i in range(len(digits) - 2, -1, -2):
+            digits[i] *= 2
+            if digits[i] > 9:
+                digits[i] -= 9
+
+        checksum = sum(digits) % 10
+        return checksum == 0
+
+    def _validate_pan_format(self, pan: str) -> bool:
+        """验证PAN格式（Luhn算法）"""
+        if not pan or not pan.isdigit():
+            return False
+
+        # 长度检查（通常13-19位）
+        if len(pan) < 13 or len(pan) > 19:
+            return False
+
+        # Luhn算法验证
+        digits = [int(d) for d in pan]
+        checksum = 0
+
+        for i in range(len(digits) - 2, -1, -2):
+            digits[i] *= 2
+            if digits[i] > 9:
+                digits[i] -= 9
+
+        checksum = sum(digits) % 10
+        return checksum == 0
 
         # 模拟响应
         parsed_response = {

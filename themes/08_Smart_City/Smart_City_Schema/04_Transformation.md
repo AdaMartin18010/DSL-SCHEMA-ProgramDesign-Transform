@@ -8,6 +8,7 @@
     - [1.1 转换目标](#11-转换目标)
   - [2. 传感器数据转换](#2-传感器数据转换)
   - [3. 城市数据聚合](#3-城市数据聚合)
+    - [3.1 IoT数据聚合器](#31-iot数据聚合器)
   - [4. 数据格式转换](#4-数据格式转换)
   - [5. Smart City数据存储与分析](#5-smart-city数据存储与分析)
     - [5.1 PostgreSQL Smart City数据存储](#51-postgresql-smart-city数据存储)
@@ -425,12 +426,29 @@ from typing import List, Optional, Dict
 import uuid
 import json
 
+import psycopg2
+
 class SmartCityStorage:
-    """Smart City数据PostgreSQL存储类"""
+    """Smart City数据PostgreSQL存储类 - 增强错误处理"""
 
     def __init__(self, connection_string: str):
-        self.conn = psycopg2.connect(connection_string)
-        self.create_tables()
+        # 输入验证
+        if not connection_string:
+            raise ValueError("Connection string cannot be empty")
+
+        if not isinstance(connection_string, str):
+            raise TypeError(f"Connection string must be a string, got {type(connection_string)}")
+
+        try:
+            self.conn = psycopg2.connect(connection_string)
+            self.create_tables()
+            logger.info("SmartCityStorage initialized successfully")
+        except psycopg2.Error as e:
+            logger.error(f"Failed to connect to database: {e}")
+            raise ConnectionError(f"Failed to connect to database: {e}") from e
+        except Exception as e:
+            logger.error(f"Unexpected error initializing SmartCityStorage: {e}", exc_info=True)
+            raise RuntimeError(f"Failed to initialize SmartCityStorage: {e}") from e
 
     def create_tables(self):
         """创建Smart City数据存储表"""
@@ -540,49 +558,170 @@ class SmartCityStorage:
         cursor.close()
 
     def store_traffic_data(self, traffic_data: dict) -> str:
-        """存储智慧交通数据"""
-        cursor = self.conn.cursor()
-        cursor.execute("""
-            INSERT INTO traffic_data (
-                location_latitude, location_longitude,
-                vehicle_count, average_speed, congestion_level, timestamp
-            ) VALUES (%s, %s, %s, %s, %s, %s)
-            RETURNING id
-        """, (
-            traffic_data.get("location", {}).get("latitude"),
-            traffic_data.get("location", {}).get("longitude"),
-            traffic_data.get("flow_data", {}).get("vehicle_count"),
-            traffic_data.get("flow_data", {}).get("average_speed"),
-            traffic_data.get("flow_data", {}).get("congestion_level"),
-            traffic_data.get("flow_data", {}).get("timestamp")
-        ))
-        traffic_id = cursor.fetchone()[0]
-        self.conn.commit()
-        cursor.close()
-        return str(traffic_id)
+        """存储智慧交通数据 - 增强错误处理"""
+        # 输入验证
+        if not isinstance(traffic_data, dict):
+            raise TypeError(f"Traffic data must be a dictionary, got {type(traffic_data)}")
+
+        if not traffic_data:
+            raise ValueError("Traffic data cannot be empty")
+
+        location = traffic_data.get("location", {})
+        if not isinstance(location, dict):
+            raise TypeError(f"Location must be a dictionary, got {type(location)}")
+
+        latitude = location.get("latitude")
+        longitude = location.get("longitude")
+
+        if latitude is None:
+            raise ValueError("Latitude is required")
+
+        if not isinstance(latitude, (int, float)):
+            raise TypeError(f"Latitude must be numeric, got {type(latitude)}")
+
+        if not (-90 <= latitude <= 90):
+            raise ValueError(f"Latitude out of range: {latitude} (must be -90 to 90)")
+
+        if longitude is None:
+            raise ValueError("Longitude is required")
+
+        if not isinstance(longitude, (int, float)):
+            raise TypeError(f"Longitude must be numeric, got {type(longitude)}")
+
+        if not (-180 <= longitude <= 180):
+            raise ValueError(f"Longitude out of range: {longitude} (must be -180 to 180)")
+
+        flow_data = traffic_data.get("flow_data", {})
+        timestamp = flow_data.get("timestamp")
+        if not timestamp:
+            raise ValueError("Timestamp is required")
+
+        if not isinstance(timestamp, datetime):
+            raise TypeError(f"Timestamp must be a datetime, got {type(timestamp)}")
+
+        vehicle_count = flow_data.get("vehicle_count", 0)
+        if vehicle_count is not None and vehicle_count < 0:
+            raise ValueError(f"Vehicle count cannot be negative: {vehicle_count}")
+
+        try:
+            cursor = self.conn.cursor()
+            cursor.execute("""
+                INSERT INTO traffic_data (
+                    location_latitude, location_longitude,
+                    vehicle_count, average_speed, congestion_level, timestamp
+                ) VALUES (%s, %s, %s, %s, %s, %s)
+                RETURNING id
+            """, (
+                latitude,
+                longitude,
+                vehicle_count,
+                flow_data.get("average_speed"),
+                flow_data.get("congestion_level"),
+                timestamp
+            ))
+
+            result = cursor.fetchone()
+            if not result:
+                raise ValueError("Failed to store traffic data")
+
+            traffic_id = result[0]
+            self.conn.commit()
+            cursor.close()
+            logger.info(f"Stored traffic data at {latitude}, {longitude}")
+            return str(traffic_id)
+
+        except psycopg2.Error as e:
+            logger.error(f"Database error storing traffic data: {e}")
+            self.conn.rollback()
+            raise RuntimeError(f"Database operation failed: {e}") from e
+        except Exception as e:
+            logger.error(f"Unexpected error storing traffic data: {e}", exc_info=True)
+            self.conn.rollback()
+            raise RuntimeError(f"Failed to store traffic data: {e}") from e
 
     def store_energy_data(self, energy_data: dict) -> str:
-        """存储智慧能源数据"""
-        cursor = self.conn.cursor()
-        cursor.execute("""
-            INSERT INTO energy_data (
-                meter_id, location_latitude, location_longitude,
-                consumption_type, current_consumption, timestamp
-            ) VALUES (%s, %s, %s, %s, %s, %s)
-            ON CONFLICT DO NOTHING
-            RETURNING id
-        """, (
-            energy_data.get("meter_id"),
-            energy_data.get("location", {}).get("latitude"),
-            energy_data.get("location", {}).get("longitude"),
-            energy_data.get("consumption_type"),
-            energy_data.get("current_consumption"),
-            energy_data.get("timestamp")
-        ))
-        result = cursor.fetchone()
-        self.conn.commit()
-        cursor.close()
-        return str(result[0]) if result else None
+        """存储智慧能源数据 - 增强错误处理"""
+        # 输入验证
+        if not isinstance(energy_data, dict):
+            raise TypeError(f"Energy data must be a dictionary, got {type(energy_data)}")
+
+        if not energy_data:
+            raise ValueError("Energy data cannot be empty")
+
+        meter_id = energy_data.get("meter_id")
+        if not meter_id:
+            raise ValueError("Meter ID is required")
+
+        if not isinstance(meter_id, str):
+            raise TypeError(f"Meter ID must be a string, got {type(meter_id)}")
+
+        if len(meter_id) > 255:
+            raise ValueError(f"Meter ID too long: {len(meter_id)} (max 255)")
+
+        location = energy_data.get("location", {})
+        latitude = location.get("latitude")
+        longitude = location.get("longitude")
+
+        if latitude is not None:
+            if not isinstance(latitude, (int, float)):
+                raise TypeError(f"Latitude must be numeric, got {type(latitude)}")
+            if not (-90 <= latitude <= 90):
+                raise ValueError(f"Latitude out of range: {latitude}")
+
+        if longitude is not None:
+            if not isinstance(longitude, (int, float)):
+                raise TypeError(f"Longitude must be numeric, got {type(longitude)}")
+            if not (-180 <= longitude <= 180):
+                raise ValueError(f"Longitude out of range: {longitude}")
+
+        timestamp = energy_data.get("timestamp")
+        if not timestamp:
+            raise ValueError("Timestamp is required")
+
+        if not isinstance(timestamp, datetime):
+            raise TypeError(f"Timestamp must be a datetime, got {type(timestamp)}")
+
+        current_consumption = energy_data.get("current_consumption")
+        if current_consumption is not None and current_consumption < 0:
+            raise ValueError(f"Current consumption cannot be negative: {current_consumption}")
+
+        try:
+            cursor = self.conn.cursor()
+            cursor.execute("""
+                INSERT INTO energy_data (
+                    meter_id, location_latitude, location_longitude,
+                    consumption_type, current_consumption, timestamp
+                ) VALUES (%s, %s, %s, %s, %s, %s)
+                ON CONFLICT DO NOTHING
+                RETURNING id
+            """, (
+                meter_id,
+                latitude,
+                longitude,
+                energy_data.get("consumption_type"),
+                current_consumption,
+                timestamp
+            ))
+
+            result = cursor.fetchone()
+            self.conn.commit()
+            cursor.close()
+
+            if not result:
+                logger.warning(f"No data stored for meter {meter_id} (possible conflict)")
+                return None
+
+            logger.info(f"Stored energy data for meter {meter_id}")
+            return str(result[0])
+
+        except psycopg2.Error as e:
+            logger.error(f"Database error storing energy data: {e}")
+            self.conn.rollback()
+            raise RuntimeError(f"Database operation failed: {e}") from e
+        except Exception as e:
+            logger.error(f"Unexpected error storing energy data: {e}", exc_info=True)
+            self.conn.rollback()
+            raise RuntimeError(f"Failed to store energy data: {e}") from e
 
     def query_traffic_by_location(self, latitude: float, longitude: float,
                                   start_time: Optional[datetime] = None,
@@ -626,7 +765,17 @@ class SmartCityDataAnalyzer:
         self.storage = storage
 
     def analyze_traffic_patterns(self, start_date: datetime, end_date: datetime) -> Dict:
-        """分析交通模式"""
+        """分析交通模式 - 增强错误处理"""
+        # 输入验证
+        if not isinstance(start_date, datetime):
+            raise TypeError(f"Start date must be a datetime, got {type(start_date)}")
+
+        if not isinstance(end_date, datetime):
+            raise TypeError(f"End date must be a datetime, got {type(end_date)}")
+
+        if start_date > end_date:
+            raise ValueError(f"Start date ({start_date}) cannot be after end date ({end_date})")
+
         cursor = self.storage.conn.cursor()
 
         # 按小时统计交通流量

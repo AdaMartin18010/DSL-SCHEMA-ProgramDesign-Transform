@@ -17,6 +17,18 @@
   - [5. 案例4：Smart City数据存储与分析](#5-案例4smart-city数据存储与分析)
     - [5.1 场景描述](#51-场景描述)
     - [5.2 实现方案](#52-实现方案)
+  - [6. 案例5：城市大脑系统](#6-案例5城市大脑系统)
+    - [6.1 场景描述](#61-场景描述)
+    - [6.2 Schema定义](#62-schema定义)
+    - [6.3 实现代码](#63-实现代码)
+  - [7. 案例6：智能治理系统](#7-案例6智能治理系统)
+    - [7.1 场景描述](#71-场景描述)
+    - [7.2 Schema定义](#72-schema定义)
+    - [7.3 实现代码](#73-实现代码)
+  - [8. 案例7：可持续发展监测](#8-案例7可持续发展监测)
+    - [8.1 场景描述](#81-场景描述)
+    - [8.2 Schema定义](#82-schema定义)
+    - [8.3 实现代码](#83-实现代码)
 
 ---
 
@@ -178,6 +190,391 @@ statistics = storage.query_city_statistics(start_date, end_date)
 print("Smart City Statistics (Last 30 days):")
 for stat in statistics:
     print(f"  {stat[0]}: {stat[1]} records, avg: {stat[2]}")
+```
+
+---
+
+## 6. 案例5：城市大脑系统
+
+### 6.1 场景描述
+
+**业务背景**：
+城市大脑系统整合城市各类数据源，通过AI算法
+进行城市运行态势感知、预测分析和智能决策。
+
+**技术挑战**：
+
+- 需要多源数据融合
+- 需要实时数据处理
+- 需要AI模型集成
+- 需要决策支持系统
+
+**解决方案**：
+使用Smart_City_Schema整合交通、能源、环境等数据，
+使用AI模型进行城市态势分析和预测，
+使用SmartCityStorage存储分析结果。
+
+### 6.2 Schema定义
+
+**城市大脑Schema**：
+
+```dsl
+schema CityBrain {
+  analysis_session_id: String @value("BRAIN-20250121-001") @required
+  analysis_time: DateTime @value("2025-01-21T10:00:00") @required
+
+  data_sources: {
+    traffic_data: {
+      total_vehicles: Integer @value(150000)
+      average_speed: Decimal @value(35.5)
+      congestion_points: Integer @value(25)
+    }
+    energy_data: {
+      total_consumption: Decimal @value(5000000.0)
+      peak_demand: Decimal @value(6000000.0)
+      renewable_ratio: Decimal @value(0.35)
+    }
+    environment_data: {
+      average_aqi: Integer @value(85)
+      pm25_level: Decimal @value(35.5)
+      temperature: Decimal @value(22.5)
+    }
+  } @required
+
+  ai_analysis: {
+    city_status: Enum { Normal } @value(Normal)
+    risk_level: Enum { Low } @value(Low)
+    predictions: [
+      {
+        prediction_type: String @value("TrafficCongestion")
+        predicted_time: DateTime @value("2025-01-21T18:00:00")
+        probability: Decimal @value(0.75)
+        severity: Enum { Medium }
+      }
+    ]
+    recommendations: [
+      {
+        recommendation_type: String @value("TrafficControl")
+        action: String @value("调整信号灯配时")
+        expected_impact: String @value("减少拥堵15%")
+      }
+    ]
+  } @required
+} @standard("ISO_37120")
+```
+
+### 6.3 实现代码
+
+```python
+from smart_city_storage import SmartCityStorage
+from datetime import datetime
+
+# 初始化存储
+storage = SmartCityStorage("postgresql://user:password@localhost/smartcity_db")
+
+# 创建城市大脑分析数据
+city_brain_data = {
+    "analysis_session_id": "BRAIN-20250121-001",
+    "analysis_time": datetime(2025, 1, 21, 10, 0, 0),
+    "traffic_total_vehicles": 150000,
+    "traffic_average_speed": 35.5,
+    "traffic_congestion_points": 25,
+    "energy_total_consumption": 5000000.0,
+    "energy_peak_demand": 6000000.0,
+    "energy_renewable_ratio": 0.35,
+    "environment_average_aqi": 85,
+    "environment_pm25_level": 35.5,
+    "environment_temperature": 22.5,
+    "city_status": "Normal",
+    "risk_level": "Low",
+    "predictions": [
+        {
+            "prediction_type": "TrafficCongestion",
+            "predicted_time": datetime(2025, 1, 21, 18, 0, 0),
+            "probability": 0.75,
+            "severity": "Medium"
+        }
+    ],
+    "recommendations": [
+        {
+            "recommendation_type": "TrafficControl",
+            "action": "调整信号灯配时",
+            "expected_impact": "减少拥堵15%"
+        }
+    ]
+}
+
+# 存储城市大脑分析数据
+brain_id = storage.store_traffic_data(city_brain_data)
+print(f"City brain analysis stored: {brain_id}")
+
+# 查询城市大脑分析
+brain_records = storage.analyze_traffic_patterns(
+    datetime(2025, 1, 21, 0, 0, 0),
+    datetime(2025, 1, 21, 23, 59, 59)
+)
+print(f"Found {len(brain_records)} city brain analysis records")
+```
+
+---
+
+## 7. 案例6：智能治理系统
+
+### 7.1 场景描述
+
+**业务背景**：
+智能治理系统通过数据分析和AI技术，
+优化城市公共服务、提升治理效率、改善市民体验。
+
+**技术挑战**：
+
+- 需要公共服务数据整合
+- 需要市民反馈分析
+- 需要服务效率评估
+- 需要治理决策支持
+
+**解决方案**：
+使用Smart_City_Schema整合公共服务数据，
+使用AI模型进行服务效率分析和优化建议，
+使用SmartCityStorage存储治理数据。
+
+### 7.2 Schema定义
+
+**智能治理Schema**：
+
+```dsl
+schema SmartGovernance {
+  governance_session_id: String @value("GOV-20250121-001") @required
+  analysis_date: Date @value("2025-01-21") @required
+
+  public_services: {
+    service_requests: {
+      total_requests: Integer @value(5000)
+      resolved_requests: Integer @value(4800)
+      pending_requests: Integer @value(200)
+      average_resolution_time: Decimal @value(2.5) @unit("days")
+    }
+    service_types: [
+      {
+        service_type: String @value("城市管理")
+        request_count: Integer @value(2000)
+        resolution_rate: Decimal @value(0.96)
+        satisfaction_score: Decimal @value(4.2) @range(1.0, 5.0)
+      },
+      {
+        service_type: String @value("交通管理")
+        request_count: Integer @value(1500)
+        resolution_rate: Decimal @value(0.94)
+        satisfaction_score: Decimal @value(4.0)
+      }
+    ]
+  } @required
+
+  citizen_feedback: {
+    total_feedback: Integer @value(3000)
+    positive_feedback: Integer @value(2400)
+    negative_feedback: Integer @value(600)
+    average_rating: Decimal @value(4.1) @range(1.0, 5.0)
+    top_concerns: [
+      {
+        concern: String @value("交通拥堵")
+        mention_count: Integer @value(800)
+        priority: Enum { High } @value(High)
+      }
+    ]
+  } @required
+
+  governance_recommendations: [
+    {
+      recommendation_type: String @value("ServiceOptimization")
+      target_service: String @value("城市管理")
+      action: String @value("优化服务流程")
+      expected_improvement: String @value("提升满意度5%")
+    }
+  ] @required
+} @standard("ISO_37120")
+```
+
+### 7.3 实现代码
+
+```python
+# 创建智能治理数据
+governance_data = {
+    "governance_session_id": "GOV-20250121-001",
+    "analysis_date": datetime(2025, 1, 21).date(),
+    "total_service_requests": 5000,
+    "resolved_requests": 4800,
+    "pending_requests": 200,
+    "average_resolution_time": 2.5,
+    "service_types": [
+        {
+            "service_type": "城市管理",
+            "request_count": 2000,
+            "resolution_rate": 0.96,
+            "satisfaction_score": 4.2
+        },
+        {
+            "service_type": "交通管理",
+            "request_count": 1500,
+            "resolution_rate": 0.94,
+            "satisfaction_score": 4.0
+        }
+    ],
+    "total_feedback": 3000,
+    "positive_feedback": 2400,
+    "negative_feedback": 600,
+    "average_rating": 4.1,
+    "top_concerns": [
+        {
+            "concern": "交通拥堵",
+            "mention_count": 800,
+            "priority": "High"
+        }
+    ],
+    "recommendations": [
+        {
+            "recommendation_type": "ServiceOptimization",
+            "target_service": "城市管理",
+            "action": "优化服务流程",
+            "expected_improvement": "提升满意度5%"
+        }
+    ]
+}
+
+# 存储智能治理数据
+governance_id = storage.store_traffic_data(governance_data)
+print(f"Smart governance data stored: {governance_id}")
+
+# 查询智能治理数据
+governance_records = storage.analyze_traffic_patterns(
+    datetime(2025, 1, 21, 0, 0, 0),
+    datetime(2025, 1, 21, 23, 59, 59)
+)
+print(f"Found {len(governance_records)} governance records")
+```
+
+---
+
+## 8. 案例7：可持续发展监测
+
+### 8.1 场景描述
+
+**业务背景**：
+可持续发展监测系统跟踪城市可持续发展指标，
+包括碳排放、能源效率、环境质量等，支持
+城市可持续发展目标实现。
+
+**技术挑战**：
+
+- 需要多维度数据监测
+- 需要可持续发展指标计算
+- 需要趋势分析和预测
+- 需要目标达成评估
+
+**解决方案**：
+使用Smart_City_Schema整合能源、环境、交通等数据，
+计算可持续发展指标，进行趋势分析和预测，
+使用SmartCityStorage存储监测数据。
+
+### 8.2 Schema定义
+
+**可持续发展监测Schema**：
+
+```dsl
+schema SustainabilityMonitoring {
+  monitoring_session_id: String @value("SUSTAIN-20250121-001") @required
+  monitoring_date: Date @value("2025-01-21") @required
+
+  carbon_emissions: {
+    total_emissions: Decimal @value(50000.0) @unit("tons CO2e")
+    transportation_emissions: Decimal @value(20000.0)
+    energy_emissions: Decimal @value(25000.0)
+    building_emissions: Decimal @value(5000.0)
+    emissions_per_capita: Decimal @value(2.5) @unit("tons CO2e/person")
+    reduction_target: Decimal @value(0.05) @unit("5% reduction")
+    current_reduction: Decimal @value(0.03) @unit("3% reduction")
+  } @required
+
+  energy_efficiency: {
+    total_energy_consumption: Decimal @value(10000000.0) @unit("kWh")
+    renewable_energy_ratio: Decimal @value(0.35)
+    energy_per_gdp: Decimal @value(0.5) @unit("kWh/万元GDP")
+    efficiency_improvement: Decimal @value(0.08) @unit("8% improvement")
+  } @required
+
+  environmental_quality: {
+    average_aqi: Integer @value(85)
+    good_air_days: Integer @value(280) @unit("days/year")
+    water_quality_index: Decimal @value(0.85) @range(0.0, 1.0)
+    green_space_ratio: Decimal @value(0.40) @unit("40%")
+  } @required
+
+  sustainability_score: {
+    overall_score: Decimal @value(0.78) @range(0.0, 1.0)
+    carbon_score: Decimal @value(0.75)
+    energy_score: Decimal @value(0.80)
+    environment_score: Decimal @value(0.78)
+    trend: Enum { Improving } @value(Improving)
+  } @required
+
+  sustainability_targets: [
+    {
+      target_name: String @value("碳中和")
+      target_year: Integer @value(2060)
+      current_progress: Decimal @value(0.30)
+      on_track: Boolean @value(true)
+    }
+  ] @required
+} @standard("ISO_37120")
+```
+
+### 8.3 实现代码
+
+```python
+# 创建可持续发展监测数据
+sustainability_data = {
+    "monitoring_session_id": "SUSTAIN-20250121-001",
+    "monitoring_date": datetime(2025, 1, 21).date(),
+    "total_carbon_emissions": 50000.0,
+    "transportation_emissions": 20000.0,
+    "energy_emissions": 25000.0,
+    "building_emissions": 5000.0,
+    "emissions_per_capita": 2.5,
+    "reduction_target": 0.05,
+    "current_reduction": 0.03,
+    "total_energy_consumption": 10000000.0,
+    "renewable_energy_ratio": 0.35,
+    "energy_per_gdp": 0.5,
+    "efficiency_improvement": 0.08,
+    "average_aqi": 85,
+    "good_air_days": 280,
+    "water_quality_index": 0.85,
+    "green_space_ratio": 0.40,
+    "overall_sustainability_score": 0.78,
+    "carbon_score": 0.75,
+    "energy_score": 0.80,
+    "environment_score": 0.78,
+    "trend": "Improving",
+    "targets": [
+        {
+            "target_name": "碳中和",
+            "target_year": 2060,
+            "current_progress": 0.30,
+            "on_track": True
+        }
+    ]
+}
+
+# 存储可持续发展监测数据
+sustainability_id = storage.store_energy_data(sustainability_data)
+print(f"Sustainability monitoring data stored: {sustainability_id}")
+
+# 查询可持续发展监测数据
+sustainability_records = storage.analyze_traffic_patterns(
+    datetime(2025, 1, 1, 0, 0, 0),
+    datetime(2025, 1, 21, 23, 59, 59)
+)
+print(f"Found {len(sustainability_records)} sustainability records")
 ```
 
 ---

@@ -35,6 +35,18 @@
     - [9.1 场景描述](#91-场景描述)
     - [9.2 Schema定义](#92-schema定义)
     - [9.3 实现代码](#93-实现代码)
+  - [10. 案例9：Matter多设备联动](#10-案例9matter多设备联动)
+    - [10.1 场景描述](#101-场景描述)
+    - [10.2 Schema定义](#102-schema定义)
+    - [10.3 实现代码](#103-实现代码)
+  - [11. 案例10：Matter场景自动化](#11-案例10matter场景自动化)
+    - [11.1 场景描述](#111-场景描述)
+    - [11.2 Schema定义](#112-schema定义)
+    - [11.3 实现代码](#113-实现代码)
+  - [12. 案例11：Matter设备故障诊断](#12-案例11matter设备故障诊断)
+    - [12.1 场景描述](#121-场景描述)
+    - [12.2 Schema定义](#122-schema定义)
+    - [12.3 实现代码](#123-实现代码)
 
 ---
 
@@ -1199,6 +1211,605 @@ if __name__ == "__main__":
 - `02_Formal_Definition.md` - 形式化定义
 - `03_Standards.md` - 标准对标
 - `04_Transformation.md` - 转换体系
+
+---
+
+## 10. 案例9：Matter多设备联动
+
+### 10.1 场景描述
+
+**业务背景**：
+Matter多设备联动系统实现多个Matter设备之间的
+协同工作，例如开门时自动开灯、温度变化时自动
+调节空调等。
+
+**技术挑战**：
+- 需要设备状态同步
+- 需要联动规则管理
+- 需要事件触发机制
+- 需要联动效果评估
+
+**解决方案**：
+使用Matter_Schema定义设备联动规则，
+使用Matter SDK实现设备联动，
+使用MatterStorage存储联动数据。
+
+### 10.2 Schema定义
+
+**Matter多设备联动Schema**：
+
+```dsl
+schema MatterDeviceCoordination {
+  coordination_id: String @value("COORD-20250121-001") @required
+  coordination_name: String @value("回家场景联动") @required
+  trigger_device: {
+    device_id: String @value("DOOR-LOCK-001")
+    device_type: Enum { DoorLock } @value(DoorLock)
+    trigger_event: Enum { Unlocked } @value(Unlocked)
+  } @required
+
+  target_devices: [
+    {
+      device_id: String @value("LIGHT-001")
+      device_type: Enum { Light } @value(Light)
+      action: {
+        cluster_id: Integer @value(6) @comment("On/Off Cluster")
+        command_id: Integer @value(1) @comment("On Command")
+        parameters: {
+          on_off: Boolean @value(true)
+        }
+      }
+    },
+    {
+      device_id: String @value("THERMOSTAT-001")
+      device_type: Enum { Thermostat } @value(Thermostat)
+      action: {
+        cluster_id: Integer @value(513) @comment("Thermostat Cluster")
+        command_id: Integer @value(0) @comment("Set Setpoint")
+        parameters: {
+          setpoint: Decimal @value(22.0) @unit("Celsius")
+        }
+      }
+    }
+  ] @required
+
+  coordination_status: {
+    status: Enum { Active } @value(Active)
+    last_triggered: DateTime @value("2025-01-21T18:00:00")
+    trigger_count: Integer @value(5)
+    success_rate: Decimal @value(1.0) @range(0.0, 1.0)
+  } @required
+} @standard("Matter")
+```
+
+### 10.3 实现代码
+
+```python
+from matter_storage import MatterStorage
+from matter_sdk_wrapper import MatterSDKWrapper
+from datetime import datetime
+
+async def matter_device_coordination():
+    """Matter多设备联动示例"""
+    storage = MatterStorage("postgresql://user:password@localhost/matter_db")
+    sdk = MatterSDKWrapper()
+
+    # 联动规则
+    coordination_rule = {
+        "coordination_id": "COORD-20250121-001",
+        "coordination_name": "回家场景联动",
+        "trigger_device": {
+            "device_id": "DOOR-LOCK-001",
+            "device_type": "DoorLock",
+            "trigger_event": "Unlocked"
+        },
+        "target_devices": [
+            {
+                "device_id": "LIGHT-001",
+                "device_type": "Light",
+                "action": {
+                    "cluster_id": 6,  # On/Off Cluster
+                    "command_id": 1,  # On Command
+                    "parameters": {"on_off": True}
+                }
+            },
+            {
+                "device_id": "THERMOSTAT-001",
+                "device_type": "Thermostat",
+                "action": {
+                    "cluster_id": 513,  # Thermostat Cluster
+                    "command_id": 0,  # Set Setpoint
+                    "parameters": {"setpoint": 22.0}
+                }
+            }
+        ]
+    }
+
+    # 监听触发设备事件
+    async def on_door_unlocked(device_id, event_data):
+        """门锁解锁事件处理"""
+        print(f"Door unlocked: {device_id}")
+
+        # 执行联动动作
+        for target_device in coordination_rule["target_devices"]:
+            try:
+                result = await sdk.send_command(
+                    target_device["device_id"],
+                    target_device["action"]["cluster_id"],
+                    target_device["action"]["command_id"],
+                    target_device["action"]["parameters"]
+                )
+
+                if result:
+                    print(f"  {target_device['device_id']} action executed successfully")
+                else:
+                    print(f"  {target_device['device_id']} action failed")
+            except Exception as e:
+                print(f"  Error executing action on {target_device['device_id']}: {e}")
+
+        # 记录联动事件
+        coordination_data = {
+            "coordination_id": coordination_rule["coordination_id"],
+            "trigger_device_id": device_id,
+            "trigger_time": datetime.now(),
+            "target_devices": [d["device_id"] for d in coordination_rule["target_devices"]],
+            "status": "Completed"
+        }
+
+        storage.store_coordination_event(coordination_data)
+
+    # 注册事件监听
+    await sdk.subscribe_to_events("DOOR-LOCK-001", on_door_unlocked)
+
+    print("Matter device coordination system started")
+    print(f"  Coordination: {coordination_rule['coordination_name']}")
+    print(f"  Trigger device: {coordination_rule['trigger_device']['device_id']}")
+    print(f"  Target devices: {len(coordination_rule['target_devices'])}")
+
+    return coordination_rule
+
+if __name__ == "__main__":
+    import asyncio
+    asyncio.run(matter_device_coordination())
+```
+
+---
+
+## 11. 案例10：Matter场景自动化
+
+### 11.1 场景描述
+
+**业务背景**：
+Matter场景自动化系统根据时间、环境条件等
+自动触发设备场景，例如早晨自动开灯、温度
+过高时自动开启空调等。
+
+**技术挑战**：
+- 需要时间条件判断
+- 需要环境条件监测
+- 需要场景规则管理
+- 需要自动化效果评估
+
+**解决方案**：
+使用Matter_Schema定义场景自动化规则，
+使用Matter SDK实现场景自动化，
+使用MatterStorage存储自动化数据。
+
+### 11.2 Schema定义
+
+**Matter场景自动化Schema**：
+
+```dsl
+schema MatterSceneAutomation {
+  automation_id: String @value("AUTO-20250121-001") @required
+  automation_name: String @value("早晨自动场景") @required
+
+  trigger_conditions: {
+    time_condition: {
+      enabled: Boolean @value(true)
+      time: Time @value("07:00:00")
+      days_of_week: [Enum] @value([Monday, Tuesday, Wednesday, Thursday, Friday])
+    }
+    environment_condition: {
+      enabled: Boolean @value(true)
+      sensor_device_id: String @value("SENSOR-001")
+      condition_type: Enum { Temperature } @value(Temperature)
+      threshold: Decimal @value(25.0) @unit("Celsius")
+      operator: Enum { GreaterThan } @value(GreaterThan)
+    }
+  } @required
+
+  scene_actions: [
+    {
+      device_id: String @value("LIGHT-001")
+      action: {
+        cluster_id: Integer @value(6)
+        command_id: Integer @value(1)
+        parameters: {
+          on_off: Boolean @value(true)
+          brightness: Integer @value(80) @range(0, 100)
+        }
+      }
+    },
+    {
+      device_id: String @value("CURTAIN-001")
+      action: {
+        cluster_id: Integer @value(258) @comment("Window Covering Cluster")
+        command_id: Integer @value(1) @comment("Up Command")
+        parameters: {
+          lift_percent: Integer @value(100)
+        }
+      }
+    }
+  ] @required
+
+  automation_status: {
+    status: Enum { Active } @value(Active)
+    last_executed: DateTime @value("2025-01-21T07:00:00")
+    execution_count: Integer @value(30)
+    success_rate: Decimal @value(0.97) @range(0.0, 1.0)
+  } @required
+} @standard("Matter")
+```
+
+### 11.3 实现代码
+
+```python
+from matter_storage import MatterStorage
+from matter_sdk_wrapper import MatterSDKWrapper
+from datetime import datetime, time
+
+async def matter_scene_automation():
+    """Matter场景自动化示例"""
+    storage = MatterStorage("postgresql://user:password@localhost/matter_db")
+    sdk = MatterSDKWrapper()
+
+    # 自动化规则
+    automation_rule = {
+        "automation_id": "AUTO-20250121-001",
+        "automation_name": "早晨自动场景",
+        "trigger_conditions": {
+            "time_condition": {
+                "enabled": True,
+                "time": time(7, 0, 0),
+                "days_of_week": [0, 1, 2, 3, 4]  # Monday to Friday
+            },
+            "environment_condition": {
+                "enabled": True,
+                "sensor_device_id": "SENSOR-001",
+                "condition_type": "Temperature",
+                "threshold": 25.0,
+                "operator": "GreaterThan"
+            }
+        },
+        "scene_actions": [
+            {
+                "device_id": "LIGHT-001",
+                "action": {
+                    "cluster_id": 6,
+                    "command_id": 1,
+                    "parameters": {"on_off": True, "brightness": 80}
+                }
+            },
+            {
+                "device_id": "CURTAIN-001",
+                "action": {
+                    "cluster_id": 258,
+                    "command_id": 1,
+                    "parameters": {"lift_percent": 100}
+                }
+            }
+        ]
+    }
+
+    # 检查触发条件
+    def check_trigger_conditions(rule):
+        """检查触发条件"""
+        conditions_met = True
+
+        # 检查时间条件
+        if rule["trigger_conditions"]["time_condition"]["enabled"]:
+            current_time = datetime.now().time()
+            target_time = rule["trigger_conditions"]["time_condition"]["time"]
+            current_day = datetime.now().weekday()
+            days_of_week = rule["trigger_conditions"]["time_condition"]["days_of_week"]
+
+            if current_time.hour != target_time.hour or \
+               current_time.minute != target_time.minute or \
+               current_day not in days_of_week:
+                conditions_met = False
+
+        # 检查环境条件
+        if rule["trigger_conditions"]["environment_condition"]["enabled"]:
+            sensor_id = rule["trigger_conditions"]["environment_condition"]["sensor_device_id"]
+            condition_type = rule["trigger_conditions"]["environment_condition"]["condition_type"]
+            threshold = rule["trigger_conditions"]["environment_condition"]["threshold"]
+            operator = rule["trigger_conditions"]["environment_condition"]["operator"]
+
+            # 获取传感器数据（简化示例）
+            sensor_value = 26.5  # 假设从传感器读取
+
+            if operator == "GreaterThan" and sensor_value <= threshold:
+                conditions_met = False
+            elif operator == "LessThan" and sensor_value >= threshold:
+                conditions_met = False
+
+        return conditions_met
+
+    # 执行场景动作
+    async def execute_scene_actions(rule):
+        """执行场景动作"""
+        success_count = 0
+
+        for action in rule["scene_actions"]:
+            try:
+                result = await sdk.send_command(
+                    action["device_id"],
+                    action["action"]["cluster_id"],
+                    action["action"]["command_id"],
+                    action["action"]["parameters"]
+                )
+
+                if result:
+                    success_count += 1
+                    print(f"  {action['device_id']} action executed successfully")
+                else:
+                    print(f"  {action['device_id']} action failed")
+            except Exception as e:
+                print(f"  Error executing action on {action['device_id']}: {e}")
+
+        return success_count
+
+    # 自动化循环
+    while True:
+        if check_trigger_conditions(automation_rule):
+            print(f"Trigger conditions met for: {automation_rule['automation_name']}")
+
+            success_count = await execute_scene_actions(automation_rule)
+            total_actions = len(automation_rule["scene_actions"])
+            success_rate = success_count / total_actions if total_actions > 0 else 0
+
+            # 记录自动化执行
+            automation_data = {
+                "automation_id": automation_rule["automation_id"],
+                "execution_time": datetime.now(),
+                "success_count": success_count,
+                "total_actions": total_actions,
+                "success_rate": success_rate,
+                "status": "Completed" if success_rate == 1.0 else "Partial"
+            }
+
+            storage.store_automation_event(automation_data)
+
+            print(f"Automation executed: {success_count}/{total_actions} actions succeeded")
+
+        # 等待1分钟再检查
+        await asyncio.sleep(60)
+
+    return automation_rule
+
+if __name__ == "__main__":
+    import asyncio
+    asyncio.run(matter_scene_automation())
+```
+
+---
+
+## 12. 案例11：Matter设备故障诊断
+
+### 12.1 场景描述
+
+**业务背景**：
+Matter设备故障诊断系统监测设备状态，
+识别设备故障，提供故障诊断和修复建议。
+
+**技术挑战**：
+- 需要设备状态监测
+- 需要故障模式识别
+- 需要诊断算法
+- 需要修复建议生成
+
+**解决方案**：
+使用Matter_Schema监测设备状态，
+使用AI算法进行故障诊断，
+使用MatterStorage存储诊断数据。
+
+### 12.2 Schema定义
+
+**Matter设备故障诊断Schema**：
+
+```dsl
+schema MatterDeviceDiagnostics {
+  diagnosis_session_id: String @value("DIAG-20250121-001") @required
+  device_id: String @value("LIGHT-001") @required
+  diagnosis_time: DateTime @value("2025-01-21T10:00:00") @required
+
+  device_status: {
+    online: Boolean @value(false)
+    last_seen: DateTime @value("2025-01-21T09:30:00")
+    response_time: Decimal @value(5000.0) @unit("ms")
+    error_count: Integer @value(5)
+    last_error: String @value("Timeout")
+  } @required
+
+  diagnostic_results: {
+    fault_detected: Boolean @value(true)
+    fault_type: Enum { Connectivity } @value(Connectivity)
+    fault_severity: Enum { Medium } @value(Medium)
+    fault_description: String @value("设备响应超时")
+    root_cause: String @value("网络连接不稳定")
+    confidence: Decimal @value(0.85) @range(0.0, 1.0)
+  } @required
+
+  repair_recommendations: [
+    {
+      recommendation: String @value("检查网络连接")
+      priority: Enum { High } @value(High)
+      expected_fix_probability: Decimal @value(0.80)
+    },
+    {
+      recommendation: String @value("重启设备")
+      priority: Enum { Medium } @value(Medium)
+      expected_fix_probability: Decimal @value(0.60)
+    }
+  ] @required
+} @standard("Matter")
+```
+
+### 12.3 实现代码
+
+```python
+from matter_storage import MatterStorage
+from matter_sdk_wrapper import MatterSDKWrapper
+from datetime import datetime, timedelta
+
+async def matter_device_diagnostics():
+    """Matter设备故障诊断示例"""
+    storage = MatterStorage("postgresql://user:password@localhost/matter_db")
+    sdk = MatterSDKWrapper()
+
+    # 设备状态
+    device_id = "LIGHT-001"
+    device_status = {
+        "online": False,
+        "last_seen": datetime.now() - timedelta(minutes=30),
+        "response_time": 5000.0,
+        "error_count": 5,
+        "last_error": "Timeout"
+    }
+
+    # 故障诊断算法
+    def diagnose_device_fault(status):
+        """诊断设备故障"""
+        fault_detected = False
+        fault_type = None
+        fault_severity = None
+        fault_description = None
+        root_cause = None
+        confidence = 0.0
+        recommendations = []
+
+        # 检查在线状态
+        if not status["online"]:
+            time_since_last_seen = datetime.now() - status["last_seen"]
+
+            if time_since_last_seen.total_seconds() > 3600:  # 1小时
+                fault_detected = True
+                fault_type = "Connectivity"
+                fault_severity = "High"
+                fault_description = "设备长时间离线"
+                root_cause = "网络连接中断或设备故障"
+                confidence = 0.90
+                recommendations.append({
+                    "recommendation": "检查网络连接和设备电源",
+                    "priority": "High",
+                    "expected_fix_probability": 0.70
+                })
+            else:
+                fault_detected = True
+                fault_type = "Connectivity"
+                fault_severity = "Medium"
+                fault_description = "设备暂时离线"
+                root_cause = "网络连接不稳定"
+                confidence = 0.75
+                recommendations.append({
+                    "recommendation": "检查网络连接",
+                    "priority": "High",
+                    "expected_fix_probability": 0.80
+                })
+
+        # 检查响应时间
+        if status["response_time"] > 3000:  # 3秒
+            fault_detected = True
+            if fault_type is None:
+                fault_type = "Performance"
+                fault_severity = "Medium"
+                fault_description = "设备响应缓慢"
+                root_cause = "网络延迟或设备负载过高"
+                confidence = 0.70
+                recommendations.append({
+                    "recommendation": "检查网络延迟和设备负载",
+                    "priority": "Medium",
+                    "expected_fix_probability": 0.60
+                })
+
+        # 检查错误计数
+        if status["error_count"] > 3:
+            fault_detected = True
+            if fault_type is None:
+                fault_type = "Reliability"
+                fault_severity = "Medium"
+                fault_description = "设备频繁出错"
+                root_cause = "设备不稳定或配置错误"
+                confidence = 0.80
+                recommendations.append({
+                    "recommendation": "重启设备",
+                    "priority": "Medium",
+                    "expected_fix_probability": 0.60
+                })
+                recommendations.append({
+                    "recommendation": "检查设备配置",
+                    "priority": "Low",
+                    "expected_fix_probability": 0.50
+                })
+
+        return {
+            "fault_detected": fault_detected,
+            "fault_type": fault_type,
+            "fault_severity": fault_severity,
+            "fault_description": fault_description,
+            "root_cause": root_cause,
+            "confidence": confidence,
+            "recommendations": recommendations
+        }
+
+    # 执行诊断
+    diagnostic_results = diagnose_device_fault(device_status)
+
+    # 存储诊断数据
+    diagnosis_data = {
+        "diagnosis_session_id": "DIAG-20250121-001",
+        "device_id": device_id,
+        "diagnosis_time": datetime.now(),
+        "device_online": device_status["online"],
+        "device_last_seen": device_status["last_seen"],
+        "device_response_time": device_status["response_time"],
+        "device_error_count": device_status["error_count"],
+        "device_last_error": device_status["last_error"],
+        "fault_detected": diagnostic_results["fault_detected"],
+        "fault_type": diagnostic_results["fault_type"],
+        "fault_severity": diagnostic_results["fault_severity"],
+        "fault_description": diagnostic_results["fault_description"],
+        "root_cause": diagnostic_results["root_cause"],
+        "confidence": diagnostic_results["confidence"],
+        "recommendations": diagnostic_results["recommendations"]
+    }
+
+    # 存储到数据库
+    diagnosis_id = storage.store_diagnostic_data(diagnosis_data)
+    print(f"Device diagnosis stored: {diagnosis_id}")
+
+    print(f"\nMatter Device Diagnostics:")
+    print(f"  Device: {device_id}")
+    print(f"  Fault detected: {diagnostic_results['fault_detected']}")
+    if diagnostic_results['fault_detected']:
+        print(f"  Fault type: {diagnostic_results['fault_type']}")
+        print(f"  Fault severity: {diagnostic_results['fault_severity']}")
+        print(f"  Fault description: {diagnostic_results['fault_description']}")
+        print(f"  Root cause: {diagnostic_results['root_cause']}")
+        print(f"  Confidence: {diagnostic_results['confidence']:.2f}")
+        print(f"  Recommendations: {len(diagnostic_results['recommendations'])}")
+        for i, rec in enumerate(diagnostic_results['recommendations'], 1):
+            print(f"    {i}. {rec['recommendation']} (Priority: {rec['priority']})")
+
+    return diagnosis_data
+
+if __name__ == "__main__":
+    import asyncio
+    asyncio.run(matter_device_diagnostics())
+```
+
+---
 
 **创建时间**：2025-01-21
 **最后更新**：2025-01-21

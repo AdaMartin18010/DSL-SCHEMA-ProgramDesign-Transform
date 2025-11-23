@@ -199,13 +199,36 @@ import json
 from typing import Dict, List, Optional
 from datetime import datetime
 
+import psycopg2
+import json
+import logging
+from datetime import datetime
+from typing import Dict, List, Optional
+
+logger = logging.getLogger(__name__)
+
 class BPELStorage:
-    """BPEL数据存储系统"""
+    """BPEL数据存储系统 - 增强错误处理"""
 
     def __init__(self, connection_string: str):
-        self.conn = psycopg2.connect(connection_string)
-        self.cur = self.conn.cursor()
-        self._create_tables()
+        # 输入验证
+        if not connection_string:
+            raise ValueError("Connection string cannot be empty")
+
+        if not isinstance(connection_string, str):
+            raise TypeError(f"Connection string must be a string, got {type(connection_string)}")
+
+        try:
+            self.conn = psycopg2.connect(connection_string)
+            self.cur = self.conn.cursor()
+            self._create_tables()
+            logger.info("BPELStorage initialized successfully")
+        except psycopg2.Error as e:
+            logger.error(f"Failed to connect to database: {e}")
+            raise ConnectionError(f"Failed to connect to database: {e}") from e
+        except Exception as e:
+            logger.error(f"Unexpected error initializing BPELStorage: {e}", exc_info=True)
+            raise RuntimeError(f"Failed to initialize BPELStorage: {e}") from e
 
     def _create_tables(self):
         """创建BPEL数据表"""
@@ -305,20 +328,67 @@ class BPELStorage:
     def store_process_definition(self, process_id: str, process_name: str,
                                  bpel_xml: str, target_namespace: str = None,
                                  metadata: Dict = None):
-        """存储流程定义"""
-        self.cur.execute("""
-            INSERT INTO bpel_process_definitions
-            (process_id, process_name, target_namespace, bpel_xml, metadata)
-            VALUES (%s, %s, %s, %s, %s::jsonb)
-            ON CONFLICT (process_id) DO UPDATE
-            SET process_name = EXCLUDED.process_name,
-                target_namespace = EXCLUDED.target_namespace,
-                bpel_xml = EXCLUDED.bpel_xml,
-                metadata = EXCLUDED.metadata,
-                updated_at = CURRENT_TIMESTAMP
-        """, (process_id, process_name, target_namespace, bpel_xml,
-              json.dumps(metadata or {})))
-        self.conn.commit()
+        """存储流程定义 - 增强错误处理"""
+        # 输入验证
+        if not process_id:
+            raise ValueError("Process ID cannot be empty")
+
+        if not isinstance(process_id, str):
+            raise TypeError(f"Process ID must be a string, got {type(process_id)}")
+
+        if len(process_id) > 200:
+            raise ValueError(f"Process ID too long: {len(process_id)} (max 200)")
+
+        if not process_name:
+            raise ValueError("Process name cannot be empty")
+
+        if not isinstance(process_name, str):
+            raise TypeError(f"Process name must be a string, got {type(process_name)}")
+
+        if len(process_name) > 200:
+            raise ValueError(f"Process name too long: {len(process_name)} (max 200)")
+
+        if not bpel_xml:
+            raise ValueError("BPEL XML cannot be empty")
+
+        if not isinstance(bpel_xml, str):
+            raise TypeError(f"BPEL XML must be a string, got {type(bpel_xml)}")
+
+        if target_namespace is not None and len(target_namespace) > 500:
+            raise ValueError(f"Target namespace too long: {len(target_namespace)} (max 500)")
+
+        if metadata is not None and not isinstance(metadata, dict):
+            raise TypeError(f"Metadata must be a dictionary or None, got {type(metadata)}")
+
+        try:
+            self.cur.execute("""
+                INSERT INTO bpel_process_definitions
+                (process_id, process_name, target_namespace, bpel_xml, metadata)
+                VALUES (%s, %s, %s, %s, %s::jsonb)
+                ON CONFLICT (process_id) DO UPDATE
+                SET process_name = EXCLUDED.process_name,
+                    target_namespace = EXCLUDED.target_namespace,
+                    bpel_xml = EXCLUDED.bpel_xml,
+                    metadata = EXCLUDED.metadata,
+                    updated_at = CURRENT_TIMESTAMP
+            """, (process_id, process_name, target_namespace, bpel_xml,
+                  json.dumps(metadata or {})))
+
+            self.conn.commit()
+            logger.info(f"Stored BPEL process definition: {process_id}")
+
+        except psycopg2.IntegrityError as e:
+            logger.error(f"Integrity error storing BPEL process definition: {e}")
+            self.conn.rollback()
+            raise ValueError(f"Duplicate process ID or constraint violation: {e}") from e
+        except psycopg2.Error as e:
+            logger.error(f"Database error storing BPEL process definition: {e}")
+            self.conn.rollback()
+            raise RuntimeError(f"Database operation failed: {e}") from e
+        except Exception as e:
+            logger.error(f"Unexpected error storing BPEL process definition: {e}", exc_info=True)
+            self.conn.rollback()
+            raise RuntimeError(f"Failed to store BPEL process definition: {e}") from e
 
     def record_service_call(self, instance_id: str, activity_id: str,
                            partner_link: str, operation: str,

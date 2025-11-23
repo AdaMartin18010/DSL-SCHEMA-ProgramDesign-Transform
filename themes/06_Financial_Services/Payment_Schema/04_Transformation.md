@@ -137,17 +137,35 @@ def convert_payment_to_iso8583(payment_request: PaymentRequest) -> ISO8583Messag
 ```python
 import psycopg2
 import json
+import logging
 from typing import Dict, List, Optional
 from datetime import datetime, date
 from decimal import Decimal
 
+logger = logging.getLogger(__name__)
+
 class PaymentStorage:
-    """Payment数据存储系统"""
+    """Payment数据存储系统 - 增强错误处理"""
 
     def __init__(self, connection_string: str):
-        self.conn = psycopg2.connect(connection_string)
-        self.cur = self.conn.cursor()
-        self._create_tables()
+        # 输入验证
+        if not connection_string:
+            raise ValueError("Connection string cannot be empty")
+
+        if not isinstance(connection_string, str):
+            raise TypeError(f"Connection string must be a string, got {type(connection_string)}")
+
+        try:
+            self.conn = psycopg2.connect(connection_string)
+            self.cur = self.conn.cursor()
+            self._create_tables()
+            logger.info("PaymentStorage initialized successfully")
+        except psycopg2.Error as e:
+            logger.error(f"Failed to connect to database: {e}")
+            raise ConnectionError(f"Failed to connect to database: {e}") from e
+        except Exception as e:
+            logger.error(f"Unexpected error initializing PaymentStorage: {e}", exc_info=True)
+            raise RuntimeError(f"Failed to initialize PaymentStorage: {e}") from e
 
     def _create_tables(self):
         """创建Payment数据表"""
@@ -290,77 +308,230 @@ class PaymentStorage:
                                   customer_name: str = None,
                                   customer_email: str = None,
                                   card_last_four: str = None):
-        """存储支付交易"""
-        self.cur.execute("""
-            INSERT INTO payment_transactions
-            (request_id, merchant_id, order_id, amount, currency,
-             payment_method, status, customer_id, customer_name,
-             customer_email, card_last_four)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-            ON CONFLICT (request_id) DO UPDATE
-            SET updated_at = CURRENT_TIMESTAMP
-        """, (request_id, merchant_id, order_id, amount, currency,
-              payment_method, 'Pending', customer_id, customer_name,
-              customer_email, card_last_four))
-        self.conn.commit()
+        """存储支付交易 - 增强错误处理"""
+        # 输入验证
+        if not request_id:
+            raise ValueError("Request ID cannot be empty")
+
+        if not isinstance(request_id, str):
+            raise TypeError(f"Request ID must be a string, got {type(request_id)}")
+
+        if len(request_id) > 100:
+            raise ValueError(f"Request ID too long: {len(request_id)} (max 100)")
+
+        if not merchant_id:
+            raise ValueError("Merchant ID cannot be empty")
+
+        if not isinstance(merchant_id, str):
+            raise TypeError(f"Merchant ID must be a string, got {type(merchant_id)}")
+
+        if len(merchant_id) > 50:
+            raise ValueError(f"Merchant ID too long: {len(merchant_id)} (max 50)")
+
+        if not order_id:
+            raise ValueError("Order ID cannot be empty")
+
+        if not isinstance(order_id, str):
+            raise TypeError(f"Order ID must be a string, got {type(order_id)}")
+
+        if len(order_id) > 100:
+            raise ValueError(f"Order ID too long: {len(order_id)} (max 100)")
+
+        if not isinstance(amount, (int, float, Decimal)):
+            raise TypeError(f"Amount must be numeric, got {type(amount)}")
+
+        amount = Decimal(str(amount))
+        if amount <= 0:
+            raise ValueError(f"Amount must be positive, got {amount}")
+
+        if amount > Decimal('999999999999999.99'):  # NUMERIC(18, 2)最大值
+            raise ValueError(f"Amount too large: {amount}")
+
+        if not currency:
+            raise ValueError("Currency cannot be empty")
+
+        if not isinstance(currency, str):
+            raise TypeError(f"Currency must be a string, got {type(currency)}")
+
+        if len(currency) != 3:
+            raise ValueError(f"Currency code must be 3 characters, got {len(currency)}")
+
+        if not payment_method:
+            raise ValueError("Payment method cannot be empty")
+
+        if not isinstance(payment_method, str):
+            raise TypeError(f"Payment method must be a string, got {type(payment_method)}")
+
+        valid_payment_methods = ['CreditCard', 'DebitCard', 'BankTransfer', 'DigitalWallet', 'Cryptocurrency']
+        if payment_method not in valid_payment_methods:
+            raise ValueError(f"Invalid payment method: {payment_method}. Must be one of {valid_payment_methods}")
+
+        # 可选字段验证
+        if customer_id is not None and not isinstance(customer_id, str):
+            raise TypeError(f"Customer ID must be a string or None, got {type(customer_id)}")
+
+        if customer_name is not None and not isinstance(customer_name, str):
+            raise TypeError(f"Customer name must be a string or None, got {type(customer_name)}")
+
+        if customer_email is not None:
+            if not isinstance(customer_email, str):
+                raise TypeError(f"Customer email must be a string or None, got {type(customer_email)}")
+            if '@' not in customer_email:
+                raise ValueError(f"Invalid email format: {customer_email}")
+
+        if card_last_four is not None:
+            if not isinstance(card_last_four, str):
+                raise TypeError(f"Card last four must be a string or None, got {type(card_last_four)}")
+            if not card_last_four.isdigit() or len(card_last_four) != 4:
+                raise ValueError(f"Card last four must be 4 digits, got {card_last_four}")
+
+        try:
+            self.cur.execute("""
+                INSERT INTO payment_transactions
+                (request_id, merchant_id, order_id, amount, currency,
+                 payment_method, status, customer_id, customer_name,
+                 customer_email, card_last_four)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                ON CONFLICT (request_id) DO UPDATE
+                SET updated_at = CURRENT_TIMESTAMP
+            """, (request_id, merchant_id, order_id, amount, currency,
+                  payment_method, 'Pending', customer_id, customer_name,
+                  customer_email, card_last_four))
+            self.conn.commit()
+            logger.info(f"Stored payment transaction: {request_id}")
+
+        except psycopg2.IntegrityError as e:
+            logger.error(f"Integrity error storing payment transaction: {e}")
+            self.conn.rollback()
+            raise ValueError(f"Duplicate request ID or constraint violation: {e}") from e
+        except psycopg2.Error as e:
+            logger.error(f"Database error storing payment transaction: {e}")
+            self.conn.rollback()
+            raise RuntimeError(f"Database operation failed: {e}") from e
+        except Exception as e:
+            logger.error(f"Unexpected error storing payment transaction: {e}", exc_info=True)
+            self.conn.rollback()
+            raise RuntimeError(f"Failed to store payment transaction: {e}") from e
 
     def update_payment_status(self, request_id: str, transaction_id: str,
                              status: str, error_code: str = None,
                              error_message: str = None):
-        """更新支付状态"""
-        self.cur.execute("""
-            UPDATE payment_transactions
-            SET transaction_id = %s,
-                status = %s,
-                error_code = %s,
-                error_message = %s,
-                updated_at = CURRENT_TIMESTAMP,
-                completed_at = CASE WHEN %s IN ('Completed', 'Failed')
-                                   THEN CURRENT_TIMESTAMP
-                                   ELSE completed_at END
-            WHERE request_id = %s
-        """, (transaction_id, status, error_code, error_message, status, request_id))
-        self.conn.commit()
+        """更新支付状态 - 增强错误处理"""
+        # 输入验证
+        if not request_id:
+            raise ValueError("Request ID cannot be empty")
+
+        if not isinstance(request_id, str):
+            raise TypeError(f"Request ID must be a string, got {type(request_id)}")
+
+        if transaction_id is not None and not isinstance(transaction_id, str):
+            raise TypeError(f"Transaction ID must be a string or None, got {type(transaction_id)}")
+
+        if not status:
+            raise ValueError("Status cannot be empty")
+
+        if not isinstance(status, str):
+            raise TypeError(f"Status must be a string, got {type(status)}")
+
+        valid_statuses = ['Pending', 'Processing', 'Completed', 'Failed', 'Cancelled', 'Refunded']
+        if status not in valid_statuses:
+            raise ValueError(f"Invalid status: {status}. Must be one of {valid_statuses}")
+
+        if error_code is not None and not isinstance(error_code, str):
+            raise TypeError(f"Error code must be a string or None, got {type(error_code)}")
+
+        if error_message is not None and not isinstance(error_message, str):
+            raise TypeError(f"Error message must be a string or None, got {type(error_message)}")
+
+        try:
+            self.cur.execute("""
+                UPDATE payment_transactions
+                SET transaction_id = %s,
+                    status = %s,
+                    error_code = %s,
+                    error_message = %s,
+                    updated_at = CURRENT_TIMESTAMP,
+                    completed_at = CASE WHEN %s IN ('Completed', 'Failed')
+                                       THEN CURRENT_TIMESTAMP
+                                       ELSE completed_at END
+                WHERE request_id = %s
+            """, (transaction_id, status, error_code, error_message, status, request_id))
+
+            if self.cur.rowcount == 0:
+                raise ValueError(f"Payment transaction not found: {request_id}")
+
+            self.conn.commit()
+            logger.info(f"Updated payment status: {request_id} -> {status}")
+
+        except psycopg2.Error as e:
+            logger.error(f"Database error updating payment status: {e}")
+            self.conn.rollback()
+            raise RuntimeError(f"Database operation failed: {e}") from e
+        except Exception as e:
+            logger.error(f"Unexpected error updating payment status: {e}", exc_info=True)
+            self.conn.rollback()
+            raise RuntimeError(f"Failed to update payment status: {e}") from e
 
     def calculate_payment_statistics(self, merchant_id: str,
                                     time_window: datetime):
-        """计算支付统计信息"""
-        self.cur.execute("""
-            SELECT
-                payment_method,
-                COUNT(*) as total_transactions,
-                COUNT(CASE WHEN status = 'Completed' THEN 1 END) as successful,
-                COUNT(CASE WHEN status = 'Failed' THEN 1 END) as failed,
-                SUM(CASE WHEN status = 'Completed' THEN amount ELSE 0 END) as total_amount,
-                AVG(CASE WHEN status = 'Completed'
-                    THEN EXTRACT(EPOCH FROM (completed_at - created_at))
-                    ELSE NULL END) as avg_processing_time
-            FROM payment_transactions
-            WHERE merchant_id = %s AND created_at >= %s
-            GROUP BY payment_method
-        """, (merchant_id, time_window))
+        """计算支付统计信息 - 增强错误处理"""
+        # 输入验证
+        if not merchant_id:
+            raise ValueError("Merchant ID cannot be empty")
 
-        stats = {}
-        for row in self.cur.fetchall():
-            stats[row[0]] = {
-                'total_transactions': row[1],
-                'successful': row[2],
-                'failed': row[3],
-                'total_amount': float(row[4]),
-                'avg_processing_time': row[5]
-            }
+        if not isinstance(merchant_id, str):
+            raise TypeError(f"Merchant ID must be a string, got {type(merchant_id)}")
 
-        # 存储统计信息
-        self.cur.execute("""
-            INSERT INTO payment_statistics
-            (statistic_type, merchant_id, payment_method, time_window, statistics)
-            VALUES (%s, %s, %s, %s, %s::jsonb)
-            ON CONFLICT (statistic_type, merchant_id, payment_method, time_window)
-            DO UPDATE SET statistics = EXCLUDED.statistics
-        """, ('payment_performance', merchant_id, 'ALL', time_window, json.dumps(stats)))
-        self.conn.commit()
+        if not isinstance(time_window, datetime):
+            raise TypeError(f"Time window must be a datetime, got {type(time_window)}")
 
-        return stats
+        try:
+            self.cur.execute("""
+                SELECT
+                    payment_method,
+                    COUNT(*) as total_transactions,
+                    COUNT(CASE WHEN status = 'Completed' THEN 1 END) as successful,
+                    COUNT(CASE WHEN status = 'Failed' THEN 1 END) as failed,
+                    SUM(CASE WHEN status = 'Completed' THEN amount ELSE 0 END) as total_amount,
+                    AVG(CASE WHEN status = 'Completed'
+                        THEN EXTRACT(EPOCH FROM (completed_at - created_at))
+                        ELSE NULL END) as avg_processing_time
+                FROM payment_transactions
+                WHERE merchant_id = %s AND created_at >= %s
+                GROUP BY payment_method
+            """, (merchant_id, time_window))
+
+            stats = {}
+            for row in self.cur.fetchall():
+                stats[row[0]] = {
+                    'total_transactions': row[1] if row[1] is not None else 0,
+                    'successful': row[2] if row[2] is not None else 0,
+                    'failed': row[3] if row[3] is not None else 0,
+                    'total_amount': float(row[4]) if row[4] is not None else 0.0,
+                    'avg_processing_time': float(row[5]) if row[5] is not None else 0.0
+                }
+
+            # 存储统计信息
+            self.cur.execute("""
+                INSERT INTO payment_statistics
+                (statistic_type, merchant_id, payment_method, time_window, statistics)
+                VALUES (%s, %s, %s, %s, %s::jsonb)
+                ON CONFLICT (statistic_type, merchant_id, payment_method, time_window)
+                DO UPDATE SET statistics = EXCLUDED.statistics
+            """, ('payment_performance', merchant_id, 'ALL', time_window, json.dumps(stats)))
+            self.conn.commit()
+
+            logger.info(f"Calculated payment statistics for merchant {merchant_id}")
+            return stats
+
+        except psycopg2.Error as e:
+            logger.error(f"Database error calculating payment statistics: {e}")
+            self.conn.rollback()
+            raise RuntimeError(f"Database operation failed: {e}") from e
+        except Exception as e:
+            logger.error(f"Unexpected error calculating payment statistics: {e}", exc_info=True)
+            self.conn.rollback()
+            raise RuntimeError(f"Failed to calculate payment statistics: {e}") from e
 ```
 
 ### 6.2 Payment数据分析查询

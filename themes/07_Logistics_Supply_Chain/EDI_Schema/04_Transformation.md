@@ -895,17 +895,34 @@ def validate_edifact_message(edifact_message: dict) -> dict:
 
 ```python
 import psycopg2
+import json
+import logging
 from datetime import datetime
 from typing import List, Optional, Dict
-import uuid
-import json
+
+logger = logging.getLogger(__name__)
 
 class EDIStorage:
-    """EDI数据PostgreSQL存储类"""
+    """EDI数据PostgreSQL存储类 - 增强错误处理"""
 
     def __init__(self, connection_string: str):
-        self.conn = psycopg2.connect(connection_string)
-        self.create_tables()
+        # 输入验证
+        if not connection_string:
+            raise ValueError("Connection string cannot be empty")
+
+        if not isinstance(connection_string, str):
+            raise TypeError(f"Connection string must be a string, got {type(connection_string)}")
+
+        try:
+            self.conn = psycopg2.connect(connection_string)
+            self.create_tables()
+            logger.info("EDIStorage initialized successfully")
+        except psycopg2.Error as e:
+            logger.error(f"Failed to connect to database: {e}")
+            raise ConnectionError(f"Failed to connect to database: {e}") from e
+        except Exception as e:
+            logger.error(f"Unexpected error initializing EDIStorage: {e}", exc_info=True)
+            raise RuntimeError(f"Failed to initialize EDIStorage: {e}") from e
 
     def create_tables(self):
         """创建EDI数据存储表"""
@@ -1005,133 +1022,286 @@ class EDIStorage:
         cursor.close()
 
     def store_edi_x12_transaction(self, interchange_data: dict, functional_group_data: dict, transaction_data: dict) -> str:
-        """存储EDI X12交易集"""
-        cursor = self.conn.cursor()
+        """存储EDI X12交易集 - 增强错误处理"""
+        # 输入验证
+        if not isinstance(interchange_data, dict):
+            raise TypeError(f"Interchange data must be a dictionary, got {type(interchange_data)}")
 
-        # 存储交换
-        cursor.execute("""
-            INSERT INTO edi_interchanges (
-                interchange_type, interchange_control_number,
-                sender_id, receiver_id, interchange_date, interchange_time
-            ) VALUES (%s, %s, %s, %s, %s, %s)
-            ON CONFLICT (interchange_control_number) DO UPDATE SET
-                sender_id = EXCLUDED.sender_id,
-                receiver_id = EXCLUDED.receiver_id
-            RETURNING id
-        """, (
-            "X12",
-            interchange_data.get("isa", {}).get("interchange_control_number"),
-            interchange_data.get("isa", {}).get("interchange_sender_id"),
-            interchange_data.get("isa", {}).get("interchange_receiver_id"),
-            parse_date(interchange_data.get("isa", {}).get("interchange_date")),
-            parse_time(interchange_data.get("isa", {}).get("interchange_time"))
-        ))
-        interchange_id = cursor.fetchone()[0]
+        if not interchange_data:
+            raise ValueError("Interchange data cannot be empty")
 
-        # 存储功能组
-        cursor.execute("""
-            INSERT INTO edi_functional_groups (
-                interchange_id, functional_identifier_code,
-                group_control_number, sender_code, receiver_code, date, time
-            ) VALUES (%s, %s, %s, %s, %s, %s, %s)
-            RETURNING id
-        """, (
-            interchange_id,
-            functional_group_data.get("gs", {}).get("functional_identifier_code"),
-            functional_group_data.get("gs", {}).get("group_control_number"),
-            functional_group_data.get("gs", {}).get("application_sender_code"),
-            functional_group_data.get("gs", {}).get("application_receiver_code"),
-            parse_date(functional_group_data.get("gs", {}).get("date")),
-            parse_time(functional_group_data.get("gs", {}).get("time"))
-        ))
-        functional_group_id = cursor.fetchone()[0]
+        if "isa" not in interchange_data:
+            raise ValueError("Interchange data missing 'isa' section")
 
-        # 存储交易集
-        cursor.execute("""
-            INSERT INTO edi_transactions (
-                functional_group_id, transaction_type,
-                transaction_set_id, transaction_control_number, message_data
-            ) VALUES (%s, %s, %s, %s, %s)
-            RETURNING id
-        """, (
-            functional_group_id,
-            "X12",
-            transaction_data.get("ST", {}).get("transaction_set_identifier_code"),
-            transaction_data.get("ST", {}).get("transaction_set_control_number"),
-            json.dumps(transaction_data)
-        ))
-        transaction_id = cursor.fetchone()[0]
+        if not isinstance(functional_group_data, dict):
+            raise TypeError(f"Functional group data must be a dictionary, got {type(functional_group_data)}")
 
-        # 存储段
-        segment_position = 1
-        for segment_id, segment_data in transaction_data.items():
-            if segment_id not in ["ST", "SE"]:  # 跳过头尾段
-                cursor.execute("""
-                    INSERT INTO edi_segments (
-                        transaction_id, segment_id, segment_position, segment_data
-                    ) VALUES (%s, %s, %s, %s)
-                """, (transaction_id, segment_id, segment_position, json.dumps(segment_data)))
-                segment_position += 1
+        if "gs" not in functional_group_data:
+            raise ValueError("Functional group data missing 'gs' section")
 
-        self.conn.commit()
-        cursor.close()
-        return str(transaction_id)
+        if not isinstance(transaction_data, dict):
+            raise TypeError(f"Transaction data must be a dictionary, got {type(transaction_data)}")
+
+        if not transaction_data:
+            raise ValueError("Transaction data cannot be empty")
+
+        if "ST" not in transaction_data:
+            raise ValueError("Transaction data missing 'ST' segment")
+
+        # 验证交换控制号
+        interchange_control_number = interchange_data.get("isa", {}).get("interchange_control_number")
+        if not interchange_control_number:
+            raise ValueError("Interchange control number is required")
+
+        if not isinstance(interchange_control_number, str):
+            raise TypeError(f"Interchange control number must be a string, got {type(interchange_control_number)}")
+
+        if len(interchange_control_number) > 14:
+            raise ValueError(f"Interchange control number too long: {len(interchange_control_number)} (max 14)")
+
+        # 验证功能组控制号
+        group_control_number = functional_group_data.get("gs", {}).get("group_control_number")
+        if not group_control_number:
+            raise ValueError("Group control number is required")
+
+        if len(str(group_control_number)) > 9:
+            raise ValueError(f"Group control number too long: {len(str(group_control_number))} (max 9)")
+
+        # 验证交易集控制号
+        transaction_control_number = transaction_data.get("ST", {}).get("transaction_set_control_number")
+        if not transaction_control_number:
+            raise ValueError("Transaction set control number is required")
+
+        if len(str(transaction_control_number)) > 14:
+            raise ValueError(f"Transaction set control number too long: {len(str(transaction_control_number))} (max 14)")
+
+        try:
+            cursor = self.conn.cursor()
+
+            # 存储交换
+            cursor.execute("""
+                INSERT INTO edi_interchanges (
+                    interchange_type, interchange_control_number,
+                    sender_id, receiver_id, interchange_date, interchange_time
+                ) VALUES (%s, %s, %s, %s, %s, %s)
+                ON CONFLICT (interchange_control_number) DO UPDATE SET
+                    sender_id = EXCLUDED.sender_id,
+                    receiver_id = EXCLUDED.receiver_id
+                RETURNING id
+            """, (
+                "X12",
+                interchange_control_number,
+                interchange_data.get("isa", {}).get("interchange_sender_id"),
+                interchange_data.get("isa", {}).get("interchange_receiver_id"),
+                parse_date(interchange_data.get("isa", {}).get("interchange_date")),
+                parse_time(interchange_data.get("isa", {}).get("interchange_time"))
+            ))
+
+            result = cursor.fetchone()
+            if not result:
+                raise ValueError("Failed to store interchange")
+
+            interchange_id = result[0]
+
+            # 存储功能组
+            cursor.execute("""
+                INSERT INTO edi_functional_groups (
+                    interchange_id, functional_identifier_code,
+                    group_control_number, sender_code, receiver_code, date, time
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s)
+                RETURNING id
+            """, (
+                interchange_id,
+                functional_group_data.get("gs", {}).get("functional_identifier_code"),
+                group_control_number,
+                functional_group_data.get("gs", {}).get("application_sender_code"),
+                functional_group_data.get("gs", {}).get("application_receiver_code"),
+                parse_date(functional_group_data.get("gs", {}).get("date")),
+                parse_time(functional_group_data.get("gs", {}).get("time"))
+            ))
+
+            result = cursor.fetchone()
+            if not result:
+                raise ValueError("Failed to store functional group")
+
+            functional_group_id = result[0]
+
+            # 存储交易集
+            cursor.execute("""
+                INSERT INTO edi_transactions (
+                    functional_group_id, transaction_type,
+                    transaction_set_id, transaction_control_number, message_data
+                ) VALUES (%s, %s, %s, %s, %s)
+                RETURNING id
+            """, (
+                functional_group_id,
+                "X12",
+                transaction_data.get("ST", {}).get("transaction_set_identifier_code"),
+                transaction_control_number,
+                json.dumps(transaction_data)
+            ))
+
+            result = cursor.fetchone()
+            if not result:
+                raise ValueError("Failed to store transaction")
+
+            transaction_id = result[0]
+
+            # 存储段
+            segment_position = 1
+            for segment_id, segment_data in transaction_data.items():
+                if segment_id not in ["ST", "SE"]:  # 跳过头尾段
+                    if not isinstance(segment_id, str):
+                        raise TypeError(f"Segment ID must be a string, got {type(segment_id)}")
+
+                    if len(segment_id) > 3:
+                        raise ValueError(f"Segment ID too long: {len(segment_id)} (max 3)")
+
+                    cursor.execute("""
+                        INSERT INTO edi_segments (
+                            transaction_id, segment_id, segment_position, segment_data
+                        ) VALUES (%s, %s, %s, %s)
+                    """, (transaction_id, segment_id, segment_position, json.dumps(segment_data)))
+                    segment_position += 1
+
+            self.conn.commit()
+            cursor.close()
+            logger.info(f"Stored EDI X12 transaction: {transaction_control_number}")
+            return str(transaction_id)
+
+        except psycopg2.IntegrityError as e:
+            logger.error(f"Integrity error storing EDI X12 transaction: {e}")
+            self.conn.rollback()
+            raise ValueError(f"Duplicate control number or constraint violation: {e}") from e
+        except psycopg2.Error as e:
+            logger.error(f"Database error storing EDI X12 transaction: {e}")
+            self.conn.rollback()
+            raise RuntimeError(f"Database operation failed: {e}") from e
+        except Exception as e:
+            logger.error(f"Unexpected error storing EDI X12 transaction: {e}", exc_info=True)
+            self.conn.rollback()
+            raise RuntimeError(f"Failed to store EDI X12 transaction: {e}") from e
 
     def store_edifact_message(self, interchange_data: dict, message_data: dict) -> str:
-        """存储EDIFACT消息"""
-        cursor = self.conn.cursor()
+        """存储EDIFACT消息 - 增强错误处理"""
+        # 输入验证
+        if not isinstance(interchange_data, dict):
+            raise TypeError(f"Interchange data must be a dictionary, got {type(interchange_data)}")
 
-        # 存储交换
-        cursor.execute("""
-            INSERT INTO edi_interchanges (
-                interchange_type, interchange_control_number,
-                sender_id, receiver_id, interchange_date, interchange_time
-            ) VALUES (%s, %s, %s, %s, %s, %s)
-            ON CONFLICT (interchange_control_number) DO UPDATE SET
-                sender_id = EXCLUDED.sender_id,
-                receiver_id = EXCLUDED.receiver_id
-            RETURNING id
-        """, (
-            "EDIFACT",
-            interchange_data.get("UNB", {}).get("interchange_control_reference"),
-            interchange_data.get("UNB", {}).get("sender_identification"),
-            interchange_data.get("UNB", {}).get("recipient_identification"),
-            parse_date(interchange_data.get("UNB", {}).get("date_of_preparation")),
-            parse_time(interchange_data.get("UNB", {}).get("time_of_preparation"))
-        ))
-        interchange_id = cursor.fetchone()[0]
+        if not interchange_data:
+            raise ValueError("Interchange data cannot be empty")
 
-        # 存储功能组（EDIFACT中为消息）
-        cursor.execute("""
-            INSERT INTO edi_functional_groups (
-                interchange_id, group_control_number
-            ) VALUES (%s, %s)
-            RETURNING id
-        """, (
-            interchange_id,
-            message_data.get("UNH", {}).get("message_reference_number")
-        ))
-        functional_group_id = cursor.fetchone()[0]
+        if "UNB" not in interchange_data:
+            raise ValueError("Interchange data missing 'UNB' segment")
 
-        # 存储消息
-        cursor.execute("""
-            INSERT INTO edi_transactions (
-                functional_group_id, transaction_type,
-                message_type, transaction_control_number, message_data
-            ) VALUES (%s, %s, %s, %s, %s)
-            RETURNING id
-        """, (
-            functional_group_id,
-            "EDIFACT",
-            message_data.get("UNH", {}).get("message_type"),
-            message_data.get("UNH", {}).get("message_reference_number"),
-            json.dumps(message_data)
-        ))
-        transaction_id = cursor.fetchone()[0]
+        if not isinstance(message_data, dict):
+            raise TypeError(f"Message data must be a dictionary, got {type(message_data)}")
 
-        self.conn.commit()
-        cursor.close()
-        return str(transaction_id)
+        if not message_data:
+            raise ValueError("Message data cannot be empty")
+
+        if "UNH" not in message_data:
+            raise ValueError("Message data missing 'UNH' segment")
+
+        # 验证交换控制引用
+        interchange_control_reference = interchange_data.get("UNB", {}).get("interchange_control_reference")
+        if not interchange_control_reference:
+            raise ValueError("Interchange control reference is required")
+
+        if not isinstance(interchange_control_reference, str):
+            raise TypeError(f"Interchange control reference must be a string, got {type(interchange_control_reference)}")
+
+        if len(interchange_control_reference) > 14:
+            raise ValueError(f"Interchange control reference too long: {len(interchange_control_reference)} (max 14)")
+
+        # 验证消息引用号
+        message_reference_number = message_data.get("UNH", {}).get("message_reference_number")
+        if not message_reference_number:
+            raise ValueError("Message reference number is required")
+
+        try:
+            cursor = self.conn.cursor()
+
+            # 存储交换
+            cursor.execute("""
+                INSERT INTO edi_interchanges (
+                    interchange_type, interchange_control_number,
+                    sender_id, receiver_id, interchange_date, interchange_time
+                ) VALUES (%s, %s, %s, %s, %s, %s)
+                ON CONFLICT (interchange_control_number) DO UPDATE SET
+                    sender_id = EXCLUDED.sender_id,
+                    receiver_id = EXCLUDED.receiver_id
+                RETURNING id
+            """, (
+                "EDIFACT",
+                interchange_control_reference,
+                interchange_data.get("UNB", {}).get("sender_identification"),
+                interchange_data.get("UNB", {}).get("recipient_identification"),
+                parse_date(interchange_data.get("UNB", {}).get("date_of_preparation")),
+                parse_time(interchange_data.get("UNB", {}).get("time_of_preparation"))
+            ))
+
+            result = cursor.fetchone()
+            if not result:
+                raise ValueError("Failed to store interchange")
+
+            interchange_id = result[0]
+
+            # 存储功能组（EDIFACT中为消息）
+            cursor.execute("""
+                INSERT INTO edi_functional_groups (
+                    interchange_id, group_control_number
+                ) VALUES (%s, %s)
+                RETURNING id
+            """, (
+                interchange_id,
+                message_reference_number
+            ))
+
+            result = cursor.fetchone()
+            if not result:
+                raise ValueError("Failed to store functional group")
+
+            functional_group_id = result[0]
+
+            # 存储消息
+            cursor.execute("""
+                INSERT INTO edi_transactions (
+                    functional_group_id, transaction_type,
+                    message_type, transaction_control_number, message_data
+                ) VALUES (%s, %s, %s, %s, %s)
+                RETURNING id
+            """, (
+                functional_group_id,
+                "EDIFACT",
+                message_data.get("UNH", {}).get("message_type"),
+                message_reference_number,
+                json.dumps(message_data)
+            ))
+
+            result = cursor.fetchone()
+            if not result:
+                raise ValueError("Failed to store transaction")
+
+            transaction_id = result[0]
+
+            self.conn.commit()
+            cursor.close()
+            logger.info(f"Stored EDIFACT message: {message_reference_number}")
+            return str(transaction_id)
+
+        except psycopg2.IntegrityError as e:
+            logger.error(f"Integrity error storing EDIFACT message: {e}")
+            self.conn.rollback()
+            raise ValueError(f"Duplicate control number or constraint violation: {e}") from e
+        except psycopg2.Error as e:
+            logger.error(f"Database error storing EDIFACT message: {e}")
+            self.conn.rollback()
+            raise RuntimeError(f"Database operation failed: {e}") from e
+        except Exception as e:
+            logger.error(f"Unexpected error storing EDIFACT message: {e}", exc_info=True)
+            self.conn.rollback()
+            raise RuntimeError(f"Failed to store EDIFACT message: {e}") from e
 
     def query_transactions_by_type(self, transaction_type: str, start_date: Optional[datetime] = None,
                                     end_date: Optional[datetime] = None) -> List[dict]:

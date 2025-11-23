@@ -126,17 +126,35 @@ def convert_erp_to_isa95_production_schedule(erp_order: ProductionOrder) -> ISA9
 ```python
 import psycopg2
 import json
+import logging
 from typing import Dict, List, Optional
 from datetime import datetime, date
 from decimal import Decimal
 
+logger = logging.getLogger(__name__)
+
 class ERPStorage:
-    """ERP数据存储系统"""
+    """ERP数据存储系统 - 增强错误处理"""
 
     def __init__(self, connection_string: str):
-        self.conn = psycopg2.connect(connection_string)
-        self.cur = self.conn.cursor()
-        self._create_tables()
+        # 输入验证
+        if not connection_string:
+            raise ValueError("Connection string cannot be empty")
+
+        if not isinstance(connection_string, str):
+            raise TypeError(f"Connection string must be a string, got {type(connection_string)}")
+
+        try:
+            self.conn = psycopg2.connect(connection_string)
+            self.cur = self.conn.cursor()
+            self._create_tables()
+            logger.info("ERPStorage initialized successfully")
+        except psycopg2.Error as e:
+            logger.error(f"Failed to connect to database: {e}")
+            raise ConnectionError(f"Failed to connect to database: {e}") from e
+        except Exception as e:
+            logger.error(f"Unexpected error initializing ERPStorage: {e}", exc_info=True)
+            raise RuntimeError(f"Failed to initialize ERPStorage: {e}") from e
 
     def _create_tables(self):
         """创建ERP数据表"""
@@ -344,62 +362,183 @@ class ERPStorage:
                            entry_type: str, description: str,
                            lines: List[Dict], total_debit: Decimal,
                            total_credit: Decimal):
-        """存储财务凭证"""
+        """存储财务凭证 - 增强错误处理"""
+        # 输入验证
+        if not entry_id:
+            raise ValueError("Entry ID cannot be empty")
+
+        if not isinstance(entry_id, str):
+            raise TypeError(f"Entry ID must be a string, got {type(entry_id)}")
+
+        if len(entry_id) > 50:
+            raise ValueError(f"Entry ID too long: {len(entry_id)} (max 50)")
+
+        if not isinstance(entry_date, date):
+            raise TypeError(f"Entry date must be a date, got {type(entry_date)}")
+
+        if not entry_type:
+            raise ValueError("Entry type cannot be empty")
+
+        if not isinstance(entry_type, str):
+            raise TypeError(f"Entry type must be a string, got {type(entry_type)}")
+
+        if description is not None and not isinstance(description, str):
+            raise TypeError(f"Description must be a string or None, got {type(description)}")
+
+        if not isinstance(lines, list):
+            raise TypeError(f"Lines must be a list, got {type(lines)}")
+
+        if not lines:
+            raise ValueError("Lines cannot be empty")
+
+        if not isinstance(total_debit, (int, float, Decimal)):
+            raise TypeError(f"Total debit must be numeric, got {type(total_debit)}")
+
+        if not isinstance(total_credit, (int, float, Decimal)):
+            raise TypeError(f"Total credit must be numeric, got {type(total_credit)}")
+
+        total_debit = Decimal(str(total_debit))
+        total_credit = Decimal(str(total_credit))
+
+        if total_debit < 0:
+            raise ValueError(f"Total debit cannot be negative: {total_debit}")
+
+        if total_credit < 0:
+            raise ValueError(f"Total credit cannot be negative: {total_credit}")
+
         # 验证借贷平衡
         if total_debit != total_credit:
-            raise ValueError("Debit and credit must be balanced")
+            raise ValueError(f"Debit and credit must be balanced: debit={total_debit}, credit={total_credit}")
 
-        self.cur.execute("""
-            INSERT INTO journal_entries
-            (entry_id, entry_date, entry_type, description, total_debit, total_credit)
-            VALUES (%s, %s, %s, %s, %s, %s)
-        """, (entry_id, entry_date, entry_type, description, total_debit, total_credit))
+        # 验证凭证行
+        line_debit_sum = Decimal('0')
+        line_credit_sum = Decimal('0')
 
-        # 存储凭证行
-        for line in lines:
+        for i, line in enumerate(lines):
+            if not isinstance(line, dict):
+                raise TypeError(f"Line {i} must be a dictionary, got {type(line)}")
+
+            if 'account_code' not in line:
+                raise ValueError(f"Line {i} missing 'account_code'")
+
+            account_code = line['account_code']
+            if not isinstance(account_code, str):
+                raise TypeError(f"Line {i} account_code must be a string, got {type(account_code)}")
+
+            if len(account_code) > 20:
+                raise ValueError(f"Line {i} account_code too long: {len(account_code)} (max 20)")
+
+            debit_amount = Decimal(str(line.get('debit_amount', 0)))
+            credit_amount = Decimal(str(line.get('credit_amount', 0)))
+
+            if debit_amount < 0:
+                raise ValueError(f"Line {i} debit_amount cannot be negative: {debit_amount}")
+
+            if credit_amount < 0:
+                raise ValueError(f"Line {i} credit_amount cannot be negative: {credit_amount}")
+
+            if debit_amount > 0 and credit_amount > 0:
+                raise ValueError(f"Line {i} cannot have both debit and credit amounts")
+
+            line_debit_sum += debit_amount
+            line_credit_sum += credit_amount
+
+        # 验证凭证行合计与总金额一致
+        if line_debit_sum != total_debit:
+            raise ValueError(f"Line debit sum ({line_debit_sum}) does not match total debit ({total_debit})")
+
+        if line_credit_sum != total_credit:
+            raise ValueError(f"Line credit sum ({line_credit_sum}) does not match total credit ({total_credit})")
+
+        try:
             self.cur.execute("""
-                INSERT INTO journal_lines
-                (entry_id, account_code, debit_amount, credit_amount, cost_center)
-                VALUES (%s, %s, %s, %s, %s)
-            """, (entry_id, line['account_code'], line.get('debit_amount', 0),
-                  line.get('credit_amount', 0), line.get('cost_center')))
+                INSERT INTO journal_entries
+                (entry_id, entry_date, entry_type, description, total_debit, total_credit)
+                VALUES (%s, %s, %s, %s, %s, %s)
+            """, (entry_id, entry_date, entry_type, description, total_debit, total_credit))
 
-        self.conn.commit()
+            # 存储凭证行
+            for line in lines:
+                self.cur.execute("""
+                    INSERT INTO journal_lines
+                    (entry_id, account_code, debit_amount, credit_amount, cost_center)
+                    VALUES (%s, %s, %s, %s, %s)
+                """, (entry_id, line['account_code'],
+                      Decimal(str(line.get('debit_amount', 0))),
+                      Decimal(str(line.get('credit_amount', 0))),
+                      line.get('cost_center')))
+
+            self.conn.commit()
+            logger.info(f"Stored journal entry: {entry_id}")
+
+        except psycopg2.IntegrityError as e:
+            logger.error(f"Integrity error storing journal entry: {e}")
+            self.conn.rollback()
+            raise ValueError(f"Duplicate entry ID or constraint violation: {e}") from e
+        except psycopg2.Error as e:
+            logger.error(f"Database error storing journal entry: {e}")
+            self.conn.rollback()
+            raise RuntimeError(f"Database operation failed: {e}") from e
+        except Exception as e:
+            logger.error(f"Unexpected error storing journal entry: {e}", exc_info=True)
+            self.conn.rollback()
+            raise RuntimeError(f"Failed to store journal entry: {e}") from e
 
     def calculate_financial_statistics(self, start_date: date, end_date: date):
-        """计算财务统计信息"""
-        self.cur.execute("""
-            SELECT
-                account_type,
-                SUM(debit_amount) as total_debit,
-                SUM(credit_amount) as total_credit,
-                COUNT(*) as transaction_count
-            FROM journal_lines jl
-            JOIN journal_entries je ON jl.entry_id = je.entry_id
-            JOIN chart_of_accounts coa ON jl.account_code = coa.account_code
-            WHERE je.entry_date BETWEEN %s AND %s
-            GROUP BY account_type
-        """, (start_date, end_date))
+        """计算财务统计信息 - 增强错误处理"""
+        # 输入验证
+        if not isinstance(start_date, date):
+            raise TypeError(f"Start date must be a date, got {type(start_date)}")
 
-        stats = {}
-        for row in self.cur.fetchall():
-            stats[row[0]] = {
-                'total_debit': float(row[1]),
-                'total_credit': float(row[2]),
-                'transaction_count': row[3]
-            }
+        if not isinstance(end_date, date):
+            raise TypeError(f"End date must be a date, got {type(end_date)}")
 
-        # 存储统计信息
-        self.cur.execute("""
-            INSERT INTO erp_statistics
-            (statistic_type, module, time_window, statistics)
-            VALUES (%s, %s, %s, %s::jsonb)
-            ON CONFLICT (statistic_type, module, time_window)
-            DO UPDATE SET statistics = EXCLUDED.statistics
-        """, ('financial', 'Finance', end_date, json.dumps(stats)))
-        self.conn.commit()
+        if start_date > end_date:
+            raise ValueError(f"Start date ({start_date}) cannot be after end date ({end_date})")
 
-        return stats
+        try:
+            self.cur.execute("""
+                SELECT
+                    account_type,
+                    SUM(debit_amount) as total_debit,
+                    SUM(credit_amount) as total_credit,
+                    COUNT(*) as transaction_count
+                FROM journal_lines jl
+                JOIN journal_entries je ON jl.entry_id = je.entry_id
+                JOIN chart_of_accounts coa ON jl.account_code = coa.account_code
+                WHERE je.entry_date BETWEEN %s AND %s
+                GROUP BY account_type
+            """, (start_date, end_date))
+
+            stats = {}
+            for row in self.cur.fetchall():
+                stats[row[0]] = {
+                    'total_debit': float(row[1]) if row[1] is not None else 0.0,
+                    'total_credit': float(row[2]) if row[2] is not None else 0.0,
+                    'transaction_count': row[3] if row[3] is not None else 0
+                }
+
+            # 存储统计信息
+            self.cur.execute("""
+                INSERT INTO erp_statistics
+                (statistic_type, module, time_window, statistics)
+                VALUES (%s, %s, %s, %s::jsonb)
+                ON CONFLICT (statistic_type, module, time_window)
+                DO UPDATE SET statistics = EXCLUDED.statistics
+            """, ('financial', 'Finance', end_date, json.dumps(stats)))
+            self.conn.commit()
+
+            logger.info(f"Calculated financial statistics from {start_date} to {end_date}")
+            return stats
+
+        except psycopg2.Error as e:
+            logger.error(f"Database error calculating financial statistics: {e}")
+            self.conn.rollback()
+            raise RuntimeError(f"Database operation failed: {e}") from e
+        except Exception as e:
+            logger.error(f"Unexpected error calculating financial statistics: {e}", exc_info=True)
+            self.conn.rollback()
+            raise RuntimeError(f"Failed to calculate financial statistics: {e}") from e
 ```
 
 ### 6.2 ERP数据分析查询

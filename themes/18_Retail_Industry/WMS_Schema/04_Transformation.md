@@ -20,7 +20,6 @@
     - [4.3 盘点差异处理器](#43-盘点差异处理器)
   - [5. EPCIS集成实现](#5-epcis集成实现)
     - [5.1 EPCIS事件生成器](#51-epcis事件生成器)
-    - [5.2 EPCIS事件解析器](#52-epcis事件解析器)
   - [6. WMS数据存储与分析](#6-wms数据存储与分析)
     - [6.1 PostgreSQL WMS数据存储](#61-postgresql-wms数据存储)
     - [6.2 WMS数据分析查询](#62-wms数据分析查询)
@@ -62,53 +61,120 @@ class InboundOrderProcessor:
         pass
 
     def create_inbound_order(self, order_data: Dict) -> Dict:
-        """创建入库单"""
-        inbound_id = f"INB{datetime.now().strftime('%Y%m%d%H%M%S')}"
-        inbound_number = f"INB-{datetime.now().strftime('%Y-%m-%d-%H%M%S')}"
+        """创建入库单 - 增强错误处理"""
+        # 输入验证
+        if not isinstance(order_data, dict):
+            raise TypeError(f"Order data must be a dictionary, got {type(order_data)}")
 
-        inbound_order = {
-            "inbound_id": inbound_id,
-            "inbound_number": inbound_number,
-            "inbound_order": {
-                "supplier_id": order_data.get("supplier_id"),
-                "supplier_name": order_data.get("supplier_name"),
-                "inbound_date": date.today(),
-                "inbound_type": order_data.get("inbound_type", "Purchase"),
-                "warehouse_id": order_data.get("warehouse_id"),
-                "warehouse_name": order_data.get("warehouse_name"),
-                "status": "Pending"
-            },
-            "inbound_products": {
-                "items": []
-            },
-            "inbound_inspection": {
-                "inspection_status": "Pending",
-                "inspector": None,
-                "inspection_time": None,
-                "inspection_notes": "",
-                "rejected_items": []
-            },
-            "inbound_putaway": {
-                "putaway_items": [],
-                "putaway_status": "Pending"
+        if not order_data:
+            raise ValueError("Order data cannot be empty")
+
+        # 必需字段验证
+        required_fields = ["supplier_id", "warehouse_id"]
+        missing_fields = [f for f in required_fields if not order_data.get(f)]
+        if missing_fields:
+            raise ValueError(f"Missing required fields: {', '.join(missing_fields)}")
+
+        # 供应商ID验证
+        supplier_id = order_data.get("supplier_id")
+        if not isinstance(supplier_id, str) or not supplier_id.strip():
+            raise ValueError(f"Invalid supplier_id: {supplier_id}")
+
+        # 仓库ID验证
+        warehouse_id = order_data.get("warehouse_id")
+        if not isinstance(warehouse_id, str) or not warehouse_id.strip():
+            raise ValueError(f"Invalid warehouse_id: {warehouse_id}")
+
+        # 入库类型验证
+        inbound_type = order_data.get("inbound_type", "Purchase")
+        valid_types = ["Purchase", "Return", "Transfer", "Adjustment"]
+        if inbound_type not in valid_types:
+            logger.warning(f"Invalid inbound type '{inbound_type}', using default 'Purchase'. Valid types: {valid_types}")
+            inbound_type = "Purchase"
+
+        # 商品列表验证
+        items = order_data.get("items", [])
+        if not isinstance(items, list):
+            raise TypeError(f"Items must be a list, got {type(items)}")
+
+        if not items:
+            raise ValueError("Inbound order must have at least one item")
+
+        if len(items) > 1000:  # 防止异常大的订单
+            raise ValueError(f"Too many items: {len(items)} (max 1000)")
+
+        try:
+            inbound_id = f"INB{datetime.now().strftime('%Y%m%d%H%M%S')}"
+            inbound_number = f"INB-{datetime.now().strftime('%Y-%m-%d-%H%M%S')}"
+
+            inbound_order = {
+                "inbound_id": inbound_id,
+                "inbound_number": inbound_number,
+                "inbound_order": {
+                    "supplier_id": supplier_id,
+                    "supplier_name": order_data.get("supplier_name", ""),
+                    "inbound_date": date.today(),
+                    "inbound_type": inbound_type,
+                    "warehouse_id": warehouse_id,
+                    "warehouse_name": order_data.get("warehouse_name", ""),
+                    "status": "Pending"
+                },
+                "inbound_products": {
+                    "items": []
+                },
+                "inbound_inspection": {
+                    "inspection_status": "Pending",
+                    "inspector": None,
+                    "inspection_time": None,
+                    "inspection_notes": "",
+                    "rejected_items": []
+                },
+                "inbound_putaway": {
+                    "putaway_items": [],
+                    "putaway_status": "Pending"
+                }
             }
-        }
 
-        # 添加商品
-        for item_data in order_data.get("items", []):
-            item = {
-                "item_id": f"ITEM{len(inbound_order['inbound_products']['items']) + 1:03d}",
-                "product_barcode": item_data.get("product_barcode"),
-                "product_name": item_data.get("product_name"),
-                "quantity": item_data.get("quantity"),
-                "batch_number": item_data.get("batch_number"),
-                "expiry_date": item_data.get("expiry_date"),
-                "unit": item_data.get("unit", "pieces")
-            }
-            inbound_order["inbound_products"]["items"].append(item)
+            # 添加商品（带验证）
+            for idx, item_data in enumerate(items):
+                if not isinstance(item_data, dict):
+                    raise TypeError(f"Item {idx} must be a dictionary, got {type(item_data)}")
 
-        logger.info(f"Created inbound order: {inbound_number}")
-        return inbound_order
+                # 商品必需字段验证
+                if not item_data.get("product_barcode") and not item_data.get("product_id"):
+                    raise ValueError(f"Item {idx} missing product identifier (barcode or product_id)")
+
+                quantity = item_data.get("quantity")
+                if quantity is None:
+                    raise ValueError(f"Item {idx} missing quantity")
+
+                if not isinstance(quantity, (int, float)) or quantity <= 0:
+                    raise ValueError(f"Item {idx} invalid quantity: {quantity}")
+
+                if quantity > 999999:  # 防止异常大数量
+                    raise ValueError(f"Item {idx} quantity too large: {quantity} (max 999999)")
+
+                item = {
+                    "item_id": f"ITEM{len(inbound_order['inbound_products']['items']) + 1:03d}",
+                    "product_barcode": item_data.get("product_barcode", ""),
+                    "product_id": item_data.get("product_id", ""),
+                    "product_name": item_data.get("product_name", ""),
+                    "quantity": float(quantity),
+                    "batch_number": item_data.get("batch_number", ""),
+                    "expiry_date": item_data.get("expiry_date"),
+                    "unit": item_data.get("unit", "pieces")
+                }
+                inbound_order["inbound_products"]["items"].append(item)
+
+            logger.info(f"Created inbound order: {inbound_number} with {len(items)} items")
+            return inbound_order
+
+        except (ValueError, TypeError) as e:
+            logger.error(f"Inbound order creation error: {e}")
+            raise
+        except Exception as e:
+            logger.error(f"Unexpected error creating inbound order: {e}", exc_info=True)
+            raise RuntimeError(f"Inbound order creation failed: {e}") from e
 ```
 
 ### 2.2 入库验收处理器
@@ -990,4 +1056,3 @@ class WMSStorage:
 
 **创建时间**：2025-01-21
 **最后更新**：2025-01-21
-

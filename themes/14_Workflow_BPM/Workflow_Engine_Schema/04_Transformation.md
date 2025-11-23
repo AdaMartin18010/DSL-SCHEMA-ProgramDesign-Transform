@@ -138,17 +138,35 @@ def convert_workflow_engine_to_xpdl(workflow_def: WorkflowDefinition) -> XPDLWor
 ```python
 import psycopg2
 import json
+import logging
 from typing import Dict, List, Optional
 from datetime import datetime
 from decimal import Decimal
 
+logger = logging.getLogger(__name__)
+
 class WorkflowEngineStorage:
-    """Workflow Engine数据存储系统"""
+    """Workflow Engine数据存储系统 - 增强错误处理"""
 
     def __init__(self, connection_string: str):
-        self.conn = psycopg2.connect(connection_string)
-        self.cur = self.conn.cursor()
-        self._create_tables()
+        # 输入验证
+        if not connection_string:
+            raise ValueError("Connection string cannot be empty")
+
+        if not isinstance(connection_string, str):
+            raise TypeError(f"Connection string must be a string, got {type(connection_string)}")
+
+        try:
+            self.conn = psycopg2.connect(connection_string)
+            self.cur = self.conn.cursor()
+            self._create_tables()
+            logger.info("WorkflowEngineStorage initialized successfully")
+        except psycopg2.Error as e:
+            logger.error(f"Failed to connect to database: {e}")
+            raise ConnectionError(f"Failed to connect to database: {e}") from e
+        except Exception as e:
+            logger.error(f"Unexpected error initializing WorkflowEngineStorage: {e}", exc_info=True)
+            raise RuntimeError(f"Failed to initialize WorkflowEngineStorage: {e}") from e
 
     def _create_tables(self):
         """创建Workflow Engine数据表"""
@@ -330,75 +348,184 @@ class WorkflowEngineStorage:
                                  deployment_id: str, resource_name: str,
                                  diagram_resource_name: str = None,
                                  category: str = None, tenant_id: str = None):
-        """存储流程定义"""
-        self.cur.execute("""
-            INSERT INTO workflow_process_definitions
-            (id, process_id, process_name, process_key, version, category,
-             deployment_id, resource_name, diagram_resource_name, tenant_id)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-            ON CONFLICT (process_key, version) DO UPDATE
-            SET process_name = EXCLUDED.process_name,
-                deployment_id = EXCLUDED.deployment_id,
-                resource_name = EXCLUDED.resource_name,
-                diagram_resource_name = EXCLUDED.diagram_resource_name,
-                updated_at = CURRENT_TIMESTAMP
-        """, (process_id, process_id, process_name, process_key, version,
-              category, deployment_id, resource_name, diagram_resource_name, tenant_id))
-        self.conn.commit()
+        """存储流程定义 - 增强错误处理"""
+        # 输入验证
+        if not process_id:
+            raise ValueError("Process ID cannot be empty")
+
+        if not isinstance(process_id, str):
+            raise TypeError(f"Process ID must be a string, got {type(process_id)}")
+
+        if len(process_id) > 64:
+            raise ValueError(f"Process ID too long: {len(process_id)} (max 64)")
+
+        if not process_name:
+            raise ValueError("Process name cannot be empty")
+
+        if not isinstance(process_name, str):
+            raise TypeError(f"Process name must be a string, got {type(process_name)}")
+
+        if len(process_name) > 255:
+            raise ValueError(f"Process name too long: {len(process_name)} (max 255)")
+
+        if not process_key:
+            raise ValueError("Process key cannot be empty")
+
+        if not isinstance(process_key, str):
+            raise TypeError(f"Process key must be a string, got {type(process_key)}")
+
+        if len(process_key) > 255:
+            raise ValueError(f"Process key too long: {len(process_key)} (max 255)")
+
+        if not isinstance(version, int):
+            raise TypeError(f"Version must be an integer, got {type(version)}")
+
+        if version < 1:
+            raise ValueError(f"Version must be >= 1, got {version}")
+
+        if not deployment_id:
+            raise ValueError("Deployment ID cannot be empty")
+
+        if not isinstance(deployment_id, str):
+            raise TypeError(f"Deployment ID must be a string, got {type(deployment_id)}")
+
+        if len(deployment_id) > 64:
+            raise ValueError(f"Deployment ID too long: {len(deployment_id)} (max 64)")
+
+        if not resource_name:
+            raise ValueError("Resource name cannot be empty")
+
+        if not isinstance(resource_name, str):
+            raise TypeError(f"Resource name must be a string, got {type(resource_name)}")
+
+        if len(resource_name) > 4000:
+            raise ValueError(f"Resource name too long: {len(resource_name)} (max 4000)")
+
+        # 可选字段验证
+        if diagram_resource_name is not None:
+            if not isinstance(diagram_resource_name, str):
+                raise TypeError(f"Diagram resource name must be a string or None, got {type(diagram_resource_name)}")
+            if len(diagram_resource_name) > 4000:
+                raise ValueError(f"Diagram resource name too long: {len(diagram_resource_name)} (max 4000)")
+
+        if category is not None and not isinstance(category, str):
+            raise TypeError(f"Category must be a string or None, got {type(category)}")
+
+        if tenant_id is not None and not isinstance(tenant_id, str):
+            raise TypeError(f"Tenant ID must be a string or None, got {type(tenant_id)}")
+
+        try:
+            self.cur.execute("""
+                INSERT INTO workflow_process_definitions
+                (id, process_id, process_name, process_key, version, category,
+                 deployment_id, resource_name, diagram_resource_name, tenant_id)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                ON CONFLICT (process_key, version) DO UPDATE
+                SET process_name = EXCLUDED.process_name,
+                    deployment_id = EXCLUDED.deployment_id,
+                    resource_name = EXCLUDED.resource_name,
+                    diagram_resource_name = EXCLUDED.diagram_resource_name,
+                    updated_at = CURRENT_TIMESTAMP
+            """, (process_id, process_id, process_name, process_key, version,
+                  category, deployment_id, resource_name, diagram_resource_name, tenant_id))
+            self.conn.commit()
+            logger.info(f"Stored process definition: {process_key} v{version}")
+
+        except psycopg2.IntegrityError as e:
+            logger.error(f"Integrity error storing process definition: {e}")
+            self.conn.rollback()
+            raise ValueError(f"Duplicate process key/version or constraint violation: {e}") from e
+        except psycopg2.Error as e:
+            logger.error(f"Database error storing process definition: {e}")
+            self.conn.rollback()
+            raise RuntimeError(f"Database operation failed: {e}") from e
+        except Exception as e:
+            logger.error(f"Unexpected error storing process definition: {e}", exc_info=True)
+            self.conn.rollback()
+            raise RuntimeError(f"Failed to store process definition: {e}") from e
 
     def calculate_process_statistics(self, process_definition_key: str,
                                     time_window: datetime):
-        """计算流程统计信息"""
-        self.cur.execute("""
-            SELECT
-                COUNT(*) as total_instances,
-                COUNT(CASE WHEN status = 'Completed' THEN 1 END) as completed,
-                COUNT(CASE WHEN status = 'Active' THEN 1 END) as active,
-                COUNT(CASE WHEN status = 'Suspended' THEN 1 END) as suspended,
-                AVG(EXTRACT(EPOCH FROM (end_time - start_time))) as avg_duration,
-                MIN(EXTRACT(EPOCH FROM (end_time - start_time))) as min_duration,
-                MAX(EXTRACT(EPOCH FROM (end_time - start_time))) as max_duration
-            FROM workflow_process_instances
-            WHERE process_definition_key = %s AND start_time >= %s
-        """, (process_definition_key, time_window))
+        """计算流程统计信息 - 增强错误处理"""
+        # 输入验证
+        if not process_definition_key:
+            raise ValueError("Process definition key cannot be empty")
 
-        stats = dict(zip([desc[0] for desc in self.cur.description],
-                         self.cur.fetchone()))
+        if not isinstance(process_definition_key, str):
+            raise TypeError(f"Process definition key must be a string, got {type(process_definition_key)}")
 
-        # 任务统计
-        self.cur.execute("""
-            SELECT
-                task_definition_key,
-                COUNT(*) as task_count,
-                AVG(EXTRACT(EPOCH FROM (updated_at - create_time))) as avg_processing_time,
-                COUNT(CASE WHEN assignee IS NOT NULL THEN 1 END) as assigned_count
-            FROM workflow_task_instances
-            WHERE process_definition_key = %s AND create_time >= %s
-            GROUP BY task_definition_key
-        """, (process_definition_key, time_window))
+        if not isinstance(time_window, datetime):
+            raise TypeError(f"Time window must be a datetime, got {type(time_window)}")
 
-        task_stats = []
-        for row in self.cur.fetchall():
-            task_stats.append({
-                'task_definition_key': row[0],
-                'task_count': row[1],
-                'avg_processing_time': row[2],
-                'assigned_count': row[3]
-            })
+        try:
+            self.cur.execute("""
+                SELECT
+                    COUNT(*) as total_instances,
+                    COUNT(CASE WHEN status = 'Completed' THEN 1 END) as completed,
+                    COUNT(CASE WHEN status = 'Active' THEN 1 END) as active,
+                    COUNT(CASE WHEN status = 'Suspended' THEN 1 END) as suspended,
+                    AVG(EXTRACT(EPOCH FROM (end_time - start_time))) as avg_duration,
+                    MIN(EXTRACT(EPOCH FROM (end_time - start_time))) as min_duration,
+                    MAX(EXTRACT(EPOCH FROM (end_time - start_time))) as max_duration
+                FROM workflow_process_instances
+                WHERE process_definition_key = %s AND start_time >= %s
+            """, (process_definition_key, time_window))
 
-        stats['task_statistics'] = task_stats
+            result = self.cur.fetchone()
+            if not result:
+                raise ValueError("No data found for statistics calculation")
 
-        # 存储统计信息
-        self.cur.execute("""
-            INSERT INTO workflow_engine_statistics
-            (statistic_type, process_definition_key, time_window, statistics)
-            VALUES (%s, %s, %s, %s::jsonb)
-            ON CONFLICT (statistic_type, process_definition_key, time_window)
-            DO UPDATE SET statistics = EXCLUDED.statistics
-        """, ('process_performance', process_definition_key, time_window, json.dumps(stats)))
-        self.conn.commit()
+            stats = dict(zip([desc[0] for desc in self.cur.description], result))
 
-        return stats
+            # 处理空值
+            for key in ['avg_duration', 'min_duration', 'max_duration']:
+                if stats[key] is None:
+                    stats[key] = 0.0
+
+            # 任务统计
+            self.cur.execute("""
+                SELECT
+                    task_definition_key,
+                    COUNT(*) as task_count,
+                    AVG(EXTRACT(EPOCH FROM (updated_at - create_time))) as avg_processing_time,
+                    COUNT(CASE WHEN assignee IS NOT NULL THEN 1 END) as assigned_count
+                FROM workflow_task_instances
+                WHERE process_definition_key = %s AND create_time >= %s
+                GROUP BY task_definition_key
+            """, (process_definition_key, time_window))
+
+            task_stats = []
+            for row in self.cur.fetchall():
+                task_stats.append({
+                    'task_definition_key': row[0],
+                    'task_count': row[1] if row[1] is not None else 0,
+                    'avg_processing_time': float(row[2]) if row[2] is not None else 0.0,
+                    'assigned_count': row[3] if row[3] is not None else 0
+                })
+
+            stats['task_statistics'] = task_stats
+
+            # 存储统计信息
+            self.cur.execute("""
+                INSERT INTO workflow_engine_statistics
+                (statistic_type, process_definition_key, time_window, statistics)
+                VALUES (%s, %s, %s, %s::jsonb)
+                ON CONFLICT (statistic_type, process_definition_key, time_window)
+                DO UPDATE SET statistics = EXCLUDED.statistics
+            """, ('process_performance', process_definition_key, time_window, json.dumps(stats)))
+            self.conn.commit()
+
+            logger.info(f"Calculated process statistics for {process_definition_key}")
+            return stats
+
+        except psycopg2.Error as e:
+            logger.error(f"Database error calculating process statistics: {e}")
+            self.conn.rollback()
+            raise RuntimeError(f"Database operation failed: {e}") from e
+        except Exception as e:
+            logger.error(f"Unexpected error calculating process statistics: {e}", exc_info=True)
+            self.conn.rollback()
+            raise RuntimeError(f"Failed to calculate process statistics: {e}") from e
 ```
 
 ### 6.2 Workflow Engine数据分析查询

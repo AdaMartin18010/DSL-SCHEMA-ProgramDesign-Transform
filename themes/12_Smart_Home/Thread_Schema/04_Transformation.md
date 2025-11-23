@@ -84,7 +84,49 @@ class ThreadNetworkManager:
 
     def create_network(self, network_name: str, pan_id: int,
                       channel: int, network_key: str) -> bool:
-        """创建Thread网络"""
+        """创建Thread网络 - 增强错误处理"""
+        # 输入验证
+        if not isinstance(network_name, str):
+            raise TypeError(f"Network name must be a string, got {type(network_name)}")
+
+        if not network_name or not network_name.strip():
+            raise ValueError("Network name cannot be empty")
+
+        if len(network_name) > 100:
+            raise ValueError(f"Network name too long: {len(network_name)} (max 100)")
+
+        if network_name in self.networks:
+            raise ValueError(f"Network already exists: {network_name}")
+
+        if not isinstance(pan_id, int):
+            raise TypeError(f"PAN ID must be an integer, got {type(pan_id)}")
+
+        if not (0 <= pan_id <= 0xFFFF):
+            raise ValueError(f"PAN ID out of range: {pan_id} (must be 0-65535)")
+
+        if not isinstance(channel, int):
+            raise TypeError(f"Channel must be an integer, got {type(channel)}")
+
+        # Thread支持11-26频道
+        if not (11 <= channel <= 26):
+            raise ValueError(f"Channel out of range: {channel} (must be 11-26)")
+
+        if not isinstance(network_key, str):
+            raise TypeError(f"Network key must be a string, got {type(network_key)}")
+
+        if not network_key:
+            raise ValueError("Network key cannot be empty")
+
+        # Thread网络密钥必须是32个十六进制字符（16字节）
+        if len(network_key) != 32:
+            raise ValueError(f"Network key must be 32 hex characters (16 bytes), got {len(network_key)}")
+
+        try:
+            # 验证网络密钥格式（十六进制）
+            int(network_key, 16)
+        except ValueError:
+            raise ValueError(f"Network key must be hexadecimal: {network_key}")
+
         try:
             # 生成Extended PAN ID
             extended_pan_id = self._generate_extended_pan_id()
@@ -102,55 +144,107 @@ class ThreadNetworkManager:
             self.networks[network_name] = network_data
             logger.info(f"Created Thread network: {network_name}")
             return True
+        except (ValueError, TypeError) as e:
+            logger.error(f"Network creation validation error: {e}")
+            raise
         except Exception as e:
-            logger.error(f"Failed to create network: {e}")
-            return False
+            logger.error(f"Unexpected error creating network: {e}", exc_info=True)
+            raise RuntimeError(f"Failed to create network: {e}") from e
 
     def join_network(self, node_id: str, network_name: str,
                     network_key: str, pan_id: int, channel: int) -> bool:
-        """节点加入网络"""
+        """节点加入网络 - 增强错误处理"""
+        # 输入验证
+        if not isinstance(node_id, str):
+            raise TypeError(f"Node ID must be a string, got {type(node_id)}")
+
+        if not node_id or not node_id.strip():
+            raise ValueError("Node ID cannot be empty")
+
+        if not isinstance(network_name, str):
+            raise TypeError(f"Network name must be a string, got {type(network_name)}")
+
+        if not network_name or not network_name.strip():
+            raise ValueError("Network name cannot be empty")
+
+        if network_name not in self.networks:
+            raise ValueError(f"Network not found: {network_name}")
+
+        if not isinstance(network_key, str):
+            raise TypeError(f"Network key must be a string, got {type(network_key)}")
+
+        if not network_key:
+            raise ValueError("Network key cannot be empty")
+
+        if len(network_key) != 32:
+            raise ValueError(f"Network key must be 32 hex characters (16 bytes), got {len(network_key)}")
+
+        try:
+            int(network_key, 16)
+        except ValueError:
+            raise ValueError(f"Network key must be hexadecimal: {network_key}")
+
+        if not isinstance(pan_id, int):
+            raise TypeError(f"PAN ID must be an integer, got {type(pan_id)}")
+
+        if not (0 <= pan_id <= 0xFFFF):
+            raise ValueError(f"PAN ID out of range: {pan_id} (must be 0-65535)")
+
+        if not isinstance(channel, int):
+            raise TypeError(f"Channel must be an integer, got {type(channel)}")
+
+        if not (11 <= channel <= 26):
+            raise ValueError(f"Channel out of range: {channel} (must be 11-26)")
+
         try:
             # 设置网络密钥
             cmd = f"networkkey {network_key}"
             result = self.execute_ot_command(node_id, cmd)
             if not result:
-                return False
+                raise RuntimeError(f"Failed to set network key for node {node_id}")
 
             # 设置PAN ID
             cmd = f"panid {pan_id:04x}"
             result = self.execute_ot_command(node_id, cmd)
             if not result:
-                return False
+                raise RuntimeError(f"Failed to set PAN ID for node {node_id}")
 
             # 设置通道
             cmd = f"channel {channel}"
             result = self.execute_ot_command(node_id, cmd)
             if not result:
-                return False
+                raise RuntimeError(f"Failed to set channel for node {node_id}")
 
             # 启动网络
             cmd = "ifconfig up"
             result = self.execute_ot_command(node_id, cmd)
             if not result:
-                return False
+                raise RuntimeError(f"Failed to bring up interface for node {node_id}")
 
             cmd = "thread start"
             result = self.execute_ot_command(node_id, cmd)
             if not result:
-                return False
+                raise RuntimeError(f"Failed to start Thread for node {node_id}")
 
             # 获取节点信息
             node_info = self.get_node_info(node_id)
-            if node_info:
-                node_info["network_name"] = network_name
-                self.nodes[node_id] = node_info
-                logger.info(f"Node {node_id} joined network {network_name}")
-                return True
+            if not node_info:
+                raise RuntimeError(f"Failed to get node info for {node_id}")
 
-            return False
+            node_info["network_name"] = network_name
+            self.nodes[node_id] = node_info
+            logger.info(f"Node {node_id} joined network {network_name}")
+            return True
+
+        except (ValueError, TypeError) as e:
+            logger.error(f"Join network validation error: {e}")
+            raise
+        except RuntimeError as e:
+            logger.error(f"Join network operation error: {e}")
+            raise
         except Exception as e:
-            logger.error(f"Failed to join network: {e}")
-            return False
+            logger.error(f"Unexpected error joining network: {e}", exc_info=True)
+            raise RuntimeError(f"Failed to join network: {e}") from e
 
     def get_node_info(self, node_id: str) -> Optional[Dict]:
         """获取节点信息"""

@@ -138,16 +138,35 @@ def convert_iso20022_to_xml(message: ISO20022Message) -> str:
 ```python
 import psycopg2
 import json
+import logging
 from typing import Dict, List, Optional
 from datetime import datetime
+from decimal import Decimal
+
+logger = logging.getLogger(__name__)
 
 class ISO20022Storage:
-    """ISO 20022数据存储系统"""
+    """ISO 20022数据存储系统 - 增强错误处理"""
 
     def __init__(self, connection_string: str):
-        self.conn = psycopg2.connect(connection_string)
-        self.cur = self.conn.cursor()
-        self._create_tables()
+        # 输入验证
+        if not connection_string:
+            raise ValueError("Connection string cannot be empty")
+
+        if not isinstance(connection_string, str):
+            raise TypeError(f"Connection string must be a string, got {type(connection_string)}")
+
+        try:
+            self.conn = psycopg2.connect(connection_string)
+            self.cur = self.conn.cursor()
+            self._create_tables()
+            logger.info("ISO20022Storage initialized successfully")
+        except psycopg2.Error as e:
+            logger.error(f"Failed to connect to database: {e}")
+            raise ConnectionError(f"Failed to connect to database: {e}") from e
+        except Exception as e:
+            logger.error(f"Unexpected error initializing ISO20022Storage: {e}", exc_info=True)
+            raise RuntimeError(f"Failed to initialize ISO20022Storage: {e}") from e
 
     def _create_tables(self):
         """创建ISO 20022数据表"""
@@ -258,87 +277,208 @@ class ISO20022Storage:
                               message_type: str, business_area: str,
                               creation_date_time: datetime,
                               message_content: Dict, message_xml: str = None):
-        """存储ISO 20022消息"""
-        self.cur.execute("""
-            INSERT INTO iso20022_messages
-            (message_identification, message_type, business_area,
-             creation_date_time, message_content, message_xml)
-            VALUES (%s, %s, %s, %s, %s::jsonb, %s)
-            ON CONFLICT (message_identification) DO UPDATE
-            SET message_content = EXCLUDED.message_content,
-                message_xml = EXCLUDED.message_xml
-        """, (message_identification, message_type, business_area,
-              creation_date_time, json.dumps(message_content), message_xml))
+        """存储ISO 20022消息 - 增强错误处理"""
+        # 输入验证
+        if not message_identification:
+            raise ValueError("Message identification cannot be empty")
 
-        # 根据消息类型存储到相应表
-        if business_area == 'pacs':
-            self._store_payment_message(message_type, message_content)
-        elif business_area == 'camt':
-            self._store_cash_management_message(message_type, message_content)
-        elif business_area == 'seev':
-            self._store_securities_message(message_type, message_content)
+        if not isinstance(message_identification, str):
+            raise TypeError(f"Message identification must be a string, got {type(message_identification)}")
 
-        self.conn.commit()
+        if len(message_identification) > 35:
+            raise ValueError(f"Message identification too long: {len(message_identification)} (max 35)")
+
+        if not message_type:
+            raise ValueError("Message type cannot be empty")
+
+        if not isinstance(message_type, str):
+            raise TypeError(f"Message type must be a string, got {type(message_type)}")
+
+        if len(message_type) > 20:
+            raise ValueError(f"Message type too long: {len(message_type)} (max 20)")
+
+        valid_business_areas = ['pacs', 'camt', 'seev', 'pain', 'pacs.008', 'pacs.009']
+        if business_area not in valid_business_areas:
+            raise ValueError(f"Invalid business area: {business_area}. Must be one of {valid_business_areas}")
+
+        if not isinstance(creation_date_time, datetime):
+            raise TypeError(f"Creation date time must be a datetime, got {type(creation_date_time)}")
+
+        if not isinstance(message_content, dict):
+            raise TypeError(f"Message content must be a dictionary, got {type(message_content)}")
+
+        if not message_content:
+            raise ValueError("Message content cannot be empty")
+
+        if message_xml is not None and not isinstance(message_xml, str):
+            raise TypeError(f"Message XML must be a string or None, got {type(message_xml)}")
+
+        try:
+            self.cur.execute("""
+                INSERT INTO iso20022_messages
+                (message_identification, message_type, business_area,
+                 creation_date_time, message_content, message_xml)
+                VALUES (%s, %s, %s, %s, %s::jsonb, %s)
+                ON CONFLICT (message_identification) DO UPDATE
+                SET message_content = EXCLUDED.message_content,
+                    message_xml = EXCLUDED.message_xml
+            """, (message_identification, message_type, business_area,
+                  creation_date_time, json.dumps(message_content), message_xml))
+
+            # 根据消息类型存储到相应表
+            if business_area == 'pacs':
+                self._store_payment_message(message_type, message_content)
+            elif business_area == 'camt':
+                self._store_cash_management_message(message_type, message_content)
+            elif business_area == 'seev':
+                self._store_securities_message(message_type, message_content)
+
+            self.conn.commit()
+            logger.info(f"Stored ISO 20022 message: {message_identification}")
+
+        except psycopg2.IntegrityError as e:
+            logger.error(f"Integrity error storing ISO 20022 message: {e}")
+            self.conn.rollback()
+            raise ValueError(f"Duplicate message identification or constraint violation: {e}") from e
+        except psycopg2.Error as e:
+            logger.error(f"Database error storing ISO 20022 message: {e}")
+            self.conn.rollback()
+            raise RuntimeError(f"Database operation failed: {e}") from e
+        except Exception as e:
+            logger.error(f"Unexpected error storing ISO 20022 message: {e}", exc_info=True)
+            self.conn.rollback()
+            raise RuntimeError(f"Failed to store ISO 20022 message: {e}") from e
 
     def _store_payment_message(self, message_type: str, message_content: Dict):
-        """存储支付消息"""
-        payment_info = message_content.get('payment_information', {})
-        transaction = payment_info.get('credit_transfer_transaction_information', [{}])[0]
+        """存储支付消息 - 增强错误处理"""
+        if not isinstance(message_content, dict):
+            raise TypeError(f"Message content must be a dictionary, got {type(message_content)}")
 
-        self.cur.execute("""
-            INSERT INTO iso20022_payment_messages
-            (message_identification, message_type, payment_information_id,
-             debtor_name, debtor_account, creditor_name, creditor_account,
-             amount, currency, execution_date, end_to_end_identification, status)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-            ON CONFLICT (message_identification) DO UPDATE
-            SET status = EXCLUDED.status,
-                updated_at = CURRENT_TIMESTAMP
-        """, (
-            message_content.get('group_header', {}).get('message_identification'),
-            message_type,
-            payment_info.get('payment_information_identification'),
-            payment_info.get('debtor', {}).get('name'),
-            payment_info.get('debtor_account', {}).get('identification', {}).get('iban'),
-            transaction.get('creditor', {}).get('name'),
-            transaction.get('creditor_account', {}).get('identification', {}).get('iban'),
-            transaction.get('amount', {}).get('instructed_amount', {}).get('value'),
-            transaction.get('amount', {}).get('instructed_amount', {}).get('currency'),
-            payment_info.get('requested_execution_date'),
-            transaction.get('payment_identification', {}).get('end_to_end_identification'),
-            'PENDING'
-        ))
+        if 'group_header' not in message_content:
+            raise ValueError("Message content missing 'group_header'")
+
+        if 'payment_information' not in message_content:
+            raise ValueError("Message content missing 'payment_information'")
+
+        try:
+            payment_info = message_content.get('payment_information', {})
+            transactions = payment_info.get('credit_transfer_transaction_information', [])
+
+            if not transactions:
+                raise ValueError("Payment information missing credit transfer transactions")
+
+            transaction = transactions[0]
+
+            # 验证金额
+            amount_value = transaction.get('amount', {}).get('instructed_amount', {}).get('value')
+            if amount_value is not None:
+                if not isinstance(amount_value, (int, float, Decimal)):
+                    raise TypeError(f"Amount value must be numeric, got {type(amount_value)}")
+                if amount_value < 0:
+                    raise ValueError(f"Amount value cannot be negative: {amount_value}")
+                if amount_value > 999999999999999.99999:  # DECIMAL(18,5)最大值
+                    raise ValueError(f"Amount value too large: {amount_value}")
+
+            # 验证货币代码
+            currency = transaction.get('amount', {}).get('instructed_amount', {}).get('currency')
+            if currency and len(currency) != 3:
+                raise ValueError(f"Invalid currency code length: {len(currency)} (must be 3)")
+
+            message_id = message_content.get('group_header', {}).get('message_identification')
+            if not message_id:
+                raise ValueError("Message identification missing in group_header")
+
+            self.cur.execute("""
+                INSERT INTO iso20022_payment_messages
+                (message_identification, message_type, payment_information_id,
+                 debtor_name, debtor_account, creditor_name, creditor_account,
+                 amount, currency, execution_date, end_to_end_identification, status)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                ON CONFLICT (message_identification) DO UPDATE
+                SET status = EXCLUDED.status,
+                    updated_at = CURRENT_TIMESTAMP
+            """, (
+                message_id,
+                message_type,
+                payment_info.get('payment_information_identification'),
+                payment_info.get('debtor', {}).get('name'),
+                payment_info.get('debtor_account', {}).get('identification', {}).get('iban'),
+                transaction.get('creditor', {}).get('name'),
+                transaction.get('creditor_account', {}).get('identification', {}).get('iban'),
+                amount_value,
+                currency,
+                payment_info.get('requested_execution_date'),
+                transaction.get('payment_identification', {}).get('end_to_end_identification'),
+                'PENDING'
+            ))
+
+        except ValueError as e:
+            logger.error(f"Value error storing payment message: {e}")
+            raise
+        except Exception as e:
+            logger.error(f"Unexpected error storing payment message: {e}", exc_info=True)
+            raise RuntimeError(f"Failed to store payment message: {e}") from e
 
     def calculate_message_statistics(self, business_area: str,
                                     message_type: str,
                                     time_window: datetime):
-        """计算消息统计信息"""
-        self.cur.execute("""
-            SELECT
-                COUNT(*) as total_messages,
-                COUNT(DISTINCT message_identification) as unique_messages,
-                MIN(creation_date_time) as first_message_time,
-                MAX(creation_date_time) as last_message_time
-            FROM iso20022_messages
-            WHERE business_area = %s
-            AND message_type = %s
-            AND creation_date_time >= %s
-        """, (business_area, message_type, time_window))
+        """计算消息统计信息 - 增强错误处理"""
+        # 输入验证
+        if not business_area:
+            raise ValueError("Business area cannot be empty")
 
-        stats = dict(zip([desc[0] for desc in self.cur.description],
-                         self.cur.fetchone()))
+        if not isinstance(business_area, str):
+            raise TypeError(f"Business area must be a string, got {type(business_area)}")
 
-        # 存储统计信息
-        self.cur.execute("""
-            INSERT INTO iso20022_statistics
-            (statistic_type, business_area, message_type, time_window, statistics)
-            VALUES (%s, %s, %s, %s, %s::jsonb)
-            ON CONFLICT (statistic_type, business_area, message_type, time_window)
-            DO UPDATE SET statistics = EXCLUDED.statistics
-        """, ('message_volume', business_area, message_type, time_window, json.dumps(stats)))
-        self.conn.commit()
+        if not message_type:
+            raise ValueError("Message type cannot be empty")
 
-        return stats
+        if not isinstance(message_type, str):
+            raise TypeError(f"Message type must be a string, got {type(message_type)}")
+
+        if not isinstance(time_window, datetime):
+            raise TypeError(f"Time window must be a datetime, got {type(time_window)}")
+
+        try:
+            self.cur.execute("""
+                SELECT
+                    COUNT(*) as total_messages,
+                    COUNT(DISTINCT message_identification) as unique_messages,
+                    MIN(creation_date_time) as first_message_time,
+                    MAX(creation_date_time) as last_message_time
+                FROM iso20022_messages
+                WHERE business_area = %s
+                AND message_type = %s
+                AND creation_date_time >= %s
+            """, (business_area, message_type, time_window))
+
+            result = self.cur.fetchone()
+            if not result:
+                raise ValueError("No data found for statistics calculation")
+
+            stats = dict(zip([desc[0] for desc in self.cur.description], result))
+
+            # 存储统计信息
+            self.cur.execute("""
+                INSERT INTO iso20022_statistics
+                (statistic_type, business_area, message_type, time_window, statistics)
+                VALUES (%s, %s, %s, %s, %s::jsonb)
+                ON CONFLICT (statistic_type, business_area, message_type, time_window)
+                DO UPDATE SET statistics = EXCLUDED.statistics
+            """, ('message_volume', business_area, message_type, time_window, json.dumps(stats)))
+            self.conn.commit()
+
+            logger.info(f"Calculated statistics for {business_area}/{message_type}")
+            return stats
+
+        except psycopg2.Error as e:
+            logger.error(f"Database error calculating statistics: {e}")
+            self.conn.rollback()
+            raise RuntimeError(f"Database operation failed: {e}") from e
+        except Exception as e:
+            logger.error(f"Unexpected error calculating statistics: {e}", exc_info=True)
+            self.conn.rollback()
+            raise RuntimeError(f"Failed to calculate statistics: {e}") from e
 ```
 
 ### 6.2 ISO 20022数据分析查询
