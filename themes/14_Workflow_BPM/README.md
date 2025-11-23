@@ -12,6 +12,8 @@
     - [2.2 工作流结构](#22-工作流结构)
   - [3. 子主题结构](#3-子主题结构)
     - [3.1 BPMN Schema子主题](#31-bpmn-schema子主题)
+    - [3.2 BPEL Schema子主题](#32-bpel-schema子主题)
+    - [3.3 Workflow Engine Schema子主题](#33-workflow-engine-schema子主题)
   - [4. 标准对标](#4-标准对标)
     - [4.1 国际标准](#41-国际标准)
     - [4.2 行业标准](#42-行业标准)

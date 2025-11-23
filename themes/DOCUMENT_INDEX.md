@@ -39,9 +39,17 @@
       - [跨主题文档](#跨主题文档-4)
     - [1.6 金融服务Schema（06\_Financial\_Services）](#16-金融服务schema06_financial_services)
       - [SWIFT Schema](#swift-schema)
-    - [1.7 工作流与BPM Schema（14\_Workflow\_BPM）](#17-工作流与bpm-schema14_workflow_bpm)
+      - [ISO 20022 Schema](#iso-20022-schema)
+      - [Payment Schema](#payment-schema)
+    - [1.7 物流与供应链Schema（07\_Logistics\_Supply\_Chain）](#17-物流与供应链schema07_logistics_supply_chain)
+      - [GS1 Schema](#gs1-schema)
+      - [EDI Schema](#edi-schema)
+    - [1.8 工作流与BPM Schema（14\_Workflow\_BPM）](#18-工作流与bpm-schema14_workflow_bpm)
       - [BPMN Schema](#bpmn-schema)
       - [BPEL Schema](#bpel-schema)
+      - [Workflow Engine Schema](#workflow-engine-schema)
+    - [1.8 ERP系统Schema（15\_ERP\_Systems）](#18-erp系统schema15_erp_systems)
+      - [ERP Schema](#erp-schema)
   - [2. 按文档类型索引](#2-按文档类型索引)
     - [2.1 概述文档（01\_Overview.md）](#21-概述文档01_overviewmd)
     - [2.2 形式化定义（02\_Formal\_Definition.md）](#22-形式化定义02_formal_definitionmd)
@@ -328,7 +336,17 @@
 - [转换体系](./07_Logistics_Supply_Chain/EDI_Schema/04_Transformation.md)
 - [实践案例](./07_Logistics_Supply_Chain/EDI_Schema/05_Case_Studies.md)
 
-### 1.8 工作流与BPM Schema（14_Workflow_BPM）
+### 1.8 智慧城市Schema（08_Smart_City）
+
+#### Smart City Schema
+
+- [概述](./08_Smart_City/Smart_City_Schema/01_Overview.md)
+- [形式化定义](./08_Smart_City/Smart_City_Schema/02_Formal_Definition.md)
+- [标准对标](./08_Smart_City/Smart_City_Schema/03_Standards.md)
+- [转换体系](./08_Smart_City/Smart_City_Schema/04_Transformation.md)
+- [实践案例](./08_Smart_City/Smart_City_Schema/05_Case_Studies.md)
+
+### 1.9 工作流与BPM Schema（14_Workflow_BPM）
 
 #### BPMN Schema
 

@@ -74,6 +74,7 @@
   - ERP_Schema：企业资源规划Schema（ISA-95、OAGIS、SAP、Oracle ERP）
   - GS1_Schema：GS1全球统一标识系统Schema（GTIN、GLN、SSCC、EPCIS）
   - EDI_Schema：电子数据交换Schema（EDI X12、EDIFACT）
+  - Smart_City_Schema：智慧城市Schema（智慧交通、智慧能源、智慧环境、智慧治理）
 - ✅ 实践案例文档代码示例增强（部分完成）
   - CAN_Schema：完整代码示例（C、Rust、Python）
   - Communication_Schema：完整代码示例（Python、Rust）

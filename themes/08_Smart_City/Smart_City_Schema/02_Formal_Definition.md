@@ -13,6 +13,8 @@
   - [7. 约束规则](#7-约束规则)
   - [8. 转换函数](#8-转换函数)
   - [9. 形式化定理](#9-形式化定理)
+    - [9.1 数据完整性定理](#91-数据完整性定理)
+    - [9.2 数据一致性定理](#92-数据一致性定理)
 
 ---
 
@@ -59,7 +61,7 @@ schema SmartTransport {
       timestamp: DateTime @required
     }
   }
-  
+
   vehicle_tracking: Optional<VehicleTracking] {
     vehicle_id: String @required @unique
     vehicle_type: Enum { Car, Bus, Truck, Motorcycle, Bicycle } @required
@@ -68,7 +70,7 @@ schema SmartTransport {
     direction: Decimal @range(0, 360) @unit("DEG")
     timestamp: DateTime @required
   }
-  
+
   parking: Optional<Parking] {
     parking_lot_id: String @required @unique
     location: Location @required
@@ -81,7 +83,7 @@ schema SmartTransport {
     }
     timestamp: DateTime @required
   }
-  
+
   public_transport: Optional<PublicTransport] {
     route_id: String @required
     vehicle_id: String @required
@@ -120,7 +122,7 @@ schema SmartEnergy {
     location: Location @required
     timestamp: DateTime @required
   }
-  
+
   energy_consumption: Optional<EnergyConsumption] {
     meter_id: String @required @unique
     location: Location @required
@@ -131,7 +133,7 @@ schema SmartEnergy {
     peak_demand: Decimal @unit("KW")
     timestamp: DateTime @required
   }
-  
+
   load_management: Optional<LoadManagement] {
     load_id: String @required @unique
     load_type: Enum { Base, Peak, OffPeak } @required
@@ -141,7 +143,7 @@ schema SmartEnergy {
     status: Enum { Normal, Reduced, Increased } @required
     timestamp: DateTime @required
   }
-  
+
   renewable_energy: Optional<RenewableEnergy] {
     source_id: String @required @unique
     source_type: Enum { Solar, Wind, Hydro, Geothermal } @required
@@ -188,7 +190,7 @@ schema SmartEnvironment {
     }
     timestamp: DateTime @required
   }
-  
+
   water_quality: Optional<WaterQuality] {
     station_id: String @required @unique
     location: Location @required
@@ -207,7 +209,7 @@ schema SmartEnvironment {
     }
     timestamp: DateTime @required
   }
-  
+
   noise: Optional<Noise] {
     station_id: String @required @unique
     location: Location @required
@@ -220,7 +222,7 @@ schema SmartEnvironment {
     }
     timestamp: DateTime @required
   }
-  
+
   weather: Optional<Weather] {
     station_id: String @required @unique
     location: Location @required
@@ -266,7 +268,7 @@ schema SmartGovernance {
     }
     timestamp: DateTime @required
   }
-  
+
   public_service: Optional<PublicService] {
     service_id: String @required @unique
     service_type: Enum { Healthcare, Education, Transportation, Utilities } @required
@@ -282,7 +284,7 @@ schema SmartGovernance {
     current_usage: Optional<Int]
     timestamp: DateTime @required
   }
-  
+
   data_open: Optional<DataOpen] {
     dataset_id: String @required @unique
     dataset_name: String @required
@@ -298,7 +300,7 @@ schema SmartGovernance {
     }
     timestamp: DateTime @required
   }
-  
+
   decision_support: Optional<DecisionSupport] {
     decision_id: String @required @unique
     decision_type: Enum { Policy, ResourceAllocation, Infrastructure, Emergency } @required
@@ -437,4 +439,3 @@ validate_city_data: Smart_City_Data → ValidationResult
 
 **创建时间**：2025-01-21
 **最后更新**：2025-01-21
-
