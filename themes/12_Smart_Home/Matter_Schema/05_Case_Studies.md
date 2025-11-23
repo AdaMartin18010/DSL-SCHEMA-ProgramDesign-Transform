@@ -27,6 +27,14 @@
     - [7.1 场景描述](#71-场景描述)
     - [7.2 实现代码](#72-实现代码)
     - [7.3 数据分析示例](#73-数据分析示例)
+  - [8. 案例7：Matter设备组控制](#8-案例7matter设备组控制)
+    - [8.1 场景描述](#81-场景描述)
+    - [8.2 Schema定义](#82-schema定义)
+    - [8.3 实现代码](#83-实现代码)
+  - [9. 案例8：Matter设备固件升级](#9-案例8matter设备固件升级)
+    - [9.1 场景描述](#91-场景描述)
+    - [9.2 Schema定义](#92-schema定义)
+    - [9.3 实现代码](#93-实现代码)
 
 ---
 
@@ -626,6 +634,561 @@ print(f"  Active days: {usage_stats['active_days']}")
 print(f"  Total commands: {usage_stats['total_commands']}")
 print(f"  Success rate: {usage_stats['success_commands'] / usage_stats['total_commands'] * 100:.1f}%")
 print(f"  Avg response time: {usage_stats['avg_response_time']:.2f}s")
+```
+
+---
+
+## 8. 案例7：Matter设备组控制
+
+### 8.1 场景描述
+
+**业务背景**：
+智能家居场景中，用户需要同时控制多个设备，例如：
+
+- 同时打开/关闭多个房间的灯光
+- 同时调整多个温控器的温度
+- 创建场景联动（如"回家模式"、"睡眠模式"）
+
+**技术挑战**：
+
+- 需要将多个设备组织成组
+- 需要支持组内设备的批量控制
+- 需要处理组内设备的部分失败情况
+- 需要记录组操作的执行历史
+
+**解决方案**：
+使用Matter设备组功能，将多个设备组织成逻辑组，实现批量控制和场景联动。
+
+### 8.2 Schema定义
+
+**Matter设备组Schema**：
+
+```json
+{
+  "group_id": 1,
+  "group_name": "客厅灯光组",
+  "devices": [
+    {
+      "device_id": "LIGHT001",
+      "endpoint_id": 1,
+      "device_type": "DimmableLight"
+    },
+    {
+      "device_id": "LIGHT002",
+      "endpoint_id": 1,
+      "device_type": "DimmableLight"
+    },
+    {
+      "device_id": "LIGHT003",
+      "endpoint_id": 1,
+      "device_type": "ColorLight"
+    }
+  ],
+  "scenes": [
+    {
+      "scene_id": "scene_bright",
+      "scene_name": "明亮模式",
+      "actions": [
+        {
+          "device_id": "LIGHT001",
+          "cluster_id": 0x0008,
+          "command": "move_to_level",
+          "parameters": {"level": 254, "transition_time": 0}
+        },
+        {
+          "device_id": "LIGHT002",
+          "cluster_id": 0x0008,
+          "command": "move_to_level",
+          "parameters": {"level": 254, "transition_time": 0}
+        }
+      ]
+    }
+  ]
+}
+```
+
+### 8.3 实现代码
+
+**完整的设备组控制实现**：
+
+```python
+import asyncio
+import logging
+from typing import List, Dict, Optional
+from matter_device_controller import (
+    MatterDeviceController,
+    MatterDimmableLightController,
+    MatterColorLightController
+)
+from matter_storage import MatterStorage
+
+logger = logging.getLogger(__name__)
+
+class MatterDeviceGroupController:
+    """Matter设备组控制器"""
+
+    def __init__(self, group_id: int, group_name: str, storage: MatterStorage):
+        self.group_id = group_id
+        self.group_name = group_name
+        self.storage = storage
+        self.devices: Dict[str, MatterDeviceController] = {}
+        self.scenes: Dict[str, Dict] = {}
+
+    async def initialize(self):
+        """初始化设备组"""
+        # 从存储中加载组内设备
+        group_devices = self.storage.get_group_devices(self.group_id)
+
+        for device_info in group_devices:
+            device_id = device_info["device_id"]
+            device_type = device_info["device_type"]
+
+            # 根据设备类型创建控制器
+            if device_type == "DimmableLight":
+                controller = MatterDimmableLightController(
+                    device_id,
+                    device_info.get("node_id", 0x12344321),
+                    device_info.get("endpoint_id", 1)
+                )
+            elif device_type == "ExtendedColorLight":
+                controller = MatterColorLightController(
+                    device_id,
+                    device_info.get("node_id", 0x12344321),
+                    device_info.get("endpoint_id", 1)
+                )
+            else:
+                logger.warning(f"Unsupported device type: {device_type}")
+                continue
+
+            # 连接设备
+            if await controller.connect():
+                self.devices[device_id] = controller
+                logger.info(f"Added device {device_id} to group {self.group_name}")
+            else:
+                logger.error(f"Failed to connect device {device_id}")
+
+    async def group_turn_on(self) -> Dict[str, bool]:
+        """组内所有设备打开"""
+        results = {}
+
+        for device_id, controller in self.devices.items():
+            if isinstance(controller, MatterOnOffLightController):
+                try:
+                    result = await controller.turn_on()
+                    results[device_id] = result
+                except Exception as e:
+                    logger.error(f"Failed to turn on {device_id}: {e}")
+                    results[device_id] = False
+            else:
+                logger.warning(f"Device {device_id} does not support On/Off")
+                results[device_id] = False
+
+        return results
+
+    async def group_turn_off(self) -> Dict[str, bool]:
+        """组内所有设备关闭"""
+        results = {}
+
+        for device_id, controller in self.devices.items():
+            if isinstance(controller, MatterOnOffLightController):
+                try:
+                    result = await controller.turn_off()
+                    results[device_id] = result
+                except Exception as e:
+                    logger.error(f"Failed to turn off {device_id}: {e}")
+                    results[device_id] = False
+            else:
+                logger.warning(f"Device {device_id} does not support On/Off")
+                results[device_id] = False
+
+        return results
+
+    async def group_set_level(self, level: int, transition_time: int = 0) -> Dict[str, bool]:
+        """组内所有可调光设备设置亮度"""
+        results = {}
+
+        for device_id, controller in self.devices.items():
+            if isinstance(controller, MatterDimmableLightController):
+                try:
+                    result = await controller.set_level(level)
+                    results[device_id] = result
+                except Exception as e:
+                    logger.error(f"Failed to set level for {device_id}: {e}")
+                    results[device_id] = False
+            else:
+                logger.warning(f"Device {device_id} does not support level control")
+                results[device_id] = False
+
+        return results
+
+    async def execute_scene(self, scene_id: str) -> Dict[str, bool]:
+        """执行场景"""
+        if scene_id not in self.scenes:
+            logger.error(f"Scene {scene_id} not found")
+            return {}
+
+        scene = self.scenes[scene_id]
+        results = {}
+
+        # 并行执行所有场景动作
+        tasks = []
+        for action in scene.get("actions", []):
+            device_id = action["device_id"]
+            controller = self.devices.get(device_id)
+
+            if not controller:
+                logger.error(f"Device {device_id} not found in group")
+                results[device_id] = False
+                continue
+
+            # 根据命令类型执行
+            command = action.get("command")
+            parameters = action.get("parameters", {})
+
+            if command == "turn_on":
+                task = controller.turn_on()
+            elif command == "turn_off":
+                task = controller.turn_off()
+            elif command == "move_to_level":
+                task = controller.set_level(parameters.get("level", 128))
+            elif command == "set_color_temperature":
+                task = controller.set_color_temperature(parameters.get("color_temp_mireds", 250))
+            else:
+                logger.warning(f"Unknown command: {command}")
+                results[device_id] = False
+                continue
+
+            tasks.append((device_id, task))
+
+        # 等待所有任务完成
+        for device_id, task in tasks:
+            try:
+                result = await task
+                results[device_id] = result
+            except Exception as e:
+                logger.error(f"Failed to execute action for {device_id}: {e}")
+                results[device_id] = False
+
+        return results
+
+    def add_scene(self, scene_id: str, scene_name: str, actions: List[Dict]):
+        """添加场景"""
+        self.scenes[scene_id] = {
+            "scene_id": scene_id,
+            "scene_name": scene_name,
+            "actions": actions
+        }
+        logger.info(f"Added scene {scene_name} to group {self.group_name}")
+
+    async def cleanup(self):
+        """清理资源"""
+        for device_id, controller in self.devices.items():
+            await controller.disconnect()
+
+async def control_device_group():
+    """设备组控制示例"""
+    # 初始化存储
+    storage = MatterStorage("postgresql://user:pass@localhost/matter")
+
+    # 创建设备组
+    group_id = storage.create_device_group(1, "客厅灯光组")
+
+    # 添加设备到组
+    storage.add_device_to_group(1, "LIGHT001", 1)
+    storage.add_device_to_group(1, "LIGHT002", 1)
+    storage.add_device_to_group(1, "LIGHT003", 1)
+
+    # 创建设备组控制器
+    group_controller = MatterDeviceGroupController(1, "客厅灯光组", storage)
+    await group_controller.initialize()
+
+    # 执行组操作
+    print("Turning on all devices in group...")
+    results = await group_controller.group_turn_on()
+    print(f"Results: {results}")
+
+    # 设置组内所有设备亮度
+    print("\nSetting all devices to level 200...")
+    results = await group_controller.group_set_level(200)
+    print(f"Results: {results}")
+
+    # 添加场景
+    group_controller.add_scene(
+        "scene_bright",
+        "明亮模式",
+        [
+            {
+                "device_id": "LIGHT001",
+                "cluster_id": 0x0008,
+                "command": "move_to_level",
+                "parameters": {"level": 254}
+            },
+            {
+                "device_id": "LIGHT002",
+                "cluster_id": 0x0008,
+                "command": "move_to_level",
+                "parameters": {"level": 254}
+            }
+        ]
+    )
+
+    # 执行场景
+    print("\nExecuting scene 'bright'...")
+    results = await group_controller.execute_scene("scene_bright")
+    print(f"Results: {results}")
+
+    # 清理
+    await group_controller.cleanup()
+    storage.close()
+
+if __name__ == "__main__":
+    asyncio.run(control_device_group())
+```
+
+---
+
+## 9. 案例8：Matter设备固件升级
+
+### 9.1 场景描述
+
+**业务背景**：
+智能家居设备需要定期进行固件升级，以修复bug、添加新功能或提升性能。Matter协议支持OTA（Over-The-Air）固件升级功能。
+
+**技术挑战**：
+
+- 需要支持固件版本检查
+- 需要支持固件下载和验证
+- 需要支持升级进度监控
+- 需要处理升级失败和回滚
+- 需要记录升级历史
+
+**解决方案**：
+使用Matter OTA升级功能，结合PostgreSQL存储升级记录，实现完整的固件升级管理。
+
+### 9.2 Schema定义
+
+**Matter固件升级Schema**：
+
+```json
+{
+  "device_id": "LIGHT001",
+  "current_firmware_version": "1.0.0",
+  "target_firmware_version": "1.1.0",
+  "firmware_info": {
+    "firmware_url": "https://example.com/firmware/light_v1.1.0.bin",
+    "firmware_size": 524288,
+    "firmware_checksum": "sha256:abc123...",
+    "firmware_format": "OTA",
+    "min_hardware_version": 1,
+    "max_hardware_version": 2
+  },
+  "upgrade_policy": {
+    "auto_upgrade": false,
+    "scheduled_time": "2025-01-22T02:00:00Z",
+    "rollback_on_failure": true
+  }
+}
+```
+
+### 9.3 实现代码
+
+**完整的固件升级实现**：
+
+```python
+import asyncio
+import logging
+import hashlib
+import aiohttp
+from typing import Dict, Optional, Callable
+from datetime import datetime
+from matter_device_controller import MatterDeviceController
+from matter_storage import MatterStorage
+
+logger = logging.getLogger(__name__)
+
+class MatterFirmwareUpdater:
+    """Matter设备固件升级器"""
+
+    def __init__(self, device_controller: MatterDeviceController,
+                 storage: MatterStorage):
+        self.device_controller = device_controller
+        self.storage = storage
+        self.device_id = device_controller.device_id
+        self.upgrade_progress_callback: Optional[Callable] = None
+
+    async def check_firmware_version(self) -> Optional[str]:
+        """检查当前固件版本"""
+        try:
+            # 读取Basic Cluster的SoftwareVersion属性
+            version = await self.device_controller.read_attribute(
+                0x0028,  # Basic Cluster
+                0x0009   # SoftwareVersion
+            )
+            return version if version else None
+        except Exception as e:
+            logger.error(f"Failed to check firmware version: {e}")
+            return None
+
+    async def download_firmware(self, firmware_url: str) -> bytes:
+        """下载固件文件"""
+        async with aiohttp.ClientSession() as session:
+            async with session.get(firmware_url) as response:
+                if response.status == 200:
+                    firmware_data = await response.read()
+                    logger.info(f"Downloaded firmware: {len(firmware_data)} bytes")
+                    return firmware_data
+                else:
+                    raise Exception(f"Failed to download firmware: HTTP {response.status}")
+
+    def verify_firmware_checksum(self, firmware_data: bytes,
+                                expected_checksum: str) -> bool:
+        """验证固件校验和"""
+        # 提取算法和哈希值
+        if expected_checksum.startswith("sha256:"):
+            algorithm = "sha256"
+            expected_hash = expected_checksum[7:]
+        elif expected_checksum.startswith("sha1:"):
+            algorithm = "sha1"
+            expected_hash = expected_checksum[5:]
+        else:
+            logger.warning(f"Unknown checksum format: {expected_checksum}")
+            return False
+
+        # 计算实际哈希值
+        if algorithm == "sha256":
+            actual_hash = hashlib.sha256(firmware_data).hexdigest()
+        elif algorithm == "sha1":
+            actual_hash = hashlib.sha1(firmware_data).hexdigest()
+        else:
+            return False
+
+        return actual_hash.lower() == expected_hash.lower()
+
+    async def upgrade_firmware(self, firmware_url: str, firmware_version: str,
+                              firmware_size: int = None,
+                              firmware_checksum: str = None,
+                              progress_callback: Callable = None) -> bool:
+        """执行固件升级"""
+        self.upgrade_progress_callback = progress_callback
+
+        # 记录升级开始
+        update_id = self.storage.store_firmware_update(
+            self.device_id,
+            firmware_version,
+            firmware_url,
+            firmware_size,
+            firmware_checksum
+        )
+
+        try:
+            # 检查当前版本
+            current_version = await self.check_firmware_version()
+            logger.info(f"Current firmware version: {current_version}")
+
+            # 下载固件
+            if progress_callback:
+                progress_callback(0, "Downloading firmware...")
+
+            firmware_data = await self.download_firmware(firmware_url)
+
+            # 验证固件
+            if firmware_checksum:
+                if progress_callback:
+                    progress_callback(10, "Verifying firmware...")
+
+                if not self.verify_firmware_checksum(firmware_data, firmware_checksum):
+                    raise Exception("Firmware checksum verification failed")
+
+            # 更新状态为进行中
+            self.storage.update_firmware_status(update_id, "InProgress")
+
+            # 发送固件到设备（这里需要实际的Matter OTA升级命令）
+            if progress_callback:
+                progress_callback(20, "Uploading firmware to device...")
+
+            # 模拟升级过程
+            await self._simulate_firmware_upgrade(firmware_data, progress_callback)
+
+            # 验证升级结果
+            if progress_callback:
+                progress_callback(90, "Verifying upgrade...")
+
+            new_version = await self.check_firmware_version()
+            if new_version == firmware_version:
+                self.storage.update_firmware_status(update_id, "Completed")
+                logger.info(f"Firmware upgrade completed: {current_version} -> {new_version}")
+                return True
+            else:
+                raise Exception(f"Version mismatch: expected {firmware_version}, got {new_version}")
+
+        except Exception as e:
+            logger.error(f"Firmware upgrade failed: {e}")
+            self.storage.update_firmware_status(update_id, "Failed", str(e))
+            return False
+
+    async def _simulate_firmware_upgrade(self, firmware_data: bytes,
+                                        progress_callback: Callable):
+        """模拟固件升级过程"""
+        # 模拟升级进度
+        for progress in range(20, 90, 10):
+            await asyncio.sleep(0.5)
+            if progress_callback:
+                progress_callback(progress, f"Upgrading... {progress}%")
+
+    async def rollback_firmware(self, previous_version: str) -> bool:
+        """回滚到之前的固件版本"""
+        logger.info(f"Rolling back to version {previous_version}")
+        # 这里需要实际的回滚逻辑
+        # Matter协议可能不支持直接回滚，需要重新升级到之前的版本
+        return False
+
+async def upgrade_device_firmware():
+    """固件升级示例"""
+    # 初始化存储
+    storage = MatterStorage("postgresql://user:pass@localhost/matter")
+
+    # 创建设备控制器
+    device_controller = MatterDeviceController("LIGHT001", 0x12344321)
+    await device_controller.connect()
+
+    # 创建固件升级器
+    updater = MatterFirmwareUpdater(device_controller, storage)
+
+    # 检查当前版本
+    current_version = await updater.check_firmware_version()
+    print(f"Current firmware version: {current_version}")
+
+    # 定义进度回调
+    def progress_callback(progress: int, message: str):
+        print(f"[{progress}%] {message}")
+
+    # 执行升级
+    success = await updater.upgrade_firmware(
+        firmware_url="https://example.com/firmware/light_v1.1.0.bin",
+        firmware_version="1.1.0",
+        firmware_size=524288,
+        firmware_checksum="sha256:abc123def456...",
+        progress_callback=progress_callback
+    )
+
+    if success:
+        print("Firmware upgrade completed successfully!")
+    else:
+        print("Firmware upgrade failed!")
+
+    # 查询升级历史
+    updates = storage.get_firmware_updates(device_id="LIGHT001")
+    print("\nFirmware update history:")
+    for update in updates:
+        print(f"  Version: {update['firmware_version']}, "
+              f"Status: {update['update_status']}, "
+              f"Time: {update['created_at']}")
+
+    await device_controller.disconnect()
+    storage.close()
+
+if __name__ == "__main__":
+    asyncio.run(upgrade_device_firmware())
 ```
 
 ---

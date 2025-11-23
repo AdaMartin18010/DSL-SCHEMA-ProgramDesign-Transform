@@ -29,6 +29,661 @@ EDI Schema转换体系支持EDI X12、EDIFACT之间的转换，
 
 ---
 
+## 2. EDI X12解析实现
+
+### 2.1 EDI X12解析器
+
+**完整的EDI X12解析实现**：
+
+```python
+import logging
+import re
+from typing import Dict, List, Optional, Tuple
+from datetime import datetime
+
+logger = logging.getLogger(__name__)
+
+class EDIX12Parser:
+    """EDI X12消息解析器 - 完整实现"""
+
+    def __init__(self):
+        # X12默认分隔符
+        self.element_separator = "*"
+        self.segment_terminator = "~"
+        self.sub_element_separator = ">"
+        self.release_character = "?"
+
+    def parse_interchange(self, x12_message: str) -> Dict:
+        """解析X12交换（ISA/ISE）"""
+        lines = x12_message.split('\n')
+        isa_line = None
+        ise_line = None
+
+        for line in lines:
+            line = line.strip()
+            if line.startswith("ISA"):
+                isa_line = line
+            elif line.startswith("IEA"):
+                ise_line = line
+
+        if not isa_line:
+            raise ValueError("Missing ISA segment")
+
+        # 解析ISA段
+        isa_elements = isa_line.split(self.element_separator)
+        if len(isa_elements) < 17:
+            raise ValueError("Invalid ISA segment format")
+
+        interchange = {
+            "isa": {
+                "authorization_qualifier": isa_elements[1],
+                "authorization_information": isa_elements[2],
+                "security_qualifier": isa_elements[3],
+                "security_information": isa_elements[4],
+                "interchange_id_qualifier": isa_elements[5],
+                "interchange_sender_id": isa_elements[6],
+                "interchange_id_qualifier_2": isa_elements[7],
+                "interchange_receiver_id": isa_elements[8],
+                "interchange_date": isa_elements[9],
+                "interchange_time": isa_elements[10],
+                "interchange_control_standards_id": isa_elements[11],
+                "interchange_control_version_number": isa_elements[12],
+                "interchange_control_number": isa_elements[13],
+                "acknowledgment_requested": isa_elements[14],
+                "usage_indicator": isa_elements[15],
+                "component_element_separator": isa_elements[16] if len(isa_elements) > 16 else ">"
+            }
+        }
+
+        # 解析IEA段
+        if ise_line:
+            ise_elements = ise_line.split(self.element_separator)
+            if len(ise_elements) >= 2:
+                interchange["iea"] = {
+                    "number_of_included_functional_groups": ise_elements[1],
+                    "interchange_control_number": ise_elements[2] if len(ise_elements) > 2 else ""
+                }
+
+        return interchange
+
+    def parse_functional_group(self, gs_ge_block: str) -> Dict:
+        """解析功能组（GS/GE）"""
+        lines = gs_ge_block.split('\n')
+        gs_line = None
+        ge_line = None
+
+        for line in lines:
+            line = line.strip()
+            if line.startswith("GS"):
+                gs_line = line
+            elif line.startswith("GE"):
+                ge_line = line
+
+        if not gs_line:
+            raise ValueError("Missing GS segment")
+
+        # 解析GS段
+        gs_elements = gs_line.split(self.element_separator)
+        if len(gs_elements) < 8:
+            raise ValueError("Invalid GS segment format")
+
+        functional_group = {
+            "gs": {
+                "functional_identifier_code": gs_elements[1],
+                "application_sender_code": gs_elements[2],
+                "application_receiver_code": gs_elements[3],
+                "date": gs_elements[4],
+                "time": gs_elements[5],
+                "group_control_number": gs_elements[6],
+                "responsible_agency_code": gs_elements[7],
+                "version_release_industry_identifier": gs_elements[8] if len(gs_elements) > 8 else ""
+            }
+        }
+
+        # 解析GE段
+        if ge_line:
+            ge_elements = ge_line.split(self.element_separator)
+            if len(ge_elements) >= 2:
+                functional_group["ge"] = {
+                    "number_of_transaction_sets_included": ge_elements[1],
+                    "group_control_number": ge_elements[2] if len(ge_elements) > 2 else ""
+                }
+
+        return functional_group
+
+    def parse_transaction_set(self, st_se_block: str) -> Dict:
+        """解析交易集（ST/SE）"""
+        lines = st_se_block.split('\n')
+        st_line = None
+        se_line = None
+        segments = []
+
+        for line in lines:
+            line = line.strip()
+            if line.startswith("ST"):
+                st_line = line
+            elif line.startswith("SE"):
+                se_line = line
+            elif line and not line.startswith("ISA") and not line.startswith("IEA") and not line.startswith("GS") and not line.startswith("GE"):
+                segments.append(line)
+
+        if not st_line:
+            raise ValueError("Missing ST segment")
+
+        # 解析ST段
+        st_elements = st_line.split(self.element_separator)
+        if len(st_elements) < 3:
+            raise ValueError("Invalid ST segment format")
+
+        transaction_set = {
+            "st": {
+                "transaction_set_identifier_code": st_elements[1],
+                "transaction_set_control_number": st_elements[2],
+                "implementation_convention_reference": st_elements[3] if len(st_elements) > 3 else ""
+            },
+            "segments": []
+        }
+
+        # 解析所有段
+        for segment_line in segments:
+            segment = self.parse_segment(segment_line)
+            if segment:
+                transaction_set["segments"].append(segment)
+
+        # 解析SE段
+        if se_line:
+            se_elements = se_line.split(self.element_separator)
+            if len(se_elements) >= 2:
+                transaction_set["se"] = {
+                    "number_of_included_segments": se_elements[1],
+                    "transaction_set_control_number": se_elements[2] if len(se_elements) > 2 else ""
+                }
+
+        return transaction_set
+
+    def parse_segment(self, segment_line: str) -> Optional[Dict]:
+        """解析单个段"""
+        if not segment_line or not segment_line.strip():
+            return None
+
+        # 移除段终止符
+        segment_line = segment_line.rstrip(self.segment_terminator)
+
+        elements = segment_line.split(self.element_separator)
+        if not elements:
+            return None
+
+        segment_tag = elements[0]
+        segment_data = {
+            "tag": segment_tag,
+            "elements": []
+        }
+
+        # 解析元素
+        for element in elements[1:]:
+            if self.sub_element_separator in element:
+                # 复合元素
+                sub_elements = element.split(self.sub_element_separator)
+                segment_data["elements"].append({
+                    "type": "composite",
+                    "sub_elements": sub_elements
+                })
+            else:
+                # 简单元素
+                segment_data["elements"].append({
+                    "type": "simple",
+                    "value": element
+                })
+
+        return segment_data
+
+    def parse_x12_message(self, x12_message: str) -> Dict:
+        """解析完整的X12消息"""
+        # 解析交换
+        interchange = self.parse_interchange(x12_message)
+
+        # 提取功能组和交易集
+        lines = x12_message.split('\n')
+        functional_groups = []
+        current_group = []
+        in_group = False
+
+        for line in lines:
+            line = line.strip()
+            if line.startswith("GS"):
+                if current_group:
+                    functional_groups.append('\n'.join(current_group))
+                current_group = [line]
+                in_group = True
+            elif line.startswith("GE"):
+                current_group.append(line)
+                functional_groups.append('\n'.join(current_group))
+                current_group = []
+                in_group = False
+            elif in_group:
+                current_group.append(line)
+
+        # 解析功能组
+        parsed_groups = []
+        for group_block in functional_groups:
+            group = self.parse_functional_group(group_block)
+
+            # 提取交易集
+            transactions = []
+            lines = group_block.split('\n')
+            current_transaction = []
+            in_transaction = False
+
+            for line in lines:
+                line = line.strip()
+                if line.startswith("ST"):
+                    if current_transaction:
+                        transactions.append('\n'.join(current_transaction))
+                    current_transaction = [line]
+                    in_transaction = True
+                elif line.startswith("SE"):
+                    current_transaction.append(line)
+                    transactions.append('\n'.join(current_transaction))
+                    current_transaction = []
+                    in_transaction = False
+                elif in_transaction:
+                    current_transaction.append(line)
+
+            # 解析交易集
+            parsed_transactions = []
+            for transaction_block in transactions:
+                transaction = self.parse_transaction_set(transaction_block)
+                parsed_transactions.append(transaction)
+
+            group["transactions"] = parsed_transactions
+            parsed_groups.append(group)
+
+        return {
+            "interchange": interchange,
+            "functional_groups": parsed_groups
+        }
+
+    def validate_x12_message(self, x12_message: str) -> Tuple[bool, List[str]]:
+        """验证X12消息"""
+        errors = []
+
+        try:
+            parsed = self.parse_x12_message(x12_message)
+        except Exception as e:
+            errors.append(f"Parse error: {str(e)}")
+            return False, errors
+
+        # 验证ISA/IEA
+        interchange = parsed.get("interchange", {})
+        if "isa" not in interchange:
+            errors.append("Missing ISA segment")
+        if "iea" not in interchange:
+            errors.append("Missing IEA segment")
+
+        # 验证段计数
+        if "isa" in interchange and "iea" in interchange:
+            isa_control_number = interchange["isa"].get("interchange_control_number")
+            iea_control_number = interchange["iea"].get("interchange_control_number")
+            if isa_control_number != iea_control_number:
+                errors.append(f"Interchange control number mismatch: ISA={isa_control_number}, IEA={iea_control_number}")
+
+        # 验证功能组
+        for group in parsed.get("functional_groups", []):
+            if "gs" not in group:
+                errors.append("Missing GS segment in functional group")
+            if "ge" not in group:
+                errors.append("Missing GE segment in functional group")
+
+            # 验证交易集
+            for transaction in group.get("transactions", []):
+                if "st" not in transaction:
+                    errors.append("Missing ST segment in transaction set")
+                if "se" not in transaction:
+                    errors.append("Missing SE segment in transaction set")
+
+                # 验证段计数
+                if "st" in transaction and "se" in transaction:
+                    expected_count = int(transaction["se"].get("number_of_included_segments", 0))
+                    actual_count = len(transaction.get("segments", [])) + 2  # ST + SE
+                    if expected_count != actual_count:
+                        errors.append(f"Segment count mismatch in transaction {transaction['st'].get('transaction_set_control_number')}: expected {expected_count}, actual {actual_count}")
+
+        return len(errors) == 0, errors
+```
+
+### 2.2 EDIFACT解析器
+
+**完整的EDIFACT解析实现**：
+
+```python
+class EDIFACTParser:
+    """EDIFACT消息解析器 - 完整实现"""
+
+    def __init__(self):
+        self.segment_terminator = "'"
+        self.element_separator = "+"
+        self.component_separator = ":"
+        self.release_character = "?"
+
+    def parse_interchange(self, edifact_message: str) -> Dict:
+        """解析EDIFACT交换（UNB/UNZ）"""
+        lines = edifact_message.split('\n')
+        unb_line = None
+        unz_line = None
+
+        for line in lines:
+            line = line.strip()
+            if line.startswith("UNB"):
+                unb_line = line
+            elif line.startswith("UNZ"):
+                unz_line = line
+
+        if not unb_line:
+            raise ValueError("Missing UNB segment")
+
+        # 解析UNB段
+        unb_elements = unb_line.rstrip(self.segment_terminator).split(self.element_separator)
+        if len(unb_elements) < 5:
+            raise ValueError("Invalid UNB segment format")
+
+        interchange = {
+            "unb": {
+                "syntax_identifier": unb_elements[1] if len(unb_elements) > 1 else "",
+                "sender_identification": unb_elements[2] if len(unb_elements) > 2 else "",
+                "receiver_identification": unb_elements[3] if len(unb_elements) > 3 else "",
+                "date_of_preparation": unb_elements[4] if len(unb_elements) > 4 else "",
+                "time_of_preparation": unb_elements[5] if len(unb_elements) > 5 else "",
+                "interchange_control_reference": unb_elements[6] if len(unb_elements) > 6 else ""
+            }
+        }
+
+        # 解析UNZ段
+        if unz_line:
+            unz_elements = unz_line.rstrip(self.segment_terminator).split(self.element_separator)
+            if len(unz_elements) >= 2:
+                interchange["unz"] = {
+                    "interchange_control_count": unz_elements[1],
+                    "interchange_control_reference": unz_elements[2] if len(unz_elements) > 2 else ""
+                }
+
+        return interchange
+
+    def parse_message(self, edifact_message: str) -> List[Dict]:
+        """解析EDIFACT消息中的所有段"""
+        segments = []
+        lines = edifact_message.split('\n')
+
+        for line in lines:
+            line = line.strip()
+            if not line:
+                continue
+
+            # 移除段终止符
+            if line.endswith(self.segment_terminator):
+                line = line[:-1]
+
+            # 解析段
+            segment = self._parse_segment(line)
+            if segment:
+                segments.append(segment)
+
+        return segments
+
+    def _parse_segment(self, segment_line: str) -> Optional[Dict]:
+        """解析单个段"""
+        if not segment_line:
+            return None
+
+        parts = segment_line.split(self.element_separator)
+        if not parts:
+            return None
+
+        tag = parts[0]
+        elements = []
+
+        for part in parts[1:]:
+            # 解析复合元素
+            if self.component_separator in part:
+                components = part.split(self.component_separator)
+                elements.append({
+                    "type": "composite",
+                    "components": components
+                })
+            else:
+                elements.append({
+                    "type": "simple",
+                    "value": part
+                })
+
+        return {
+            "tag": tag,
+            "elements": elements
+        }
+
+    def parse_edifact_message(self, edifact_message: str) -> Dict:
+        """解析完整的EDIFACT消息"""
+        # 解析交换
+        interchange = self.parse_interchange(edifact_message)
+
+        # 解析消息
+        segments = self.parse_message(edifact_message)
+
+        # 查找UNH/UNT
+        unh_segment = None
+        unt_segment = None
+        message_segments = []
+
+        in_message = False
+        for segment in segments:
+            tag = segment.get("tag", "")
+            if tag == "UNH":
+                unh_segment = segment
+                in_message = True
+                message_segments.append(segment)
+            elif tag == "UNT":
+                unt_segment = segment
+                message_segments.append(segment)
+                in_message = False
+            elif in_message:
+                message_segments.append(segment)
+
+        message = {
+            "unh": unh_segment,
+            "unt": unt_segment,
+            "segments": message_segments
+        }
+
+        return {
+            "interchange": interchange,
+            "message": message
+        }
+
+    def validate_edifact_message(self, edifact_message: str) -> Tuple[bool, List[str]]:
+        """验证EDIFACT消息"""
+        errors = []
+
+        try:
+            parsed = self.parse_edifact_message(edifact_message)
+        except Exception as e:
+            errors.append(f"Parse error: {str(e)}")
+            return False, errors
+
+        # 验证UNB/UNZ
+        interchange = parsed.get("interchange", {})
+        if "unb" not in interchange:
+            errors.append("Missing UNB segment")
+        if "unz" not in interchange:
+            errors.append("Missing UNZ segment")
+
+        # 验证UNH/UNT
+        message = parsed.get("message", {})
+        if not message.get("unh"):
+            errors.append("Missing UNH segment")
+        if not message.get("unt"):
+            errors.append("Missing UNT segment")
+
+        # 验证段计数
+        if message.get("unh") and message.get("unt"):
+            unh_elements = message["unh"].get("elements", [])
+            unt_elements = message["unt"].get("elements", [])
+
+            if unt_elements and len(unt_elements) > 0:
+                declared_count = unt_elements[0].get("value", "")
+                try:
+                    declared_count_int = int(declared_count)
+                    actual_count = len(message.get("segments", []))
+                    if declared_count_int != actual_count:
+                        errors.append(f"Segment count mismatch: declared {declared_count_int}, actual {actual_count}")
+                except ValueError:
+                    errors.append(f"Invalid segment count in UNT: {declared_count}")
+
+        return len(errors) == 0, errors
+
+    def parse_orders_message(self, segments: List[Dict]) -> Dict:
+        """解析ORDERS消息"""
+        orders = {
+            "message_type": "ORDERS",
+            "order_details": []
+        }
+
+        current_order_line = {}
+
+        for segment in segments:
+            tag = segment.get("tag", "")
+
+            if tag == "UNH":
+                # 消息头
+                if segment.get("elements"):
+                    msg_ref_elem = segment["elements"][0] if segment["elements"] else {}
+                    orders["message_reference"] = msg_ref_elem.get("value", "") if msg_ref_elem.get("type") == "simple" else msg_ref_elem.get("components", [""])[0] if msg_ref_elem.get("type") == "composite" else ""
+
+            elif tag == "BGM":
+                # 消息开始
+                if segment.get("elements"):
+                    orders["document_number"] = segment["elements"][1].get("value", "") if len(segment["elements"]) > 1 else ""
+
+            elif tag == "DTM":
+                # 日期时间
+                if segment.get("elements"):
+                    date_type = segment["elements"][0].get("value", "")
+                    date_value = segment["elements"][1].get("value", "") if len(segment["elements"]) > 1 else ""
+                    if date_type == "137":
+                        orders["order_date"] = self._parse_edifact_date(date_value)
+
+            elif tag == "LIN":
+                # 订单行项
+                if current_order_line:
+                    orders["order_details"].append(current_order_line)
+                current_order_line = {
+                    "line_number": segment["elements"][0].get("value", "") if segment.get("elements") else "",
+                    "product_id": "",
+                    "quantity": 0,
+                    "unit_price": 0
+                }
+
+            elif tag == "PIA":
+                # 产品标识
+                if current_order_line and segment.get("elements"):
+                    product_id_elem = segment["elements"][1] if len(segment["elements"]) > 1 else {}
+                    if product_id_elem.get("type") == "composite":
+                        current_order_line["product_id"] = product_id_elem.get("components", [""])[0] if product_id_elem.get("components") else ""
+
+            elif tag == "QTY":
+                # 数量
+                if current_order_line and segment.get("elements"):
+                    quantity_elem = segment["elements"][1] if len(segment["elements"]) > 1 else {}
+                    if quantity_elem.get("type") == "simple":
+                        try:
+                            current_order_line["quantity"] = float(quantity_elem.get("value", 0))
+                        except ValueError:
+                            pass
+
+            elif tag == "PRI":
+                # 价格
+                if current_order_line and segment.get("elements"):
+                    price_elem = segment["elements"][1] if len(segment["elements"]) > 1 else {}
+                    if price_elem.get("type") == "simple":
+                        try:
+                            current_order_line["unit_price"] = float(price_elem.get("value", 0))
+                        except ValueError:
+                            pass
+
+        if current_order_line:
+            orders["order_details"].append(current_order_line)
+
+        return orders
+
+    def parse_invoic_message(self, segments: List[Dict]) -> Dict:
+        """解析INVOIC消息"""
+        invoice = {
+            "message_type": "INVOIC",
+            "invoice_lines": []
+        }
+
+        current_line = {}
+
+        for segment in segments:
+            tag = segment.get("tag", "")
+
+            if tag == "UNH":
+                if segment.get("elements"):
+                    msg_ref_elem = segment["elements"][0] if segment["elements"] else {}
+                    invoice["message_reference"] = msg_ref_elem.get("value", "") if msg_ref_elem.get("type") == "simple" else msg_ref_elem.get("components", [""])[0] if msg_ref_elem.get("type") == "composite" else ""
+
+            elif tag == "BGM":
+                if segment.get("elements"):
+                    invoice["invoice_number"] = segment["elements"][1].get("value", "") if len(segment["elements"]) > 1 else ""
+
+            elif tag == "DTM":
+                if segment.get("elements"):
+                    date_type = segment["elements"][0].get("value", "")
+                    date_value = segment["elements"][1].get("value", "") if len(segment["elements"]) > 1 else ""
+                    if date_type == "137":
+                        invoice["invoice_date"] = self._parse_edifact_date(date_value)
+
+            elif tag == "LIN":
+                if current_line:
+                    invoice["invoice_lines"].append(current_line)
+                current_line = {
+                    "line_number": segment["elements"][0].get("value", "") if segment.get("elements") else "",
+                    "product_id": "",
+                    "quantity": 0,
+                    "unit_price": 0,
+                    "line_total": 0
+                }
+
+            elif tag == "MOA":
+                # 货币金额
+                if segment.get("elements"):
+                    amount_type = segment["elements"][0].get("value", "")
+                    amount_elem = segment["elements"][1] if len(segment["elements"]) > 1 else {}
+                    if amount_elem.get("type") == "simple":
+                        try:
+                            amount = float(amount_elem.get("value", 0))
+                            if amount_type == "79":
+                                if current_line:
+                                    current_line["line_total"] = amount
+                                else:
+                                    invoice["total_amount"] = amount
+                        except ValueError:
+                            pass
+
+        if current_line:
+            invoice["invoice_lines"].append(current_line)
+
+        return invoice
+
+    def _parse_edifact_date(self, date_str: str) -> Optional[str]:
+        """解析EDIFACT日期格式"""
+        if len(date_str) == 8:
+            return f"{date_str[:4]}-{date_str[4:6]}-{date_str[6:8]}"
+        elif len(date_str) >= 12:
+            return f"{date_str[:4]}-{date_str[4:6]}-{date_str[6:8]}T{date_str[8:10]}:{date_str[10:12]}:00Z"
+        return None
+```
+
+---
+
 ## 2. EDI X12到EDIFACT转换
 
 **转换规则**：

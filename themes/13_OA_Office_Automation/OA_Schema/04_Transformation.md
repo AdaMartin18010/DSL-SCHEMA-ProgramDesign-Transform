@@ -422,6 +422,313 @@ class ODFToOOXMLConverter:
             result = chr(65 + (col_num % 26)) + result
             col_num //= 26
         return result
+
+    def convert_metadata(self, odf_file_path: str, ooxml_file_path: str):
+        """转换文档元数据"""
+        try:
+            odf_path = Path(odf_file_path)
+            ooxml_path = Path(ooxml_file_path)
+
+            # 读取ODF元数据
+            with zipfile.ZipFile(odf_path, 'r') as odf_zip:
+                if 'meta.xml' in odf_zip.namelist():
+                    meta_xml = odf_zip.read('meta.xml')
+                    odf_meta = self._parse_odf_metadata(meta_xml)
+                else:
+                    odf_meta = {}
+
+            # 转换元数据到OOXML格式
+            ooxml_meta = self._convert_metadata_to_ooxml(odf_meta)
+
+            # 更新OOXML文件的元数据
+            self._update_ooxml_metadata(ooxml_path, ooxml_meta)
+
+            logger.info(f"Converted metadata from ODF to OOXML")
+        except Exception as e:
+            logger.error(f"Failed to convert metadata: {e}")
+
+    def _parse_odf_metadata(self, meta_xml: bytes) -> Dict:
+        """解析ODF元数据"""
+        tree = ET.fromstring(meta_xml)
+        namespaces = {
+            'office': 'urn:oasis:names:tc:opendocument:xmlns:office:1.0',
+            'meta': 'urn:oasis:names:tc:opendocument:xmlns:meta:1.0',
+            'dc': 'http://purl.org/dc/elements/1.1/'
+        }
+
+        metadata = {}
+
+        # 标题
+        title_elem = tree.find('.//{http://purl.org/dc/elements/1.1/}title', namespaces)
+        if title_elem is not None:
+            metadata['title'] = title_elem.text or ""
+
+        # 作者
+        creator_elem = tree.find('.//{http://purl.org/dc/elements/1.1/}creator', namespaces)
+        if creator_elem is not None:
+            metadata['creator'] = creator_elem.text or ""
+
+        # 主题
+        subject_elem = tree.find('.//{http://purl.org/dc/elements/1.1/}subject', namespaces)
+        if subject_elem is not None:
+            metadata['subject'] = subject_elem.text or ""
+
+        # 关键词
+        keywords_elem = tree.find('.//{urn:oasis:names:tc:opendocument:xmlns:meta:1.0}keyword', namespaces)
+        if keywords_elem is not None:
+            metadata['keywords'] = keywords_elem.text or ""
+
+        # 描述
+        description_elem = tree.find('.//{http://purl.org/dc/elements/1.1/}description', namespaces)
+        if description_elem is not None:
+            metadata['description'] = description_elem.text or ""
+
+        # 创建时间
+        creation_date_elem = tree.find('.//{urn:oasis:names:tc:opendocument:xmlns:meta:1.0}creation-date', namespaces)
+        if creation_date_elem is not None:
+            metadata['creation_date'] = creation_date_elem.text or ""
+
+        # 修改时间
+        modification_date_elem = tree.find('.//{urn:oasis:names:tc:opendocument:xmlns:meta:1.0}modification-date', namespaces)
+        if modification_date_elem is not None:
+            metadata['modification_date'] = modification_date_elem.text or ""
+
+        return metadata
+
+    def _convert_metadata_to_ooxml(self, odf_meta: Dict) -> Dict:
+        """将ODF元数据转换为OOXML格式"""
+        ooxml_meta = {}
+
+        # 映射字段
+        field_mapping = {
+            'title': 'title',
+            'creator': 'creator',
+            'subject': 'subject',
+            'keywords': 'keywords',
+            'description': 'description',
+            'creation_date': 'created',
+            'modification_date': 'modified'
+        }
+
+        for odf_key, ooxml_key in field_mapping.items():
+            if odf_key in odf_meta:
+                ooxml_meta[ooxml_key] = odf_meta[odf_key]
+
+        return ooxml_meta
+
+    def _update_ooxml_metadata(self, ooxml_path: Path, metadata: Dict):
+        """更新OOXML文件的元数据"""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            # 解压OOXML文件
+            temp_ooxml_dir = Path(temp_dir) / "ooxml"
+            temp_ooxml_dir.mkdir()
+
+            with zipfile.ZipFile(ooxml_path, 'r') as ooxml_zip:
+                ooxml_zip.extractall(temp_ooxml_dir)
+
+            # 创建或更新core.xml（元数据文件）
+            core_xml_path = temp_ooxml_dir / "docProps" / "core.xml"
+            core_xml_path.parent.mkdir(exist_ok=True)
+
+            self._create_core_xml(core_xml_path, metadata)
+
+            # 重新打包OOXML文件
+            with zipfile.ZipFile(ooxml_path, 'w', zipfile.ZIP_DEFLATED) as ooxml_zip:
+                for file_path in temp_ooxml_dir.rglob('*'):
+                    if file_path.is_file():
+                        rel_path = file_path.relative_to(temp_ooxml_dir)
+                        ooxml_zip.write(file_path, str(rel_path))
+
+    def _create_core_xml(self, core_xml_path: Path, metadata: Dict):
+        """创建OOXML core.xml元数据文件"""
+        namespaces = {
+            'cp': 'http://schemas.openxmlformats.org/package/2006/metadata/core-properties',
+            'dc': 'http://purl.org/dc/elements/1.1/',
+            'dcterms': 'http://purl.org/dc/terms/',
+            'dcmitype': 'http://purl.org/dc/dcmitype/',
+            'xsi': 'http://www.w3.org/2001/XMLSchema-instance'
+        }
+
+        core_properties = ET.Element('{http://schemas.openxmlformats.org/package/2006/metadata/core-properties}coreProperties')
+        core_properties.set('xmlns:cp', namespaces['cp'])
+        core_properties.set('xmlns:dc', namespaces['dc'])
+        core_properties.set('xmlns:dcterms', namespaces['dcterms'])
+        core_properties.set('xmlns:dcmitype', namespaces['dcmitype'])
+        core_properties.set('xmlns:xsi', namespaces['xsi'])
+
+        # 添加元数据字段
+        if 'title' in metadata:
+            title = ET.SubElement(core_properties, f'{{{namespaces["dc"]}}}title')
+            title.text = metadata['title']
+
+        if 'creator' in metadata:
+            creator = ET.SubElement(core_properties, f'{{{namespaces["dc"]}}}creator')
+            creator.text = metadata['creator']
+
+        if 'subject' in metadata:
+            subject = ET.SubElement(core_properties, f'{{{namespaces["dc"]}}}subject')
+            subject.text = metadata['subject']
+
+        if 'description' in metadata:
+            description = ET.SubElement(core_properties, f'{{{namespaces["dc"]}}}description')
+            description.text = metadata['description']
+
+        if 'keywords' in metadata:
+            keywords = ET.SubElement(core_properties, f'{{{namespaces["cp"]}}}keywords')
+            keywords.text = metadata['keywords']
+
+        if 'created' in metadata:
+            created = ET.SubElement(core_properties, f'{{{namespaces["dcterms"]}}}created')
+            created.set('{http://www.w3.org/2001/XMLSchema-instance}type', 'dcterms:W3CDTF')
+            created.text = metadata['created']
+
+        if 'modified' in metadata:
+            modified = ET.SubElement(core_properties, f'{{{namespaces["dcterms"]}}}modified')
+            modified.set('{http://www.w3.org/2001/XMLSchema-instance}type', 'dcterms:W3CDTF')
+            modified.text = metadata['modified']
+
+        # 保存core.xml
+        tree = ET.ElementTree(core_properties)
+        tree.write(core_xml_path, encoding='utf-8', xml_declaration=True)
+
+    def convert_styles(self, odf_file_path: str, ooxml_file_path: str):
+        """转换文档样式"""
+        try:
+            odf_path = Path(odf_file_path)
+            ooxml_path = Path(ooxml_file_path)
+
+            # 读取ODF样式
+            with zipfile.ZipFile(odf_path, 'r') as odf_zip:
+                if 'styles.xml' in odf_zip.namelist():
+                    styles_xml = odf_zip.read('styles.xml')
+                    odf_styles = self._parse_odf_styles(styles_xml)
+                else:
+                    odf_styles = {}
+
+            # 转换样式到OOXML格式
+            ooxml_styles = self._convert_styles_to_ooxml(odf_styles)
+
+            # 更新OOXML文件的样式
+            self._update_ooxml_styles(ooxml_path, ooxml_styles)
+
+            logger.info(f"Converted styles from ODF to OOXML")
+        except Exception as e:
+            logger.error(f"Failed to convert styles: {e}")
+
+    def _parse_odf_styles(self, styles_xml: bytes) -> Dict:
+        """解析ODF样式"""
+        tree = ET.fromstring(styles_xml)
+        namespaces = {
+            'office': 'urn:oasis:names:tc:opendocument:xmlns:office:1.0',
+            'style': 'urn:oasis:names:tc:opendocument:xmlns:style:1.0',
+            'fo': 'urn:oasis:names:tc:opendocument:xmlns:xsl-fo-compatible:1.0'
+        }
+
+        styles = {
+            'paragraph_styles': {},
+            'text_styles': {},
+            'table_styles': {}
+        }
+
+        # 解析段落样式
+        para_styles = tree.findall('.//{urn:oasis:names:tc:opendocument:xmlns:style:1.0}style[@style:family="paragraph"]', namespaces)
+        for style in para_styles:
+            style_name = style.get('{urn:oasis:names:tc:opendocument:xmlns:style:1.0}name', '')
+            style_props = {}
+
+            # 字体属性
+            text_props = style.find('.//{urn:oasis:names:tc:opendocument:xmlns:style:1.0}text-properties', namespaces)
+            if text_props is not None:
+                if text_props.get('{urn:oasis:names:tc:opendocument:xmlns:xsl-fo-compatible:1.0}font-size'):
+                    style_props['font_size'] = text_props.get('{urn:oasis:names:tc:opendocument:xmlns:xsl-fo-compatible:1.0}font-size')
+                if text_props.get('{urn:oasis:names:tc:opendocument:xmlns:xsl-fo-compatible:1.0}font-weight'):
+                    style_props['font_weight'] = text_props.get('{urn:oasis:names:tc:opendocument:xmlns:xsl-fo-compatible:1.0}font-weight')
+                if text_props.get('{urn:oasis:names:tc:opendocument:xmlns:xsl-fo-compatible:1.0}font-style'):
+                    style_props['font_style'] = text_props.get('{urn:oasis:names:tc:opendocument:xmlns:xsl-fo-compatible:1.0}font-style')
+                if text_props.get('{urn:oasis:names:tc:opendocument:xmlns:style:1.0}font-name'):
+                    style_props['font_name'] = text_props.get('{urn:oasis:names:tc:opendocument:xmlns:style:1.0}font-name')
+
+            # 段落属性
+            para_props = style.find('.//{urn:oasis:names:tc:opendocument:xmlns:style:1.0}paragraph-properties', namespaces)
+            if para_props is not None:
+                if para_props.get('{urn:oasis:names:tc:opendocument:xmlns:fo:1.0}text-align'):
+                    style_props['text_align'] = para_props.get('{urn:oasis:names:tc:opendocument:xmlns:fo:1.0}text-align')
+                if para_props.get('{urn:oasis:names:tc:opendocument:xmlns:fo:1.0}margin-left'):
+                    style_props['margin_left'] = para_props.get('{urn:oasis:names:tc:opendocument:xmlns:fo:1.0}margin-left')
+                if para_props.get('{urn:oasis:names:tc:opendocument:xmlns:fo:1.0}margin-right'):
+                    style_props['margin_right'] = para_props.get('{urn:oasis:names:tc:opendocument:xmlns:fo:1.0}margin-right')
+
+            styles['paragraph_styles'][style_name] = style_props
+
+        return styles
+
+    def _convert_styles_to_ooxml(self, odf_styles: Dict) -> Dict:
+        """将ODF样式转换为OOXML格式"""
+        ooxml_styles = {
+            'paragraph_styles': {},
+            'character_styles': {},
+            'table_styles': {}
+        }
+
+        # 转换段落样式
+        for style_name, style_props in odf_styles.get('paragraph_styles', {}).items():
+            ooxml_style = {}
+
+            # 字体属性映射
+            if 'font_size' in style_props:
+                ooxml_style['font_size'] = self._convert_font_size(style_props['font_size'])
+            if 'font_weight' in style_props:
+                ooxml_style['bold'] = style_props['font_weight'] == 'bold'
+            if 'font_style' in style_props:
+                ooxml_style['italic'] = style_props['font_style'] == 'italic'
+            if 'font_name' in style_props:
+                ooxml_style['font_name'] = style_props['font_name']
+
+            # 段落属性映射
+            if 'text_align' in style_props:
+                ooxml_style['alignment'] = self._convert_alignment(style_props['text_align'])
+            if 'margin_left' in style_props:
+                ooxml_style['left_margin'] = self._convert_margin(style_props['margin_left'])
+            if 'margin_right' in style_props:
+                ooxml_style['right_margin'] = self._convert_margin(style_props['margin_right'])
+
+            ooxml_styles['paragraph_styles'][style_name] = ooxml_style
+
+        return ooxml_styles
+
+    def _convert_font_size(self, odf_size: str) -> int:
+        """转换字体大小（pt到half-points）"""
+        try:
+            # ODF使用pt，OOXML使用half-points
+            pt_value = float(odf_size.replace('pt', '').strip())
+            return int(pt_value * 2)
+        except:
+            return 24  # 默认12pt
+
+    def _convert_alignment(self, odf_align: str) -> str:
+        """转换对齐方式"""
+        align_map = {
+            'left': 'left',
+            'right': 'right',
+            'center': 'center',
+            'justify': 'both'
+        }
+        return align_map.get(odf_align.lower(), 'left')
+
+    def _convert_margin(self, odf_margin: str) -> int:
+        """转换边距（cm到twips，1cm = 567 twips）"""
+        try:
+            cm_value = float(odf_margin.replace('cm', '').strip())
+            return int(cm_value * 567)
+        except:
+            return 0
+
+    def _update_ooxml_styles(self, ooxml_path: Path, styles: Dict):
+        """更新OOXML文件的样式"""
+        # 这里需要根据文档类型（DOCX/XLSX/PPTX）更新相应的样式文件
+        # DOCX使用styles.xml，XLSX使用styles.xml，PPTX使用theme和slide master
+        # 由于实现较复杂，这里提供基础框架
+        logger.info(f"Updating OOXML styles: {len(styles.get('paragraph_styles', {}))} paragraph styles")
 ```
 
 ---
@@ -918,6 +1225,303 @@ class WorkflowEngine:
     def get_process_status(self, instance_id: str) -> Optional[Dict]:
         """获取流程状态"""
         return self.running_processes.get(instance_id)
+
+    def assign_task(self, instance_id: str, node_id: str, assignee: str):
+        """分配任务"""
+        if instance_id not in self.running_processes:
+            raise ValueError(f"Process instance not found: {instance_id}")
+
+        process = self.running_processes[instance_id]
+        definition = self.process_definitions[process["process_id"]]
+        node = self._get_node_by_id(definition, node_id)
+
+        if not node:
+            raise ValueError(f"Node not found: {node_id}")
+
+        # 存储任务分配
+        self.storage.store_task_assignment({
+            "process_id": instance_id,
+            "node_id": node_id,
+            "assignee": assignee,
+            "assigned_time": datetime.now(),
+            "task_status": "Assigned"
+        })
+
+        logger.info(f"Assigned task {node_id} to {assignee} in process {instance_id}")
+
+    def get_process_statistics(self, process_id: str = None,
+                              start_date: datetime = None,
+                              end_date: datetime = None) -> Dict:
+        """获取流程统计信息"""
+        stats = {
+            "total_processes": 0,
+            "completed_processes": 0,
+            "in_progress_processes": 0,
+            "rejected_processes": 0,
+            "average_duration_hours": 0.0,
+            "node_statistics": {}
+        }
+
+        processes_to_analyze = []
+        if process_id:
+            processes_to_analyze = [
+                p for p in self.running_processes.values()
+                if p["process_id"] == process_id
+            ]
+        else:
+            processes_to_analyze = list(self.running_processes.values())
+
+        # 过滤日期范围
+        if start_date or end_date:
+            filtered_processes = []
+            for p in processes_to_analyze:
+                submit_time = p.get("submit_time")
+                if submit_time:
+                    if start_date and submit_time < start_date:
+                        continue
+                    if end_date and submit_time > end_date:
+                        continue
+                    filtered_processes.append(p)
+            processes_to_analyze = filtered_processes
+
+        stats["total_processes"] = len(processes_to_analyze)
+
+        durations = []
+        for process in processes_to_analyze:
+            status = process.get("current_status")
+            if status == ProcessStatus.COMPLETED.value:
+                stats["completed_processes"] += 1
+                if "submit_time" in process and "complete_time" in process:
+                    duration = (process["complete_time"] - process["submit_time"]).total_seconds() / 3600
+                    durations.append(duration)
+            elif status == ProcessStatus.IN_PROGRESS.value:
+                stats["in_progress_processes"] += 1
+            elif status == ProcessStatus.REJECTED.value:
+                stats["rejected_processes"] += 1
+
+        if durations:
+            stats["average_duration_hours"] = sum(durations) / len(durations)
+
+        return stats
+
+class BPMNParser:
+    """BPMN流程解析器"""
+
+    def __init__(self):
+        self.namespaces = {
+            'bpmn': 'http://www.omg.org/spec/BPMN/20100524/MODEL',
+            'bpmndi': 'http://www.omg.org/spec/BPMN/20100524/DI',
+            'dc': 'http://www.omg.org/spec/DD/20100524/DC',
+            'di': 'http://www.omg.org/spec/DD/20100524/DI'
+        }
+
+    def parse_bpmn_file(self, bpmn_file_path: str) -> Dict:
+        """解析BPMN文件"""
+        tree = ET.parse(bpmn_file_path)
+        root = tree.getroot()
+
+        process_definition = {
+            "process_id": root.get('id', ''),
+            "process_name": root.get('name', ''),
+            "nodes": [],
+            "flows": [],
+            "gateways": []
+        }
+
+        # 解析流程节点
+        process_elem = root.find('.//{http://www.omg.org/spec/BPMN/20100524/MODEL}process', self.namespaces)
+        if process_elem is not None:
+            # 解析开始事件
+            start_events = process_elem.findall('.//{http://www.omg.org/spec/BPMN/20100524/MODEL}startEvent', self.namespaces)
+            for event in start_events:
+                process_definition["nodes"].append({
+                    "node_id": event.get('id', ''),
+                    "node_name": event.get('name', ''),
+                    "node_type": "Start"
+                })
+
+            # 解析任务节点
+            tasks = process_elem.findall('.//{http://www.omg.org/spec/BPMN/20100524/MODEL}task', self.namespaces)
+            for task in tasks:
+                process_definition["nodes"].append({
+                    "node_id": task.get('id', ''),
+                    "node_name": task.get('name', ''),
+                    "node_type": "Task",
+                    "assignee": self._extract_assignee(task)
+                })
+
+            # 解析用户任务
+            user_tasks = process_elem.findall('.//{http://www.omg.org/spec/BPMN/20100524/MODEL}userTask', self.namespaces)
+            for task in user_tasks:
+                process_definition["nodes"].append({
+                    "node_id": task.get('id', ''),
+                    "node_name": task.get('name', ''),
+                    "node_type": "Approval",
+                    "assignee": self._extract_assignee(task)
+                })
+
+            # 解析网关
+            gateways = process_elem.findall('.//{http://www.omg.org/spec/BPMN/20100524/MODEL}exclusiveGateway', self.namespaces)
+            for gateway in gateways:
+                process_definition["gateways"].append({
+                    "gateway_id": gateway.get('id', ''),
+                    "gateway_name": gateway.get('name', ''),
+                    "gateway_type": "Exclusive"
+                })
+
+            # 解析结束事件
+            end_events = process_elem.findall('.//{http://www.omg.org/spec/BPMN/20100524/MODEL}endEvent', self.namespaces)
+            for event in end_events:
+                process_definition["nodes"].append({
+                    "node_id": event.get('id', ''),
+                    "node_name": event.get('name', ''),
+                    "node_type": "End"
+                })
+
+            # 解析流程流
+            flows = process_elem.findall('.//{http://www.omg.org/spec/BPMN/20100524/MODEL}sequenceFlow', self.namespaces)
+            for flow in flows:
+                process_definition["flows"].append({
+                    "flow_id": flow.get('id', ''),
+                    "source_ref": flow.get('sourceRef', ''),
+                    "target_ref": flow.get('targetRef', ''),
+                    "condition": self._extract_condition(flow)
+                })
+
+        return process_definition
+
+    def _extract_assignee(self, task_elem) -> Optional[str]:
+        """提取任务分配者"""
+        # 查找humanPerformer或potentialOwner
+        human_performer = task_elem.find('.//{http://www.omg.org/spec/BPMN/20100524/MODEL}humanPerformer', self.namespaces)
+        if human_performer is not None:
+            resource = human_performer.find('.//{http://www.omg.org/spec/BPMN/20100524/MODEL}resource', self.namespaces)
+            if resource is not None:
+                return resource.get('name', '')
+
+        potential_owner = task_elem.find('.//{http://www.omg.org/spec/BPMN/20100524/MODEL}potentialOwner', self.namespaces)
+        if potential_owner is not None:
+            resource = potential_owner.find('.//{http://www.omg.org/spec/BPMN/20100524/MODEL}resource', self.namespaces)
+            if resource is not None:
+                return resource.get('name', '')
+
+        return None
+
+    def _extract_condition(self, flow_elem) -> Optional[str]:
+        """提取流程条件"""
+        condition = flow_elem.find('.//{http://www.omg.org/spec/BPMN/20100524/MODEL}conditionExpression', self.namespaces)
+        if condition is not None:
+            return condition.text
+        return None
+
+    def convert_to_workflow_definition(self, bpmn_definition: Dict) -> Dict:
+        """将BPMN定义转换为工作流引擎定义"""
+        workflow_def = {
+            "process_id": bpmn_definition["process_id"],
+            "process_name": bpmn_definition["process_name"],
+            "process_type": "BPMN",
+            "process_definition": {
+                "process_nodes": []
+            }
+        }
+
+        # 转换节点
+        node_order = 1
+        for node in bpmn_definition["nodes"]:
+            workflow_node = {
+                "node_id": node["node_id"],
+                "node_name": node["node_name"],
+                "node_type": node["node_type"],
+                "node_order": node_order
+            }
+
+            if "assignee" in node:
+                workflow_node["assignee"] = node["assignee"]
+
+            workflow_def["process_definition"]["process_nodes"].append(workflow_node)
+            node_order += 1
+
+        # 添加网关信息
+        if bpmn_definition["gateways"]:
+            workflow_def["process_definition"]["gateways"] = bpmn_definition["gateways"]
+
+        # 添加流程流信息
+        if bpmn_definition["flows"]:
+            workflow_def["process_definition"]["flows"] = bpmn_definition["flows"]
+
+        return workflow_def
+
+class ProcessMonitor:
+    """流程监控器"""
+
+    def __init__(self, workflow_engine: WorkflowEngine, storage):
+        self.workflow_engine = workflow_engine
+        self.storage = storage
+
+    def monitor_process(self, instance_id: str) -> Dict:
+        """监控流程实例"""
+        process = self.workflow_engine.get_process_status(instance_id)
+        if not process:
+            return {}
+
+        monitor_data = {
+            "instance_id": instance_id,
+            "process_id": process["process_id"],
+            "current_status": process["current_status"],
+            "current_node": process["current_node"],
+            "submitter": process["submitter"],
+            "submit_time": process["submit_time"].isoformat() if "submit_time" in process else None,
+            "duration_hours": None,
+            "node_history": process.get("nodes_history", []),
+            "pending_tasks": [],
+            "completed_tasks": []
+        }
+
+        # 计算持续时间
+        if "submit_time" in process:
+            if "complete_time" in process:
+                duration = (process["complete_time"] - process["submit_time"]).total_seconds() / 3600
+            else:
+                duration = (datetime.now() - process["submit_time"]).total_seconds() / 3600
+            monitor_data["duration_hours"] = round(duration, 2)
+
+        # 获取待处理任务
+        pending_tasks = self.storage.get_pending_tasks(instance_id)
+        monitor_data["pending_tasks"] = pending_tasks
+
+        # 获取已完成任务
+        completed_tasks = self.storage.get_completed_tasks(instance_id)
+        monitor_data["completed_tasks"] = completed_tasks
+
+        return monitor_data
+
+    def get_process_performance_metrics(self, process_id: str,
+                                        start_date: datetime = None,
+                                        end_date: datetime = None) -> Dict:
+        """获取流程性能指标"""
+        stats = self.workflow_engine.get_process_statistics(
+            process_id, start_date, end_date
+        )
+
+        metrics = {
+            "total_processes": stats["total_processes"],
+            "completion_rate": 0.0,
+            "rejection_rate": 0.0,
+            "average_duration_hours": stats["average_duration_hours"],
+            "throughput_per_day": 0.0
+        }
+
+        if stats["total_processes"] > 0:
+            metrics["completion_rate"] = stats["completed_processes"] / stats["total_processes"]
+            metrics["rejection_rate"] = stats["rejected_processes"] / stats["total_processes"]
+
+        # 计算吞吐量
+        if start_date and end_date:
+            days = (end_date - start_date).days
+            if days > 0:
+                metrics["throughput_per_day"] = stats["total_processes"] / days
+
+        return metrics
 ```
 
 ### 4.2 文档版本控制
@@ -1228,10 +1832,113 @@ class OAStorage:
             )
         """)
 
+        # 文档内容表（全文索引）
+        self.cur.execute("""
+            CREATE TABLE IF NOT EXISTS document_contents (
+                id BIGSERIAL PRIMARY KEY,
+                document_id VARCHAR(20) NOT NULL,
+                version_number INTEGER NOT NULL,
+                content_text TEXT,
+                content_html TEXT,
+                content_json JSONB,
+                extracted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (document_id) REFERENCES documents(document_id),
+                UNIQUE(document_id, version_number)
+            )
+        """)
+
+        # 创建全文索引
+        self.cur.execute("""
+            CREATE INDEX IF NOT EXISTS idx_document_contents_fulltext
+            ON document_contents USING gin(to_tsvector('english', content_text))
+        """)
+
+        # 任务分配表
+        self.cur.execute("""
+            CREATE TABLE IF NOT EXISTS task_assignments (
+                id BIGSERIAL PRIMARY KEY,
+                process_id VARCHAR(20) NOT NULL,
+                node_id VARCHAR(10) NOT NULL,
+                assignee VARCHAR(100) NOT NULL,
+                assigned_time TIMESTAMP NOT NULL,
+                task_status VARCHAR(20) DEFAULT 'Assigned',
+                completed_time TIMESTAMP,
+                FOREIGN KEY (process_id) REFERENCES process_approvals(process_id)
+            )
+        """)
+
+        # 协作记录表
+        self.cur.execute("""
+            CREATE TABLE IF NOT EXISTS collaboration_records (
+                id BIGSERIAL PRIMARY KEY,
+                document_id VARCHAR(20) NOT NULL,
+                user_id VARCHAR(100) NOT NULL,
+                action_type VARCHAR(50) NOT NULL,
+                action_description TEXT,
+                action_data JSONB,
+                action_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (document_id) REFERENCES documents(document_id)
+            )
+        """)
+
+        # 文档权限表
+        self.cur.execute("""
+            CREATE TABLE IF NOT EXISTS document_permissions (
+                id BIGSERIAL PRIMARY KEY,
+                document_id VARCHAR(20) NOT NULL,
+                user_id VARCHAR(100) NOT NULL,
+                permission_type VARCHAR(20) NOT NULL,
+                granted_by VARCHAR(100),
+                granted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (document_id) REFERENCES documents(document_id),
+                UNIQUE(document_id, user_id, permission_type)
+            )
+        """)
+
+        # 流程实例扩展表
+        self.cur.execute("""
+            CREATE TABLE IF NOT EXISTS process_instances (
+                id BIGSERIAL PRIMARY KEY,
+                instance_id VARCHAR(50) UNIQUE NOT NULL,
+                process_id VARCHAR(20) NOT NULL,
+                process_name VARCHAR(200) NOT NULL,
+                submitter VARCHAR(100) NOT NULL,
+                current_status VARCHAR(20) NOT NULL,
+                current_node VARCHAR(10),
+                submit_time TIMESTAMP NOT NULL,
+                complete_time TIMESTAMP,
+                duration_hours NUMERIC(10, 2),
+                process_data JSONB,
+                nodes_history JSONB,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+
         # 创建索引
         self.cur.execute("""
             CREATE INDEX IF NOT EXISTS idx_documents_document_id
             ON documents(document_id)
+        """)
+
+        self.cur.execute("""
+            CREATE INDEX IF NOT EXISTS idx_documents_author
+            ON documents(author)
+        """)
+
+        self.cur.execute("""
+            CREATE INDEX IF NOT EXISTS idx_documents_created_at
+            ON documents(created_at DESC)
+        """)
+
+        self.cur.execute("""
+            CREATE INDEX IF NOT EXISTS idx_document_versions_document_id
+            ON document_versions(document_id, version_number DESC)
+        """)
+
+        self.cur.execute("""
+            CREATE INDEX IF NOT EXISTS idx_document_contents_document_id
+            ON document_contents(document_id, version_number)
         """)
 
         self.cur.execute("""
@@ -1240,8 +1947,58 @@ class OAStorage:
         """)
 
         self.cur.execute("""
+            CREATE INDEX IF NOT EXISTS idx_process_approvals_status
+            ON process_approvals(current_status, submit_time DESC)
+        """)
+
+        self.cur.execute("""
+            CREATE INDEX IF NOT EXISTS idx_process_instances_instance_id
+            ON process_instances(instance_id)
+        """)
+
+        self.cur.execute("""
+            CREATE INDEX IF NOT EXISTS idx_process_instances_status
+            ON process_instances(current_status, submit_time DESC)
+        """)
+
+        self.cur.execute("""
+            CREATE INDEX IF NOT EXISTS idx_approval_records_process_id
+            ON approval_records(process_id, approval_time DESC)
+        """)
+
+        self.cur.execute("""
+            CREATE INDEX IF NOT EXISTS idx_task_assignments_process_id
+            ON task_assignments(process_id, assigned_time DESC)
+        """)
+
+        self.cur.execute("""
+            CREATE INDEX IF NOT EXISTS idx_task_assignments_assignee
+            ON task_assignments(assignee, task_status)
+        """)
+
+        self.cur.execute("""
             CREATE INDEX IF NOT EXISTS idx_tasks_task_id
             ON tasks(task_id)
+        """)
+
+        self.cur.execute("""
+            CREATE INDEX IF NOT EXISTS idx_tasks_assignee
+            ON tasks(assignee, task_status)
+        """)
+
+        self.cur.execute("""
+            CREATE INDEX IF NOT EXISTS idx_collaboration_records_document_id
+            ON collaboration_records(document_id, action_time DESC)
+        """)
+
+        self.cur.execute("""
+            CREATE INDEX IF NOT EXISTS idx_collaboration_records_user_id
+            ON collaboration_records(user_id, action_time DESC)
+        """)
+
+        self.cur.execute("""
+            CREATE INDEX IF NOT EXISTS idx_document_permissions_document_id
+            ON document_permissions(document_id)
         """)
 
         self.conn.commit()
@@ -1400,6 +2157,245 @@ class OAStorage:
                 "created_at": row[4]
             }
         return None
+
+    def store_document_content(self, document_id: str, version_number: int,
+                              content_text: str = None, content_html: str = None,
+                              content_json: Dict = None) -> int:
+        """存储文档内容"""
+        self.cur.execute("""
+            INSERT INTO document_contents (
+                document_id, version_number, content_text,
+                content_html, content_json
+            ) VALUES (%s, %s, %s, %s, %s::jsonb)
+            ON CONFLICT (document_id, version_number) DO UPDATE SET
+                content_text = EXCLUDED.content_text,
+                content_html = EXCLUDED.content_html,
+                content_json = EXCLUDED.content_json,
+                extracted_at = CURRENT_TIMESTAMP
+            RETURNING id
+        """, (
+            document_id, version_number, content_text,
+            content_html, json.dumps(content_json) if content_json else None
+        ))
+        self.conn.commit()
+        return self.cur.fetchone()[0]
+
+    def search_documents_fulltext(self, search_query: str, limit: int = 100) -> List[Dict]:
+        """全文搜索文档"""
+        self.cur.execute("""
+            SELECT DISTINCT d.document_id, d.document_title, d.document_type,
+                   d.author, d.created_at, dc.version_number,
+                   ts_rank(to_tsvector('english', dc.content_text),
+                          plainto_tsquery('english', %s)) as rank
+            FROM documents d
+            JOIN document_contents dc ON d.document_id = dc.document_id
+            WHERE to_tsvector('english', dc.content_text) @@ plainto_tsquery('english', %s)
+            ORDER BY rank DESC, d.created_at DESC
+            LIMIT %s
+        """, (search_query, search_query, limit))
+
+        return [
+            {
+                "document_id": row[0],
+                "document_title": row[1],
+                "document_type": row[2],
+                "author": row[3],
+                "created_at": row[4],
+                "version_number": row[5],
+                "rank": float(row[6])
+            }
+            for row in self.cur.fetchall()
+        ]
+
+    def store_task_assignment(self, assignment_data: Dict) -> int:
+        """存储任务分配"""
+        self.cur.execute("""
+            INSERT INTO task_assignments (
+                process_id, node_id, assignee, assigned_time, task_status
+            ) VALUES (%s, %s, %s, %s, %s)
+            RETURNING id
+        """, (
+            assignment_data.get("process_id"),
+            assignment_data.get("node_id"),
+            assignment_data.get("assignee"),
+            assignment_data.get("assigned_time"),
+            assignment_data.get("task_status", "Assigned")
+        ))
+        self.conn.commit()
+        return self.cur.fetchone()[0]
+
+    def get_pending_tasks(self, process_id: str) -> List[Dict]:
+        """获取待处理任务"""
+        self.cur.execute("""
+            SELECT process_id, node_id, assignee, assigned_time, task_status
+            FROM task_assignments
+            WHERE process_id = %s AND task_status IN ('Assigned', 'InProgress')
+            ORDER BY assigned_time DESC
+        """, (process_id,))
+
+        return [
+            {
+                "process_id": row[0],
+                "node_id": row[1],
+                "assignee": row[2],
+                "assigned_time": row[3],
+                "task_status": row[4]
+            }
+            for row in self.cur.fetchall()
+        ]
+
+    def get_completed_tasks(self, process_id: str) -> List[Dict]:
+        """获取已完成任务"""
+        self.cur.execute("""
+            SELECT process_id, node_id, assignee, assigned_time,
+                   completed_time, task_status
+            FROM task_assignments
+            WHERE process_id = %s AND task_status = 'Completed'
+            ORDER BY completed_time DESC
+        """, (process_id,))
+
+        return [
+            {
+                "process_id": row[0],
+                "node_id": row[1],
+                "assignee": row[2],
+                "assigned_time": row[3],
+                "completed_time": row[4],
+                "task_status": row[5]
+            }
+            for row in self.cur.fetchall()
+        ]
+
+    def store_collaboration_record(self, document_id: str, user_id: str,
+                                   action_type: str, action_description: str = None,
+                                   action_data: Dict = None) -> int:
+        """存储协作记录"""
+        self.cur.execute("""
+            INSERT INTO collaboration_records (
+                document_id, user_id, action_type,
+                action_description, action_data
+            ) VALUES (%s, %s, %s, %s, %s::jsonb)
+            RETURNING id
+        """, (
+            document_id, user_id, action_type,
+            action_description, json.dumps(action_data) if action_data else None
+        ))
+        self.conn.commit()
+        return self.cur.fetchone()[0]
+
+    def get_collaboration_history(self, document_id: str, limit: int = 100) -> List[Dict]:
+        """获取协作历史"""
+        self.cur.execute("""
+            SELECT user_id, action_type, action_description,
+                   action_data, action_time
+            FROM collaboration_records
+            WHERE document_id = %s
+            ORDER BY action_time DESC
+            LIMIT %s
+        """, (document_id, limit))
+
+        return [
+            {
+                "user_id": row[0],
+                "action_type": row[1],
+                "action_description": row[2],
+                "action_data": json.loads(row[3]) if row[3] else None,
+                "action_time": row[4]
+            }
+            for row in self.cur.fetchall()
+        ]
+
+    def grant_document_permission(self, document_id: str, user_id: str,
+                                  permission_type: str, granted_by: str) -> int:
+        """授予文档权限"""
+        self.cur.execute("""
+            INSERT INTO document_permissions (
+                document_id, user_id, permission_type, granted_by
+            ) VALUES (%s, %s, %s, %s)
+            ON CONFLICT (document_id, user_id, permission_type) DO UPDATE SET
+                granted_by = EXCLUDED.granted_by,
+                granted_at = CURRENT_TIMESTAMP
+            RETURNING id
+        """, (document_id, user_id, permission_type, granted_by))
+        self.conn.commit()
+        return self.cur.fetchone()[0]
+
+    def check_document_permission(self, document_id: str, user_id: str,
+                                 permission_type: str) -> bool:
+        """检查文档权限"""
+        self.cur.execute("""
+            SELECT COUNT(*) FROM document_permissions
+            WHERE document_id = %s AND user_id = %s AND permission_type = %s
+        """, (document_id, user_id, permission_type))
+        return self.cur.fetchone()[0] > 0
+
+    def store_process_instance(self, instance_data: Dict) -> int:
+        """存储流程实例"""
+        self.cur.execute("""
+            INSERT INTO process_instances (
+                instance_id, process_id, process_name, submitter,
+                current_status, current_node, submit_time,
+                process_data, nodes_history
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s::jsonb, %s::jsonb)
+            ON CONFLICT (instance_id) DO UPDATE SET
+                current_status = EXCLUDED.current_status,
+                current_node = EXCLUDED.current_node,
+                process_data = EXCLUDED.process_data,
+                nodes_history = EXCLUDED.nodes_history,
+                updated_at = CURRENT_TIMESTAMP
+            RETURNING id
+        """, (
+            instance_data.get("instance_id"),
+            instance_data.get("process_id"),
+            instance_data.get("process_name"),
+            instance_data.get("submitter"),
+            instance_data.get("current_status"),
+            instance_data.get("current_node"),
+            instance_data.get("submit_time"),
+            json.dumps(instance_data.get("process_data", {})),
+            json.dumps(instance_data.get("nodes_history", []))
+        ))
+        self.conn.commit()
+        return self.cur.fetchone()[0]
+
+    def update_process_instance(self, instance_id: str, status: str = None,
+                               current_node: str = None, complete_time: datetime = None):
+        """更新流程实例"""
+        updates = []
+        params = []
+
+        if status:
+            updates.append("current_status = %s")
+            params.append(status)
+
+        if current_node:
+            updates.append("current_node = %s")
+            params.append(current_node)
+
+        if complete_time:
+            updates.append("complete_time = %s")
+            params.append(complete_time)
+            # 计算持续时间
+            self.cur.execute("""
+                SELECT submit_time FROM process_instances WHERE instance_id = %s
+            """, (instance_id,))
+            submit_time = self.cur.fetchone()
+            if submit_time:
+                duration = (complete_time - submit_time[0]).total_seconds() / 3600
+                updates.append("duration_hours = %s")
+                params.append(duration)
+
+        if updates:
+            updates.append("updated_at = CURRENT_TIMESTAMP")
+            params.append(instance_id)
+
+            query = f"""
+                UPDATE process_instances
+                SET {', '.join(updates)}
+                WHERE instance_id = %s
+            """
+            self.cur.execute(query, tuple(params))
+            self.conn.commit()
 
     def close(self):
         """关闭数据库连接"""

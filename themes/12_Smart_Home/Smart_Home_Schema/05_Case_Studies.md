@@ -30,8 +30,12 @@
     - [8.1 场景描述](#81-场景描述)
     - [8.2 Schema定义](#82-schema定义)
     - [8.3 实现代码](#83-实现代码)
-  - [9. 案例8：智慧家居数据存储系统](#9-案例8智慧家居数据存储系统)
+  - [9. 案例9：离家场景（安防、能耗管理）](#9-案例9离家场景安防能耗管理)
     - [9.1 场景描述](#91-场景描述)
+    - [9.2 Schema定义](#92-schema定义)
+    - [9.3 实现代码](#93-实现代码)
+  - [10. 案例10：智慧家居数据存储系统](#10-案例10智慧家居数据存储系统)
+    - [9.1 场景描述](#91-场景描述-1)
     - [9.2 实现代码](#92-实现代码)
 
 ---
@@ -715,7 +719,310 @@ def monitor_devices():
 
 ---
 
-## 9. 案例8：智慧家居数据存储系统
+## 9. 案例9：离家场景（安防、能耗管理）
+
+### 9.1 场景描述
+
+**业务背景**：
+用户希望当检测到用户离开家时，自动执行离家场景，包括：
+
+- 关闭所有灯光和电器设备
+- 启动安防系统（门窗传感器、摄像头）
+- 调节空调到节能模式
+- 关闭窗帘
+- 记录离开时间用于能耗分析
+
+**技术挑战**：
+
+- 需要准确检测用户离开（多种传感器组合判断）
+- 需要确保所有设备正确关闭
+- 需要启动安防系统并验证状态
+- 需要记录能耗数据用于分析
+
+**解决方案**：
+使用场景联动系统，定义离家场景的触发条件（门锁状态+运动传感器+时间），
+当条件满足时自动执行离家场景，并记录执行结果用于后续分析。
+
+### 9.2 Schema定义
+
+**离家场景Schema**：
+
+```json
+{
+  "scene_id": "scene_away",
+  "scene_name": "离家场景",
+  "scene_description": "用户离开家时自动执行，关闭设备并启动安防",
+  "enabled": true,
+  "condition_logic": "AND",
+  "conditions": [
+    {
+      "device_id": "LOCK001",
+      "attribute": "lock_state",
+      "operator": "==",
+      "value": "Locked"
+    },
+    {
+      "device_id": "MOTION001",
+      "attribute": "motion_detected",
+      "operator": "==",
+      "value": false
+    },
+    {
+      "device_id": "MOTION002",
+      "attribute": "motion_detected",
+      "operator": "==",
+      "value": false
+    }
+  ],
+  "time_conditions": [
+    {
+      "time_type": "time_of_day",
+      "value": "08:00:00"
+    }
+  ],
+  "actions": [
+    {
+      "device_id": "LIGHT001",
+      "command": "turn_off",
+      "parameters": {},
+      "delay": 0.0
+    },
+    {
+      "device_id": "LIGHT002",
+      "command": "turn_off",
+      "parameters": {},
+      "delay": 0.0
+    },
+    {
+      "device_id": "AC001",
+      "command": "set_temperature",
+      "parameters": {
+        "temperature": 28,
+        "mode": "Eco"
+      },
+      "delay": 0.0
+    },
+    {
+      "device_id": "CURTAIN001",
+      "command": "close",
+      "parameters": {},
+      "delay": 0.0
+    },
+    {
+      "device_id": "CURTAIN002",
+      "command": "close",
+      "parameters": {},
+      "delay": 0.0
+    },
+    {
+      "device_id": "SECURITY001",
+      "command": "arm",
+      "parameters": {
+        "mode": "Away",
+        "zones": ["all"]
+      },
+      "delay": 5.0
+    },
+    {
+      "device_id": "CAMERA001",
+      "command": "start_recording",
+      "parameters": {
+        "mode": "motion_detection"
+      },
+      "delay": 5.0
+    }
+  ]
+}
+```
+
+### 9.3 实现代码
+
+**离家场景完整实现**：
+
+```python
+import logging
+from datetime import datetime, time
+from smart_home_storage import SmartHomeStorage
+from scene_manager import SceneManager, DeviceController
+from matter_sdk_wrapper import MatterSDKWrapper
+from zigbee2mqtt_wrapper import Zigbee2MQTTWrapper
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# 初始化组件
+storage = SmartHomeStorage("postgresql://user:pass@localhost/smarthome")
+matter_sdk = MatterSDKWrapper(node_id=0x12344321)
+zigbee_api = Zigbee2MQTTWrapper(base_url="http://localhost:8080")
+device_controller = DeviceController(matter_sdk=matter_sdk, zigbee_api=zigbee_api)
+scene_manager = SceneManager(storage, device_controller)
+
+# 创建离家场景
+def create_away_scene():
+    """创建离家场景"""
+    scene_manager.create_scene(
+        scene_id="scene_away",
+        scene_name="离家场景",
+        conditions=[
+            {
+                "device_id": "LOCK001",
+                "attribute": "lock_state",
+                "operator": "==",
+                "value": "Locked"
+            },
+            {
+                "device_id": "MOTION001",
+                "attribute": "motion_detected",
+                "operator": "==",
+                "value": False
+            },
+            {
+                "device_id": "MOTION002",
+                "attribute": "motion_detected",
+                "operator": "==",
+                "value": False
+            }
+        ],
+        actions=[
+            {
+                "device_id": "LIGHT001",
+                "command": "turn_off",
+                "parameters": {},
+                "delay": 0.0
+            },
+            {
+                "device_id": "LIGHT002",
+                "command": "turn_off",
+                "parameters": {},
+                "delay": 0.0
+            },
+            {
+                "device_id": "AC001",
+                "command": "set_temperature",
+                "parameters": {"temperature": 28, "mode": "Eco"},
+                "delay": 0.0
+            },
+            {
+                "device_id": "CURTAIN001",
+                "command": "close",
+                "parameters": {},
+                "delay": 0.0
+            },
+            {
+                "device_id": "SECURITY001",
+                "command": "arm",
+                "parameters": {"mode": "Away", "zones": ["all"]},
+                "delay": 5.0
+            },
+            {
+                "device_id": "CAMERA001",
+                "command": "start_recording",
+                "parameters": {"mode": "motion_detection"},
+                "delay": 5.0
+            }
+        ],
+        time_conditions=[
+            {
+                "time_type": "time_of_day",
+                "value": time(8, 0, 0)  # 8:00 AM之后
+            }
+        ],
+        condition_logic="AND"
+    )
+    logger.info("离家场景创建成功")
+
+# 模拟用户离开
+def simulate_user_leaving():
+    """模拟用户离开场景"""
+    # 1. 用户锁门
+    scene_manager.update_device_state("LOCK001", {
+        "lock_state": "Locked",
+        "timestamp": datetime.now().isoformat()
+    })
+
+    # 2. 等待5秒，确保用户离开
+    import time
+    time.sleep(5)
+
+    # 3. 更新运动传感器状态（无运动）
+    scene_manager.update_device_state("MOTION001", {
+        "motion_detected": False,
+        "timestamp": datetime.now().isoformat()
+    })
+
+    scene_manager.update_device_state("MOTION002", {
+        "motion_detected": False,
+        "timestamp": datetime.now().isoformat()
+    })
+
+    logger.info("用户离开检测完成，场景应自动触发")
+
+# 验证场景执行结果
+def verify_away_scene_execution():
+    """验证离家场景执行结果"""
+    # 查询场景执行历史
+    executions = storage.get_scene_execution_statistics("scene_away", days=1)
+    logger.info(f"离家场景执行统计: {executions}")
+
+    # 验证设备状态
+    devices_to_check = ["LIGHT001", "LIGHT002", "AC001", "SECURITY001"]
+    for device_id in devices_to_check:
+        state = storage.get_latest_device_state(device_id)
+        if state:
+            logger.info(f"设备 {device_id} 状态: {state}")
+        else:
+            logger.warning(f"设备 {device_id} 状态未找到")
+
+    # 查询能耗数据
+    energy_stats = storage.get_device_energy_statistics("AC001", datetime.now())
+    logger.info(f"空调能耗统计: {energy_stats}")
+
+# 测试用例
+def test_away_scene():
+    """测试离家场景"""
+    # 测试1: 正常离开场景
+    logger.info("测试1: 正常离开场景")
+    create_away_scene()
+    simulate_user_leaving()
+    verify_away_scene_execution()
+
+    # 测试2: 部分条件不满足（运动传感器仍检测到运动）
+    logger.info("测试2: 部分条件不满足")
+    scene_manager.update_device_state("MOTION001", {
+        "motion_detected": True,  # 仍有运动
+        "timestamp": datetime.now().isoformat()
+    })
+    # 场景不应触发
+
+    # 测试3: 手动执行场景
+    logger.info("测试3: 手动执行场景")
+    result = scene_manager.execute_scene("scene_away", manual=True)
+    logger.info(f"手动执行结果: {result}")
+
+if __name__ == "__main__":
+    test_away_scene()
+```
+
+**运行结果示例**：
+
+```text
+INFO:__main__:离家场景创建成功
+INFO:__main__:用户离开检测完成，场景应自动触发
+INFO:__main__:Scenes triggered: ['scene_away']
+INFO:__main__:Action executed: LIGHT001 -> turn_off
+INFO:__main__:Action executed: LIGHT002 -> turn_off
+INFO:__main__:Action executed: AC001 -> set_temperature
+INFO:__main__:Action executed: CURTAIN001 -> close
+INFO:__main__:Action executed: SECURITY001 -> arm
+INFO:__main__:Action executed: CAMERA001 -> start_recording
+INFO:__main__:离家场景执行统计: [('auto', 1, 1, 0, None)]
+INFO:__main__:设备 LIGHT001 状态: {'state': {'power': 'Off'}, 'recorded_at': '2025-01-21 10:30:00'}
+INFO:__main__:设备 AC001 状态: {'state': {'temperature': 28, 'mode': 'Eco'}, 'recorded_at': '2025-01-21 10:30:00'}
+```
+
+---
+
+## 10. 案例10：智慧家居数据存储系统
 
 ### 9.1 场景描述
 

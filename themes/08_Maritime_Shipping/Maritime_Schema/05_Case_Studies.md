@@ -5,21 +5,44 @@
 - [海运与航运Schema实践案例](#海运与航运schema实践案例)
   - [📑 目录](#-目录)
   - [1. 案例概述](#1-案例概述)
-  - [2. 案例1：船舶信息管理](#2-案例1船舶信息管理)
+  - [2. 案例1：船舶信息管理和位置追踪](#2-案例1船舶信息管理和位置追踪)
     - [2.1 场景描述](#21-场景描述)
     - [2.2 Schema定义](#22-schema定义)
-  - [3. 案例2：货物追踪系统](#3-案例2货物追踪系统)
+    - [2.3 实现代码](#23-实现代码)
+  - [3. 案例2：货物全程追踪系统](#3-案例2货物全程追踪系统)
     - [3.1 场景描述](#31-场景描述)
     - [3.2 Schema定义](#32-schema定义)
-  - [4. 案例3：航线规划系统](#4-案例3航线规划系统)
+    - [3.3 实现代码](#33-实现代码)
+  - [4. 案例3：航线规划和性能分析](#4-案例3航线规划和性能分析)
     - [4.1 场景描述](#41-场景描述)
     - [4.2 Schema定义](#42-schema定义)
-  - [5. 案例4：EDIFACT到XML转换](#5-案例4edifact到xml转换)
+    - [4.3 实现代码](#43-实现代码)
+  - [5. 案例4：EDIFACT消息处理和转换](#5-案例4edifact消息处理和转换)
     - [5.1 场景描述](#51-场景描述)
     - [5.2 实现代码](#52-实现代码)
-  - [6. 案例5：海运航运数据存储系统](#6-案例5海运航运数据存储系统)
+  - [6. 案例5：海运航运数据分析和报表](#6-案例5海运航运数据分析和报表)
     - [6.1 场景描述](#61-场景描述)
     - [6.2 实现代码](#62-实现代码)
+    - [6.3 数据分析示例](#63-数据分析示例)
+  - [7. 案例6：船舶实时追踪（AIS集成）](#7-案例6船舶实时追踪ais集成)
+    - [7.1 场景描述](#71-场景描述)
+    - [7.2 Schema定义](#72-schema定义)
+    - [7.3 实现代码](#73-实现代码)
+  - [8. 案例7：货物全程追踪（EDIFACT）](#8-案例7货物全程追踪edifact)
+    - [8.1 场景描述](#81-场景描述)
+    - [8.2 Schema定义](#82-schema定义)
+    - [8.3 实现代码](#83-实现代码)
+  - [9. 案例8：航线优化（成本+时间）](#9-案例8航线优化成本时间)
+    - [9.1 场景描述](#91-场景描述)
+    - [9.2 Schema定义](#92-schema定义)
+    - [9.3 实现代码](#93-实现代码)
+  - [10. 案例9：港口效率分析](#10-案例9港口效率分析)
+    - [10.1 场景描述](#101-场景描述)
+    - [10.2 实现代码](#102-实现代码)
+  - [11. 案例10：异常事件处理](#11-案例10异常事件处理)
+    - [11.1 场景描述](#111-场景描述)
+    - [11.2 Schema定义](#112-schema定义)
+    - [11.3 实现代码](#113-实现代码)
 
 ---
 
@@ -38,6 +61,7 @@
 并预测到达时间，优化航线规划。
 
 **技术挑战**：
+
 - 需要实时接收AIS位置数据
 - 需要计算船舶速度和航向
 - 需要预测到达时间
@@ -143,6 +167,7 @@ print(f"  Max speed: {stats['max_speed']:.2f} knots")
 全程追踪，确保货物安全和及时交付。
 
 **技术挑战**：
+
 - 需要实时更新货物状态
 - 需要记录所有追踪事件
 - 需要支持多货物批量追踪
@@ -261,6 +286,7 @@ for stat in stats:
 优化燃油消耗和航行时间。
 
 **技术挑战**：
+
 - 需要规划最优航线
 - 需要监控实际执行情况
 - 需要分析航线性能
@@ -339,6 +365,7 @@ print(f"  Utilization rate: {utilization['utilization_rate']:.2f}%")
 与合作伙伴交换货物清单、状态更新和到达通知。
 
 **技术挑战**：
+
 - 需要解析EDIFACT消息
 - 需要转换为XML格式
 - 需要验证消息完整性
@@ -464,6 +491,725 @@ utilization = storage.get_vessel_utilization("VESSEL001", days=30)
 print(f"\nVessel Utilization (30 days):")
 print(f"  Utilization rate: {utilization['utilization_rate']:.2f}%")
 print(f"  Total cargo weight: {utilization['total_cargo_weight']:.2f} tons")
+```
+
+---
+
+## 7. 案例6：船舶实时追踪（AIS集成）
+
+### 7.1 场景描述
+
+**业务背景**：
+航运公司需要实时追踪船舶位置，通过AIS（Automatic Identification System）系统接收船舶位置数据，实时更新船舶状态，并预测到达时间。
+
+**技术挑战**：
+
+- 需要解析AIS NMEA格式消息
+- 需要实时处理大量AIS数据
+- 需要计算船舶速度和航向
+- 需要预测到达时间
+
+**解决方案**：
+使用AISMessageParser解析AIS消息，使用VesselPositionTracker实时更新船舶位置，支持多种AIS消息类型。
+
+### 7.2 Schema定义
+
+**AIS数据Schema**：
+
+```json
+{
+  "ais_message": "!AIVDM,1,1,,A,133m@ogP00PD;88MD5MTDww@2D7k,0*46",
+  "message_type": 1,
+  "message_type_name": "Position Report Class A",
+  "mmsi": "563123456",
+  "vessel_id": "VESSEL001",
+  "position_data": {
+    "latitude": 1.234567,
+    "longitude": 103.456789,
+    "course_over_ground": 45.5,
+    "speed_over_ground": 18.5,
+    "heading": 45,
+    "navigation_status": 0
+  },
+  "timestamp": "2025-01-21T10:30:00Z"
+}
+```
+
+### 7.3 实现代码
+
+**完整的AIS实时追踪实现**：
+
+```python
+import asyncio
+import logging
+from vessel_position_tracker import VesselPositionTracker, AISMessageParser
+from maritime_storage import MaritimeStorage
+
+logger = logging.getLogger(__name__)
+
+async def real_time_ais_tracking():
+    """实时AIS追踪示例"""
+    storage = MaritimeStorage("postgresql://user:pass@localhost/maritime")
+    tracker = VesselPositionTracker(storage)
+
+    # 模拟AIS消息流
+    ais_messages = [
+        "!AIVDM,1,1,,A,133m@ogP00PD;88MD5MTDww@2D7k,0*46",
+        "!AIVDM,1,1,,A,133m@ogP00PD;88MD5MTDww@2D7k,0*46",
+        "!AIVDM,1,1,,A,133m@ogP00PD;88MD5MTDww@2D7k,0*46"
+    ]
+
+    print("Processing AIS messages...")
+    for ais_msg in ais_messages:
+        try:
+            # 处理AIS消息
+            tracker.process_ais_message(ais_msg)
+            print(f"Processed AIS message: {ais_msg[:50]}...")
+        except Exception as e:
+            logger.error(f"Failed to process AIS message: {e}")
+
+    # 获取船舶当前位置
+    vessel_id = "VESSEL001"
+    current_pos = tracker.get_current_position(vessel_id)
+    if current_pos:
+        print(f"\nCurrent position for {vessel_id}:")
+        print(f"  Latitude: {current_pos['latitude']}")
+        print(f"  Longitude: {current_pos['longitude']}")
+        print(f"  Speed: {current_pos.get('speed', 0)} knots")
+        print(f"  Course: {current_pos.get('course', 0)} degrees")
+
+    # 估算到达时间
+    destination_lat = 1.300000
+    destination_lon = 103.500000
+    eta = tracker.estimate_arrival_time(vessel_id, destination_lat, destination_lon)
+    if eta:
+        print(f"\nEstimated arrival time: {eta}")
+
+    # 获取船舶轨迹
+    track = tracker.get_vessel_track(vessel_id, hours=24)
+    print(f"\nVessel track (24h): {len(track)} positions")
+
+    # 获取区域内的船舶
+    vessels_in_area = tracker.get_vessels_in_area(
+        min_lat=1.200000,
+        max_lat=1.400000,
+        min_lon=103.400000,
+        max_lon=103.600000
+    )
+    print(f"\nVessels in area: {len(vessels_in_area)}")
+    for vessel in vessels_in_area:
+        print(f"  {vessel['vessel_name']}: {vessel['latitude']}, {vessel['longitude']}")
+
+    storage.close()
+
+if __name__ == "__main__":
+    asyncio.run(real_time_ais_tracking())
+```
+
+---
+
+## 8. 案例7：货物全程追踪（EDIFACT）
+
+### 8.1 场景描述
+
+**业务背景**：
+航运公司需要全程追踪货物状态，通过EDIFACT消息（IFTMIN、IFTMCS、IFTMAN）与合作伙伴交换货物信息，实现货物从预订到交付的全程追踪。
+
+**技术挑战**：
+
+- 需要解析多种EDIFACT消息类型
+- 需要验证消息完整性
+- 需要关联不同消息中的货物信息
+- 需要生成货物追踪报告
+
+**解决方案**：
+使用EDIFACTParser解析EDIFACT消息，使用CargoTrackingSystem追踪货物状态，实现货物全程追踪。
+
+### 8.2 Schema定义
+
+**货物全程追踪Schema**：
+
+```json
+{
+  "cargo_id": "CARGO20250121001",
+  "tracking_events": [
+    {
+      "event_type": "Booked",
+      "event_time": "2025-01-15T10:00:00Z",
+      "event_location": "Shanghai",
+      "source_message": "IFTMIN",
+      "message_reference": "MSG001"
+    },
+    {
+      "event_type": "Loaded",
+      "event_time": "2025-01-18T14:00:00Z",
+      "event_location": "Shanghai Port",
+      "source_message": "IFTMCS",
+      "message_reference": "MSG002"
+    },
+    {
+      "event_type": "Arrived",
+      "event_time": "2025-01-22T08:00:00Z",
+      "event_location": "Singapore Port",
+      "source_message": "IFTMAN",
+      "message_reference": "MSG003"
+    }
+  ]
+}
+```
+
+### 8.3 实现代码
+
+**完整的货物全程追踪实现**：
+
+```python
+from edifact_parser import EDIFACTParser
+from cargo_tracking_system import CargoTrackingSystem
+from maritime_storage import MaritimeStorage
+
+def cargo_full_tracking():
+    """货物全程追踪示例"""
+    storage = MaritimeStorage("postgresql://user:pass@localhost/maritime")
+    parser = EDIFACTParser()
+    tracking_system = CargoTrackingSystem(storage)
+
+    # 1. 接收IFTMIN消息（货物清单）
+    iftmin_message = """UNH+1+IFTMIN:D:96A:UN'
+BGM+270+MSG001+9'
+DTM+137:20250115:102'
+TDT+20+1+13+MV OCEAN STAR::172'
+LOC+5+CNSHA:172:6+Shanghai'
+LOC+8+SGSIN:172:6+Singapore'
+GID+1+Electronics'
+MEA+WT+20000:KGM'
+UNT+8+1'"""
+
+    segments = parser.parse_message(iftmin_message)
+    cargo_manifest = parser.parse_iftmin(segments)
+
+    cargo_id = "CARGO20250121001"
+
+    # 记录预订事件
+    tracking_system.track_cargo_event(
+        cargo_id,
+        "Booked",
+        cargo_manifest.get("loading_port", "Unknown"),
+        f"From EDIFACT message: {cargo_manifest.get('message_reference')}"
+    )
+
+    # 2. 接收IFTMCS消息（货物状态更新）
+    iftmcs_message = """UNH+1+IFTMCS:D:96A:UN'
+BGM+270+MSG002+9'
+RFF+BM:CARGO20250121001'
+DTM+137:20250118:102'
+LOC+11+Shanghai Port'
+STS+1+Loaded'
+UNT+5+1'"""
+
+    segments = parser.parse_message(iftmcs_message)
+    cargo_status = parser.parse_iftmcs(segments)
+
+    # 记录状态更新
+    for update in cargo_status.get("status_updates", []):
+        tracking_system.track_cargo_event(
+            update.get("cargo_id", cargo_id),
+            update.get("status", "Unknown"),
+            update.get("event_location", "Unknown"),
+            f"From EDIFACT message: {cargo_status.get('message_reference')}"
+        )
+
+    # 3. 接收IFTMAN消息（到达通知）
+    iftman_message = """UNH+1+IFTMAN:D:96A:UN'
+BGM+270+MSG003+9'
+TDT+20+1+13+MV OCEAN STAR::172'
+LOC+8+SGSIN:172:6+Singapore'
+DTM+132:20250122:102'
+DTM+133:20250122:102'
+UNT+6+1'"""
+
+    segments = parser.parse_message(iftman_message)
+    arrival_notice = parser.parse_iftman(segments)
+
+    # 记录到达事件
+    arrival_info = arrival_notice.get("arrival_info", {})
+    tracking_system.track_cargo_event(
+        cargo_id,
+        "Arrived",
+        arrival_info.get("port_name", "Unknown"),
+        f"From EDIFACT message: {arrival_notice.get('message_reference')}"
+    )
+
+    # 获取货物追踪历史
+    history = tracking_system.get_cargo_tracking_history(cargo_id)
+    print(f"\nCargo Tracking History for {cargo_id}:")
+    for event in history:
+        print(f"  {event['event_time']}: {event['event_type']} at {event['event_location']}")
+
+    # 获取当前状态
+    current_status = tracking_system.get_cargo_current_status(cargo_id)
+    if current_status:
+        print(f"\nCurrent Status:")
+        print(f"  Status: {current_status['status']}")
+        print(f"  Location: {current_status['current_location']}")
+        print(f"  Last Update: {current_status['last_update']}")
+
+    storage.close()
+
+if __name__ == "__main__":
+    cargo_full_tracking()
+```
+
+---
+
+## 9. 案例8：航线优化（成本+时间）
+
+### 9.1 场景描述
+
+**业务背景**：
+航运公司需要在成本和时间之间找到平衡，优化航线规划。需要考虑燃油成本、港口成本、航行时间、天气因素等多个因素。
+
+**技术挑战**：
+
+- 需要计算最短路径
+- 需要优化燃油成本
+- 需要优化航行时间
+- 需要考虑天气因素
+- 需要多目标优化
+
+**解决方案**：
+使用RouteOptimizer实现航线优化，支持最短路径、成本优化、时间优化和多目标优化。
+
+### 9.2 Schema定义
+
+**航线优化Schema**：
+
+```json
+{
+  "optimization_id": "OPT001",
+  "route_id": "ROUTE20250121001",
+  "optimization_type": "multi_objective",
+  "origin": {
+    "latitude": 31.230416,
+    "longitude": 121.473701,
+    "port_code": "CNSHA",
+    "port_name": "Shanghai"
+  },
+  "destination": {
+    "latitude": 1.289670,
+    "longitude": 103.850070,
+    "port_code": "SGSIN",
+    "port_name": "Singapore"
+  },
+  "optimization_parameters": {
+    "weights": {
+      "cost": 0.6,
+      "time": 0.4
+    },
+    "fuel_price_per_ton": 500.0,
+    "max_speed": 20.0,
+    "weather_data": {
+      "wind_speed": 15,
+      "wind_direction": 90
+    }
+  },
+  "optimization_result": {
+    "total_distance": 1500.0,
+    "estimated_hours": 75.0,
+    "fuel_consumption": 75.0,
+    "total_cost": 37500.0,
+    "recommended_speed": 18.5
+  }
+}
+```
+
+### 9.3 实现代码
+
+**完整的航线优化实现**：
+
+```python
+from route_optimizer import RouteOptimizer
+from vessel_position_tracker import VesselPositionTracker
+from maritime_storage import MaritimeStorage
+
+def route_optimization_example():
+    """航线优化示例"""
+    storage = MaritimeStorage("postgresql://user:pass@localhost/maritime")
+    tracker = VesselPositionTracker(storage)
+    optimizer = RouteOptimizer(storage, tracker)
+
+    vessel_id = "VESSEL001"
+    origin_lat, origin_lon = 31.230416, 121.473701  # Shanghai
+    dest_lat, dest_lon = 1.289670, 103.850070  # Singapore
+
+    # 1. 最短路径优化
+    print("1. Shortest Path Optimization:")
+    shortest_result = optimizer.optimize_route_shortest_path(
+        origin_lat, origin_lon, dest_lat, dest_lon
+    )
+    print(f"  Total distance: {shortest_result['total_distance']:.2f} nautical miles")
+    print(f"  Route segments: {len(shortest_result['route_segments'])}")
+
+    # 2. 成本优化
+    print("\n2. Cost Optimization:")
+    cost_result = optimizer.optimize_route_cost(
+        origin_lat, origin_lon, dest_lat, dest_lon,
+        vessel_id,
+        fuel_price_per_ton=500.0,
+        port_costs={"loading": 5000, "discharge": 5000}
+    )
+    print(f"  Total distance: {cost_result['total_distance']:.2f} nautical miles")
+    print(f"  Fuel consumption: {cost_result['fuel_consumption']:.2f} tons")
+    print(f"  Fuel cost: ${cost_result['fuel_cost']:,.2f}")
+    print(f"  Port cost: ${cost_result['port_cost']:,.2f}")
+    print(f"  Total cost: ${cost_result['total_cost']:,.2f}")
+    print(f"  Estimated hours: {cost_result['estimated_hours']:.2f}")
+
+    # 3. 时间优化
+    print("\n3. Time Optimization:")
+    time_result = optimizer.optimize_route_time(
+        origin_lat, origin_lon, dest_lat, dest_lon,
+        vessel_id,
+        max_speed=20.0,
+        weather_data={"wind_speed": 15, "wind_direction": 90}
+    )
+    print(f"  Total distance: {time_result['total_distance']:.2f} nautical miles")
+    print(f"  Max speed: {time_result['max_speed']:.2f} knots")
+    print(f"  Effective speed: {time_result['effective_speed']:.2f} knots")
+    print(f"  Estimated hours: {time_result['estimated_hours']:.2f}")
+    print(f"  Weather impact: {time_result['weather_impact']}")
+
+    # 4. 多目标优化
+    print("\n4. Multi-Objective Optimization:")
+    multi_result = optimizer.optimize_route_multi_objective(
+        origin_lat, origin_lon, dest_lat, dest_lon,
+        vessel_id,
+        weights={"cost": 0.6, "time": 0.4}
+    )
+    print(f"  Combined score: {multi_result['combined_score']:.4f}")
+    print(f"  Recommended speed: {multi_result['recommended_speed']:.2f} knots")
+    print(f"  Estimated cost: ${multi_result['estimated_cost']:,.2f}")
+    print(f"  Estimated hours: {multi_result['estimated_hours']:.2f}")
+
+    # 5. 寻找最优中间港口
+    print("\n5. Optimal Waypoints:")
+    available_ports = [
+        {"port_code": "CNXMN", "port_name": "Xiamen", "latitude": 24.479834, "longitude": 118.081871},
+        {"port_code": "CNFOC", "port_name": "Fuzhou", "latitude": 26.074508, "longitude": 119.296494},
+        {"port_code": "MYTPP", "port_name": "Port Klang", "latitude": 3.000000, "longitude": 101.400000}
+    ]
+
+    optimal_waypoints = optimizer.find_optimal_waypoints(
+        origin_lat, origin_lon, dest_lat, dest_lon, available_ports
+    )
+    print(f"  Optimal waypoints: {len(optimal_waypoints)}")
+    for wp in optimal_waypoints:
+        print(f"    {wp['port_name']} ({wp['port_code']})")
+
+    # 存储优化结果
+    optimization_data = {
+        "optimization_id": "OPT001",
+        "route_id": "ROUTE20250121001",
+        "optimization_type": "multi_objective",
+        "origin_latitude": origin_lat,
+        "origin_longitude": origin_lon,
+        "destination_latitude": dest_lat,
+        "destination_longitude": dest_lon,
+        "total_distance": multi_result["total_distance"],
+        "estimated_hours": multi_result["estimated_hours"],
+        "fuel_consumption": multi_result["cost_optimization"]["fuel_consumption"],
+        "fuel_cost": multi_result["estimated_cost"],
+        "total_cost": multi_result["estimated_cost"],
+        "recommended_speed": multi_result["recommended_speed"],
+        "waypoints": optimal_waypoints,
+        "optimization_parameters": {"weights": {"cost": 0.6, "time": 0.4}}
+    }
+
+    storage.store_route_optimization(optimization_data)
+    print(f"\nStored optimization result: OPT001")
+
+    storage.close()
+
+if __name__ == "__main__":
+    route_optimization_example()
+```
+
+---
+
+## 10. 案例9：港口效率分析
+
+### 10.1 场景描述
+
+**业务背景**：
+航运公司需要分析港口效率，了解各港口的平均停靠时间、货物处理速度、等待时间等指标，以便选择最优港口和优化港口操作。
+
+**技术挑战**：
+
+- 需要收集港口操作数据
+- 需要计算港口效率指标
+- 需要比较不同港口的效率
+- 需要识别效率瓶颈
+
+**解决方案**：
+使用港口效率表和港口操作记录表存储数据，实现港口效率分析和比较。
+
+### 10.2 实现代码
+
+**完整的港口效率分析实现**：
+
+```python
+from maritime_storage import MaritimeStorage
+from datetime import datetime, timedelta
+
+def port_efficiency_analysis():
+    """港口效率分析示例"""
+    storage = MaritimeStorage("postgresql://user:pass@localhost/maritime")
+
+    # 记录港口操作
+    operations = [
+        {
+            "operation_id": "OP001",
+            "port_code": "CNSHA",
+            "vessel_id": "VESSEL001",
+            "operation_type": "Loading",
+            "operation_start": datetime(2025, 1, 18, 8, 0, 0),
+            "operation_end": datetime(2025, 1, 18, 20, 0, 0),
+            "duration_hours": 12.0,
+            "cargo_tonnage": 20000.0,
+            "berth_number": "Berth 5",
+            "crane_count": 3,
+            "efficiency_rating": 0.85
+        },
+        {
+            "operation_id": "OP002",
+            "port_code": "SGSIN",
+            "vessel_id": "VESSEL001",
+            "operation_type": "Discharge",
+            "operation_start": datetime(2025, 1, 22, 8, 0, 0),
+            "operation_end": datetime(2025, 1, 22, 18, 0, 0),
+            "duration_hours": 10.0,
+            "cargo_tonnage": 20000.0,
+            "berth_number": "Berth 12",
+            "crane_count": 4,
+            "efficiency_rating": 0.90
+        }
+    ]
+
+    for op in operations:
+        storage.store_port_operation(op)
+        print(f"Stored operation: {op['operation_id']} at {op['port_code']}")
+
+    # 更新港口效率数据
+    port_efficiency_data = {
+        "port_code": "CNSHA",
+        "port_name": "Shanghai",
+        "country_code": "CN",
+        "latitude": 31.230416,
+        "longitude": 121.473701,
+        "average_berth_time_hours": 12.5,
+        "average_cargo_handling_rate": 1666.67,  # 吨/小时
+        "average_waiting_time_hours": 2.0,
+        "total_vessels": 100,
+        "total_cargo_tonnage": 2000000.0,
+        "efficiency_score": 0.85
+    }
+    storage.store_port_efficiency(port_efficiency_data)
+
+    port_efficiency_data_sg = {
+        "port_code": "SGSIN",
+        "port_name": "Singapore",
+        "country_code": "SG",
+        "latitude": 1.289670,
+        "longitude": 103.850070,
+        "average_berth_time_hours": 10.0,
+        "average_cargo_handling_rate": 2000.0,  # 吨/小时
+        "average_waiting_time_hours": 1.5,
+        "total_vessels": 150,
+        "total_cargo_tonnage": 3000000.0,
+        "efficiency_score": 0.90
+    }
+    storage.store_port_efficiency(port_efficiency_data_sg)
+
+    # 获取港口效率统计
+    print("\nPort Efficiency Statistics:")
+    efficiency_stats = storage.get_port_efficiency_statistics()
+    for stat in efficiency_stats:
+        print(f"\n{stat['port_name']} ({stat['port_code']}):")
+        print(f"  Average berth time: {stat['average_berth_time_hours']:.2f} hours")
+        print(f"  Cargo handling rate: {stat['average_cargo_handling_rate']:.2f} tons/hour")
+        print(f"  Average waiting time: {stat['average_waiting_time_hours']:.2f} hours")
+        print(f"  Efficiency score: {stat['efficiency_score']:.2f}")
+        print(f"  Total vessels: {stat['total_vessels']}")
+        print(f"  Total cargo: {stat['total_cargo_tonnage']:,.2f} tons")
+
+    # 比较港口效率
+    print("\nPort Efficiency Comparison:")
+    if len(efficiency_stats) >= 2:
+        port1 = efficiency_stats[0]
+        port2 = efficiency_stats[1]
+
+        print(f"\n{port1['port_name']} vs {port2['port_name']}:")
+        print(f"  Berth time difference: {abs(port1['average_berth_time_hours'] - port2['average_berth_time_hours']):.2f} hours")
+        print(f"  Handling rate difference: {abs(port1['average_cargo_handling_rate'] - port2['average_cargo_handling_rate']):.2f} tons/hour")
+        print(f"  Efficiency score difference: {abs(port1['efficiency_score'] - port2['efficiency_score']):.2f}")
+
+        if port1['efficiency_score'] > port2['efficiency_score']:
+            print(f"  {port1['port_name']} is more efficient")
+        else:
+            print(f"  {port2['port_name']} is more efficient")
+
+    storage.close()
+
+if __name__ == "__main__":
+    port_efficiency_analysis()
+```
+
+---
+
+## 11. 案例10：异常事件处理
+
+### 11.1 场景描述
+
+**业务背景**：
+航运公司需要监控和处理异常事件，如船舶故障、货物损坏、航线延误、天气异常等。需要及时记录、分析和处理这些事件。
+
+**技术挑战**：
+
+- 需要实时监控异常事件
+- 需要分类和分级事件
+- 需要记录事件处理过程
+- 需要生成事件报告
+
+**解决方案**：
+使用异常事件表存储事件数据，实现事件分类、分级、追踪和处理功能。
+
+### 11.2 Schema定义
+
+**异常事件Schema**：
+
+```json
+{
+  "event_id": "EVT001",
+  "event_type": "VesselBreakdown",
+  "event_severity": "High",
+  "vessel_id": "VESSEL001",
+  "route_id": "ROUTE20250121001",
+  "cargo_id": "CARGO20250121001",
+  "event_location": {
+    "latitude": 1.250000,
+    "longitude": 103.500000
+  },
+  "event_description": "Engine failure, vessel stopped",
+  "event_time": "2025-01-21T14:30:00Z",
+  "resolved_time": "2025-01-21T18:00:00Z",
+  "resolution_description": "Engine repaired, vessel resumed voyage"
+}
+```
+
+### 11.3 实现代码
+
+**完整的异常事件处理实现**：
+
+```python
+from maritime_storage import MaritimeStorage
+from datetime import datetime
+
+def maritime_event_handling():
+    """异常事件处理示例"""
+    storage = MaritimeStorage("postgresql://user:pass@localhost/maritime")
+
+    # 记录异常事件
+    events = [
+        {
+            "event_id": "EVT001",
+            "event_type": "VesselBreakdown",
+            "event_severity": "High",
+            "vessel_id": "VESSEL001",
+            "route_id": "ROUTE20250121001",
+            "cargo_id": None,
+            "event_location_latitude": 1.250000,
+            "event_location_longitude": 103.500000,
+            "event_description": "Engine failure, vessel stopped",
+            "event_time": datetime(2025, 1, 21, 14, 30, 0),
+            "resolved_time": datetime(2025, 1, 21, 18, 0, 0),
+            "resolution_description": "Engine repaired, vessel resumed voyage"
+        },
+        {
+            "event_id": "EVT002",
+            "event_type": "CargoDamage",
+            "event_severity": "Medium",
+            "vessel_id": "VESSEL001",
+            "route_id": "ROUTE20250121001",
+            "cargo_id": "CARGO20250121001",
+            "event_location_latitude": None,
+            "event_location_longitude": None,
+            "event_description": "Container damaged during loading",
+            "event_time": datetime(2025, 1, 18, 10, 0, 0),
+            "resolved_time": datetime(2025, 1, 18, 12, 0, 0),
+            "resolution_description": "Container replaced, cargo reloaded"
+        },
+        {
+            "event_id": "EVT003",
+            "event_type": "WeatherDelay",
+            "event_severity": "Low",
+            "vessel_id": "VESSEL001",
+            "route_id": "ROUTE20250121001",
+            "cargo_id": None,
+            "event_location_latitude": 1.300000,
+            "event_location_longitude": 103.600000,
+            "event_description": "Heavy weather, vessel slowed down",
+            "event_time": datetime(2025, 1, 21, 8, 0, 0),
+            "resolved_time": datetime(2025, 1, 21, 12, 0, 0),
+            "resolution_description": "Weather cleared, normal speed resumed"
+        }
+    ]
+
+    for event in events:
+        storage.store_maritime_event(event)
+        print(f"Stored event: {event['event_id']} - {event['event_type']}")
+
+    # 查询事件
+    print("\nAll Events:")
+    all_events = storage.get_maritime_events(limit=10)
+    for event in all_events:
+        print(f"  {event['event_id']}: {event['event_type']} ({event['event_severity']}) at {event['event_time']}")
+
+    # 查询特定船舶的事件
+    print("\nEvents for VESSEL001:")
+    vessel_events = storage.get_maritime_events(vessel_id="VESSEL001")
+    for event in vessel_events:
+        print(f"  {event['event_type']}: {event['event_description']}")
+        if event['resolved_time']:
+            duration = (event['resolved_time'] - event['event_time']).total_seconds() / 3600
+            print(f"    Resolved in {duration:.2f} hours")
+
+    # 查询高严重性事件
+    print("\nHigh Severity Events:")
+    high_severity_events = storage.get_maritime_events(severity="High")
+    for event in high_severity_events:
+        print(f"  {event['event_id']}: {event['event_type']} - {event['event_description']}")
+
+    # 查询未解决的事件
+    print("\nUnresolved Events:")
+    unresolved_events = [
+        e for e in all_events if e['resolved_time'] is None
+    ]
+    for event in unresolved_events:
+        print(f"  {event['event_id']}: {event['event_type']} - {event['event_description']}")
+
+    # 事件统计
+    print("\nEvent Statistics:")
+    event_types = {}
+    for event in all_events:
+        event_type = event['event_type']
+        event_types[event_type] = event_types.get(event_type, 0) + 1
+
+    for event_type, count in event_types.items():
+        print(f"  {event_type}: {count} events")
+
+    storage.close()
+
+if __name__ == "__main__":
+    maritime_event_handling()
 ```
 
 ---

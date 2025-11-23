@@ -29,6 +29,393 @@
 
 ---
 
+## 2. HL7/FHIR转换实现
+
+### 2.1 HL7消息解析器
+
+**完整的HL7消息解析实现**：
+
+```python
+import logging
+from typing import Dict, List, Optional
+from datetime import datetime
+import uuid
+
+logger = logging.getLogger(__name__)
+
+class HL7Parser:
+    """HL7消息解析器 - 完整实现"""
+
+    def __init__(self):
+        self.field_separator = "|"
+        self.component_separator = "^"
+        self.repetition_separator = "~"
+        self.escape_character = "\\"
+        self.sub_component_separator = "&"
+
+    def parse_message(self, hl7_message: str) -> Dict:
+        """解析HL7消息"""
+        segments = hl7_message.split("\r")
+        if not segments:
+            segments = hl7_message.split("\n")
+
+        parsed_segments = {}
+
+        for segment in segments:
+            if not segment.strip():
+                continue
+
+            segment_type = segment.split(self.field_separator)[0]
+            parsed_segments[segment_type] = self.parse_segment(segment)
+
+        return parsed_segments
+
+    def parse_segment(self, segment: str) -> Dict:
+        """解析单个段"""
+        fields = segment.split(self.field_separator)
+        segment_type = fields[0]
+
+        parsed = {
+            "segment_type": segment_type,
+            "fields": []
+        }
+
+        for i, field in enumerate(fields[1:], start=1):
+            if self.component_separator in field:
+                # 复合字段
+                components = field.split(self.component_separator)
+                parsed["fields"].append({
+                    "field_number": i,
+                    "type": "composite",
+                    "components": components
+                })
+            else:
+                parsed["fields"].append({
+                    "field_number": i,
+                    "type": "simple",
+                    "value": field
+                })
+
+        return parsed
+
+    def parse_msh_segment(self, msh_segment: str) -> Dict:
+        """解析MSH段（消息头）"""
+        fields = msh_segment.split(self.field_separator)
+
+        return {
+            "segment_type": "MSH",
+            "field_separator": fields[1] if len(fields) > 1 else "|",
+            "encoding_characters": fields[2] if len(fields) > 2 else "^~\\&",
+            "sending_application": fields[3] if len(fields) > 3 else "",
+            "sending_facility": fields[4] if len(fields) > 4 else "",
+            "receiving_application": fields[5] if len(fields) > 5 else "",
+            "receiving_facility": fields[6] if len(fields) > 6 else "",
+            "date_time": fields[7] if len(fields) > 7 else "",
+            "security": fields[8] if len(fields) > 8 else "",
+            "message_type": fields[9] if len(fields) > 9 else "",
+            "message_control_id": fields[10] if len(fields) > 10 else "",
+            "processing_id": fields[11] if len(fields) > 11 else "",
+            "version_id": fields[12] if len(fields) > 12 else ""
+        }
+
+    def parse_pid_segment(self, pid_segment: str) -> Dict:
+        """解析PID段（患者识别）"""
+        fields = pid_segment.split(self.field_separator)
+
+        # 解析患者ID（字段3）
+        patient_id = ""
+        if len(fields) > 3:
+            patient_id_components = fields[3].split(self.component_separator)
+            patient_id = patient_id_components[0] if patient_id_components else ""
+
+        # 解析患者姓名（字段5）
+        patient_name = {}
+        if len(fields) > 5:
+            name_components = fields[5].split(self.component_separator)
+            patient_name = {
+                "family": name_components[0] if len(name_components) > 0 else "",
+                "given": name_components[1] if len(name_components) > 1 else "",
+                "middle": name_components[2] if len(name_components) > 2 else ""
+            }
+
+        return {
+            "segment_type": "PID",
+            "set_id": fields[1] if len(fields) > 1 else "",
+            "patient_id": patient_id,
+            "patient_name": patient_name,
+            "mother_maiden_name": fields[6] if len(fields) > 6 else "",
+            "date_of_birth": fields[7] if len(fields) > 7 else "",
+            "sex": fields[8] if len(fields) > 8 else "",
+            "race": fields[10] if len(fields) > 10 else "",
+            "address": fields[11] if len(fields) > 11 else "",
+            "phone": fields[13] if len(fields) > 13 else ""
+        }
+
+    def parse_obr_segment(self, obr_segment: str) -> Dict:
+        """解析OBR段（观察请求）"""
+        fields = obr_segment.split(self.field_separator)
+
+        return {
+            "segment_type": "OBR",
+            "set_id": fields[1] if len(fields) > 1 else "",
+            "placer_order_number": fields[2] if len(fields) > 2 else "",
+            "filler_order_number": fields[3] if len(fields) > 3 else "",
+            "universal_service_id": fields[4] if len(fields) > 4 else "",
+            "priority": fields[5] if len(fields) > 5 else "",
+            "requested_date_time": fields[6] if len(fields) > 6 else "",
+            "observation_date_time": fields[7] if len(fields) > 7 else "",
+            "observation_end_date_time": fields[8] if len(fields) > 8 else "",
+            "collector_identifier": fields[10] if len(fields) > 10 else "",
+            "specimen_action_code": fields[11] if len(fields) > 11 else ""
+        }
+
+    def parse_obx_segment(self, obx_segment: str) -> Dict:
+        """解析OBX段（观察结果）"""
+        fields = obx_segment.split(self.field_separator)
+
+        return {
+            "segment_type": "OBX",
+            "set_id": fields[1] if len(fields) > 1 else "",
+            "value_type": fields[2] if len(fields) > 2 else "",
+            "observation_id": fields[3] if len(fields) > 3 else "",
+            "observation_sub_id": fields[4] if len(fields) > 4 else "",
+            "observation_value": fields[5] if len(fields) > 5 else "",
+            "units": fields[6] if len(fields) > 6 else "",
+            "references_range": fields[7] if len(fields) > 7 else "",
+            "abnormal_flags": fields[8] if len(fields) > 8 else "",
+            "probability": fields[9] if len(fields) > 9 else "",
+            "nature_of_abnormal_test": fields[10] if len(fields) > 10 else "",
+            "observation_result_status": fields[11] if len(fields) > 11 else "",
+            "date_time_of_observation": fields[14] if len(fields) > 14 else ""
+        }
+```
+
+### 2.2 FHIR资源转换器
+
+**完整的FHIR资源转换实现**：
+
+```python
+class FHIRConverter:
+    """FHIR资源转换器 - 完整实现"""
+
+    def __init__(self):
+        self.base_url = "http://fhir.example.org"
+
+    def convert_hl7_to_fhir_patient(self, hl7_message: str) -> Dict:
+        """将HL7 ADT消息转换为FHIR Patient资源"""
+        parser = HL7Parser()
+        parsed = parser.parse_message(hl7_message)
+
+        pid = parsed.get("PID")
+        if not pid:
+            raise ValueError("PID segment not found")
+
+        # 构建FHIR Patient资源
+        fhir_patient = {
+            "resourceType": "Patient",
+            "id": pid.get("patient_id", str(uuid.uuid4())),
+            "identifier": [{
+                "system": f"{self.base_url}/patients",
+                "value": pid.get("patient_id", "")
+            }],
+            "name": [{
+                "family": pid.get("patient_name", {}).get("family", ""),
+                "given": [pid.get("patient_name", {}).get("given", "")]
+            }],
+            "gender": self._map_hl7_gender_to_fhir(pid.get("sex", "")),
+            "birthDate": self._parse_hl7_date(pid.get("date_of_birth", "")),
+            "address": [self._parse_hl7_address(pid.get("address", ""))]
+        }
+
+        # 添加电话
+        if pid.get("phone"):
+            fhir_patient["telecom"] = [{
+                "system": "phone",
+                "value": pid.get("phone")
+            }]
+
+        return fhir_patient
+
+    def convert_hl7_to_fhir_observation(self, hl7_message: str) -> Dict:
+        """将HL7 ORU消息转换为FHIR Observation资源"""
+        parser = HL7Parser()
+        parsed = parser.parse_message(hl7_message)
+
+        pid = parsed.get("PID")
+        obr = parsed.get("OBR")
+        obx_segments = [seg for seg_type, seg in parsed.items() if seg_type == "OBX"]
+
+        if not pid or not obr:
+            raise ValueError("PID or OBR segment not found")
+
+        # 构建FHIR Observation资源
+        fhir_observation = {
+            "resourceType": "Observation",
+            "id": str(uuid.uuid4()),
+            "status": "final",
+            "code": {
+                "coding": [{
+                    "system": "http://loinc.org",
+                    "code": obr.get("universal_service_id", ""),
+                    "display": obr.get("universal_service_id", "")
+                }]
+            },
+            "subject": {
+                "reference": f"Patient/{pid.get('patient_id', '')}"
+            },
+            "effectiveDateTime": self._parse_hl7_date_time(obr.get("observation_date_time", "")),
+            "performer": [{
+                "reference": f"Practitioner/{obr.get('collector_identifier', '')}"
+            }]
+        }
+
+        # 添加观察值
+        if obx_segments:
+            obx = obx_segments[0]  # 使用第一个OBX段
+            value_type = obx.get("value_type", "")
+            observation_value = obx.get("observation_value", "")
+
+            if value_type == "NM":  # 数值
+                fhir_observation["valueQuantity"] = {
+                    "value": float(observation_value) if observation_value else None,
+                    "unit": obx.get("units", ""),
+                    "system": "http://unitsofmeasure.org",
+                    "code": obx.get("units", "")
+                }
+            elif value_type == "ST" or value_type == "TX":  # 字符串
+                fhir_observation["valueString"] = observation_value
+            elif value_type == "CE":  # 编码元素
+                fhir_observation["valueCodeableConcept"] = {
+                    "coding": [{
+                        "code": observation_value,
+                        "display": observation_value
+                    }]
+                }
+
+        return fhir_observation
+
+    def convert_fhir_patient_to_hl7(self, fhir_patient: Dict) -> str:
+        """将FHIR Patient资源转换为HL7 ADT消息"""
+        hl7_segments = []
+
+        # MSH段
+        msh = [
+            "MSH",
+            "^~\\&",
+            "FHIR",
+            "SYSTEM",
+            "HL7",
+            "SYSTEM",
+            datetime.now().strftime("%Y%m%d%H%M%S"),
+            "",
+            "ADT^A08^ADT_A01",
+            str(uuid.uuid4()),
+            "P",
+            "2.5"
+        ]
+        hl7_segments.append(self.field_separator.join(msh))
+
+        # PID段
+        patient_id = fhir_patient.get("id", "")
+        identifier = fhir_patient.get("identifier", [{}])[0] if fhir_patient.get("identifier") else {}
+        name = fhir_patient.get("name", [{}])[0] if fhir_patient.get("name") else {}
+
+        pid = [
+            "PID",
+            "1",
+            "",
+            f"{patient_id}^{identifier.get('value', '')}",
+            "",
+            f"{name.get('family', '')}^{name.get('given', [''])[0] if name.get('given') else ''}",
+            "",
+            self._format_fhir_date_to_hl7(fhir_patient.get("birthDate", "")),
+            self._map_fhir_gender_to_hl7(fhir_patient.get("gender", "")),
+            "",
+            "",
+            self._format_fhir_address_to_hl7(fhir_patient.get("address", [{}])[0] if fhir_patient.get("address") else {})
+        ]
+        hl7_segments.append(self.field_separator.join(pid))
+
+        return "\r".join(hl7_segments)
+
+    def _map_hl7_gender_to_fhir(self, hl7_gender: str) -> str:
+        """映射HL7性别代码到FHIR"""
+        mapping = {
+            "M": "male",
+            "F": "female",
+            "O": "other",
+            "U": "unknown"
+        }
+        return mapping.get(hl7_gender.upper(), "unknown")
+
+    def _map_fhir_gender_to_hl7(self, fhir_gender: str) -> str:
+        """映射FHIR性别到HL7代码"""
+        mapping = {
+            "male": "M",
+            "female": "F",
+            "other": "O",
+            "unknown": "U"
+        }
+        return mapping.get(fhir_gender.lower(), "U")
+
+    def _parse_hl7_date(self, hl7_date: str) -> Optional[str]:
+        """解析HL7日期格式"""
+        if not hl7_date or len(hl7_date) < 8:
+            return None
+
+        try:
+            if len(hl7_date) == 8:
+                return f"{hl7_date[:4]}-{hl7_date[4:6]}-{hl7_date[6:8]}"
+            elif len(hl7_date) >= 14:
+                return f"{hl7_date[:4]}-{hl7_date[4:6]}-{hl7_date[6:8]}T{hl7_date[8:10]}:{hl7_date[10:12]}:{hl7_date[12:14]}Z"
+        except Exception:
+            pass
+
+        return None
+
+    def _parse_hl7_date_time(self, hl7_date_time: str) -> Optional[str]:
+        """解析HL7日期时间格式"""
+        return self._parse_hl7_date(hl7_date_time)
+
+    def _format_fhir_date_to_hl7(self, fhir_date: str) -> str:
+        """格式化FHIR日期为HL7格式"""
+        if not fhir_date:
+            return ""
+
+        # 移除时间部分
+        date_part = fhir_date.split("T")[0]
+        return date_part.replace("-", "")
+
+    def _parse_hl7_address(self, hl7_address: str) -> Dict:
+        """解析HL7地址"""
+        if not hl7_address:
+            return {}
+
+        components = hl7_address.split(self.component_separator)
+        return {
+            "line": [components[0]] if len(components) > 0 and components[0] else [],
+            "city": components[2] if len(components) > 2 else "",
+            "state": components[3] if len(components) > 3 else "",
+            "postalCode": components[4] if len(components) > 4 else "",
+            "country": components[5] if len(components) > 5 else ""
+        }
+
+    def _format_fhir_address_to_hl7(self, fhir_address: Dict) -> str:
+        """格式化FHIR地址为HL7格式"""
+        if not fhir_address:
+            return ""
+
+        line = fhir_address.get("line", [""])[0] if fhir_address.get("line") else ""
+        city = fhir_address.get("city", "")
+        state = fhir_address.get("state", "")
+        postal_code = fhir_address.get("postalCode", "")
+        country = fhir_address.get("country", "")
+
+        return f"{line}^{city}^{state}^{postal_code}^{country}"
+```
+
+---
+
 ## 2. FHIR到HL7转换
 
 **转换规则**：
@@ -341,6 +728,274 @@ class HealthcareStorage:
 ```
 
 ### 6.2 医疗数据分析查询
+
+**完整的医疗数据分析类**：
+
+```python
+class HealthcareDataAnalyzer:
+    """医疗数据分析器 - 完整实现"""
+
+    def __init__(self, storage):
+        self.storage = storage
+
+    def analyze_patient_statistics(self, start_date: datetime, end_date: datetime) -> Dict:
+        """分析患者统计"""
+        cursor = self.storage.conn.cursor()
+
+        # 患者总数
+        cursor.execute("SELECT COUNT(*) FROM patients")
+        total_patients = cursor.fetchone()[0]
+
+        # 按性别统计
+        cursor.execute("""
+            SELECT gender, COUNT(*) as count
+            FROM patients
+            GROUP BY gender
+        """)
+        gender_stats = {row[0]: row[1] for row in cursor.fetchall()}
+
+        # 按年龄段统计
+        cursor.execute("""
+            SELECT
+                CASE
+                    WHEN EXTRACT(YEAR FROM AGE(birth_date)) < 18 THEN '0-17'
+                    WHEN EXTRACT(YEAR FROM AGE(birth_date)) < 30 THEN '18-29'
+                    WHEN EXTRACT(YEAR FROM AGE(birth_date)) < 50 THEN '30-49'
+                    WHEN EXTRACT(YEAR FROM AGE(birth_date)) < 70 THEN '50-69'
+                    ELSE '70+'
+                END as age_group,
+                COUNT(*) as count
+            FROM patients
+            WHERE birth_date IS NOT NULL
+            GROUP BY age_group
+            ORDER BY age_group
+        """)
+        age_stats = {row[0]: row[1] for row in cursor.fetchall()}
+
+        # 新增患者统计
+        cursor.execute("""
+            SELECT COUNT(*)
+            FROM patients
+            WHERE created_at >= %s AND created_at <= %s
+        """, (start_date, end_date))
+        new_patients = cursor.fetchone()[0]
+
+        return {
+            "analysis_period": {
+                "start": start_date.isoformat(),
+                "end": end_date.isoformat()
+            },
+            "total_patients": total_patients,
+            "new_patients": new_patients,
+            "gender_distribution": gender_stats,
+            "age_distribution": age_stats
+        }
+
+    def analyze_diagnosis_statistics(self, start_date: datetime, end_date: datetime) -> Dict:
+        """分析诊断统计"""
+        cursor = self.storage.conn.cursor()
+
+        # 最常见诊断
+        cursor.execute("""
+            SELECT
+                diagnosis_code,
+                diagnosis_name,
+                COUNT(*) as diagnosis_count
+            FROM diagnoses
+            WHERE diagnosis_date >= %s AND diagnosis_date <= %s
+            GROUP BY diagnosis_code, diagnosis_name
+            ORDER BY diagnosis_count DESC
+            LIMIT 10
+        """, (start_date, end_date))
+
+        top_diagnoses = []
+        for row in cursor.fetchall():
+            top_diagnoses.append({
+                "code": row[0],
+                "name": row[1],
+                "count": row[2]
+            })
+
+        # 按严重程度统计
+        cursor.execute("""
+            SELECT
+                severity,
+                COUNT(*) as count
+            FROM diagnoses
+            WHERE diagnosis_date >= %s AND diagnosis_date <= %s
+            GROUP BY severity
+        """, (start_date, end_date))
+
+        severity_stats = {row[0]: row[1] for row in cursor.fetchall()}
+
+        # 诊断趋势（按月）
+        cursor.execute("""
+            SELECT
+                DATE_TRUNC('month', diagnosis_date) as month,
+                COUNT(*) as count
+            FROM diagnoses
+            WHERE diagnosis_date >= %s AND diagnosis_date <= %s
+            GROUP BY month
+            ORDER BY month
+        """, (start_date, end_date))
+
+        monthly_trends = []
+        for row in cursor.fetchall():
+            monthly_trends.append({
+                "month": row[0].isoformat() if row[0] else None,
+                "count": row[1]
+            })
+
+        return {
+            "analysis_period": {
+                "start": start_date.isoformat(),
+                "end": end_date.isoformat()
+            },
+            "top_diagnoses": top_diagnoses,
+            "severity_distribution": severity_stats,
+            "monthly_trends": monthly_trends
+        }
+
+    def analyze_medication_statistics(self, start_date: datetime, end_date: datetime) -> Dict:
+        """分析用药统计"""
+        cursor = self.storage.conn.cursor()
+
+        # 最常用药物
+        cursor.execute("""
+            SELECT
+                medication_name,
+                medication_code,
+                COUNT(*) as prescription_count,
+                COUNT(DISTINCT patient_id) as patient_count
+            FROM medications
+            WHERE start_date >= %s AND start_date <= %s
+            GROUP BY medication_name, medication_code
+            ORDER BY prescription_count DESC
+            LIMIT 10
+        """, (start_date, end_date))
+
+        top_medications = []
+        for row in cursor.fetchall():
+            top_medications.append({
+                "name": row[0],
+                "code": row[1],
+                "prescription_count": row[2],
+                "patient_count": row[3]
+            })
+
+        # 按给药途径统计
+        cursor.execute("""
+            SELECT
+                route,
+                COUNT(*) as count
+            FROM medications
+            WHERE start_date >= %s AND start_date <= %s
+            GROUP BY route
+        """, (start_date, end_date))
+
+        route_stats = {row[0]: row[1] for row in cursor.fetchall()}
+
+        # 用药趋势（按月）
+        cursor.execute("""
+            SELECT
+                DATE_TRUNC('month', start_date) as month,
+                COUNT(*) as count
+            FROM medications
+            WHERE start_date >= %s AND start_date <= %s
+            GROUP BY month
+            ORDER BY month
+        """, (start_date, end_date))
+
+        monthly_trends = []
+        for row in cursor.fetchall():
+            monthly_trends.append({
+                "month": row[0].isoformat() if row[0] else None,
+                "count": row[1]
+            })
+
+        return {
+            "analysis_period": {
+                "start": start_date.isoformat(),
+                "end": end_date.isoformat()
+            },
+            "top_medications": top_medications,
+            "route_distribution": route_stats,
+            "monthly_trends": monthly_trends
+        }
+
+    def analyze_clinical_data_statistics(self, start_date: datetime, end_date: datetime) -> Dict:
+        """分析临床数据统计"""
+        cursor = self.storage.conn.cursor()
+
+        # 按数据类型统计
+        cursor.execute("""
+            SELECT
+                data_type,
+                COUNT(*) as count
+            FROM clinical_data
+            WHERE recorded_at >= %s AND recorded_at <= %s
+            GROUP BY data_type
+            ORDER BY count DESC
+        """, (start_date, end_date))
+
+        data_type_stats = []
+        for row in cursor.fetchall():
+            data_type_stats.append({
+                "type": row[0],
+                "count": row[1]
+            })
+
+        # 数据记录趋势（按天）
+        cursor.execute("""
+            SELECT
+                DATE(recorded_at) as date,
+                COUNT(*) as count
+            FROM clinical_data
+            WHERE recorded_at >= %s AND recorded_at <= %s
+            GROUP BY date
+            ORDER BY date
+        """, (start_date, end_date))
+
+        daily_trends = []
+        for row in cursor.fetchall():
+            daily_trends.append({
+                "date": row[0].isoformat() if row[0] else None,
+                "count": row[1]
+            })
+
+        return {
+            "analysis_period": {
+                "start": start_date.isoformat(),
+                "end": end_date.isoformat()
+            },
+            "data_type_distribution": data_type_stats,
+            "daily_trends": daily_trends
+        }
+
+    def generate_healthcare_report(self, start_date: datetime, end_date: datetime) -> Dict:
+        """生成医疗综合报告"""
+        patient_stats = self.analyze_patient_statistics(start_date, end_date)
+        diagnosis_stats = self.analyze_diagnosis_statistics(start_date, end_date)
+        medication_stats = self.analyze_medication_statistics(start_date, end_date)
+        clinical_stats = self.analyze_clinical_data_statistics(start_date, end_date)
+
+        return {
+            "report_period": {
+                "start": start_date.isoformat(),
+                "end": end_date.isoformat()
+            },
+            "patient_statistics": patient_stats,
+            "diagnosis_statistics": diagnosis_stats,
+            "medication_statistics": medication_stats,
+            "clinical_data_statistics": clinical_stats,
+            "summary": {
+                "total_patients": patient_stats.get("total_patients", 0),
+                "new_patients": patient_stats.get("new_patients", 0),
+                "top_diagnosis": diagnosis_stats.get("top_diagnoses", [{}])[0] if diagnosis_stats.get("top_diagnoses") else None,
+                "top_medication": medication_stats.get("top_medications", [{}])[0] if medication_stats.get("top_medications") else None
+            }
+        }
+```
 
 **查询示例**：
 

@@ -24,6 +24,24 @@
     - [6.1 场景描述](#61-场景描述)
     - [6.2 实现代码](#62-实现代码)
     - [6.3 数据分析示例](#63-数据分析示例)
+  - [7. 案例6：文档协作编辑（多人同时编辑）](#7-案例6文档协作编辑多人同时编辑)
+    - [7.1 场景描述](#71-场景描述)
+    - [7.2 Schema定义](#72-schema定义)
+    - [7.3 实现代码](#73-实现代码)
+  - [8. 案例7：复杂审批流程（多级审批）](#8-案例7复杂审批流程多级审批)
+    - [8.1 场景描述](#81-场景描述)
+    - [8.2 Schema定义](#82-schema定义)
+    - [8.3 实现代码](#83-实现代码)
+  - [9. 案例8：文档版本对比](#9-案例8文档版本对比)
+    - [9.1 场景描述](#91-场景描述)
+    - [9.2 实现代码](#92-实现代码)
+  - [10. 案例9：流程效率分析](#10-案例9流程效率分析)
+    - [10.1 场景描述](#101-场景描述)
+    - [10.2 实现代码](#102-实现代码)
+  - [11. 案例10：知识库管理](#11-案例10知识库管理)
+    - [11.1 场景描述](#111-场景描述)
+    - [11.2 Schema定义](#112-schema定义)
+    - [11.3 实现代码](#113-实现代码)
 
 ---
 
@@ -438,6 +456,1097 @@ workload = storage.get_user_workload("张三", days=7)
 print(f"\nWorkload for 张三 (7 days):")
 print(f"  Tasks: {workload['tasks']}")
 print(f"  Approvals: {workload['approvals']}")
+```
+
+---
+
+## 7. 案例6：文档协作编辑（多人同时编辑）
+
+### 7.1 场景描述
+
+**业务背景**：
+企业需要支持多人同时编辑同一文档，实现实时协作编辑功能。
+多个用户可以在同一文档的不同部分进行编辑，系统需要跟踪每个用户的编辑操作，并记录协作历史。
+
+**技术挑战**：
+
+- 需要实现文档锁定机制（段落/章节级别）
+- 需要跟踪每个用户的编辑操作
+- 需要处理编辑冲突
+- 需要记录协作历史
+
+**解决方案**：
+使用文档协作记录表跟踪每个用户的编辑操作，实现段落级别的锁定机制，支持多人同时编辑。
+
+### 7.2 Schema定义
+
+**文档协作编辑Schema**：
+
+```json
+{
+  "document_id": "DOC001",
+  "collaboration_mode": "concurrent",
+  "active_users": [
+    {
+      "user_id": "user001",
+      "user_name": "张三",
+      "editing_sections": ["section1", "section2"],
+      "last_activity": "2025-01-21T10:30:00Z"
+    },
+    {
+      "user_id": "user002",
+      "user_name": "李四",
+      "editing_sections": ["section3"],
+      "last_activity": "2025-01-21T10:25:00Z"
+    }
+  ],
+  "lock_rules": {
+    "lock_level": "paragraph",
+    "auto_unlock_minutes": 30
+  }
+}
+```
+
+### 7.3 实现代码
+
+**完整的文档协作编辑实现**：
+
+```python
+import asyncio
+import logging
+from typing import Dict, List, Optional
+from datetime import datetime, timedelta
+from oa_storage import OAStorage
+from document_version_manager import DocumentVersionManager
+
+logger = logging.getLogger(__name__)
+
+class DocumentCollaborationManager:
+    """文档协作管理器"""
+
+    def __init__(self, storage: OAStorage):
+        self.storage = storage
+        self.active_sessions: Dict[str, Dict] = {}
+        self.locked_sections: Dict[str, Dict] = {}
+
+    def start_editing_session(self, document_id: str, user_id: str,
+                              section_id: str = None) -> bool:
+        """开始编辑会话"""
+        # 检查权限
+        if not self.storage.check_document_permission(document_id, user_id, "write"):
+            logger.warning(f"User {user_id} does not have write permission for {document_id}")
+            return False
+
+        # 检查段落是否被锁定
+        if section_id:
+            if self._is_section_locked(document_id, section_id, user_id):
+                logger.warning(f"Section {section_id} is locked by another user")
+                return False
+            self._lock_section(document_id, section_id, user_id)
+
+        # 记录协作操作
+        self.storage.store_collaboration_record(
+            document_id,
+            user_id,
+            "start_editing",
+            f"Started editing session",
+            {"section_id": section_id}
+        )
+
+        # 更新活动会话
+        session_key = f"{document_id}_{user_id}"
+        self.active_sessions[session_key] = {
+            "document_id": document_id,
+            "user_id": user_id,
+            "section_id": section_id,
+            "start_time": datetime.now(),
+            "last_activity": datetime.now()
+        }
+
+        logger.info(f"User {user_id} started editing session for {document_id}")
+        return True
+
+    def save_edit(self, document_id: str, user_id: str, section_id: str,
+                  content: str, change_description: str = None):
+        """保存编辑"""
+        # 记录编辑操作
+        self.storage.store_collaboration_record(
+            document_id,
+            user_id,
+            "edit",
+            change_description or "Edited content",
+            {
+                "section_id": section_id,
+                "content_length": len(content),
+                "timestamp": datetime.now().isoformat()
+            }
+        )
+
+        # 更新活动会话
+        session_key = f"{document_id}_{user_id}"
+        if session_key in self.active_sessions:
+            self.active_sessions[session_key]["last_activity"] = datetime.now()
+
+        logger.info(f"User {user_id} saved edit for {document_id}, section {section_id}")
+
+    def end_editing_session(self, document_id: str, user_id: str):
+        """结束编辑会话"""
+        session_key = f"{document_id}_{user_id}"
+        if session_key in self.active_sessions:
+            session = self.active_sessions[session_key]
+            section_id = session.get("section_id")
+
+            # 解锁段落
+            if section_id:
+                self._unlock_section(document_id, section_id, user_id)
+
+            # 记录协作操作
+            self.storage.store_collaboration_record(
+                document_id,
+                user_id,
+                "end_editing",
+                "Ended editing session",
+                {
+                    "duration_minutes": (datetime.now() - session["start_time"]).total_seconds() / 60
+                }
+            )
+
+            del self.active_sessions[session_key]
+            logger.info(f"User {user_id} ended editing session for {document_id}")
+
+    def get_active_collaborators(self, document_id: str) -> List[Dict]:
+        """获取活动协作者"""
+        collaborators = []
+        for session_key, session in self.active_sessions.items():
+            if session["document_id"] == document_id:
+                collaborators.append({
+                    "user_id": session["user_id"],
+                    "section_id": session.get("section_id"),
+                    "last_activity": session["last_activity"]
+                })
+        return collaborators
+
+    def get_collaboration_history(self, document_id: str, limit: int = 100) -> List[Dict]:
+        """获取协作历史"""
+        return self.storage.get_collaboration_history(document_id, limit)
+
+    def _is_section_locked(self, document_id: str, section_id: str, user_id: str) -> bool:
+        """检查段落是否被锁定"""
+        lock_key = f"{document_id}_{section_id}"
+        if lock_key in self.locked_sections:
+            lock_info = self.locked_sections[lock_key]
+            # 检查是否是自己锁定的
+            if lock_info["user_id"] == user_id:
+                return False
+            # 检查锁定是否过期（30分钟）
+            if datetime.now() - lock_info["lock_time"] > timedelta(minutes=30):
+                del self.locked_sections[lock_key]
+                return False
+            return True
+        return False
+
+    def _lock_section(self, document_id: str, section_id: str, user_id: str):
+        """锁定段落"""
+        lock_key = f"{document_id}_{section_id}"
+        self.locked_sections[lock_key] = {
+            "document_id": document_id,
+            "section_id": section_id,
+            "user_id": user_id,
+            "lock_time": datetime.now()
+        }
+
+    def _unlock_section(self, document_id: str, section_id: str, user_id: str):
+        """解锁段落"""
+        lock_key = f"{document_id}_{section_id}"
+        if lock_key in self.locked_sections:
+            if self.locked_sections[lock_key]["user_id"] == user_id:
+                del self.locked_sections[lock_key]
+
+async def collaborative_editing_example():
+    """文档协作编辑示例"""
+    storage = OAStorage("postgresql://user:pass@localhost/oa")
+    collab_manager = DocumentCollaborationManager(storage)
+
+    document_id = "DOC001"
+
+    # 授予权限
+    storage.grant_document_permission(document_id, "user001", "write", "admin")
+    storage.grant_document_permission(document_id, "user002", "write", "admin")
+
+    # 用户1开始编辑
+    print("User 1 starting editing session...")
+    collab_manager.start_editing_session(document_id, "user001", "section1")
+
+    # 用户2开始编辑（不同段落）
+    print("User 2 starting editing session...")
+    collab_manager.start_editing_session(document_id, "user002", "section2")
+
+    # 保存编辑
+    collab_manager.save_edit(document_id, "user001", "section1", "Updated content", "Added introduction")
+    collab_manager.save_edit(document_id, "user002", "section2", "Updated content", "Added conclusion")
+
+    # 获取活动协作者
+    collaborators = collab_manager.get_active_collaborators(document_id)
+    print(f"\nActive collaborators: {len(collaborators)}")
+    for collab in collaborators:
+        print(f"  User: {collab['user_id']}, Section: {collab['section_id']}")
+
+    # 获取协作历史
+    history = collab_manager.get_collaboration_history(document_id)
+    print(f"\nCollaboration history: {len(history)} records")
+    for record in history[:5]:
+        print(f"  {record['user_id']}: {record['action_type']} at {record['action_time']}")
+
+    # 结束编辑会话
+    collab_manager.end_editing_session(document_id, "user001")
+    collab_manager.end_editing_session(document_id, "user002")
+
+    storage.close()
+
+if __name__ == "__main__":
+    asyncio.run(collaborative_editing_example())
+```
+
+---
+
+## 8. 案例7：复杂审批流程（多级审批）
+
+### 8.1 场景描述
+
+**业务背景**：
+企业需要实现复杂的多级审批流程，例如采购审批需要经过部门经理、财务经理、总经理三级审批。每个审批节点可能有不同的审批规则和条件。
+
+**技术挑战**：
+
+- 需要支持多级审批流程
+- 需要支持条件分支（根据金额决定审批路径）
+- 需要支持并行审批（多个审批人同时审批）
+- 需要支持审批退回和重新提交
+
+**解决方案**：
+使用BPMN流程定义描述复杂审批流程，通过工作流引擎执行流程，支持条件分支和并行审批。
+
+### 8.2 Schema定义
+
+**复杂审批流程Schema**：
+
+```json
+{
+  "process_id": "purchase_approval",
+  "process_name": "采购审批流程",
+  "process_type": "MultiLevelApproval",
+  "process_definition": {
+    "process_nodes": [
+      {
+        "node_id": "start",
+        "node_name": "开始",
+        "node_type": "Start",
+        "node_order": 1
+      },
+      {
+        "node_id": "dept_manager",
+        "node_name": "部门经理审批",
+        "node_type": "Approval",
+        "node_order": 2,
+        "assignee": "dept_manager",
+        "condition": null
+      },
+      {
+        "node_id": "gateway_amount",
+        "node_name": "金额判断",
+        "node_type": "Gateway",
+        "node_order": 3,
+        "condition": "amount > 10000"
+      },
+      {
+        "node_id": "finance_manager",
+        "node_name": "财务经理审批",
+        "node_type": "Approval",
+        "node_order": 4,
+        "assignee": "finance_manager",
+        "condition": "amount > 10000"
+      },
+      {
+        "node_id": "general_manager",
+        "node_name": "总经理审批",
+        "node_type": "Approval",
+        "node_order": 5,
+        "assignee": "general_manager",
+        "condition": "amount > 50000"
+      },
+      {
+        "node_id": "end",
+        "node_name": "结束",
+        "node_type": "End",
+        "node_order": 6
+      }
+    ]
+  }
+}
+```
+
+### 8.3 实现代码
+
+**完整的复杂审批流程实现**：
+
+```python
+import asyncio
+import logging
+from typing import Dict, List, Optional
+from datetime import datetime
+from workflow_engine import WorkflowEngine, ProcessStatus
+from oa_storage import OAStorage
+
+logger = logging.getLogger(__name__)
+
+class MultiLevelApprovalProcess:
+    """多级审批流程"""
+
+    def __init__(self, workflow_engine: WorkflowEngine, storage: OAStorage):
+        self.workflow_engine = workflow_engine
+        self.storage = storage
+
+    def define_purchase_approval_process(self):
+        """定义采购审批流程"""
+        process_definition = {
+            "process_id": "purchase_approval",
+            "process_name": "采购审批流程",
+            "process_type": "MultiLevelApproval",
+            "process_definition": {
+                "process_nodes": [
+                    {
+                        "node_id": "start",
+                        "node_name": "开始",
+                        "node_type": "Start",
+                        "node_order": 1
+                    },
+                    {
+                        "node_id": "dept_manager",
+                        "node_name": "部门经理审批",
+                        "node_type": "Approval",
+                        "node_order": 2,
+                        "assignee": "dept_manager"
+                    },
+                    {
+                        "node_id": "gateway_amount",
+                        "node_name": "金额判断网关",
+                        "node_type": "Gateway",
+                        "node_order": 3
+                    },
+                    {
+                        "node_id": "finance_manager",
+                        "node_name": "财务经理审批",
+                        "node_type": "Approval",
+                        "node_order": 4,
+                        "assignee": "finance_manager",
+                        "condition": "amount > 10000"
+                    },
+                    {
+                        "node_id": "general_manager",
+                        "node_name": "总经理审批",
+                        "node_type": "Approval",
+                        "node_order": 5,
+                        "assignee": "general_manager",
+                        "condition": "amount > 50000"
+                    },
+                    {
+                        "node_id": "end",
+                        "node_name": "结束",
+                        "node_type": "End",
+                        "node_order": 6
+                    }
+                ]
+            }
+        }
+
+        self.workflow_engine.define_process("purchase_approval", process_definition)
+        logger.info("Defined purchase approval process")
+
+    def start_purchase_approval(self, submitter: str, amount: float,
+                               purchase_items: List[Dict]) -> str:
+        """启动采购审批"""
+        process_data = {
+            "amount": amount,
+            "purchase_items": purchase_items,
+            "submitter": submitter
+        }
+
+        instance_id = self.workflow_engine.start_process(
+            "purchase_approval",
+            submitter,
+            process_data
+        )
+
+        logger.info(f"Started purchase approval process: {instance_id}")
+        return instance_id
+
+    def approve_with_condition(self, instance_id: str, approver: str,
+                              approval_result: str, comment: str = ""):
+        """条件审批"""
+        process = self.workflow_engine.get_process_status(instance_id)
+        if not process:
+            raise ValueError(f"Process instance not found: {instance_id}")
+
+        process_data = process.get("process_data", {})
+        amount = process_data.get("amount", 0)
+
+        # 审批当前节点
+        self.workflow_engine.approve_node(instance_id, approver, approval_result, comment)
+
+        if approval_result == "Approved":
+            # 根据金额决定下一个节点
+            current_node = process.get("current_node")
+            definition = self.workflow_engine.process_definitions[process["process_id"]]
+
+            # 获取下一个节点（考虑条件）
+            next_node = self._get_next_node_with_condition(
+                definition, current_node, amount
+            )
+
+            if next_node:
+                # 更新当前节点
+                process["current_node"] = next_node["node_id"]
+                # 分配任务
+                if next_node.get("assignee"):
+                    self.workflow_engine.assign_task(
+                        instance_id,
+                        next_node["node_id"],
+                        next_node["assignee"]
+                    )
+
+    def _get_next_node_with_condition(self, definition: Dict, current_node_id: str,
+                                     amount: float) -> Optional[Dict]:
+        """根据条件获取下一个节点"""
+        nodes = definition.get("process_definition", {}).get("process_nodes", [])
+        current_node = None
+
+        for node in nodes:
+            if node.get("node_id") == current_node_id:
+                current_node = node
+                break
+
+        if not current_node:
+            return None
+
+        current_order = current_node.get("node_order", 0)
+
+        # 查找下一个节点
+        for node in nodes:
+            node_order = node.get("node_order", 0)
+            if node_order > current_order:
+                # 检查条件
+                condition = node.get("condition")
+                if condition:
+                    if condition == "amount > 10000" and amount <= 10000:
+                        continue
+                    if condition == "amount > 50000" and amount <= 50000:
+                        continue
+                return node
+
+        return None
+
+async def multi_level_approval_example():
+    """多级审批流程示例"""
+    storage = OAStorage("postgresql://user:pass@localhost/oa")
+    workflow_engine = WorkflowEngine(storage)
+    approval_process = MultiLevelApprovalProcess(workflow_engine, storage)
+
+    # 定义流程
+    approval_process.define_purchase_approval_process()
+
+    # 启动审批流程（金额15000，需要财务经理审批）
+    instance_id = approval_process.start_purchase_approval(
+        "user001",
+        15000.0,
+        [{"item": "办公用品", "quantity": 100}]
+    )
+
+    print(f"Started approval process: {instance_id}")
+
+    # 部门经理审批
+    print("\nDepartment manager approving...")
+    approval_process.approve_with_condition(
+        instance_id,
+        "dept_manager",
+        "Approved",
+        "同意采购"
+    )
+
+    # 财务经理审批（因为金额>10000）
+    print("\nFinance manager approving...")
+    approval_process.approve_with_condition(
+        instance_id,
+        "finance_manager",
+        "Approved",
+        "同意采购"
+    )
+
+    # 检查流程状态
+    status = workflow_engine.get_process_status(instance_id)
+    print(f"\nProcess status: {status['current_status']}")
+    print(f"Current node: {status['current_node']}")
+
+    storage.close()
+
+if __name__ == "__main__":
+    asyncio.run(multi_level_approval_example())
+```
+
+---
+
+## 9. 案例8：文档版本对比
+
+### 9.1 场景描述
+
+**业务背景**：
+企业需要对比文档的不同版本，查看版本之间的差异，了解文档的变更历史。这对于文档审查和版本管理非常重要。
+
+**技术挑战**：
+
+- 需要提取文档内容
+- 需要对比两个版本的差异
+- 需要高亮显示变更内容
+- 需要生成对比报告
+
+**解决方案**：
+使用文档内容表存储文档的文本内容，实现版本对比算法，生成差异报告。
+
+### 9.2 实现代码
+
+**完整的文档版本对比实现**：
+
+```python
+import difflib
+from typing import List, Dict, Tuple
+from oa_storage import OAStorage
+from document_version_manager import DocumentVersionManager
+
+class DocumentVersionComparator:
+    """文档版本对比器"""
+
+    def __init__(self, storage: OAStorage):
+        self.storage = storage
+
+    def compare_versions(self, document_id: str, version1: int, version2: int) -> Dict:
+        """对比两个版本"""
+        # 获取版本内容
+        content1 = self._get_version_content(document_id, version1)
+        content2 = self._get_version_content(document_id, version2)
+
+        if not content1 or not content2:
+            return {"error": "Version content not found"}
+
+        # 对比内容
+        diff = self._compute_diff(content1, content2)
+
+        return {
+            "document_id": document_id,
+            "version1": version1,
+            "version2": version2,
+            "diff": diff,
+            "statistics": self._compute_statistics(diff)
+        }
+
+    def _get_version_content(self, document_id: str, version: int) -> Optional[str]:
+        """获取版本内容"""
+        self.storage.cur.execute("""
+            SELECT content_text FROM document_contents
+            WHERE document_id = %s AND version_number = %s
+        """, (document_id, version))
+        result = self.storage.cur.fetchone()
+        return result[0] if result else None
+
+    def _compute_diff(self, content1: str, content2: str) -> List[Dict]:
+        """计算差异"""
+        lines1 = content1.splitlines(keepends=True)
+        lines2 = content2.splitlines(keepends=True)
+
+        diff = difflib.unified_diff(
+            lines1, lines2,
+            lineterm='',
+            n=3
+        )
+
+        diff_list = []
+        for line in diff:
+            if line.startswith('---') or line.startswith('+++'):
+                continue
+            elif line.startswith('@@'):
+                diff_list.append({"type": "header", "content": line})
+            elif line.startswith('-'):
+                diff_list.append({"type": "deleted", "content": line[1:]})
+            elif line.startswith('+'):
+                diff_list.append({"type": "added", "content": line[1:]})
+            else:
+                diff_list.append({"type": "unchanged", "content": line})
+
+        return diff_list
+
+    def _compute_statistics(self, diff: List[Dict]) -> Dict:
+        """计算统计信息"""
+        stats = {
+            "added_lines": 0,
+            "deleted_lines": 0,
+            "unchanged_lines": 0,
+            "total_changes": 0
+        }
+
+        for item in diff:
+            if item["type"] == "added":
+                stats["added_lines"] += 1
+                stats["total_changes"] += 1
+            elif item["type"] == "deleted":
+                stats["deleted_lines"] += 1
+                stats["total_changes"] += 1
+            elif item["type"] == "unchanged":
+                stats["unchanged_lines"] += 1
+
+        return stats
+
+    def generate_diff_report(self, document_id: str, version1: int, version2: int) -> str:
+        """生成差异报告"""
+        comparison = self.compare_versions(document_id, version1, version2)
+
+        report = f"Document Version Comparison Report\n"
+        report += f"{'='*50}\n\n"
+        report += f"Document ID: {comparison['document_id']}\n"
+        report += f"Version {comparison['version1']} vs Version {comparison['version2']}\n\n"
+
+        stats = comparison['statistics']
+        report += f"Statistics:\n"
+        report += f"  Added lines: {stats['added_lines']}\n"
+        report += f"  Deleted lines: {stats['deleted_lines']}\n"
+        report += f"  Unchanged lines: {stats['unchanged_lines']}\n"
+        report += f"  Total changes: {stats['total_changes']}\n\n"
+
+        report += f"Differences:\n"
+        report += f"{'-'*50}\n"
+
+        for item in comparison['diff']:
+            if item['type'] == 'added':
+                report += f"+ {item['content']}"
+            elif item['type'] == 'deleted':
+                report += f"- {item['content']}"
+            elif item['type'] == 'header':
+                report += f"{item['content']}\n"
+
+        return report
+
+def version_comparison_example():
+    """文档版本对比示例"""
+    storage = OAStorage("postgresql://user:pass@localhost/oa")
+    comparator = DocumentVersionComparator(storage)
+
+    document_id = "DOC001"
+
+    # 对比版本1和版本2
+    comparison = comparator.compare_versions(document_id, 1, 2)
+    print("Version Comparison:")
+    print(f"  Added lines: {comparison['statistics']['added_lines']}")
+    print(f"  Deleted lines: {comparison['statistics']['deleted_lines']}")
+
+    # 生成差异报告
+    report = comparator.generate_diff_report(document_id, 1, 2)
+    print("\nDiff Report:")
+    print(report)
+
+    storage.close()
+
+if __name__ == "__main__":
+    version_comparison_example()
+```
+
+---
+
+## 10. 案例9：流程效率分析
+
+### 10.1 场景描述
+
+**业务背景**：
+企业需要分析审批流程的效率，找出流程瓶颈，优化流程设计。通过分析流程的执行时间、各节点的处理时间、审批通过率等指标，帮助企业改进流程效率。
+
+**技术挑战**：
+
+- 需要收集流程执行数据
+- 需要计算流程性能指标
+- 需要识别流程瓶颈
+- 需要生成分析报告
+
+**解决方案**：
+使用流程监控器收集流程执行数据，计算性能指标，生成流程效率分析报告。
+
+### 10.2 实现代码
+
+**完整的流程效率分析实现**：
+
+```python
+from typing import Dict, List
+from datetime import datetime, timedelta
+from process_monitor import ProcessMonitor
+from workflow_engine import WorkflowEngine
+from oa_storage import OAStorage
+
+class ProcessEfficiencyAnalyzer:
+    """流程效率分析器"""
+
+    def __init__(self, process_monitor: ProcessMonitor):
+        self.process_monitor = process_monitor
+
+    def analyze_process_efficiency(self, process_id: str,
+                                  start_date: datetime = None,
+                                  end_date: datetime = None) -> Dict:
+        """分析流程效率"""
+        # 获取性能指标
+        metrics = self.process_monitor.get_process_performance_metrics(
+            process_id, start_date, end_date
+        )
+
+        # 获取流程统计
+        stats = self.process_monitor.workflow_engine.get_process_statistics(
+            process_id, start_date, end_date
+        )
+
+        # 分析瓶颈节点
+        bottlenecks = self._identify_bottlenecks(process_id, start_date, end_date)
+
+        return {
+            "process_id": process_id,
+            "metrics": metrics,
+            "statistics": stats,
+            "bottlenecks": bottlenecks,
+            "recommendations": self._generate_recommendations(metrics, bottlenecks)
+        }
+
+    def _identify_bottlenecks(self, process_id: str,
+                             start_date: datetime = None,
+                             end_date: datetime = None) -> List[Dict]:
+        """识别流程瓶颈"""
+        # 这里需要查询各节点的平均处理时间
+        # 简化实现，实际需要从数据库查询节点处理时间
+        bottlenecks = []
+
+        # 示例：假设某些节点处理时间较长
+        # 实际实现需要从task_assignments表查询数据
+
+        return bottlenecks
+
+    def _generate_recommendations(self, metrics: Dict, bottlenecks: List[Dict]) -> List[str]:
+        """生成优化建议"""
+        recommendations = []
+
+        if metrics.get("average_duration_hours", 0) > 24:
+            recommendations.append("流程平均处理时间超过24小时，建议优化流程设计")
+
+        if metrics.get("rejection_rate", 0) > 0.3:
+            recommendations.append("流程拒绝率超过30%，建议检查审批条件设置")
+
+        if metrics.get("completion_rate", 0) < 0.7:
+            recommendations.append("流程完成率低于70%，建议检查流程设计")
+
+        return recommendations
+
+    def generate_efficiency_report(self, process_id: str,
+                                   start_date: datetime = None,
+                                   end_date: datetime = None) -> str:
+        """生成效率分析报告"""
+        analysis = self.analyze_process_efficiency(process_id, start_date, end_date)
+
+        report = f"Process Efficiency Analysis Report\n"
+        report += f"{'='*60}\n\n"
+        report += f"Process ID: {analysis['process_id']}\n"
+        if start_date:
+            report += f"Start Date: {start_date.strftime('%Y-%m-%d')}\n"
+        if end_date:
+            report += f"End Date: {end_date.strftime('%Y-%m-%d')}\n"
+        report += f"\n"
+
+        metrics = analysis['metrics']
+        report += f"Performance Metrics:\n"
+        report += f"  Total Processes: {metrics['total_processes']}\n"
+        report += f"  Completion Rate: {metrics['completion_rate']*100:.1f}%\n"
+        report += f"  Rejection Rate: {metrics['rejection_rate']*100:.1f}%\n"
+        report += f"  Average Duration: {metrics['average_duration_hours']:.2f} hours\n"
+        report += f"  Throughput: {metrics['throughput_per_day']:.2f} processes/day\n"
+        report += f"\n"
+
+        stats = analysis['statistics']
+        report += f"Statistics:\n"
+        report += f"  Completed: {stats['completed_processes']}\n"
+        report += f"  In Progress: {stats['in_progress_processes']}\n"
+        report += f"  Rejected: {stats['rejected_processes']}\n"
+        report += f"\n"
+
+        recommendations = analysis['recommendations']
+        if recommendations:
+            report += f"Recommendations:\n"
+            for i, rec in enumerate(recommendations, 1):
+                report += f"  {i}. {rec}\n"
+
+        return report
+
+def process_efficiency_analysis_example():
+    """流程效率分析示例"""
+    storage = OAStorage("postgresql://user:pass@localhost/oa")
+    workflow_engine = WorkflowEngine(storage)
+    process_monitor = ProcessMonitor(workflow_engine, storage)
+    analyzer = ProcessEfficiencyAnalyzer(process_monitor)
+
+    process_id = "purchase_approval"
+    start_date = datetime.now() - timedelta(days=30)
+    end_date = datetime.now()
+
+    # 分析流程效率
+    analysis = analyzer.analyze_process_efficiency(
+        process_id, start_date, end_date
+    )
+
+    print("Process Efficiency Analysis:")
+    print(f"  Completion Rate: {analysis['metrics']['completion_rate']*100:.1f}%")
+    print(f"  Average Duration: {analysis['metrics']['average_duration_hours']:.2f} hours")
+
+    # 生成报告
+    report = analyzer.generate_efficiency_report(
+        process_id, start_date, end_date
+    )
+    print("\nEfficiency Report:")
+    print(report)
+
+    storage.close()
+
+if __name__ == "__main__":
+    process_efficiency_analysis_example()
+```
+
+---
+
+## 11. 案例10：知识库管理
+
+### 11.1 场景描述
+
+**业务背景**：
+企业需要建立知识库系统，管理企业文档、经验总结、最佳实践等知识资产。知识库需要支持分类管理、标签管理、全文检索、权限控制等功能。
+
+**技术挑战**：
+
+- 需要实现知识分类体系
+- 需要支持标签管理
+- 需要实现全文检索
+- 需要支持知识推荐
+
+**解决方案**：
+使用文档内容表的全文索引实现知识检索，使用分类和标签管理知识组织，实现知识推荐算法。
+
+### 11.2 Schema定义
+
+**知识库管理Schema**：
+
+```json
+{
+  "knowledge_base_id": "KB001",
+  "knowledge_base_name": "企业知识库",
+  "categories": [
+    {
+      "category_id": "CAT001",
+      "category_name": "技术文档",
+      "parent_category": null,
+      "description": "技术相关文档"
+    },
+    {
+      "category_id": "CAT002",
+      "category_name": "业务流程",
+      "parent_category": null,
+      "description": "业务流程文档"
+    }
+  ],
+  "tags": [
+    {"tag_id": "TAG001", "tag_name": "Python"},
+    {"tag_id": "TAG002", "tag_name": "数据库"},
+    {"tag_id": "TAG003", "tag_name": "审批流程"}
+  ]
+}
+```
+
+### 11.3 实现代码
+
+**完整的知识库管理实现**：
+
+```python
+from typing import Dict, List, Optional
+from oa_storage import OAStorage
+
+class KnowledgeBaseManager:
+    """知识库管理器"""
+
+    def __init__(self, storage: OAStorage):
+        self.storage = storage
+
+    def create_category(self, category_id: str, category_name: str,
+                       parent_category: str = None, description: str = None):
+        """创建知识分类"""
+        self.storage.cur.execute("""
+            INSERT INTO knowledge_categories (
+                category_id, category_name, parent_category, description
+            ) VALUES (%s, %s, %s, %s)
+            ON CONFLICT (category_id) DO UPDATE SET
+                category_name = EXCLUDED.category_name,
+                parent_category = EXCLUDED.parent_category,
+                description = EXCLUDED.description
+        """, (category_id, category_name, parent_category, description))
+        self.storage.conn.commit()
+
+    def add_document_to_knowledge_base(self, document_id: str, category_id: str,
+                                      tags: List[str] = None):
+        """添加文档到知识库"""
+        # 关联文档和分类
+        self.storage.cur.execute("""
+            INSERT INTO knowledge_documents (
+                document_id, category_id
+            ) VALUES (%s, %s)
+            ON CONFLICT (document_id) DO UPDATE SET
+                category_id = EXCLUDED.category_id
+        """, (document_id, category_id))
+
+        # 添加标签
+        if tags:
+            for tag in tags:
+                self.storage.cur.execute("""
+                    INSERT INTO document_tags (
+                        document_id, tag_name
+                    ) VALUES (%s, %s)
+                    ON CONFLICT (document_id, tag_name) DO NOTHING
+                """, (document_id, tag))
+
+        self.storage.conn.commit()
+
+    def search_knowledge(self, query: str, category_id: str = None,
+                        tags: List[str] = None, limit: int = 20) -> List[Dict]:
+        """搜索知识"""
+        # 全文搜索
+        results = self.storage.search_documents_fulltext(query, limit)
+
+        # 过滤分类
+        if category_id:
+            results = [r for r in results if self._document_in_category(r['document_id'], category_id)]
+
+        # 过滤标签
+        if tags:
+            filtered_results = []
+            for result in results:
+                doc_tags = self._get_document_tags(result['document_id'])
+                if any(tag in doc_tags for tag in tags):
+                    filtered_results.append(result)
+            results = filtered_results
+
+        return results
+
+    def recommend_knowledge(self, document_id: str, limit: int = 5) -> List[Dict]:
+        """推荐相关知识"""
+        # 获取文档的标签和分类
+        doc_tags = self._get_document_tags(document_id)
+        doc_category = self._get_document_category(document_id)
+
+        # 查找相同标签或分类的文档
+        recommendations = []
+
+        if doc_tags:
+            for tag in doc_tags:
+                similar_docs = self.search_knowledge("", tags=[tag], limit=limit)
+                for doc in similar_docs:
+                    if doc['document_id'] != document_id:
+                        recommendations.append(doc)
+
+        if doc_category:
+            category_docs = self._get_documents_in_category(doc_category, limit)
+            for doc in category_docs:
+                if doc['document_id'] != document_id:
+                    recommendations.append(doc)
+
+        # 去重并按相关性排序
+        unique_recommendations = {}
+        for rec in recommendations:
+            doc_id = rec['document_id']
+            if doc_id not in unique_recommendations:
+                unique_recommendations[doc_id] = rec
+
+        return list(unique_recommendations.values())[:limit]
+
+    def _document_in_category(self, document_id: str, category_id: str) -> bool:
+        """检查文档是否在指定分类"""
+        self.storage.cur.execute("""
+            SELECT COUNT(*) FROM knowledge_documents
+            WHERE document_id = %s AND category_id = %s
+        """, (document_id, category_id))
+        return self.storage.cur.fetchone()[0] > 0
+
+    def _get_document_tags(self, document_id: str) -> List[str]:
+        """获取文档标签"""
+        self.storage.cur.execute("""
+            SELECT tag_name FROM document_tags
+            WHERE document_id = %s
+        """, (document_id,))
+        return [row[0] for row in self.storage.cur.fetchall()]
+
+    def _get_document_category(self, document_id: str) -> Optional[str]:
+        """获取文档分类"""
+        self.storage.cur.execute("""
+            SELECT category_id FROM knowledge_documents
+            WHERE document_id = %s
+        """, (document_id,))
+        result = self.storage.cur.fetchone()
+        return result[0] if result else None
+
+    def _get_documents_in_category(self, category_id: str, limit: int) -> List[Dict]:
+        """获取分类下的文档"""
+        self.storage.cur.execute("""
+            SELECT d.document_id, d.document_title, d.document_type
+            FROM documents d
+            JOIN knowledge_documents kd ON d.document_id = kd.document_id
+            WHERE kd.category_id = %s
+            ORDER BY d.created_at DESC
+            LIMIT %s
+        """, (category_id, limit))
+
+        return [
+            {
+                "document_id": row[0],
+                "document_title": row[1],
+                "document_type": row[2]
+            }
+            for row in self.storage.cur.fetchall()
+        ]
+
+def knowledge_base_example():
+    """知识库管理示例"""
+    storage = OAStorage("postgresql://user:pass@localhost/oa")
+    kb_manager = KnowledgeBaseManager(storage)
+
+    # 创建分类
+    kb_manager.create_category("CAT001", "技术文档", None, "技术相关文档")
+    kb_manager.create_category("CAT002", "业务流程", None, "业务流程文档")
+
+    # 添加文档到知识库
+    kb_manager.add_document_to_knowledge_base(
+        "DOC001",
+        "CAT001",
+        ["Python", "数据库"]
+    )
+
+    # 搜索知识
+    results = kb_manager.search_knowledge("Python", category_id="CAT001")
+    print(f"Found {len(results)} documents")
+    for result in results:
+        print(f"  {result['document_title']}")
+
+    # 推荐相关知识
+    recommendations = kb_manager.recommend_knowledge("DOC001")
+    print(f"\nRecommended documents: {len(recommendations)}")
+    for rec in recommendations:
+        print(f"  {rec['document_title']}")
+
+    storage.close()
+
+if __name__ == "__main__":
+    knowledge_base_example()
 ```
 
 ---
