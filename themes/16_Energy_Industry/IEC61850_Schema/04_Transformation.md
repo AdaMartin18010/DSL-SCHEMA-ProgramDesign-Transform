@@ -58,10 +58,34 @@ class SCLParser:
         }
 
     def parse_scl_file(self, scl_file_path: str) -> Dict:
-        """解析SCL文件"""
+        """解析SCL文件 - 增强错误处理"""
+        # 输入验证
+        if not scl_file_path:
+            raise ValueError("SCL file path cannot be empty")
+
+        if not isinstance(scl_file_path, str):
+            raise TypeError(f"SCL file path must be a string, got {type(scl_file_path)}")
+
+        import os
+        if not os.path.exists(scl_file_path):
+            raise FileNotFoundError(f"SCL file not found: {scl_file_path}")
+
+        if not os.path.isfile(scl_file_path):
+            raise ValueError(f"Path is not a file: {scl_file_path}")
+
+        # 检查文件大小（防止过大文件）
+        file_size = os.path.getsize(scl_file_path)
+        MAX_FILE_SIZE = 100 * 1024 * 1024  # 100MB
+        if file_size > MAX_FILE_SIZE:
+            raise ValueError(f"SCL file too large: {file_size} bytes (max {MAX_FILE_SIZE})")
+
         try:
             tree = ET.parse(scl_file_path)
             root = tree.getroot()
+
+            # 验证根元素
+            if root.tag is None or not root.tag.endswith('SCL'):
+                raise ValueError(f"Invalid SCL file: root element is not SCL, got {root.tag}")
 
             scl_data = {
                 "header": self._parse_header(root),
@@ -70,11 +94,24 @@ class SCLParser:
                 "data_type_templates": self._parse_data_type_templates(root)
             }
 
-            logger.info(f"Successfully parsed SCL file: {scl_file_path}")
+            # 验证解析结果
+            if not scl_data.get("ieds"):
+                logger.warning("No IEDs found in SCL file")
+
+            logger.info(f"Successfully parsed SCL file: {scl_file_path} ({len(scl_data.get('ieds', []))} IEDs)")
             return scl_data
-        except Exception as e:
-            logger.error(f"Error parsing SCL file: {e}")
+
+        except ET.ParseError as e:
+            logger.error(f"XML parsing error in SCL file {scl_file_path}: {e}")
+            raise ValueError(f"Invalid XML format in SCL file: {e}") from e
+        except FileNotFoundError:
             raise
+        except PermissionError as e:
+            logger.error(f"Permission denied reading SCL file {scl_file_path}: {e}")
+            raise PermissionError(f"Cannot read SCL file: {e}") from e
+        except Exception as e:
+            logger.error(f"Unexpected error parsing SCL file {scl_file_path}: {e}", exc_info=True)
+            raise RuntimeError(f"Failed to parse SCL file: {e}") from e
 
     def _parse_header(self, root: ET.Element) -> Dict:
         """解析SCL Header"""
@@ -470,17 +507,69 @@ class MMSClient:
         self.socket: Optional[socket.socket] = None
         self.connected = False
 
-    def connect(self) -> bool:
-        """连接到MMS服务器"""
+    def connect(self, timeout: float = 10.0) -> bool:
+        """连接到MMS服务器 - 增强错误处理"""
+        # 输入验证
+        if not self.host:
+            raise ValueError("MMS server host cannot be empty")
+
+        if not isinstance(self.host, str):
+            raise TypeError(f"MMS server host must be a string, got {type(self.host)}")
+
+        if not isinstance(self.port, int):
+            raise TypeError(f"MMS server port must be an integer, got {type(self.port)}")
+
+        if not (1 <= self.port <= 65535):
+            raise ValueError(f"MMS server port must be between 1 and 65535, got {self.port}")
+
+        if timeout <= 0:
+            raise ValueError(f"Connection timeout must be positive, got {timeout}")
+
+        # 如果已经连接，先断开
+        if self.connected and self.socket:
+            try:
+                self.disconnect()
+            except Exception as e:
+                logger.warning(f"Error disconnecting existing connection: {e}")
+
         try:
             self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.socket.settimeout(timeout)
+
+            # 尝试连接
             self.socket.connect((self.host, self.port))
             self.connected = True
+
             logger.info(f"Connected to MMS server: {self.host}:{self.port}")
             return True
+
+        except socket.timeout:
+            logger.error(f"Connection timeout to MMS server {self.host}:{self.port} (timeout: {timeout}s)")
+            self._cleanup_socket()
+            raise TimeoutError(f"Connection timeout to MMS server {self.host}:{self.port}") from None
+        except socket.gaierror as e:
+            logger.error(f"DNS resolution failed for MMS server {self.host}: {e}")
+            self._cleanup_socket()
+            raise ConnectionError(f"Cannot resolve hostname {self.host}: {e}") from e
+        except socket.error as e:
+            logger.error(f"Socket error connecting to MMS server {self.host}:{self.port}: {e}")
+            self._cleanup_socket()
+            raise ConnectionError(f"Cannot connect to MMS server {self.host}:{self.port}: {e}") from e
         except Exception as e:
-            logger.error(f"Failed to connect to MMS server: {e}")
-            return False
+            logger.error(f"Unexpected error connecting to MMS server {self.host}:{self.port}: {e}", exc_info=True)
+            self._cleanup_socket()
+            raise RuntimeError(f"Failed to connect to MMS server: {e}") from e
+
+    def _cleanup_socket(self):
+        """清理socket资源"""
+        if self.socket:
+            try:
+                self.socket.close()
+            except Exception:
+                pass
+            finally:
+                self.socket = None
+                self.connected = False
 
     def disconnect(self):
         """断开连接"""

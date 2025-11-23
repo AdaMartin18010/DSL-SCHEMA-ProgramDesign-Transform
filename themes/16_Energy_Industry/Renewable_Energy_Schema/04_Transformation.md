@@ -59,38 +59,128 @@ class WindTurbineDataCollector:
         self.socket: Optional[socket.socket] = None
         self.connected = False
 
-    def connect(self) -> bool:
-        """连接到风机控制器"""
+    def connect(self, timeout: float = 10.0) -> bool:
+        """连接到风机控制器 - 增强错误处理"""
+        # 输入验证
+        if not self.turbine_id:
+            raise ValueError("Turbine ID cannot be empty")
+
+        if not isinstance(self.turbine_id, str):
+            raise TypeError(f"Turbine ID must be a string, got {type(self.turbine_id)}")
+
+        if not self.host:
+            raise ValueError("Host cannot be empty")
+
+        if not isinstance(self.host, str):
+            raise TypeError(f"Host must be a string, got {type(self.host)}")
+
+        if not isinstance(self.port, int):
+            raise TypeError(f"Port must be an integer, got {type(self.port)}")
+
+        if not (1 <= self.port <= 65535):
+            raise ValueError(f"Port must be between 1 and 65535, got {self.port}")
+
+        if timeout <= 0:
+            raise ValueError(f"Timeout must be positive, got {timeout}")
+
+        # 如果已连接，先断开
+        if self.connected and self.socket:
+            try:
+                self.disconnect()
+            except Exception as e:
+                logger.warning(f"Error disconnecting existing connection: {e}")
+
         try:
             self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.socket.settimeout(timeout)
+
+            # 尝试连接
             self.socket.connect((self.host, self.port))
             self.connected = True
-            logger.info(f"Connected to wind turbine {self.turbine_id}")
+
+            logger.info(f"Connected to wind turbine {self.turbine_id} at {self.host}:{self.port}")
             return True
+
+        except socket.timeout:
+            logger.error(f"Connection timeout to wind turbine {self.turbine_id} at {self.host}:{self.port} (timeout: {timeout}s)")
+            self._cleanup_socket()
+            raise TimeoutError(f"Connection timeout to wind turbine {self.turbine_id}") from None
+        except socket.gaierror as e:
+            logger.error(f"DNS resolution failed for wind turbine {self.turbine_id} host {self.host}: {e}")
+            self._cleanup_socket()
+            raise ConnectionError(f"Cannot resolve hostname {self.host}: {e}") from e
+        except socket.error as e:
+            logger.error(f"Socket error connecting to wind turbine {self.turbine_id} at {self.host}:{self.port}: {e}")
+            self._cleanup_socket()
+            raise ConnectionError(f"Cannot connect to wind turbine {self.turbine_id}: {e}") from e
         except Exception as e:
-            logger.error(f"Failed to connect to wind turbine: {e}")
-            return False
+            logger.error(f"Unexpected error connecting to wind turbine {self.turbine_id}: {e}", exc_info=True)
+            self._cleanup_socket()
+            raise RuntimeError(f"Failed to connect to wind turbine {self.turbine_id}: {e}") from e
+
+    def _cleanup_socket(self):
+        """清理socket资源"""
+        if self.socket:
+            try:
+                self.socket.close()
+            except Exception:
+                pass
+            finally:
+                self.socket = None
+                self.connected = False
 
     def disconnect(self):
-        """断开连接"""
+        """断开连接 - 增强错误处理"""
         if self.socket:
-            self.socket.close()
-            self.connected = False
+            try:
+                self.socket.close()
+                logger.info(f"Disconnected from wind turbine {self.turbine_id}")
+            except Exception as e:
+                logger.warning(f"Error closing socket: {e}")
+            finally:
+                self.socket = None
+                self.connected = False
 
     def read_turbine_status(self) -> Optional[Dict]:
-        """读取风机状态"""
+        """读取风机状态 - 增强错误处理"""
+        # 连接状态检查
         if not self.connected:
-            return None
+            raise ConnectionError(f"Not connected to wind turbine {self.turbine_id}. Call connect() first.")
 
-        # Modbus读取状态寄存器（简化实现）
-        status_data = self._read_modbus_registers(0x1000, 10)
-        if status_data:
+        if self.socket is None:
+            raise ConnectionError("Socket is not initialized")
+
+        try:
+            # Modbus读取状态寄存器（简化实现）
+            status_data = self._read_modbus_registers(0x1000, 10)
+            if not status_data:
+                logger.warning(f"No status data received from wind turbine {self.turbine_id}")
+                return None
+
+            if len(status_data) < 3:
+                raise ValueError(f"Insufficient status data: expected at least 3 registers, got {len(status_data)}")
+
             return {
+                "turbine_id": self.turbine_id,
+                "timestamp": datetime.now().isoformat(),
                 "operational_status": self._parse_operational_status(status_data[0]),
                 "fault_status": self._parse_fault_status(status_data[1]),
                 "maintenance_status": self._parse_maintenance_status(status_data[2])
             }
-        return None
+
+        except socket.timeout:
+            logger.error(f"Timeout reading status from wind turbine {self.turbine_id}")
+            raise TimeoutError(f"Timeout reading status from wind turbine {self.turbine_id}") from None
+        except socket.error as e:
+            logger.error(f"Socket error reading status from wind turbine {self.turbine_id}: {e}")
+            self.connected = False
+            raise ConnectionError(f"Socket error: {e}") from e
+        except ValueError as e:
+            logger.error(f"Invalid status data from wind turbine {self.turbine_id}: {e}")
+            raise
+        except Exception as e:
+            logger.error(f"Unexpected error reading status from wind turbine {self.turbine_id}: {e}", exc_info=True)
+            raise RuntimeError(f"Failed to read turbine status: {e}") from e
 
     def read_turbine_performance(self) -> Optional[Dict]:
         """读取风机性能数据"""

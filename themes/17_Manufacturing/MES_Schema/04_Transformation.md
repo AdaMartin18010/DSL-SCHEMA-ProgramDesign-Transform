@@ -56,31 +56,100 @@ class ERPOrderParser:
         pass
 
     def parse_erp_order(self, erp_order_data: Dict) -> Dict:
-        """解析ERP订单数据"""
+        """解析ERP订单数据 - 增强错误处理"""
+        # 输入验证
+        if not isinstance(erp_order_data, dict):
+            raise TypeError(f"ERP order data must be a dictionary, got {type(erp_order_data)}")
+
+        if not erp_order_data:
+            raise ValueError("ERP order data cannot be empty")
+
+        # 必需字段验证
+        required_fields = ["order_id", "order_number", "product_id"]
+        missing_fields = [field for field in required_fields if not erp_order_data.get(field)]
+        if missing_fields:
+            raise ValueError(f"Missing required fields: {', '.join(missing_fields)}")
+
+        # 数量验证
+        quantity = erp_order_data.get("quantity")
+        if quantity is not None:
+            if not isinstance(quantity, (int, float)):
+                raise TypeError(f"Quantity must be a number, got {type(quantity)}")
+            if quantity <= 0:
+                raise ValueError(f"Quantity must be positive, got {quantity}")
+
+        # 日期验证
+        start_date = self._parse_datetime(erp_order_data.get("start_date"))
+        end_date = self._parse_datetime(erp_order_data.get("end_date"))
+        delivery_date = self._parse_datetime(erp_order_data.get("delivery_date"))
+
+        if start_date and end_date and start_date > end_date:
+            raise ValueError(f"Start date ({start_date}) must be before end date ({end_date})")
+
+        if end_date and delivery_date and end_date > delivery_date:
+            logger.warning(f"End date ({end_date}) is after delivery date ({delivery_date})")
+
+        # 优先级验证
+        priority = erp_order_data.get("priority", "Normal")
+        valid_priorities = ["Low", "Normal", "High", "Urgent"]
+        if priority not in valid_priorities:
+            logger.warning(f"Invalid priority '{priority}', using default 'Normal'. Valid priorities: {valid_priorities}")
+            priority = "Normal"
+
         return {
-            "order_id": erp_order_data.get("order_id"),
-            "order_number": erp_order_data.get("order_number"),
-            "product_id": erp_order_data.get("product_id"),
-            "product_name": erp_order_data.get("product_name"),
-            "quantity": erp_order_data.get("quantity"),
+            "order_id": erp_order_data["order_id"],
+            "order_number": erp_order_data["order_number"],
+            "product_id": erp_order_data["product_id"],
+            "product_name": erp_order_data.get("product_name", ""),
+            "quantity": quantity,
             "unit": erp_order_data.get("unit", "pieces"),
-            "start_date": self._parse_datetime(erp_order_data.get("start_date")),
-            "end_date": self._parse_datetime(erp_order_data.get("end_date")),
-            "delivery_date": self._parse_datetime(erp_order_data.get("delivery_date")),
-            "priority": erp_order_data.get("priority", "Normal"),
+            "start_date": start_date,
+            "end_date": end_date,
+            "delivery_date": delivery_date,
+            "priority": priority,
             "order_type": erp_order_data.get("order_type", "MakeToOrder"),
             "material_requirements": erp_order_data.get("material_requirements", []),
             "work_centers": erp_order_data.get("work_centers", [])
         }
 
     def _parse_datetime(self, date_str: Optional[str]) -> Optional[datetime]:
-        """解析日期时间"""
+        """解析日期时间 - 增强错误处理"""
         if not date_str:
             return None
-        try:
-            return datetime.fromisoformat(date_str.replace('Z', '+00:00'))
-        except Exception:
+
+        if not isinstance(date_str, str):
+            raise TypeError(f"Date string must be a string, got {type(date_str)}")
+
+        if not date_str.strip():
             return None
+
+        try:
+            # 支持多种日期格式
+            date_str_clean = date_str.replace('Z', '+00:00')
+
+            # ISO 8601格式
+            if 'T' in date_str_clean or '+' in date_str_clean or date_str_clean.endswith('Z'):
+                return datetime.fromisoformat(date_str_clean)
+
+            # 仅日期格式 YYYY-MM-DD
+            if len(date_str_clean) == 10:
+                return datetime.strptime(date_str_clean, "%Y-%m-%d")
+
+            # 其他常见格式
+            for fmt in ["%Y-%m-%d %H:%M:%S", "%Y/%m/%d", "%d/%m/%Y"]:
+                try:
+                    return datetime.strptime(date_str_clean, fmt)
+                except ValueError:
+                    continue
+
+            raise ValueError(f"Unsupported date format: {date_str}")
+
+        except ValueError as e:
+            logger.warning(f"Failed to parse date '{date_str}': {e}")
+            raise ValueError(f"Invalid date format: {date_str}") from e
+        except Exception as e:
+            logger.error(f"Unexpected error parsing date '{date_str}': {e}", exc_info=True)
+            raise RuntimeError(f"Date parsing failed: {e}") from e
 ```
 
 ### 2.2 MES订单转换器
@@ -95,8 +164,26 @@ class ERPToMESConverter:
         self.parser = ERPOrderParser()
 
     def convert_erp_order_to_mes(self, erp_order_data: Dict) -> Dict:
-        """将ERP订单转换为MES生产订单"""
-        erp_order = self.parser.parse_erp_order(erp_order_data)
+        """将ERP订单转换为MES生产订单 - 增强错误处理"""
+        # 输入验证
+        if not isinstance(erp_order_data, dict):
+            raise TypeError(f"ERP order data must be a dictionary, got {type(erp_order_data)}")
+
+        try:
+            erp_order = self.parser.parse_erp_order(erp_order_data)
+        except (ValueError, TypeError) as e:
+            logger.error(f"Failed to parse ERP order: {e}")
+            raise ValueError(f"Invalid ERP order data: {e}") from e
+
+        # 验证必需字段
+        if not erp_order.get("order_id"):
+            raise ValueError("Order ID is required for MES conversion")
+
+        if not erp_order.get("product_id"):
+            raise ValueError("Product ID is required for MES conversion")
+
+        if not erp_order.get("quantity") or erp_order["quantity"] <= 0:
+            raise ValueError(f"Valid quantity is required, got {erp_order.get('quantity')}")
 
         mes_order = {
             "order_id": erp_order["order_id"],

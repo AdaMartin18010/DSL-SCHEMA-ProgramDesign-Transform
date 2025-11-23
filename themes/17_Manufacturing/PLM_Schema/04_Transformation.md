@@ -59,37 +59,105 @@ class STEPParser:
         self.entity_pattern = re.compile(r'#(\d+)\s*=\s*([A-Z_]+)\s*\(([^)]*)\);')
 
     def parse_step_file(self, file_path: str) -> Dict:
-        """解析STEP文件"""
+        """解析STEP文件 - 增强错误处理"""
+        # 输入验证
+        if not file_path:
+            raise ValueError("STEP file path cannot be empty")
+
+        if not isinstance(file_path, str):
+            raise TypeError(f"STEP file path must be a string, got {type(file_path)}")
+
+        import os
+        if not os.path.exists(file_path):
+            raise FileNotFoundError(f"STEP file not found: {file_path}")
+
+        if not os.path.isfile(file_path):
+            raise ValueError(f"Path is not a file: {file_path}")
+
+        # 检查文件扩展名
+        if not file_path.lower().endswith(('.step', '.stp')):
+            logger.warning(f"File extension is not .step or .stp: {file_path}")
+
+        # 检查文件大小
+        file_size = os.path.getsize(file_path)
+        MAX_FILE_SIZE = 500 * 1024 * 1024  # 500MB
+        if file_size > MAX_FILE_SIZE:
+            raise ValueError(f"STEP file too large: {file_size} bytes (max {MAX_FILE_SIZE})")
+
+        if file_size == 0:
+            raise ValueError(f"STEP file is empty: {file_path}")
+
         try:
             with open(file_path, 'r', encoding='utf-8') as f:
                 content = f.read()
 
+            if not content.strip():
+                raise ValueError(f"STEP file is empty or contains only whitespace: {file_path}")
+
+            # 验证STEP文件格式
+            if 'HEADER;' not in content:
+                raise ValueError(f"Invalid STEP file: missing HEADER section")
+
+            if 'DATA;' not in content:
+                raise ValueError(f"Invalid STEP file: missing DATA section")
+
             # 解析文件结构
             header_end = content.find('ENDSEC;')
+            if header_end == -1:
+                raise ValueError(f"Invalid STEP file: missing ENDSEC in HEADER section")
+
             data_start = content.find('DATA;')
+            if data_start == -1:
+                raise ValueError(f"Invalid STEP file: missing DATA section")
+
             data_end = content.find('ENDSEC;', data_start)
+            if data_end == -1:
+                raise ValueError(f"Invalid STEP file: missing ENDSEC in DATA section")
 
             # 解析HEADER段
             header_section = content[:header_end + len('ENDSEC;')]
             header_data = self._parse_header(header_section)
 
+            if not header_data:
+                logger.warning(f"No header data parsed from STEP file: {file_path}")
+
             # 解析DATA段
             data_section = content[data_start:data_end + len('ENDSEC;')]
             entities = self._parse_data(data_section)
 
-            return {
+            if not entities:
+                logger.warning(f"No entities parsed from STEP file: {file_path}")
+
+            result = {
                 "file_path": file_path,
+                "file_size": file_size,
                 "step_header": header_data,
                 "step_data": {
-                    "entities": entities
+                    "entities": entities,
+                    "entity_count": len(entities)
                 },
                 "step_end": {
                     "end_marker": "ENDSTEP"
                 }
             }
-        except Exception as e:
-            logger.error(f"Error parsing STEP file: {e}")
+
+            logger.info(f"Successfully parsed STEP file: {file_path} ({len(entities)} entities)")
+            return result
+
+        except FileNotFoundError:
             raise
+        except PermissionError as e:
+            logger.error(f"Permission denied reading STEP file {file_path}: {e}")
+            raise PermissionError(f"Cannot read STEP file: {e}") from e
+        except UnicodeDecodeError as e:
+            logger.error(f"Encoding error reading STEP file {file_path}: {e}")
+            raise ValueError(f"Invalid file encoding (expected UTF-8): {e}") from e
+        except ValueError as e:
+            logger.error(f"Invalid STEP file format {file_path}: {e}")
+            raise
+        except Exception as e:
+            logger.error(f"Unexpected error parsing STEP file {file_path}: {e}", exc_info=True)
+            raise RuntimeError(f"Failed to parse STEP file: {e}") from e
 
     def _parse_header(self, header_section: str) -> Dict:
         """解析HEADER段"""
