@@ -6,10 +6,20 @@
   - [📑 目录](#-目录)
   - [1. 案例概述](#1-案例概述)
   - [2. 案例1：课程内容管理](#2-案例1课程内容管理)
+    - [2.1 场景描述](#21-场景描述)
+    - [2.2 Schema定义](#22-schema定义)
   - [3. 案例2：学习路径规划](#3-案例2学习路径规划)
+    - [3.1 场景描述](#31-场景描述)
+    - [3.2 Schema定义](#32-schema定义)
   - [4. 案例3：互动学习](#4-案例3互动学习)
+    - [4.1 场景描述](#41-场景描述)
+    - [4.2 Schema定义](#42-schema定义)
   - [5. 案例4：Common Cartridge到xAPI转换](#5-案例4common-cartridge到xapi转换)
+    - [5.1 场景描述](#51-场景描述)
+    - [5.2 实现代码](#52-实现代码)
   - [6. 案例5：在线教育数据存储与分析](#6-案例5在线教育数据存储与分析)
+    - [6.1 场景描述](#61-场景描述)
+    - [6.2 实现代码](#62-实现代码)
 
 ---
 
@@ -108,11 +118,11 @@ def convert_cc_to_xapi_example():
         "content_title": "Python基础语法",
         "course_id": "COURSE001"
     }
-    
+
     # 转换为xAPI语句
     xapi_statement = convert_cc_to_xapi(cc_data)
     print(f"xAPI Statement: {xapi_statement}")
-    
+
     return xapi_statement
 
 if __name__ == "__main__":
@@ -137,7 +147,7 @@ def online_education_data_storage_example():
     """在线教育数据存储示例"""
     storage = OnlineEducationStorage("postgresql://user:password@localhost/online_edu_db")
     storage.create_tables()
-    
+
     # 存储课程内容
     content_data = {
         "content_id": "CONTENT001",
@@ -147,11 +157,11 @@ def online_education_data_storage_example():
         "resource_title": "Python基础语法"
     }
     storage.store_course_content(content_data)
-    
+
     # 分析在线教育数据
     results = analyze_online_education_data(storage)
     print(f"Online education analysis results: {results}")
-    
+
     storage.close()
 
 if __name__ == "__main__":
@@ -169,4 +179,3 @@ if __name__ == "__main__":
 
 **创建时间**：2025-01-21
 **最后更新**：2025-01-21
-

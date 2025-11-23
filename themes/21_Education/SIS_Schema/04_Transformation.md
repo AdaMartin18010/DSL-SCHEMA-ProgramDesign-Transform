@@ -5,6 +5,7 @@
 - [学生信息系统Schema转换体系](#学生信息系统schema转换体系)
   - [📑 目录](#-目录)
   - [1. 转换体系概述](#1-转换体系概述)
+    - [1.1 转换目标](#11-转换目标)
   - [2. Ed-Fi到SIF转换](#2-ed-fi到sif转换)
   - [3. SIF到Ed-Fi转换](#3-sif到ed-fi转换)
   - [4. 学生数据存储与分析](#4-学生数据存储与分析)
@@ -95,7 +96,7 @@ class SISStorage:
         """初始化存储连接"""
         if not connection_string:
             raise ValueError("Connection string cannot be empty")
-        
+
         try:
             self.conn = psycopg2.connect(connection_string)
             self.cur = self.conn.cursor(cursor_factory=RealDictCursor)
@@ -261,7 +262,7 @@ def analyze_student_data(storage):
     """分析学生数据"""
     # GPA统计
     storage.cur.execute("""
-        SELECT 
+        SELECT
             s.student_id,
             s.name,
             AVG(g.grade_points) as avg_gpa,
@@ -271,7 +272,7 @@ def analyze_student_data(storage):
         GROUP BY s.student_id, s.name
         ORDER BY avg_gpa DESC
     """)
-    
+
     results = storage.cur.fetchall()
     return results
 ```
@@ -287,4 +288,3 @@ def analyze_student_data(storage):
 
 **创建时间**：2025-01-21
 **最后更新**：2025-01-21
-

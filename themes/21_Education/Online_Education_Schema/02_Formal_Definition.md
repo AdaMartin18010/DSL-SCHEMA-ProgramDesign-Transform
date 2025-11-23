@@ -11,7 +11,10 @@
   - [5. 类型系统](#5-类型系统)
   - [6. 约束规则](#6-约束规则)
   - [7. 转换函数](#7-转换函数)
+    - [7.1 Common Cartridge到xAPI转换](#71-common-cartridge到xapi转换)
+    - [7.2 xAPI到Common Cartridge转换](#72-xapi到common-cartridge转换)
   - [8. 形式化定理](#8-形式化定理)
+    - [8.1 学习路径一致性定理](#81-学习路径一致性定理)
 
 ---
 
@@ -247,4 +250,3 @@ convert_xAPI_to_CC: xAPI_Statement → CommonCartridge_Data
 
 **创建时间**：2025-01-21
 **最后更新**：2025-01-21
-

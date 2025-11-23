@@ -6,10 +6,20 @@
   - [📑 目录](#-目录)
   - [1. 案例概述](#1-案例概述)
   - [2. 案例1：学生信息管理](#2-案例1学生信息管理)
+    - [2.1 场景描述](#21-场景描述)
+    - [2.2 Schema定义](#22-schema定义)
   - [3. 案例2：学籍管理](#3-案例2学籍管理)
+    - [3.1 场景描述](#31-场景描述)
+    - [3.2 Schema定义](#32-schema定义)
   - [4. 案例3：成绩管理](#4-案例3成绩管理)
+    - [4.1 场景描述](#41-场景描述)
+    - [4.2 Schema定义](#42-schema定义)
   - [5. 案例4：Ed-Fi到SIF转换](#5-案例4ed-fi到sif转换)
+    - [5.1 场景描述](#51-场景描述)
+    - [5.2 实现代码](#52-实现代码)
   - [6. 案例5：学生数据存储与分析](#6-案例5学生数据存储与分析)
+    - [6.1 场景描述](#61-场景描述)
+    - [6.2 实现代码](#62-实现代码)
 
 ---
 
@@ -109,11 +119,11 @@ def convert_edfi_to_sif_example():
         "birth_date": "2005-05-15",
         "gender": "M"
     }
-    
+
     # 转换为SIF消息
     sif_message = convert_edfi_to_sif(edfi_data)
     print(f"SIF Message: {sif_message}")
-    
+
     return sif_message
 
 if __name__ == "__main__":
@@ -138,7 +148,7 @@ def student_data_storage_example():
     """学生数据存储示例"""
     storage = SISStorage("postgresql://user:password@localhost/sis_db")
     storage.create_tables()
-    
+
     # 存储学生
     student_data = {
         "student_id": "STU001",
@@ -148,7 +158,7 @@ def student_data_storage_example():
         "email": "zhangsan@example.com"
     }
     storage.store_student(student_data)
-    
+
     # 存储学籍
     enrollment_data = {
         "enrollment_id": "ENR001",
@@ -157,7 +167,7 @@ def student_data_storage_example():
         "enrollment_status": "Active"
     }
     storage.store_enrollment(enrollment_data)
-    
+
     # 存储成绩
     grade_data = {
         "grade_id": "GRD001",
@@ -169,11 +179,11 @@ def student_data_storage_example():
         "credits": 3.0
     }
     storage.store_grade(grade_data)
-    
+
     # 分析学生数据
     results = analyze_student_data(storage)
     print(f"Student analysis results: {results}")
-    
+
     storage.close()
 
 if __name__ == "__main__":
@@ -191,4 +201,3 @@ if __name__ == "__main__":
 
 **创建时间**：2025-01-21
 **最后更新**：2025-01-21
-

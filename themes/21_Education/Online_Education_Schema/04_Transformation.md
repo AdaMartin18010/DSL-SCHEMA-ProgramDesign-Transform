@@ -5,6 +5,7 @@
 - [在线教育平台Schema转换体系](#在线教育平台schema转换体系)
   - [📑 目录](#-目录)
   - [1. 转换体系概述](#1-转换体系概述)
+    - [1.1 转换目标](#11-转换目标)
   - [2. Common Cartridge到xAPI转换](#2-common-cartridge到xapi转换)
   - [3. xAPI到Common Cartridge转换](#3-xapi到common-cartridge转换)
   - [4. 在线教育数据存储与分析](#4-在线教育数据存储与分析)
@@ -101,7 +102,7 @@ class OnlineEducationStorage:
         """初始化存储连接"""
         if not connection_string:
             raise ValueError("Connection string cannot be empty")
-        
+
         try:
             self.conn = psycopg2.connect(connection_string)
             self.cur = self.conn.cursor(cursor_factory=RealDictCursor)
@@ -206,7 +207,7 @@ def analyze_online_education_data(storage):
     """分析在线教育数据"""
     # 学习路径完成率
     storage.cur.execute("""
-        SELECT 
+        SELECT
             learner_id,
             AVG(current_progress) as avg_progress,
             COUNT(*) as total_paths
@@ -214,7 +215,7 @@ def analyze_online_education_data(storage):
         GROUP BY learner_id
         ORDER BY avg_progress DESC
     """)
-    
+
     results = storage.cur.fetchall()
     return results
 ```
@@ -230,4 +231,3 @@ def analyze_online_education_data(storage):
 
 **创建时间**：2025-01-21
 **最后更新**：2025-01-21
-
