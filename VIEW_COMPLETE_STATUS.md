@@ -54,7 +54,7 @@
 
 ## 📁 最终文档结构
 
-```
+```text
 themes/
 ├── 01_Industrial_Automation/     ✅ 100%完成
 │   ├── README.md                 ✅

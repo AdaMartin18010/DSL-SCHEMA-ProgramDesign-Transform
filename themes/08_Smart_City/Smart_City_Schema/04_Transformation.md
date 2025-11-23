@@ -382,4 +382,3 @@ def query_city_statistics(storage: SmartCityStorage, start_date: datetime, end_d
 
 **创建时间**：2025-01-21
 **最后更新**：2025-01-21
-

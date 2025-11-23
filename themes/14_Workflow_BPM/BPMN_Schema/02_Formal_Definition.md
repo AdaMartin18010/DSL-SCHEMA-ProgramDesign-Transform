@@ -71,7 +71,7 @@ schema ProcessDefinition {
   }
 
   start_event: StartEvent @required
-  end_events: List<EndEvent] @required
+  end_events: List<EndEvent> @required
 } @standard("BPMN_2.0")
 ```
 
@@ -94,37 +94,37 @@ schema Task {
   type: Enum { UserTask, ServiceTask, ScriptTask, BusinessRuleTask } @required
 
   // 用户任务
-  user_task: Optional<UserTask] {
+  user_task: Optional<UserTask> {
     assignee: Optional<String>
     candidate_users: List<String>
     candidate_groups: List<String>
     due_date: Optional<DateTime>
-    priority: Optional<Int] @range(0, 100)
+    priority: Optional<Int> @range(0, 100)
   }
 
   // 服务任务
-  service_task: Optional<ServiceTask] {
+  service_task: Optional<ServiceTask> {
     implementation: String @required
-    operation_ref: Optional<String]
+    operation_ref: Optional<String>
     input_variables: Map<String, String>
     output_variables: Map<String, String>
   }
 
   // 脚本任务
-  script_task: Optional<ScriptTask] {
+  script_task: Optional<ScriptTask> {
     script_format: String @required
     script: String @required
   }
 
   // 业务规则任务
-  business_rule_task: Optional<BusinessRuleTask] {
-    decision_ref: Optional<String]
+  business_rule_task: Optional<BusinessRuleTask> {
+    decision_ref: Optional<String>
     input_variables: Map<String, String>
-    output_variables: Map<String, String]
+    output_variables: Map<String, String>
   }
 
-  incoming_flows: List<String]
-  outgoing_flows: List<String]
+  incoming_flows: List<String>
+  outgoing_flows: List<String>
 } @standard("BPMN_2.0")
 ```
 
@@ -147,32 +147,32 @@ schema Gateway {
   type: Enum { Exclusive, Parallel, Inclusive, Event } @required
 
   // 排他网关
-  exclusive_gateway: Optional<ExclusiveGateway] {
-    default_flow: Optional<String]
-    sequence_flows: List<SequenceFlow] {
+  exclusive_gateway: Optional<ExclusiveGateway> {
+    default_flow: Optional<String>
+    sequence_flows: List<SequenceFlow> {
       id: String @required
-      condition_expression: Optional<String]
+      condition_expression: Optional<String>
       target_ref: String @required
     }
   }
 
   // 并行网关
-  parallel_gateway: Optional<ParallelGateway] {
-    sequence_flows: List<SequenceFlow] @required
+  parallel_gateway: Optional<ParallelGateway> {
+    sequence_flows: List<SequenceFlow> @required
   }
 
   // 包容网关
-  inclusive_gateway: Optional<InclusiveGateway] {
-    default_flow: Optional<String]
-    sequence_flows: List<SequenceFlow] {
+  inclusive_gateway: Optional<InclusiveGateway> {
+    default_flow: Optional<String>
+    sequence_flows: List<SequenceFlow> {
       id: String @required
-      condition_expression: Optional<String]
+      condition_expression: Optional<String>
       target_ref: String @required
     }
   }
 
-  incoming_flows: List<String] @required
-  outgoing_flows: List<String] @required
+  incoming_flows: List<String> @required
+  outgoing_flows: List<String> @required
 } @standard("BPMN_2.0")
 ```
 
@@ -195,33 +195,33 @@ schema Event {
   type: Enum { Start, End, Intermediate, Boundary } @required
 
   // 开始事件
-  start_event: Optional<StartEvent] {
+  start_event: Optional<StartEvent> {
     trigger: Enum { None, Message, Timer, Signal, Error }
-    event_definitions: List<EventDefinition]
+    event_definitions: List<EventDefinition>
   }
 
   // 结束事件
-  end_event: Optional<EndEvent] {
+  end_event: Optional<EndEvent> {
     result: Enum { None, Message, Signal, Error, Terminate }
-    event_definitions: List<EventDefinition]
+    event_definitions: List<EventDefinition>
   }
 
   // 中间事件
-  intermediate_event: Optional<IntermediateEvent] {
+  intermediate_event: Optional<IntermediateEvent> {
     trigger: Enum { Message, Timer, Signal, Error, Escalation }
-    event_definitions: List<EventDefinition]
+    event_definitions: List<EventDefinition>
   }
 
   // 边界事件
-  boundary_event: Optional<BoundaryEvent] {
+  boundary_event: Optional<BoundaryEvent> {
     attached_to_ref: String @required
     cancel_activity: Boolean @default(true)
     trigger: Enum { Message, Timer, Signal, Error, Escalation }
-    event_definitions: List<EventDefinition]
+    event_definitions: List<EventDefinition>
   }
 
-  incoming_flows: List<String]
-  outgoing_flows: List<String]
+  incoming_flows: List<String>
+  outgoing_flows: List<String>
 } @standard("BPMN_2.0")
 ```
 
@@ -249,7 +249,7 @@ type DataObject {
   id: String @required
   name: Optional<String>
   data_state: Optional<String>
-  item_subject_ref: Optional<String]
+  item_subject_ref: Optional<String>
 }
 
 type DataType {

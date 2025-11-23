@@ -48,11 +48,11 @@ Transport_Schema = (Traffic_Flow ⊕ Vehicle_Tracking ⊕ Parking ⊕ Public_Tra
 
 ```dsl
 schema SmartTransport {
-  traffic_flow: Optional<TrafficFlow] {
+  traffic_flow: Optional<TrafficFlow> {
     location: Location {
       latitude: Decimal @range(-90, 90) @required
       longitude: Decimal @range(-180, 180) @required
-      address: Optional<String]
+      address: Optional<String>
     }
     flow_data: FlowData {
       vehicle_count: Int @range(0, 10000) @required
@@ -62,7 +62,7 @@ schema SmartTransport {
     }
   }
 
-  vehicle_tracking: Optional<VehicleTracking] {
+  vehicle_tracking: Optional<VehicleTracking> {
     vehicle_id: String @required @unique
     vehicle_type: Enum { Car, Bus, Truck, Motorcycle, Bicycle } @required
     current_location: Location @required
@@ -71,20 +71,20 @@ schema SmartTransport {
     timestamp: DateTime @required
   }
 
-  parking: Optional<Parking] {
+  parking: Optional<Parking> {
     parking_lot_id: String @required @unique
     location: Location @required
     total_spaces: Int @range(0, 10000) @required
     available_spaces: Int @range(0, 10000) @required
     parking_type: Enum { Street, Garage, Lot, Metered } @required
-    pricing: Optional<Pricing] {
+    pricing: Optional<Pricing> {
       hourly_rate: Decimal @precision(10, 2)
       currency: String @length(3) @default("USD")
     }
     timestamp: DateTime @required
   }
 
-  public_transport: Optional<PublicTransport] {
+  public_transport: Optional<PublicTransport> {
     route_id: String @required
     vehicle_id: String @required
     vehicle_type: Enum { Bus, Tram, Subway, Train } @required
@@ -112,7 +112,7 @@ Energy_Schema = (Smart_Grid ⊕ Energy_Consumption ⊕ Load_Management ⊕ Renew
 
 ```dsl
 schema SmartEnergy {
-  smart_grid: Optional<SmartGrid] {
+  smart_grid: Optional<SmartGrid> {
     grid_id: String @required @unique
     grid_type: Enum { Distribution, Transmission, Microgrid } @required
     voltage_level: Decimal @unit("V") @required
@@ -123,7 +123,7 @@ schema SmartEnergy {
     timestamp: DateTime @required
   }
 
-  energy_consumption: Optional<EnergyConsumption] {
+  energy_consumption: Optional<EnergyConsumption> {
     meter_id: String @required @unique
     location: Location @required
     consumption_type: Enum { Residential, Commercial, Industrial } @required
@@ -134,7 +134,7 @@ schema SmartEnergy {
     timestamp: DateTime @required
   }
 
-  load_management: Optional<LoadManagement] {
+  load_management: Optional<LoadManagement> {
     load_id: String @required @unique
     load_type: Enum { Base, Peak, OffPeak } @required
     current_load: Decimal @unit("KW") @required
@@ -144,17 +144,17 @@ schema SmartEnergy {
     timestamp: DateTime @required
   }
 
-  renewable_energy: Optional<RenewableEnergy] {
+  renewable_energy: Optional<RenewableEnergy> {
     source_id: String @required @unique
     source_type: Enum { Solar, Wind, Hydro, Geothermal } @required
     location: Location @required
     installed_capacity: Decimal @unit("KW") @required
     current_generation: Decimal @unit("KW") @required
     efficiency: Decimal @range(0, 100) @unit("PERCENT")
-    weather_conditions: Optional<WeatherConditions] {
-      solar_irradiance: Optional<Decimal] @unit("W/M2")
-      wind_speed: Optional<Decimal] @unit("M/S")
-      temperature: Optional<Decimal] @unit("CELSIUS")
+    weather_conditions: Optional<WeatherConditions> {
+      solar_irradiance: Optional<Decimal> @unit("W/M2")
+      wind_speed: Optional<Decimal> @unit("M/S")
+      temperature: Optional<Decimal> @unit("CELSIUS")
     }
     timestamp: DateTime @required
   }
@@ -175,7 +175,7 @@ Environment_Schema = (Air_Quality ⊕ Water_Quality ⊕ Noise ⊕ Weather)
 
 ```dsl
 schema SmartEnvironment {
-  air_quality: Optional<AirQuality] {
+  air_quality: Optional<AirQuality> {
     station_id: String @required @unique
     location: Location @required
     aqi: Int @range(0, 500) @required
@@ -183,15 +183,15 @@ schema SmartEnvironment {
     pollutants: Pollutants {
       pm25: Decimal @unit("UG/M3") @required
       pm10: Decimal @unit("UG/M3") @required
-      no2: Optional<Decimal] @unit("UG/M3")
-      o3: Optional<Decimal] @unit("UG/M3")
-      so2: Optional<Decimal] @unit("UG/M3")
-      co: Optional<Decimal] @unit("MG/M3")
+      no2: Optional<Decimal> @unit("UG/M3")
+      o3: Optional<Decimal> @unit("UG/M3")
+      so2: Optional<Decimal> @unit("UG/M3")
+      co: Optional<Decimal> @unit("MG/M3")
     }
     timestamp: DateTime @required
   }
 
-  water_quality: Optional<WaterQuality] {
+  water_quality: Optional<WaterQuality> {
     station_id: String @required @unique
     location: Location @required
     water_type: Enum { River, Lake, Groundwater, TapWater } @required
@@ -203,19 +203,19 @@ schema SmartEnvironment {
       conductivity: Decimal @unit("US/CM")
       temperature: Decimal @unit("CELSIUS")
     }
-    contaminants: Optional<Contaminants] {
-      heavy_metals: Optional<Decimal] @unit("MG/L")
-      bacteria_count: Optional<Int] @unit("CFU/100ML")
+    contaminants: Optional<Contaminants> {
+      heavy_metals: Optional<Decimal> @unit("MG/L")
+      bacteria_count: Optional<Int> @unit("CFU/100ML")
     }
     timestamp: DateTime @required
   }
 
-  noise: Optional<Noise] {
+  noise: Optional<Noise> {
     station_id: String @required @unique
     location: Location @required
     noise_level: Decimal @range(0, 200) @unit("DB") @required
     noise_category: Enum { Quiet, Moderate, Loud, VeryLoud } @required
-    frequency_analysis: Optional<FrequencyAnalysis] {
+    frequency_analysis: Optional<FrequencyAnalysis> {
       low_frequency: Decimal @unit("DB")
       mid_frequency: Decimal @unit("DB")
       high_frequency: Decimal @unit("DB")
@@ -223,7 +223,7 @@ schema SmartEnvironment {
     timestamp: DateTime @required
   }
 
-  weather: Optional<Weather] {
+  weather: Optional<Weather> {
     station_id: String @required @unique
     location: Location @required
     temperature: Decimal @unit("CELSIUS") @required
@@ -252,7 +252,7 @@ Governance_Schema = (City_Management ⊕ Public_Service ⊕ Data_Open ⊕ Decisi
 
 ```dsl
 schema SmartGovernance {
-  city_management: Optional<CityManagement] {
+  city_management: Optional<CityManagement> {
     department_id: String @required @unique
     department_name: String @required
     management_type: Enum { Infrastructure, PublicSafety, WasteManagement, UrbanPlanning } @required
@@ -261,7 +261,7 @@ schema SmartGovernance {
       staff_count: Int
       equipment_count: Int
     }
-    performance_metrics: Optional<PerformanceMetrics] {
+    performance_metrics: Optional<PerformanceMetrics> {
       service_level: Decimal @range(0, 100) @unit("PERCENT")
       response_time: Decimal @unit("HOURS")
       satisfaction_score: Decimal @range(0, 10)
@@ -269,7 +269,7 @@ schema SmartGovernance {
     timestamp: DateTime @required
   }
 
-  public_service: Optional<PublicService] {
+  public_service: Optional<PublicService> {
     service_id: String @required @unique
     service_type: Enum { Healthcare, Education, Transportation, Utilities } @required
     service_name: String @required
@@ -278,14 +278,14 @@ schema SmartGovernance {
     operating_hours: OperatingHours {
       open_time: Time @required
       close_time: Time @required
-      days_of_week: List<String] @required
+      days_of_week: List<String> @required
     }
-    capacity: Optional<Int]
-    current_usage: Optional<Int]
+    capacity: Optional<Int>
+    current_usage: Optional<Int>
     timestamp: DateTime @required
   }
 
-  data_open: Optional<DataOpen] {
+  data_open: Optional<DataOpen> {
     dataset_id: String @required @unique
     dataset_name: String @required
     category: Enum { Transportation, Environment, Energy, Governance } @required
@@ -293,21 +293,21 @@ schema SmartGovernance {
     update_frequency: Enum { RealTime, Hourly, Daily, Weekly, Monthly } @required
     license: String @required
     access_url: String @required
-    metadata: Optional<Metadata] {
+    metadata: Optional<Metadata> {
       description: String
-      keywords: List<String]
+      keywords: List<String>
       last_updated: DateTime
     }
     timestamp: DateTime @required
   }
 
-  decision_support: Optional<DecisionSupport] {
+  decision_support: Optional<DecisionSupport> {
     decision_id: String @required @unique
     decision_type: Enum { Policy, ResourceAllocation, Infrastructure, Emergency } @required
     decision_area: String @required
-    data_sources: List<String] @required
+    data_sources: List<String> @required
     analysis_method: Enum { Statistical, MachineLearning, Simulation, ExpertSystem } @required
-    recommendations: List<Recommendation] {
+    recommendations: List<Recommendation> {
       option: String @required
       score: Decimal @range(0, 100)
       rationale: String
@@ -333,8 +333,8 @@ Smart_City_Data_Type = Transport_Data | Energy_Data | Environment_Data | Governa
 type Location {
   latitude: Decimal @range(-90, 90) @required
   longitude: Decimal @range(-180, 180) @required
-  altitude: Optional<Decimal] @unit("M")
-  address: Optional<String]
+  altitude: Optional<Decimal> @unit("M")
+  address: Optional<String>
 }
 
 type Timestamp {
@@ -359,8 +359,8 @@ type Device {
 
 ```text
 ∀ loc ∈ Location:
-  loc.latitude ∈ [-90, 90]
-  ∧ loc.longitude ∈ [-180, 180]
+  loc.latitude ∈ [-90, 90>
+  ∧ loc.longitude ∈ [-180, 180>
   → location_valid(loc)
 ```
 
