@@ -8,15 +8,15 @@
 
 1. **Precision_Agriculture_Schema**（精准农业）
    - 标准：ISO 11783、AgGateway、OGC SensorThings
-   - 状态：⏳ 进行中
+   - 状态：✅ 已完成
 
 2. **Food_Traceability_Schema**（农产品追溯）
    - 标准：GS1、EPCIS、ISO 22005
-   - 状态：⏳ 规划中
+   - 状态：✅ 已完成
 
 3. **Agricultural_IoT_Schema**（农业物联网）
    - 标准：LoRaWAN、MQTT、CoAP
-   - 状态：⏳ 规划中
+   - 状态：✅ 已完成
 
 ## 📚 文档结构
 

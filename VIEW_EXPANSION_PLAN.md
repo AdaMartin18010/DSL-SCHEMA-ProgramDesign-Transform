@@ -232,15 +232,18 @@
 ### 阶段1：深度扩展（4-6周）
 
 **Week 1-2**：案例研究扩展
+
 - 为10个高优先级Schema各添加3-5个案例
 - 每个案例包含完整的实现代码
 
 **Week 3-4**：转换规则扩展
+
 - 添加跨Schema转换规则
 - 添加边界情况处理
 - 添加性能优化
 
 **Week 5-6**：存储优化扩展
+
 - 添加索引优化
 - 添加分区策略
 - 添加查询优化示例
@@ -248,16 +251,19 @@
 ### 阶段2：广度扩展（8-10周）
 
 **Week 7-8**：教育行业Schema
+
 - LMS_Schema
 - SIS_Schema
 - Online_Education_Schema
 
 **Week 9-10**：农业行业Schema
+
 - Precision_Agriculture_Schema
 - Food_Traceability_Schema
 - Agricultural_IoT_Schema
 
 **Week 11-12**：通信行业Schema
+
 - 5G_Network_Schema
 - Telecom_Operations_Schema
 - Network_Management_Schema
@@ -355,12 +361,13 @@
    - 状态：✅ 已完成
 
 10. **Thread_Schema** ✅
-   - 原有：8个案例
-   - 新增：3个案例（大规模网络管理、网络性能优化、安全加固）
-   - 当前：11个案例
-   - 状态：✅ 已完成
 
-### 广度扩展进展
+- 原有：8个案例
+- 新增：3个案例（大规模网络管理、网络性能优化、安全加固）
+- 当前：11个案例
+- 状态：✅ 已完成
+
+### 广度扩展进展1
 
 - 状态：⏳ 规划中，待开始
 

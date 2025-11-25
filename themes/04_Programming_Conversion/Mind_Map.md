@@ -266,6 +266,7 @@ mindmap
 - `Language_Mapping/` - 语言映射
 - `Code_Generation/` - 代码生成
 
+```text
 ├─ 8. 中国国家标准体系
     │
     ├─ 8.1 IT服务标准

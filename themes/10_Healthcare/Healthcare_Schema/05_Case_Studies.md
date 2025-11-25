@@ -184,6 +184,7 @@ schema DiagnosisRecord {
 接受医生远程诊疗，实现医疗资源优化配置。
 
 **技术挑战**：
+
 - 需要实时音视频通信
 - 需要患者数据同步
 - 需要处方电子化
@@ -287,6 +288,7 @@ print(f"Found {len(telemedicine_records)} telemedicine encounters")
 提供诊断建议和风险评估，辅助医生做出诊断决策。
 
 **技术挑战**：
+
 - 需要症状数据标准化
 - 需要检查结果分析
 - 需要诊断规则引擎
@@ -411,6 +413,7 @@ print(f"Found {len(diagnosis_records)} diagnosis records")
 药物配送、用药提醒、不良反应监测等。
 
 **技术挑战**：
+
 - 需要药物信息标准化
 - 需要用药时间管理
 - 需要药物相互作用检查

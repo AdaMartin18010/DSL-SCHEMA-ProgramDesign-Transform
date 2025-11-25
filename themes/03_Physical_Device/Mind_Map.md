@@ -312,6 +312,7 @@ mindmap
 - `Mechanical_Schema/` - 机械Schema
 - `Safety_Schema/` - 安全Schema
 
+```text
 ├─ 8. 中国国家标准体系
     │
     ├─ 8.1 IT服务标准
