@@ -137,10 +137,50 @@ class MCPServer:
 
     def handle_request(self, request: MCPRequest) -> MCPResponse:
         """处理MCP请求"""
-        # 解析自然语言请求
-        # 调用相应的工具
-        # 返回结果
-        pass
+        try:
+            # 解析自然语言请求
+            parsed_request = self._parse_natural_language(request.text)
+
+            # 查找匹配的工具
+            matched_tool = self._find_matching_tool(parsed_request)
+            if not matched_tool:
+                return MCPResponse(
+                    success=False,
+                    error="未找到匹配的工具",
+                    data=None
+                )
+
+            # 调用相应的工具
+            result = matched_tool.execute(parsed_request.parameters)
+
+            # 返回结果
+            return MCPResponse(
+                success=True,
+                error=None,
+                data=result
+            )
+        except Exception as e:
+            return MCPResponse(
+                success=False,
+                error=str(e),
+                data=None
+            )
+
+    def _parse_natural_language(self, text: str) -> ParsedRequest:
+        """解析自然语言请求"""
+        # 使用NLP技术解析自然语言
+        # 提取意图和参数
+        return ParsedRequest(
+            intent="",
+            parameters={}
+        )
+
+    def _find_matching_tool(self, parsed_request: ParsedRequest) -> Optional[MCPTool]:
+        """查找匹配的工具"""
+        for tool in self.tools:
+            if tool.matches(parsed_request.intent):
+                return tool
+        return None
 ```
 
 ### 4.2 OpenAPI到MCP转换

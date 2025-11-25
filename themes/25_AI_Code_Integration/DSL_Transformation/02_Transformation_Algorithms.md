@@ -49,7 +49,27 @@ class ASTTransformer:
     def transform_node(self, node: Node, target_schema: Schema) -> Node:
         """转换单个节点"""
         # 根据目标Schema转换节点
-        pass
+        transformed_node = Node(
+            name=node.name,
+            node_type=self._map_node_type(node.node_type, target_schema),
+            attributes=self._transform_attributes(node.attributes, target_schema),
+            children=[self.transform_node(child, target_schema) for child in node.children]
+        )
+        return transformed_node
+
+    def _map_node_type(self, source_type: str, target_schema: Schema) -> str:
+        """映射节点类型"""
+        type_mapping = target_schema.get_type_mapping()
+        return type_mapping.get(source_type, source_type)
+
+    def _transform_attributes(self, attributes: Dict, target_schema: Schema) -> Dict:
+        """转换属性"""
+        transformed = {}
+        attribute_mapping = target_schema.get_attribute_mapping()
+        for key, value in attributes.items():
+            target_key = attribute_mapping.get(key, key)
+            transformed[target_key] = value
+        return transformed
 ```
 
 ---

@@ -97,38 +97,127 @@ storage.store_sensor_data(
 - 需要控制灌溉设备
 - 需要低延迟响应
 
-**
+**解决方案**：
+使用实时监测和控制机制，结合MQTT消息队列，实现低延迟的智能灌溉控制。
 
-3.2 实现代码
+### 3.2 实现代码
 
 ```python
-def control_irrigation(storage: AgriculturalIoTStorage, device_id: str):
-    """根据土壤湿度控制灌溉"""
-    # 查询最新土壤湿度数据
-    storage.cur.execute("""
-        SELECT soil_moisture, timestamp
-        FROM sensor_data
-        WHERE device_id = %s
-        ORDER BY timestamp DESC
-        LIMIT 1
-    """, (device_id,))
+import json
+import logging
+from typing import Optional, Dict
+from datetime import datetime
+from agricultural_iot_storage import AgriculturalIoTStorage
 
-    result = storage.cur.fetchone()
-    if result and result[0] is not None:
-        soil_moisture = result[0]
+logger = logging.getLogger(__name__)
 
-        # 如果土壤湿度低于30%，启动灌溉
-        if soil_moisture < 30.0:
-            # 发送控制命令到MQTT
-            control_message = {
-                "topic": f"agriculture/control/{device_id}",
-                "payload": json.dumps({
-                    "action": "start_irrigation",
-                    "duration": 30  # 分钟
-                })
-            }
-            return control_message
-    return None
+class IrrigationController:
+    """智能灌溉控制器"""
+
+    def __init__(self, storage: AgriculturalIoTStorage, mqtt_client=None):
+        self.storage = storage
+        self.mqtt_client = mqtt_client
+        self.moisture_threshold = 30.0  # 土壤湿度阈值（%）
+        self.irrigation_duration = 30  # 默认灌溉时长（分钟）
+
+    def control_irrigation(self, device_id: str) -> Optional[Dict]:
+        """根据土壤湿度控制灌溉"""
+        try:
+            # 查询最新土壤湿度数据
+            self.storage.cur.execute("""
+                SELECT soil_moisture, timestamp
+                FROM sensor_data
+                WHERE device_id = %s
+                ORDER BY timestamp DESC
+                LIMIT 1
+            """, (device_id,))
+
+            result = self.storage.cur.fetchone()
+            if not result or result[0] is None:
+                logger.warning(f"设备 {device_id} 没有土壤湿度数据")
+                return None
+
+            soil_moisture = result[0]
+            timestamp = result[1]
+
+            logger.info(f"设备 {device_id} 当前土壤湿度: {soil_moisture}%")
+
+            # 如果土壤湿度低于阈值，启动灌溉
+            if soil_moisture < self.moisture_threshold:
+                logger.info(f"土壤湿度低于阈值 {self.moisture_threshold}%，启动灌溉")
+
+                # 构建控制命令
+                control_message = {
+                    "topic": f"agriculture/control/{device_id}",
+                    "payload": json.dumps({
+                        "action": "start_irrigation",
+                        "duration": self.irrigation_duration,
+                        "timestamp": datetime.now().isoformat(),
+                        "moisture_level": soil_moisture
+                    })
+                }
+
+                # 发送MQTT消息
+                if self.mqtt_client:
+                    self.mqtt_client.publish(
+                        control_message["topic"],
+                        control_message["payload"]
+                    )
+                    logger.info(f"已发送灌溉控制命令到设备 {device_id}")
+                else:
+                    logger.warning("MQTT客户端未配置，无法发送控制命令")
+
+                # 记录控制命令
+                self.storage.store_control_command(
+                    device_id=device_id,
+                    command_type="IrrigationControl",
+                    command_payload=json.loads(control_message["payload"]),
+                    status="sent"
+                )
+
+                return control_message
+            else:
+                logger.info(f"土壤湿度 {soil_moisture}% 高于阈值，无需灌溉")
+                return None
+
+        except Exception as e:
+            logger.error(f"控制灌溉时发生错误: {e}", exc_info=True)
+            raise RuntimeError(f"灌溉控制失败: {e}") from e
+
+    def set_moisture_threshold(self, threshold: float):
+        """设置土壤湿度阈值"""
+        if not 0 <= threshold <= 100:
+            raise ValueError("土壤湿度阈值必须在0-100之间")
+        self.moisture_threshold = threshold
+        logger.info(f"土壤湿度阈值已更新为: {threshold}%")
+
+    def set_irrigation_duration(self, duration: int):
+        """设置灌溉时长"""
+        if duration <= 0:
+            raise ValueError("灌溉时长必须大于0")
+        self.irrigation_duration = duration
+        logger.info(f"灌溉时长已更新为: {duration}分钟")
+
+# 使用示例
+if __name__ == "__main__":
+    # 初始化存储
+    storage = AgriculturalIoTStorage("postgresql://user:pass@localhost/agricultural_iot")
+
+    # 初始化控制器
+    controller = IrrigationController(storage)
+
+    # 设置阈值和时长
+    controller.set_moisture_threshold(30.0)
+    controller.set_irrigation_duration(30)
+
+    # 控制灌溉
+    device_id = "DEV001"
+    result = controller.control_irrigation(device_id)
+
+    if result:
+        print(f"已发送灌溉控制命令: {result}")
+    else:
+        print("无需灌溉")
 ```
 
 ---
