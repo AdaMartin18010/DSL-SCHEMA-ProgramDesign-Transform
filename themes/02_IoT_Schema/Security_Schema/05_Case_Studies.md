@@ -498,8 +498,29 @@ class MedicalDeviceSecurityManager:
     def encrypt_patient_data(self, data: bytes, key: bytes) -> tuple:
         """加密患者数据"""
         # 使用AES-256-GCM加密
-        # 实现同案例1
-        pass
+        try:
+            from Crypto.Cipher import AES
+            from Crypto.Random import get_random_bytes
+            import hashlib
+
+            # 确保密钥长度为32字节（AES-256）
+            if len(key) != 32:
+                key = hashlib.sha256(key).digest()
+
+            # 生成随机IV（12字节，GCM推荐）
+            iv = get_random_bytes(12)
+
+            # 创建AES-GCM加密器
+            cipher = AES.new(key, AES.MODE_GCM, nonce=iv)
+
+            # 加密数据
+            ciphertext, tag = cipher.encrypt_and_digest(data)
+
+            # 返回密文、IV和认证标签
+            return (ciphertext, iv, tag)
+        except Exception as e:
+            self.logger.error(f"Encryption error: {e}")
+            raise ValueError(f"Failed to encrypt patient data: {e}")
 
     def comply_with_hipaa(self):
         """HIPAA合规检查"""

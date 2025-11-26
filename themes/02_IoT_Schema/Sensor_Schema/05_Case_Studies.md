@@ -664,7 +664,37 @@ class LowPowerSoilSensor:
     def send_data(self, data: dict):
         """发送数据（NB-IoT）"""
         # NB-IoT发送逻辑
-        pass
+        try:
+            import json
+            import socket
+            import ssl
+
+            # NB-IoT模块初始化（简化实现）
+            # 实际应使用NB-IoT模块API（如Quectel BC95/BC26）
+            nbiot_endpoint = self.config.get("nbiot_endpoint", "coap://nbiot.example.com")
+
+            # 构建CoAP消息（NB-IoT通常使用CoAP协议）
+            payload = json.dumps(data).encode('utf-8')
+
+            # 发送到NB-IoT网络（简化实现）
+            # 实际应使用NB-IoT模块的AT命令或SDK
+            # AT+NSOST=<socket_id>,<remote_addr>,<remote_port>,<length>,<data>
+            # 这里简化处理，实际应调用NB-IoT模块API
+            if hasattr(self, 'nbiot_module'):
+                # 使用NB-IoT模块发送
+                self.nbiot_module.send(payload)
+            else:
+                # 模拟发送（实际应使用真实NB-IoT模块）
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.info(f"NB-IoT send (simulated): {data}")
+
+            return True
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"NB-IoT send error: {e}")
+            return False
 
     def run(self):
         """主循环（低功耗）"""
