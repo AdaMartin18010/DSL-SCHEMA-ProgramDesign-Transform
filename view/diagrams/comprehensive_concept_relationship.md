@@ -51,6 +51,7 @@
       - [7.1.2 数据分析Schema（5个）](#712-数据分析schema5个)
       - [7.1.3 企业绩效管理Schema（3个）](#713-企业绩效管理schema3个)
     - [7.2 改进计划](#72-改进计划)
+    - [7.3 相关文档](#73-相关文档)
 
 ---
 
@@ -958,9 +959,16 @@ DSL Schema转换体系
 
 **参考文档**：`CRITICAL_EVALUATION_AND_IMPROVEMENT_PLAN.md`
 
+### 7.3 相关文档
+
+- **转换形式化证明**：`transformation_formal_proofs_comprehensive.md` - 详细的转换形式化证明
+- **形式模型与形式语言**：`formal_models_and_languages_comprehensive.md` - 形式模型和形式语言的全面梳理
+- **多表征方式**：`multi_representation_comprehensive.md` - 多种表征方式的综合展示
+- **论证过程总结**：`proof_process_summary.md` - 论证过程的全面总结
+
 ---
 
-**文档版本**：1.1
+**文档版本**：1.2
 **创建时间**：2025-01-21
 **最后更新**：2025-01-21
 **维护者**：DSL Schema研究团队

@@ -6,12 +6,15 @@
   - [📑 目录](#-目录)
   - [1. 概述](#1-概述)
   - [2. 文档列表](#2-文档列表)
-    - [2.1 核心文档（5个）](#21-核心文档5个)
+    - [2.1 核心文档（8个）](#21-核心文档8个)
   - [3. 文档关系](#3-文档关系)
   - [4. 使用指南](#4-使用指南)
     - [4.1 阅读顺序](#41-阅读顺序)
     - [4.2 查找特定信息](#42-查找特定信息)
     - [4.3 可视化工具](#43-可视化工具)
+  - [5. 文档更新历史](#5-文档更新历史)
+    - [5.1 最新更新（2025-01-21）](#51-最新更新2025-01-21)
+    - [5.2 文档版本](#52-文档版本)
 
 ---
 
@@ -92,7 +95,9 @@
      - 信息论证明方法（信息熵定义、信息守恒定理、信息损失量化）
      - 形式语言理论证明方法（语法转换完备性、语义转换正确性、语法-语义一致性）
      - 多维度证明整合（证明方法对比矩阵、综合验证框架）
-     - 实际转换案例证明（SWIFT MT103→ISO 20022、HL7 v2→FHIR、MQTT→OpenAPI）
+     - 实际转换案例证明（SWIFT MT103→ISO 20022、HL7 v2→FHIR、MQTT→OpenAPI、IoT Schema→AsyncAPI、MQTT→AsyncAPI）
+     - **新增**：IoT Schema→AsyncAPI转换证明（包含完整的行业语义模型论证）
+     - **新增**：MQTT→AsyncAPI转换证明（包含MQTT协议特有的语义模型论证）
 
 7. **`formal_models_and_languages_comprehensive.md`** ⭐新增
    - **内容**：形式模型与形式语言全面梳理
@@ -126,11 +131,19 @@ graph TB
     MindMap[思维导图] --> Concept[概念关系图]
     Concept --> Matrix[多维矩阵]
     Concept --> Proof[论证过程]
+    Concept --> Examples[具体示例]
+
+    Proof --> FormalProofs[形式化证明]
+    Proof --> FormalModels[形式模型]
+    Proof --> MultiRep[多表征方式]
 
     MindMap --> Overview[概述]
     Concept --> Details[详细定义]
     Matrix --> Comparison[对比分析]
     Proof --> Methods[证明方法]
+    FormalProofs --> ProofMethods[证明方法]
+    FormalModels --> ModelLang[模型语言]
+    MultiRep --> Representations[表征方式]
 ```
 
 **文档关系说明**：
@@ -147,6 +160,18 @@ graph TB
    - 概念关系图定义概念
    - 论证过程证明概念正确性
 
+4. **论证过程** → **形式化证明**
+   - 论证过程提供证明框架
+   - 形式化证明提供详细证明过程
+
+5. **论证过程** → **形式模型**
+   - 论证过程使用形式模型
+   - 形式模型提供理论基础
+
+6. **论证过程** → **多表征方式**
+   - 论证过程使用多种表征方式
+   - 多表征方式提供可视化展示
+
 ---
 
 ## 4. 使用指南
@@ -159,8 +184,6 @@ graph TB
 
 2. **第二步**：阅读 `comprehensive_concept_relationship.md`
    - 了解所有核心概念的定义
-   - 理解概念之间的属性关系
-   - 查看概念关系网络- 了解所有核心概念的定义
    - 理解概念之间的属性关系
    - 查看概念关系网络
 
@@ -178,6 +201,21 @@ graph TB
    - 查看具体Schema实例
    - 学习转换规则实现
    - 理解实际应用案例
+
+6. **第六步**：阅读 `transformation_formal_proofs_comprehensive.md`
+   - 了解转换的形式化证明方法
+   - 理解转换正确性、语义等价性、类型安全等证明
+   - 查看实际转换案例的形式化证明
+
+7. **第七步**：阅读 `formal_models_and_languages_comprehensive.md`
+   - 了解形式模型体系（17个形式模型）
+   - 理解形式语言体系（5种形式语言）
+   - 查看形式模型和形式语言的关系网络
+
+8. **第八步**：阅读 `multi_representation_comprehensive.md`
+   - 了解多种表征方式（思维导图、矩阵、网络图、层次图、形式化证明）
+   - 理解不同表征方式的应用场景
+   - 查看实际应用案例的多表征展示
 
 ### 4.2 查找特定信息
 
@@ -202,6 +240,15 @@ graph TB
 **查找转换实现**：
 → 查看 `concrete_examples_and_implementations.md` 第3-5节
 
+**查找形式化证明**：
+→ 查看 `transformation_formal_proofs_comprehensive.md`
+
+**查找形式模型和形式语言**：
+→ 查看 `formal_models_and_languages_comprehensive.md`
+
+**查找多表征方式**：
+→ 查看 `multi_representation_comprehensive.md`
+
 ### 4.3 可视化工具
 
 **思维导图工具**：
@@ -224,7 +271,19 @@ graph TB
 
 ---
 
-**文档版本**：1.0
+## 5. 文档更新历史
+
+### 5.1 最新更新（2025-01-21）
+
+- ✅ 添加了3个新文档的详细说明
+- ✅ 更新了阅读顺序（添加了第6-8步）
+- ✅ 更新了文档关系图（添加了新文档的关系）
+- ✅ 更新了查找特定信息部分（添加了新文档的引用）
+- ✅ 修复了重复内容
+
+### 5.2 文档版本
+
+**文档版本**：1.1
 **创建时间**：2025-01-21
 **最后更新**：2025-01-21
 **维护者**：DSL Schema研究团队

@@ -470,6 +470,10 @@
 | 改进计划 | `CRITICAL_EVALUATION_AND_IMPROVEMENT_PLAN.md` |
 | 企业财务 | `CRITICAL_EVALUATION_AND_IMPROVEMENT_PLAN.md` |
 | 数据分析 | `CRITICAL_EVALUATION_AND_IMPROVEMENT_PLAN.md` |
+| 转换形式化证明 | `view/diagrams/transformation_formal_proofs_comprehensive.md` |
+| 形式模型 | `view/diagrams/formal_models_and_languages_comprehensive.md` |
+| 形式语言 | `view/diagrams/formal_models_and_languages_comprehensive.md` |
+| 多表征方式 | `view/diagrams/multi_representation_comprehensive.md` |
 
 ### 8.2 按问题查找
 

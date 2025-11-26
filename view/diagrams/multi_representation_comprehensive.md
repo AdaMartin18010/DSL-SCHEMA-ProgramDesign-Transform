@@ -24,6 +24,7 @@
     - [5.3 形式语言层次结构图](#53-形式语言层次结构图)
   - [6. 形式化证明表征](#6-形式化证明表征)
     - [6.1 证明树表征](#61-证明树表征)
+      - [6.1.1 证明树示例：OpenAPI→AsyncAPI转换正确性证明](#611-证明树示例openapiasyncapi转换正确性证明)
     - [6.2 证明流程图](#62-证明流程图)
     - [6.3 证明矩阵](#63-证明矩阵)
   - [7. 多表征方式整合](#7-多表征方式整合)
@@ -223,23 +224,23 @@ graph TB
     Schema --> IoTSchema[IoT Schema]
     Schema --> DataSchema[Data Schema]
     Schema --> IndustrySchema[Industry Schema]
-    
+
     APISchema --> OpenAPI[OpenAPI]
     APISchema --> AsyncAPI[AsyncAPI]
     APISchema --> GraphQL[GraphQL]
-    
+
     IoTSchema --> MQTT[MQTT]
     IoTSchema --> CoAP[CoAP]
     IoTSchema --> WoT[W3C WoT]
-    
+
     DataSchema --> JSON[JSON Schema]
     DataSchema --> SQL[SQL Schema]
     DataSchema --> NoSQL[NoSQL Schema]
-    
+
     IndustrySchema --> SWIFT[SWIFT]
     IndustrySchema --> FHIR[FHIR]
     IndustrySchema --> GS1[GS1]
-    
+
     OpenAPI -->|转换| AsyncAPI
     MQTT -->|转换| OpenAPI
     JSON -->|转换| SQL
@@ -255,7 +256,7 @@ graph LR
     JSON[JSON Schema] -->|f3| SQL[SQL Schema]
     SWIFT[SWIFT] -->|f4| ISO20022[ISO 20022]
     HL7[HL7 v2] -->|f5| FHIR[FHIR]
-    
+
     AsyncAPI -->|f6| GraphQL[GraphQL]
     SQL -->|f7| NoSQL[NoSQL]
 ```
@@ -269,11 +270,11 @@ graph TB
     BaseModel --> SemModel[语义模型]
     BaseModel --> TypeModel[类型系统模型]
     BaseModel --> ConstModel[约束系统模型]
-    
+
     SchemaModel --> StructModel[结构化模型]
     SchemaModel --> HierModel[层次化模型]
     SchemaModel --> VerModel[版本化模型]
-    
+
     TransModel --> MultiStep[多步骤模型]
     TransModel --> Parallel[并行模型]
     TransModel --> Cond[条件模型]
@@ -391,7 +392,7 @@ Schema
 
 ### 6.1 证明树表征
 
-**证明树示例：OpenAPI→AsyncAPI转换正确性证明**
+#### 6.1.1 证明树示例：OpenAPI→AsyncAPI转换正确性证明
 
 ```text
 转换正确性证明
@@ -531,6 +532,7 @@ graph LR
 **定理**：转换函数 $f: OpenAPI \rightarrow AsyncAPI$ 是正确的。
 
 **证明**：
+
 1. 结构正确性：路径、操作、Schema都正确映射 ✓
 2. 语义等价性：REST语义等价于异步语义 ✓
 3. 类型安全性：类型信息保持 ✓
@@ -577,6 +579,7 @@ JSON Schema → SQL Schema转换
 **定理**：转换函数 $h: JSON Schema \rightarrow SQL Schema$ 是正确的。
 
 **证明**：
+
 1. 类型映射正确性：所有JSON类型都映射到对应SQL类型 ✓
 2. 对象到表转换正确性：对象结构正确转换为表结构 ✓
 3. 约束映射正确性：JSON约束正确映射为SQL约束 ✓
@@ -588,4 +591,3 @@ JSON Schema → SQL Schema转换
 **创建时间**：2025-01-21
 **最后更新**：2025-01-21
 **维护者**：DSL Schema研究团队
-

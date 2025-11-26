@@ -28,6 +28,8 @@
   - [8. 维度交叉分析](#8-维度交叉分析)
     - [8.1 Schema类型×行业交叉矩阵](#81-schema类型行业交叉矩阵)
     - [8.2 转换类型×复杂度交叉矩阵](#82-转换类型复杂度交叉矩阵)
+  - [9. 参考文档](#9-参考文档)
+    - [9.1 相关文档](#91-相关文档)
 
 ---
 
@@ -586,7 +588,19 @@
 
 ---
 
-**文档版本**：1.0
+## 9. 参考文档
+
+### 9.1 相关文档
+
+- **转换形式化证明**：`transformation_formal_proofs_comprehensive.md` - 详细的转换形式化证明和实际案例
+- **形式模型与形式语言**：`formal_models_and_languages_comprehensive.md` - 形式模型和形式语言的全面梳理
+- **多表征方式**：`multi_representation_comprehensive.md` - 多种表征方式的综合展示
+- **概念关系图**：`comprehensive_concept_relationship.md` - 项目全面概念关系图
+- **论证过程总结**：`proof_process_summary.md` - 论证过程的全面总结
+
+---
+
+**文档版本**：1.1
 **创建时间**：2025-01-21
 **最后更新**：2025-01-21
 **维护者**：DSL Schema研究团队

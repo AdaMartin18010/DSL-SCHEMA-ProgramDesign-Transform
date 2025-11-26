@@ -684,20 +684,85 @@ class LoRaWANDevice:
     def join_network(self):
         """加入网络（OTAA）"""
         # LoRaWAN Join Request逻辑
-        # 简化实现
-        pass
+        try:
+            import struct
+            from Crypto.Cipher import AES
+            from Crypto.Util import Counter
+
+            # 生成Join Request消息
+            join_eui = self.app_eui  # 8字节
+            dev_eui = self.dev_eui    # 8字节
+            dev_nonce = self.generate_dev_nonce()  # 2字节随机数
+
+            # 构建Join Request消息
+            join_request = struct.pack('>Q', int.from_bytes(join_eui, 'big')) + \
+                          struct.pack('>Q', int.from_bytes(dev_eui, 'big')) + \
+                          struct.pack('>H', dev_nonce)
+
+            # 计算MIC（Message Integrity Code）
+            mic = self.calculate_join_mic(join_request)
+            join_request += mic
+
+            return join_request
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"OTAA join error: {e}")
+            raise
 
     def encrypt_payload(self, payload: bytes, dev_addr: bytes, f_cnt: int):
         """加密载荷"""
         # AES-128加密逻辑
-        # 简化实现
-        pass
+        try:
+            from Crypto.Cipher import AES
+            from Crypto.Util import Counter
+
+            app_s_key = self.app_s_key  # 16字节应用会话密钥
+
+            # 构建AES计数器
+            counter = Counter.new(32, prefix=dev_addr[:4] + f_cnt.to_bytes(4, 'big'))
+            cipher = AES.new(app_s_key, AES.MODE_CTR, counter=counter)
+
+            encrypted_payload = cipher.encrypt(payload)
+            return encrypted_payload
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Payload encryption error: {e}")
+            raise
 
     def build_frame(self, payload: bytes):
         """构建LoRaWAN帧"""
         # 构建MAC层帧
-        # 简化实现
-        pass
+        try:
+            import struct
+
+            # LoRaWAN帧结构：MHDR | MACPayload | MIC
+            mhdr = 0x40  # Unconfirmed Data Up
+            dev_addr = self.dev_addr if self.dev_addr else 0x00000000
+            f_ctrl = 0x00
+            f_cnt = self.f_cnt
+            f_opts = b''  # 可选字段
+
+            # 构建MAC Payload
+            mac_payload = struct.pack('>I', dev_addr)[:4] + \
+                         struct.pack('B', f_ctrl) + \
+                         struct.pack('>H', f_cnt) + \
+                         f_opts + \
+                         payload
+
+            # 计算MIC（使用NwkSKey）
+            mic = self.calculate_mic(mhdr, mac_payload)
+
+            # 组合完整帧
+            frame = struct.pack('B', mhdr) + mac_payload + mic
+
+            return frame
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Frame building error: {e}")
+            raise
 
     def send_data(self, data: dict):
         """发送数据"""

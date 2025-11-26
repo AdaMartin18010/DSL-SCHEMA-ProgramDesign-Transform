@@ -736,7 +736,14 @@ class EPCISToGS1Converter:
     """EPCIS到GS1转换器"""
 
     def __init__(self):
-        pass
+        """初始化EPCIS到GS1转换器"""
+        import logging
+        self.logger = logging.getLogger(__name__)
+        self.event_type_mapping = {
+            "ObjectEvent": "EPC",
+            "AggregationEvent": "SSCC",
+            "TransactionEvent": "GTIN"
+        }
 
     def convert_object_event_to_food_info(self, epcis_event: Dict) -> Dict:
         """将EPCIS ObjectEvent转换为GS1食品信息"""

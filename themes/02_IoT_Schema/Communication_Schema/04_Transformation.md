@@ -251,8 +251,22 @@ class LoRaWANToHTTPGateway:
     def decrypt_lorawan_payload(self, encrypted_payload: bytes, dev_addr: bytes, f_cnt: int):
         """解密LoRaWAN载荷"""
         # LoRaWAN AES-128解密逻辑
-        # 简化实现
-        pass
+        try:
+            from Crypto.Cipher import AES
+            from Crypto.Util import Counter
+
+            # 生成会话密钥（简化实现，实际应使用AppSKey）
+            app_s_key = self.app_s_key  # 16字节密钥
+
+            # 构建AES计数器（使用dev_addr和f_cnt）
+            counter = Counter.new(32, prefix=dev_addr[:4] + f_cnt.to_bytes(4, 'big'))
+            cipher = AES.new(app_s_key, AES.MODE_CTR, counter=counter)
+
+            decrypted_payload = cipher.decrypt(encrypted_payload)
+            return decrypted_payload
+        except Exception as e:
+            self.logger.error(f"LoRaWAN decryption error: {e}")
+            raise ValueError(f"LoRaWAN decryption failed: {e}")
 
     def convert_to_http(self, lorawan_data: dict):
         """转换为HTTP请求"""
@@ -364,7 +378,18 @@ class ModbusRegisterConverter:
         data_type = register_info.get("type", "uint16")
         if data_type == "float32":
             # 假设两个寄存器组成一个浮点数
-            pass
+            # 需要读取相邻的两个寄存器来组成32位浮点数
+            # 这里简化处理，实际需要读取两个寄存器值
+            import struct
+            # 假设value是16位值，需要组合两个寄存器
+            # 实际实现需要读取address和address+1两个寄存器
+            if isinstance(value, (list, tuple)) and len(value) >= 2:
+                # 组合两个16位值为32位浮点数
+                combined = (value[0] << 16) | value[1]
+                value = struct.unpack('>f', struct.pack('>I', combined))[0]
+            else:
+                # 单个寄存器值，转换为浮点数
+                value = float(value)
 
         return {
             "slave_id": slave_id,
@@ -581,8 +606,15 @@ class IoTCommunicationStorage:
         payload_text = None
         try:
             payload_text = message.payload.decode('utf-8')
-        except:
-            pass
+        except UnicodeDecodeError:
+            # 如果不是UTF-8编码，尝试其他编码或记录为二进制
+            try:
+                payload_text = message.payload.decode('latin-1')
+            except:
+                payload_text = None  # 无法解码，保持为None
+        except Exception as e:
+            self.logger.warning(f"Failed to decode payload: {e}")
+            payload_text = None
 
         self.cur.execute("""
             INSERT INTO mqtt_messages

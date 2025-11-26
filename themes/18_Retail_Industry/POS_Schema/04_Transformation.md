@@ -736,7 +736,14 @@ class PaymentSecurityProcessor:
     """支付安全处理器"""
 
     def __init__(self):
-        pass
+        """初始化支付安全处理器"""
+        self.logger = logging.getLogger(__name__)
+        self.risk_thresholds = {
+            "low": 0.3,
+            "medium": 0.6,
+            "high": 0.9
+        }
+        self.pci_compliant = True
 
     def mask_card_number(self, card_number: str) -> str:
         """掩码卡号"""
