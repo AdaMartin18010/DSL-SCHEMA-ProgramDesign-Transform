@@ -191,8 +191,13 @@ DSL-SCHEMA-ProgramDesign-Transform/
 │   ├── 10_Security_Considerations.md            # 安全考虑与实践
 │   ├── 11_Testing_Validation.md                 # 测试与验证方法
 │   └── 12_Real_World_Case_Studies.md            # 实际应用案例研究
-└── diagrams/                                    # 图表目录
+└── view/diagrams/                               # 图表目录（概念关系、思维导图、多维矩阵、论证过程）
     ├── mindmap_dsl_schema_transformation.md     # DSL Schema转换思维导图
+    ├── comprehensive_concept_relationship.md    # 全面概念关系图
+    ├── proof_process_summary.md                 # 论证过程全面总结
+    ├── multi_dimensional_comparison_matrix.md   # 多维矩阵对比
+    ├── concrete_examples_and_implementations.md # 具体示例与实现细节
+    └── README.md                                # Diagrams目录说明
     └── knowledge_matrix.md                      # 多维知识矩阵可视化
 ```
 
@@ -904,7 +909,7 @@ type_safe(s_1) ⟹ type_safe(f(s_1))
 
 **参考文档**：
 
-- `diagrams/mindmap_dsl_schema_transformation.md` -
+- `view/diagrams/mindmap_dsl_schema_transformation.md` -
   DSL Schema转换思维导图
 - `ai_prompt.md` 第15章 -
   多维知识矩阵与思维导图整合
@@ -1219,7 +1224,7 @@ type_safe(s_1) ⟹ type_safe(f(s_1))
 
 **参考文档**：
 
-- `diagrams/mindmap_dsl_schema_transformation.md` -
+- `view/diagrams/mindmap_dsl_schema_transformation.md` -
   DSL Schema转换思维导图
 - `ai_prompt.md` 第15章 -
   多维知识矩阵与思维导图整合
@@ -1280,7 +1285,7 @@ type_safe(s_1) ⟹ type_safe(f(s_1))
 
 **参考文档**：
 
-- `diagrams/mindmap_dsl_schema_transformation.md` -
+- `view/diagrams/mindmap_dsl_schema_transformation.md` -
   DSL Schema转换思维导图
 - `ai_prompt.md` 第15章 -
   多维知识矩阵与思维导图整合
@@ -1680,14 +1685,19 @@ f 保持类型信息 ∧ f 保持值信息 ∧ f 保持约束信息
 - ✅ 完善MCP协议集成文档和分析
 - ✅ 建立多维知识矩阵和思维导图
 - ✅ 完善形式化证明体系
+- ✅ 完成项目全面批判性评价和改进计划
 - 🔄 开发IoT Schema MCP Server原型
 - 🔄 建立工具链测试体系
+- 🔄 **新增**：补充企业财务Schema（8个Schema，P0优先级）
+- 🔄 **新增**：补充数据分析Schema（5个Schema，P0优先级）
 
 ### 13.2 中期目标（3-6个月）
 
 - 🔄 参与MCP协议标准化讨论
 - 🔄 推动统一Schema语言提案
 - 🔄 建立行业适配器标准
+- 🔄 **新增**：补充企业绩效管理Schema（3个Schema，P1优先级）
+- 🔄 **新增**：完善标准对标（XBRL、IFRS、GAAP、COSO等15个标准）
 - 🔄 建立开源社区
 - 🔄 发布工具和库
 
@@ -1698,6 +1708,8 @@ f 保持类型信息 ∧ f 保持值信息 ∧ f 保持约束信息
 - 🔄 发布国际标准规范
 - 🔄 企业级工具开发
 - 🔄 AI转换准确率提升至95%+
+
+**参考文档**：`CRITICAL_EVALUATION_AND_IMPROVEMENT_PLAN.md` - 详细的改进计划和时间线
 
 ---
 
@@ -1713,3 +1725,13 @@ f 保持类型信息 ∧ f 保持值信息 ∧ f 保持约束信息
 - ✅ 整合形式化证明：将信息论和形式语言理论的形式化证明整合到理论文档
 - ✅ 多维度证明体系：建立信息论、形式语言理论、传统形式化方法的多维度证明体系
 - ✅ 持续对标：跟踪2025年最新技术趋势
+- ✅ **新增**：完成项目全面批判性评价和改进计划（识别16个缺失的企业级Schema）
+
+**v2.1.0 计划更新（2025年）**：
+
+- 🔄 补充企业财务Schema（8个Schema）
+- 🔄 补充数据分析Schema（5个Schema）
+- 🔄 补充企业绩效管理Schema（3个Schema）
+- 🔄 完善标准对标（15个关键标准）
+
+**参考文档**：`CRITICAL_EVALUATION_AND_IMPROVEMENT_PLAN.md`

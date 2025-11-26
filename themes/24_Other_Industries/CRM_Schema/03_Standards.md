@@ -6,7 +6,9 @@
   - [📑 目录](#-目录)
   - [1. 标准体系概述](#1-标准体系概述)
   - [2. Salesforce API标准](#2-salesforce-api标准)
+    - [2.1 Salesforce API概述](#21-salesforce-api概述)
   - [3. Microsoft Dynamics标准](#3-microsoft-dynamics标准)
+    - [3.1 Microsoft Dynamics概述](#31-microsoft-dynamics概述)
   - [4. 标准对比矩阵](#4-标准对比矩阵)
 
 ---

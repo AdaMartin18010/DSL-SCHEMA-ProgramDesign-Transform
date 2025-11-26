@@ -45,6 +45,12 @@
     - [6.2 矩阵表征](#62-矩阵表征)
     - [6.3 网络图表征](#63-网络图表征)
     - [6.4 层次图表征](#64-层次图表征)
+  - [7. 缺失Schema说明](#7-缺失schema说明)
+    - [7.1 企业级Schema缺失情况](#71-企业级schema缺失情况)
+      - [7.1.1 企业财务Schema（8个）](#711-企业财务schema8个)
+      - [7.1.2 数据分析Schema（5个）](#712-数据分析schema5个)
+      - [7.1.3 企业绩效管理Schema（3个）](#713-企业绩效管理schema3个)
+    - [7.2 改进计划](#72-改进计划)
 
 ---
 
@@ -495,6 +501,33 @@ Industry_Schema = (Domain_Concepts, Business_Rules,
 - `Manufacturing_Schema`：制造行业Schema
 - ...（共25个行业）
 
+**缺失的企业级Schema**（16个，详见`CRITICAL_EVALUATION_AND_IMPROVEMENT_PLAN.md`）：
+
+**企业财务Schema**（8个）：
+
+- `Accounting_Schema`：会计Schema（财务会计、管理会计、成本会计、税务会计）
+- `Budget_Management_Schema`：预算管理Schema（预算编制、执行、控制、分析）
+- `Cost_Accounting_Schema`：成本会计Schema（作业成本法、标准成本法、实际成本法）
+- `Management_Accounting_Schema`：管理会计Schema（责任中心、预算差异分析、绩效评价）
+- `XBRL_Schema`：XBRL Schema（分类标准、实例文档、链接库）
+- `Financial_Reporting_Schema`：财务报告Schema（资产负债表、利润表、现金流量表）
+- `Tax_Accounting_Schema`：税务会计Schema（税务申报、税务计算、税务合规）
+- `Audit_Schema`：审计Schema（审计证据、审计程序、内部控制）
+
+**数据分析Schema**（5个）：
+
+- `Data_Analytics_Schema`：数据分析Schema（描述性、预测性、规范性、诊断性分析）
+- `Business_Intelligence_Schema`：商业智能Schema（OLAP Cube、数据挖掘、报表生成、仪表板）
+- `Data_Warehouse_Schema`：数据仓库Schema（星型模式、雪花模式、事实表、维度表）
+- `ETL_Schema`：ETL Schema（数据提取、转换、加载）
+- `Data_Lake_Schema`：数据湖Schema（原始数据存储、数据分区、数据目录）
+
+**企业绩效管理Schema**（3个）：
+
+- `EPM_Schema`：企业绩效管理Schema（预算规划、财务规划、预测分析、场景分析）
+- `KPI_Schema`：关键绩效指标Schema（KPI定义、监控、分析）
+- `Balanced_Scorecard_Schema`：平衡计分卡Schema（财务、客户、内部流程、学习成长维度）
+
 **关系**：
 
 - `Industry_Schema` → `Standard`：遵循行业标准
@@ -877,7 +910,57 @@ DSL Schema转换体系
 
 ---
 
-**文档版本**：1.0
+## 7. 缺失Schema说明
+
+### 7.1 企业级Schema缺失情况
+
+根据项目全面批判性评价（详见`CRITICAL_EVALUATION_AND_IMPROVEMENT_PLAN.md`），项目识别出**16个缺失的企业级Schema**：
+
+#### 7.1.1 企业财务Schema（8个）
+
+这些Schema对于企业财务管理至关重要，但目前项目中仅有ERP_Schema中的基础财务模块，深度不足：
+
+1. **Accounting_Schema**：会计Schema
+2. **Budget_Management_Schema**：预算管理Schema
+3. **Cost_Accounting_Schema**：成本会计Schema
+4. **Management_Accounting_Schema**：管理会计Schema
+5. **XBRL_Schema**：XBRL Schema
+6. **Financial_Reporting_Schema**：财务报告Schema
+7. **Tax_Accounting_Schema**：税务会计Schema
+8. **Audit_Schema**：审计Schema
+
+#### 7.1.2 数据分析Schema（5个）
+
+这些Schema对于企业数据分析和决策支持至关重要：
+
+1. **Data_Analytics_Schema**：数据分析Schema
+2. **Business_Intelligence_Schema**：商业智能Schema
+3. **Data_Warehouse_Schema**：数据仓库Schema
+4. **ETL_Schema**：ETL Schema
+5. **Data_Lake_Schema**：数据湖Schema
+
+#### 7.1.3 企业绩效管理Schema（3个）
+
+这些Schema对于企业绩效管理和战略管理至关重要：
+
+1. **EPM_Schema**：企业绩效管理Schema
+2. **KPI_Schema**：关键绩效指标Schema
+3. **Balanced_Scorecard_Schema**：平衡计分卡Schema
+
+### 7.2 改进计划
+
+**优先级**：
+
+- **P0（最高）**：企业财务Schema（8个）+ 数据分析Schema（5个）= 13个Schema
+- **P1（高）**：企业绩效管理Schema（3个）
+
+**实施时间线**：6-8个月
+
+**参考文档**：`CRITICAL_EVALUATION_AND_IMPROVEMENT_PLAN.md`
+
+---
+
+**文档版本**：1.1
 **创建时间**：2025-01-21
 **最后更新**：2025-01-21
 **维护者**：DSL Schema研究团队

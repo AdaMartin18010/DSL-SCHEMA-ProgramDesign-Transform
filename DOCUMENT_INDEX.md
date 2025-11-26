@@ -113,7 +113,11 @@
 
 - `theory/07_Knowledge_Graph_Mapping.md` - 知识图谱映射
 - `theory/08_Multidimensional_Knowledge_Matrix.md` - 多维知识矩阵
-- `diagrams/mindmap_dsl_schema_transformation.md` - 思维导图
+- `view/diagrams/mindmap_dsl_schema_transformation.md` - 思维导图
+- `view/diagrams/comprehensive_concept_relationship.md` - 全面概念关系图
+- `view/diagrams/proof_process_summary.md` - 论证过程总结
+- `view/diagrams/multi_dimensional_comparison_matrix.md` - 多维矩阵对比
+- `view/diagrams/concrete_examples_and_implementations.md` - 具体示例与实现
 
 ### 1.3 按角色查找
 
@@ -299,9 +303,32 @@
    - 5个核心维度定义
    - 知识矩阵应用
 
-3. **`diagrams/mindmap_dsl_schema_transformation.md`**
+3. **`view/diagrams/mindmap_dsl_schema_transformation.md`**
    - DSL Schema转换思维导图
    - 知识体系可视化
+
+4. **`view/diagrams/comprehensive_concept_relationship.md`**
+   - 项目全面概念关系图
+   - 核心概念定义（15个概念）
+   - 概念属性关系矩阵
+   - 概念关系网络
+
+5. **`view/diagrams/proof_process_summary.md`**
+   - 论证过程全面总结
+   - 形式化证明方法（8种方法）
+   - 核心论证过程（6个核心论证）
+
+6. **`view/diagrams/multi_dimensional_comparison_matrix.md`**
+   - 多维矩阵对比文档
+   - Schema类型多维对比
+   - 行业Schema多维对比
+   - 转换复杂度多维对比
+
+7. **`view/diagrams/concrete_examples_and_implementations.md`**
+   - 具体示例与实现细节
+   - Schema具体实例（10+个）
+   - 转换规则详细实现（50+个代码示例）
+   - 实际应用案例（10+个）
 
 ---
 
@@ -392,11 +419,18 @@
 
 ### 7.2 改进计划
 
-1. **`IMPROVEMENT_PLAN.md`**
+1. **`CRITICAL_EVALUATION_AND_IMPROVEMENT_PLAN.md`** ⭐新增
+   - 项目全面批判性评价与改进计划
+   - 2025年最新标准对标分析
+   - 企业视角完整性评估
+   - 缺失Schema识别（16个企业级Schema）
+   - 详细改进方案和实施路线图
+
+2. **`IMPROVEMENT_PLAN.md`**
    - 文档全面改进计划
    - 改进优先级
 
-2. **`COMPLETE_IMPROVEMENT_FINAL_REPORT.md`**
+3. **`COMPLETE_IMPROVEMENT_FINAL_REPORT.md`**
    - 文档全面改进最终报告
    - 改进成果总览
 
@@ -424,9 +458,18 @@
 | 形式语言理论 | `theory/10_Formal_Language_Theory_Analysis.md` |
 | 知识图谱 | `theory/07_Knowledge_Graph_Mapping.md` |
 | 多维矩阵 | `theory/08_Multidimensional_Knowledge_Matrix.md` |
+| 思维导图 | `view/diagrams/mindmap_dsl_schema_transformation.md` |
+| 概念关系 | `view/diagrams/comprehensive_concept_relationship.md` |
+| 论证过程 | `view/diagrams/proof_process_summary.md` |
+| 多维对比 | `view/diagrams/multi_dimensional_comparison_matrix.md` |
+| 具体示例 | `view/diagrams/concrete_examples_and_implementations.md` |
 | IoT Schema | `analysis/03_IoT_Schema_Transformation_Practices.md` |
 | 工具链对比 | `analysis/02_DSL_Transformation_Toolchain_Comparison.md` |
 | 最新趋势 | `analysis/05_2025_Latest_Trends_Analysis.md` |
+| 批判性评价 | `CRITICAL_EVALUATION_AND_IMPROVEMENT_PLAN.md` |
+| 改进计划 | `CRITICAL_EVALUATION_AND_IMPROVEMENT_PLAN.md` |
+| 企业财务 | `CRITICAL_EVALUATION_AND_IMPROVEMENT_PLAN.md` |
+| 数据分析 | `CRITICAL_EVALUATION_AND_IMPROVEMENT_PLAN.md` |
 
 ### 8.2 按问题查找
 
@@ -452,7 +495,7 @@
 - **分析文档**：11个
 - **理论文档**：5个
 - **实践文档**：5个
-- **图表文档**：1个
+- **图表文档**：8个（view/diagrams目录）
 - **辅助文档**：15个
 
 ### 9.2 文档分类
@@ -463,7 +506,7 @@
 - `theory/` - 5个理论文档
 - `practices/` - 5个实践文档
 - `view/` - 6个主题文档
-- `diagrams/` - 1个图表文档
+- `view/diagrams/` - 8个图表文档
 - 根目录 - 16个辅助文档
 
 **按主题分类**：
