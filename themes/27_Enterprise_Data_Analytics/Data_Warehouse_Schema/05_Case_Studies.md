@@ -1,0 +1,465 @@
+# 数据仓库Schema实践案例
+
+## 📑 目录
+
+- [数据仓库Schema实践案例](#数据仓库schema实践案例)
+  - [📑 目录](#-目录)
+  - [1. 案例概述](#1-案例概述)
+  - [2. 案例1：星型模式数据仓库设计](#2-案例1星型模式数据仓库设计)
+    - [2.1 场景描述](#21-场景描述)
+    - [2.2 Schema定义](#22-schema定义)
+  - [3. 案例2：Data Vault数据仓库设计](#3-案例2data-vault数据仓库设计)
+    - [3.1 场景描述](#31-场景描述)
+    - [3.2 Schema定义](#32-schema定义)
+  - [4. 案例3：数据仓库到SQL转换](#4-案例3数据仓库到sql转换)
+    - [4.1 场景描述](#41-场景描述)
+    - [4.2 实现代码](#42-实现代码)
+  - [5. 案例4：数据血缘追溯系统](#5-案例4数据血缘追溯系统)
+    - [5.1 场景描述](#51-场景描述)
+    - [5.2 实现代码](#52-实现代码)
+  - [6. 案例5：数据仓库数据存储与分析系统](#6-案例5数据仓库数据存储与分析系统)
+    - [6.1 场景描述](#61-场景描述)
+    - [6.2 实现代码](#62-实现代码)
+
+---
+
+## 1. 案例概述
+
+本文档提供数据仓库Schema在实际应用中的实践案例。
+
+---
+
+## 2. 案例1：星型模式数据仓库设计
+
+### 2.1 场景描述
+
+**应用场景**：
+基于Kimball方法设计星型模式数据仓库，包括销售事实表和产品、时间、客户维度表。
+
+**业务需求**：
+
+- 支持销售数据分析
+- 支持多维度分析
+- 支持历史数据查询
+
+### 2.2 Schema定义
+
+**星型模式数据仓库Schema**：
+
+```dsl
+schema StarSchemaDataWarehouse {
+  fact_table: FactTable {
+    fact_table_id: String @value("FACT-SALES")
+    fact_table_name: String @value("fact_sales")
+    fact_table_type: Enum @value("Transaction")
+    measures: List<Measure> {
+      sales_amount: Measure {
+        measure_name: String @value("sales_amount")
+        measure_type: Enum @value("Sum")
+        data_type: Enum @value("Decimal")
+        aggregation_function: String @value("SUM")
+      }
+      sales_quantity: Measure {
+        measure_name: String @value("sales_quantity")
+        measure_type: Enum @value("Sum")
+        data_type: Enum @value("Integer")
+        aggregation_function: String @value("SUM")
+      }
+    }
+    dimension_keys: List<DimensionKey> {
+      product_key: DimensionKey {
+        dimension_table_id: String @value("DIM-PRODUCT")
+        foreign_key_name: String @value("product_id")
+      }
+      time_key: DimensionKey {
+        dimension_table_id: String @value("DIM-TIME")
+        foreign_key_name: String @value("time_id")
+      }
+      customer_key: DimensionKey {
+        dimension_table_id: String @value("DIM-CUSTOMER")
+        foreign_key_name: String @value("customer_id")
+      }
+    }
+    grain: String @value("One row per sales transaction")
+  }
+
+  dimension_tables: List<DimensionTable> {
+    product_dimension: DimensionTable {
+      dimension_table_id: String @value("DIM-PRODUCT")
+      dimension_table_name: String @value("dim_product")
+      dimension_type: Enum @value("Product")
+      attributes: List<DimensionAttribute> {
+        product_id: DimensionAttribute {
+          attribute_name: String @value("product_id")
+          attribute_type: Enum @value("Surrogate_Key")
+          data_type: Enum @value("Integer")
+        }
+        product_name: DimensionAttribute {
+          attribute_name: String @value("product_name")
+          attribute_type: Enum @value("Descriptive")
+          data_type: Enum @value("String")
+        }
+        product_category: DimensionAttribute {
+          attribute_name: String @value("product_category")
+          attribute_type: Enum @value("Hierarchical")
+          data_type: Enum @value("String")
+        }
+      }
+      primary_key: String @value("product_id")
+    }
+  }
+}
+```
+
+---
+
+## 3. 案例2：Data Vault数据仓库设计
+
+### 3.1 场景描述
+
+**应用场景**：
+基于Data Vault 2.0方法设计数据仓库，包括Hub、Link、Satellite结构。
+
+**业务需求**：
+
+- 支持历史数据追踪
+- 支持数据源追踪
+- 支持灵活的数据模型
+
+### 3.2 Schema定义
+
+**Data Vault数据仓库Schema**：
+
+```dsl
+schema DataVaultDataWarehouse {
+  hubs: List<Hub> {
+    customer_hub: Hub {
+      hub_id: String @value("HUB-CUSTOMER")
+      hub_name: String @value("hub_customer")
+      business_key: String @value("customer_code")
+      business_key_data_type: Enum @value("String")
+      load_date: Date @value("2025-01-21")
+      record_source: String @value("CRM_SYSTEM")
+    }
+  }
+
+  links: List<Link> {
+    customer_order_link: Link {
+      link_id: String @value("LINK-CUSTOMER-ORDER")
+      link_name: String @value("link_customer_order")
+      hub_keys: List<String> {
+        "HUB-CUSTOMER"
+        "HUB-ORDER"
+      }
+      link_type: Enum @value("Transaction")
+      load_date: Date @value("2025-01-21")
+      record_source: String @value("ORDER_SYSTEM")
+    }
+  }
+
+  satellites: List<Satellite> {
+    customer_satellite: Satellite {
+      satellite_id: String @value("SAT-CUSTOMER")
+      satellite_name: String @value("sat_customer")
+      parent_id: String @value("HUB-CUSTOMER")
+      parent_type: Enum @value("Hub")
+      descriptive_attributes: List<SatelliteAttribute> {
+        customer_name: SatelliteAttribute {
+          attribute_name: String @value("customer_name")
+          attribute_type: Enum @value("String")
+        }
+        customer_address: SatelliteAttribute {
+          attribute_name: String @value("customer_address")
+          attribute_type: Enum @value("String")
+        }
+      }
+      load_date: Date @value("2025-01-21")
+      effective_date: Date @value("2025-01-21")
+      record_source: String @value("CRM_SYSTEM")
+    }
+  }
+}
+```
+
+---
+
+## 4. 案例3：数据仓库到SQL转换
+
+### 4.1 场景描述
+
+**应用场景**：
+将数据仓库Schema转换为SQL DDL语句，用于创建数据仓库表结构。
+
+**业务需求**：
+
+- 支持自动生成SQL DDL
+- 支持多数据库平台
+- 支持表结构验证
+
+### 4.2 实现代码
+
+```python
+def convert_dw_to_sql_ddl(dw_data: DataWarehouseSchema) -> List[str]:
+    """将数据仓库Schema转换为SQL DDL语句"""
+    ddl_statements = []
+
+    # 转换维度表
+    for dimension_table in dw_data.star_schema.dimension_tables:
+        ddl = f"CREATE TABLE {dimension_table.dimension_table_name} (\n"
+
+        # 主键
+        primary_key = dimension_table.primary_key
+        ddl += f"    {primary_key} INTEGER PRIMARY KEY,\n"
+
+        # 属性
+        for attribute in dimension_table.attributes:
+            if attribute.attribute_name != primary_key:
+                ddl += f"    {attribute.attribute_name} {map_data_type_to_sql(attribute.data_type)}"
+                if not attribute.is_required:
+                    ddl += " NULL"
+                ddl += ",\n"
+
+        ddl = ddl.rstrip(",\n") + "\n);"
+        ddl_statements.append(ddl)
+
+    # 转换事实表
+    for fact_table in dw_data.star_schema.fact_tables:
+        ddl = f"CREATE TABLE {fact_table.fact_table_name} (\n"
+
+        # 度量
+        for measure in fact_table.measures:
+            ddl += f"    {measure.measure_name} {map_data_type_to_sql(measure.data_type)} NOT NULL,\n"
+
+        # 维度键
+        for dimension_key in fact_table.dimension_keys:
+            ddl += f"    {dimension_key.foreign_key_name} INTEGER NOT NULL,\n"
+
+        # 外键约束
+        ddl = ddl.rstrip(",\n") + ",\n"
+        for dimension_key in fact_table.dimension_keys:
+            dimension_table = get_dimension_table(dimension_key.dimension_table_id)
+            ddl += f"    FOREIGN KEY ({dimension_key.foreign_key_name}) REFERENCES {dimension_table.dimension_table_name}({dimension_table.primary_key}),\n"
+
+        ddl = ddl.rstrip(",\n") + "\n);"
+        ddl_statements.append(ddl)
+
+    return ddl_statements
+```
+
+---
+
+## 5. 案例4：数据血缘追溯系统
+
+### 5.1 场景描述
+
+**应用场景**：
+数据血缘追溯系统，追踪数据从源系统到目标系统的完整路径。
+
+**业务需求**：
+
+- 支持数据血缘可视化
+- 支持影响分析
+- 支持数据追溯
+
+### 5.2 实现代码
+
+```python
+def trace_data_lineage(dw_data: DataWarehouseSchema, target_table: str) -> List[LineagePath]:
+    """追溯数据血缘"""
+    lineage_paths = []
+
+    # 查找目标表
+    target_node = find_node_by_name(dw_data.metadata.data_lineage, target_table)
+
+    if target_node:
+        # 递归查找上游节点
+        def find_upstream_nodes(node: LineageNode, path: List[LineageNode]):
+            if node.node_type == "Source":
+                lineage_paths.append(LineagePath(nodes=path + [node]))
+            else:
+                # 查找上游边
+                upstream_edges = [edge for edge in dw_data.metadata.data_lineage.lineage_edges
+                                 if edge.to_node_id == node.node_id]
+
+                for edge in upstream_edges:
+                    upstream_node = find_node_by_id(dw_data.metadata.data_lineage, edge.from_node_id)
+                    if upstream_node and upstream_node not in path:
+                        find_upstream_nodes(upstream_node, path + [node])
+
+        find_upstream_nodes(target_node, [])
+
+    return lineage_paths
+
+def analyze_impact(dw_data: DataWarehouseSchema, source_table: str) -> List[LineagePath]:
+    """分析影响范围"""
+    impact_paths = []
+
+    # 查找源表
+    source_node = find_node_by_name(dw_data.metadata.data_lineage, source_table)
+
+    if source_node:
+        # 递归查找下游节点
+        def find_downstream_nodes(node: LineageNode, path: List[LineageNode]):
+            # 查找下游边
+            downstream_edges = [edge for edge in dw_data.metadata.data_lineage.lineage_edges
+                               if edge.from_node_id == node.node_id]
+
+            if not downstream_edges:
+                impact_paths.append(LineagePath(nodes=path + [node]))
+            else:
+                for edge in downstream_edges:
+                    downstream_node = find_node_by_id(dw_data.metadata.data_lineage, edge.to_node_id)
+                    if downstream_node and downstream_node not in path:
+                        find_downstream_nodes(downstream_node, path + [node])
+
+        find_downstream_nodes(source_node, [])
+
+    return impact_paths
+```
+
+---
+
+## 6. 案例5：数据仓库数据存储与分析系统
+
+### 6.1 场景描述
+
+**应用场景**：
+数据仓库数据存储与分析系统，支持元数据存储、查询、分析。
+
+**业务需求**：
+
+- 支持元数据存储
+- 支持元数据查询和分析
+- 支持数据质量监控
+
+### 6.2 实现代码
+
+```python
+def store_dw_metadata(dw_data: DataWarehouseSchema, conn):
+    """存储数据仓库元数据到PostgreSQL"""
+    cursor = conn.cursor()
+
+    # 存储事实表元数据
+    for fact_table in dw_data.star_schema.fact_tables:
+        cursor.execute("""
+            INSERT INTO fact_table_metadata
+            (fact_table_id, fact_table_name, fact_table_type, grain, partition_key)
+            VALUES (%s, %s, %s, %s, %s)
+            ON CONFLICT (fact_table_id) DO UPDATE SET
+            fact_table_name = EXCLUDED.fact_table_name,
+            fact_table_type = EXCLUDED.fact_table_type,
+            grain = EXCLUDED.grain,
+            partition_key = EXCLUDED.partition_key,
+            updated_at = CURRENT_TIMESTAMP
+        """, (fact_table.fact_table_id, fact_table.fact_table_name,
+              fact_table.fact_table_type, fact_table.grain, fact_table.partition_key))
+
+        # 存储度量元数据
+        for measure in fact_table.measures:
+            cursor.execute("""
+                INSERT INTO measure_metadata
+                (measure_id, fact_table_id, measure_name, measure_type, data_type, aggregation_function)
+                VALUES (%s, %s, %s, %s, %s, %s)
+                ON CONFLICT (measure_id) DO UPDATE SET
+                measure_name = EXCLUDED.measure_name,
+                measure_type = EXCLUDED.measure_type,
+                data_type = EXCLUDED.data_type,
+                aggregation_function = EXCLUDED.aggregation_function
+            """, (measure.measure_id, fact_table.fact_table_id,
+                  measure.measure_name, measure.measure_type,
+                  measure.data_type, measure.aggregation_function))
+
+    # 存储维度表元数据
+    for dimension_table in dw_data.star_schema.dimension_tables:
+        cursor.execute("""
+            INSERT INTO dimension_table_metadata
+            (dimension_table_id, dimension_table_name, dimension_type, primary_key, slow_changing_type)
+            VALUES (%s, %s, %s, %s, %s)
+            ON CONFLICT (dimension_table_id) DO UPDATE SET
+            dimension_table_name = EXCLUDED.dimension_table_name,
+            dimension_type = EXCLUDED.dimension_type,
+            primary_key = EXCLUDED.primary_key,
+            slow_changing_type = EXCLUDED.slow_changing_type,
+            updated_at = CURRENT_TIMESTAMP
+        """, (dimension_table.dimension_table_id, dimension_table.dimension_table_name,
+              dimension_table.dimension_type, dimension_table.primary_key,
+              dimension_table.slow_changing_type))
+
+        # 存储维度属性元数据
+        for attribute in dimension_table.attributes:
+            cursor.execute("""
+                INSERT INTO dimension_attribute_metadata
+                (attribute_id, dimension_table_id, attribute_name, attribute_type, data_type, is_required)
+                VALUES (%s, %s, %s, %s, %s, %s)
+                ON CONFLICT (attribute_id) DO UPDATE SET
+                attribute_name = EXCLUDED.attribute_name,
+                attribute_type = EXCLUDED.attribute_type,
+                data_type = EXCLUDED.data_type,
+                is_required = EXCLUDED.is_required
+            """, (attribute.attribute_id, dimension_table.dimension_table_id,
+                  attribute.attribute_name, attribute.attribute_type,
+                  attribute.data_type, attribute.is_required))
+
+    # 存储数据血缘
+    for edge in dw_data.metadata.data_lineage.lineage_edges:
+        cursor.execute("""
+            INSERT INTO data_lineage
+            (lineage_id, from_node_id, to_node_id, transformation_rule, data_flow_type)
+            VALUES (%s, %s, %s, %s, %s)
+            ON CONFLICT (lineage_id) DO UPDATE SET
+            transformation_rule = EXCLUDED.transformation_rule,
+            data_flow_type = EXCLUDED.data_flow_type
+        """, (edge.edge_id, edge.from_node_id, edge.to_node_id,
+              edge.transformation_rule, edge.data_flow_type))
+
+    conn.commit()
+
+def generate_dw_report(conn):
+    """生成数据仓库报表"""
+    cursor = conn.cursor()
+
+    # 查询事实表汇总
+    cursor.execute("""
+        SELECT
+            ftm.fact_table_name,
+            ftm.fact_table_type,
+            COUNT(mm.measure_id) as measure_count
+        FROM fact_table_metadata ftm
+        LEFT JOIN measure_metadata mm ON ftm.fact_table_id = mm.fact_table_id
+        GROUP BY ftm.fact_table_id, ftm.fact_table_name, ftm.fact_table_type
+        ORDER BY ftm.fact_table_name
+    """)
+
+    fact_table_report = cursor.fetchall()
+
+    # 查询维度表汇总
+    cursor.execute("""
+        SELECT
+            dtm.dimension_table_name,
+            dtm.dimension_type,
+            COUNT(dam.attribute_id) as attribute_count
+        FROM dimension_table_metadata dtm
+        LEFT JOIN dimension_attribute_metadata dam ON dtm.dimension_table_id = dam.dimension_table_id
+        GROUP BY dtm.dimension_table_id, dtm.dimension_table_name, dtm.dimension_type
+        ORDER BY dtm.dimension_table_name
+    """)
+
+    dimension_table_report = cursor.fetchall()
+
+    return {
+        "fact_table_report": fact_table_report,
+        "dimension_table_report": dimension_table_report
+    }
+```
+
+---
+
+**参考文档**：
+
+- `01_Overview.md` - 概述
+- `02_Formal_Definition.md` - 形式化定义
+- `03_Standards.md` - 标准对标
+- `04_Transformation.md` - 转换体系
+
+**创建时间**：2025-01-21
+**最后更新**：2025-01-21
