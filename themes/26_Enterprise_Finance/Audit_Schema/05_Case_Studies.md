@@ -224,14 +224,14 @@ def convert_financial_report_to_audit(financial_report: FinancialReportingSchema
     """将财务报告转换为审计数据"""
     audit_schema = AuditSchema()
     audit_schema.company_code = financial_report.company_code
-    
+
     # 转换审计范围
     financial_audit = FinancialAudit()
     financial_audit.audit_scope.audit_period_start = financial_report.income_statement.period_start
     financial_audit.audit_scope.audit_period_end = financial_report.income_statement.period_end
     financial_audit.audit_scope.audit_entities = [financial_report.company_code]
     financial_audit.audit_scope.audit_areas = ["Balance Sheet", "Income Statement", "Cash Flow Statement"]
-    
+
     # 转换审计程序
     # 资产负债表审计程序
     balance_sheet_procedure = AuditProcedure()
@@ -240,7 +240,7 @@ def convert_financial_report_to_audit(financial_report: FinancialReportingSchema
     balance_sheet_procedure.procedure_description = "检查资产负债表项目余额"
     balance_sheet_procedure.procedure_date = financial_report.report_date
     financial_audit.audit_procedures.append(balance_sheet_procedure)
-    
+
     # 利润表审计程序
     income_statement_procedure = AuditProcedure()
     income_statement_procedure.procedure_id = "PROC-IS-001"
@@ -248,9 +248,9 @@ def convert_financial_report_to_audit(financial_report: FinancialReportingSchema
     income_statement_procedure.procedure_description = "重新计算利润表项目"
     income_statement_procedure.procedure_date = financial_report.report_date
     financial_audit.audit_procedures.append(income_statement_procedure)
-    
+
     audit_schema.financial_audit = financial_audit
-    
+
     return audit_schema
 
 # 使用示例
@@ -284,41 +284,41 @@ from audit_schema import AuditSchema, FinancialAudit, ControlDeficiency
 class AuditDataStore:
     def __init__(self, db_config):
         self.conn = psycopg2.connect(**db_config)
-    
+
     def store_audit_data(self, audit_data: AuditSchema):
         """存储审计数据"""
         cursor = self.conn.cursor()
-        
+
         audit_id = f"AUDIT-{audit_data.company_code}-{audit_data.financial_audit.audit_scope.audit_period_end}"
-        
+
         # 插入审计程序
         for procedure in audit_data.financial_audit.audit_procedures:
             cursor.execute("""
-                INSERT INTO audit_procedures 
+                INSERT INTO audit_procedures
                 (procedure_id, audit_id, procedure_type, procedure_description, procedure_date, procedure_result)
                 VALUES (%s, %s, %s, %s, %s, %s)
             """, (procedure.procedure_id, audit_id, procedure.procedure_type,
                   procedure.procedure_description, procedure.procedure_date, procedure.procedure_result))
-        
+
         # 插入控制缺陷
         for deficiency in audit_data.internal_control_audit.control_deficiencies:
             cursor.execute("""
-                INSERT INTO control_deficiencies 
+                INSERT INTO control_deficiencies
                 (deficiency_id, control_id, deficiency_type, deficiency_description, deficiency_impact, remediation_plan)
                 VALUES (%s, %s, %s, %s, %s, %s)
             """, (deficiency.deficiency_id, deficiency.control_id,
                   deficiency.deficiency_type, deficiency.deficiency_description,
                   deficiency.deficiency_impact, deficiency.remediation_plan))
-        
+
         self.conn.commit()
-    
+
     def generate_audit_analysis(self, company_code, period_start, period_end):
         """生成审计分析报告"""
         cursor = self.conn.cursor()
-        
+
         # 查询审计程序结果
         cursor.execute("""
-            SELECT 
+            SELECT
                 procedure_type,
                 COUNT(*) as total_procedures,
                 SUM(CASE WHEN procedure_result = 'Pass' THEN 1 ELSE 0 END) as passed_procedures,
@@ -328,12 +328,12 @@ class AuditDataStore:
             WHERE a.company_code = %s AND a.audit_period_end BETWEEN %s AND %s
             GROUP BY procedure_type
         """, (company_code, period_start, period_end))
-        
+
         procedure_summary = cursor.fetchall()
-        
+
         # 查询控制缺陷
         cursor.execute("""
-            SELECT 
+            SELECT
                 deficiency_type,
                 COUNT(*) as deficiency_count
             FROM control_deficiencies
@@ -341,9 +341,9 @@ class AuditDataStore:
             GROUP BY deficiency_type
             ORDER BY deficiency_count DESC
         """, (period_start, period_end))
-        
+
         deficiency_summary = cursor.fetchall()
-        
+
         return {
             "procedure_summary": procedure_summary,
             "deficiency_summary": deficiency_summary
@@ -381,4 +381,3 @@ for row in audit_analysis["deficiency_summary"]:
 
 **创建时间**：2025-01-21
 **最后更新**：2025-01-21
-

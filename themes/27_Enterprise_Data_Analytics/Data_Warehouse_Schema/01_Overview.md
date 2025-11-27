@@ -156,4 +156,3 @@ Data_Warehouse_Schema = (Star_Schema ⊕ Snowflake_Schema
 
 **创建时间**：2025-01-21
 **最后更新**：2025-01-21
-

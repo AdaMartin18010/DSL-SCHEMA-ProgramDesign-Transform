@@ -226,10 +226,10 @@ from data_warehouse_schema import DataWarehouseSchema, StarSchema, FactTable, Di
 def convert_analytics_to_data_warehouse(analytics_data: DataAnalyticsSchema) -> DataWarehouseSchema:
     """将数据分析数据转换为数据仓库格式"""
     dw_schema = DataWarehouseSchema()
-    
+
     # 转换星型模式
     star_schema = StarSchema()
-    
+
     # 创建销售事实表
     fact_table = FactTable()
     fact_table.fact_table_name = "sales_fact"
@@ -240,7 +240,7 @@ def convert_analytics_to_data_warehouse(analytics_data: DataAnalyticsSchema) -> 
     ]
     fact_table.grain = "Daily Sales by Product and Customer"
     star_schema.fact_tables.append(fact_table)
-    
+
     # 创建产品维度表
     product_dimension = DimensionTable()
     product_dimension.dimension_name = "product_dimension"
@@ -248,7 +248,7 @@ def convert_analytics_to_data_warehouse(analytics_data: DataAnalyticsSchema) -> 
         "product_id", "product_name", "product_category", "product_price"
     ]
     star_schema.dimension_tables.append(product_dimension)
-    
+
     # 创建客户维度表
     customer_dimension = DimensionTable()
     customer_dimension.dimension_name = "customer_dimension"
@@ -256,9 +256,9 @@ def convert_analytics_to_data_warehouse(analytics_data: DataAnalyticsSchema) -> 
         "customer_id", "customer_name", "customer_segment", "customer_region"
     ]
     star_schema.dimension_tables.append(customer_dimension)
-    
+
     dw_schema.star_schema = star_schema
-    
+
     return dw_schema
 
 # 使用示例
@@ -292,38 +292,38 @@ from data_analytics_schema import DataAnalyticsSchema, DataSource, MLModel
 class AnalyticsDataStore:
     def __init__(self, db_config):
         self.conn = psycopg2.connect(**db_config)
-    
+
     def store_analytics_data(self, analytics_data: DataAnalyticsSchema):
         """存储数据分析数据"""
         cursor = self.conn.cursor()
-        
+
         # 插入数据源
         for source in analytics_data.data_collection.data_sources:
             cursor.execute("""
-                INSERT INTO data_sources 
+                INSERT INTO data_sources
                 (source_id, source_type, source_connection, is_active)
                 VALUES (%s, %s, %s, %s)
             """, (source.source_id, source.source_type,
                   source.source_connection, source.is_active))
-        
+
         # 插入机器学习模型
         for model in analytics_data.data_analysis.machine_learning.models:
             cursor.execute("""
-                INSERT INTO ml_models 
+                INSERT INTO ml_models
                 (model_id, model_type, algorithm, model_accuracy, training_date, model_version)
                 VALUES (%s, %s, %s, %s, %s, %s)
             """, (model.model_id, model.model_type, model.algorithm,
                   model.model_accuracy, "2025-01-21", "v1.0"))
-        
+
         self.conn.commit()
-    
+
     def generate_analytics_report(self, period_start, period_end):
         """生成数据分析报告"""
         cursor = self.conn.cursor()
-        
+
         # 查询数据质量趋势
         cursor.execute("""
-            SELECT 
+            SELECT
                 check_date,
                 AVG(metric_value) as avg_quality_score,
                 COUNT(CASE WHEN is_passed THEN 1 END) as passed_metrics,
@@ -333,12 +333,12 @@ class AnalyticsDataStore:
             GROUP BY check_date
             ORDER BY check_date
         """, (period_start, period_end))
-        
+
         quality_trends = cursor.fetchall()
-        
+
         # 查询模型性能
         cursor.execute("""
-            SELECT 
+            SELECT
                 model_type,
                 AVG(model_accuracy) as avg_accuracy,
                 COUNT(*) as model_count
@@ -347,9 +347,9 @@ class AnalyticsDataStore:
             GROUP BY model_type
             ORDER BY avg_accuracy DESC
         """, (period_start, period_end))
-        
+
         model_performance = cursor.fetchall()
-        
+
         return {
             "quality_trends": quality_trends,
             "model_performance": model_performance
@@ -387,4 +387,3 @@ for row in analytics_report["model_performance"]:
 
 **创建时间**：2025-01-21
 **最后更新**：2025-01-21
-

@@ -42,10 +42,10 @@
 def convert_analytics_to_data_warehouse(analytics_data: DataAnalyticsSchema) -> DataWarehouseSchema:
     """将数据分析数据转换为数据仓库格式"""
     dw_schema = DataWarehouseSchema()
-    
+
     # 转换星型模式
     star_schema = StarSchema()
-    
+
     # 创建事实表
     fact_table = FactTable()
     fact_table.fact_table_name = "sales_fact"
@@ -55,7 +55,7 @@ def convert_analytics_to_data_warehouse(analytics_data: DataAnalyticsSchema) -> 
     ]
     fact_table.grain = "Daily Sales by Product and Customer"
     star_schema.fact_tables.append(fact_table)
-    
+
     # 创建维度表
     dimension_table = DimensionTable()
     dimension_table.dimension_name = "product_dimension"
@@ -63,9 +63,9 @@ def convert_analytics_to_data_warehouse(analytics_data: DataAnalyticsSchema) -> 
         "product_id", "product_name", "product_category", "product_price"
     ]
     star_schema.dimension_tables.append(dimension_table)
-    
+
     dw_schema.star_schema = star_schema
-    
+
     return dw_schema
 ```
 
@@ -85,27 +85,27 @@ def convert_analytics_to_data_warehouse(analytics_data: DataAnalyticsSchema) -> 
 def convert_analytics_to_bi(analytics_data: DataAnalyticsSchema) -> BusinessIntelligenceSchema:
     """将数据分析数据转换为BI格式"""
     bi_schema = BusinessIntelligenceSchema()
-    
+
     # 转换报表
     report = Report()
     report.report_name = "Sales Analysis Report"
     report.report_format = "PDF"
     report.report_content = generate_report_content(analytics_data)
     bi_schema.reports.append(report)
-    
+
     # 转换仪表板
     dashboard = Dashboard()
     dashboard.dashboard_name = "Sales Dashboard"
-    
+
     # 转换图表组件
     for chart in analytics_data.data_visualization.chart_types:
         component = DashboardComponent()
         component.component_type = "Chart"
         component.component_config = chart.chart_config
         dashboard.dashboard_components.append(component)
-    
+
     bi_schema.dashboards.append(dashboard)
-    
+
     return bi_schema
 ```
 
@@ -179,34 +179,34 @@ CREATE INDEX idx_ml_models_type ON ml_models(model_type);
 def store_analytics_data(analytics_data: DataAnalyticsSchema, conn):
     """存储数据分析数据到PostgreSQL"""
     cursor = conn.cursor()
-    
+
     # 插入数据源
     for source in analytics_data.data_collection.data_sources:
         cursor.execute("""
-            INSERT INTO data_sources 
+            INSERT INTO data_sources
             (source_id, source_type, source_connection, is_active)
             VALUES (%s, %s, %s, %s)
         """, (source.source_id, source.source_type,
               source.source_connection, source.is_active))
-    
+
     # 插入数据质量指标
     for metric in analytics_data.data_collection.data_quality.quality_metrics:
         cursor.execute("""
-            INSERT INTO data_quality_metrics 
+            INSERT INTO data_quality_metrics
             (metric_id, metric_name, metric_type, metric_value, threshold, check_date)
             VALUES (%s, %s, %s, %s, %s, %s)
         """, (metric.metric_id, metric.metric_name, metric.metric_type,
               metric.metric_value, metric.threshold, "2025-01-21"))
-    
+
     # 插入机器学习模型
     for model in analytics_data.data_analysis.machine_learning.models:
         cursor.execute("""
-            INSERT INTO ml_models 
+            INSERT INTO ml_models
             (model_id, model_type, algorithm, model_accuracy, training_date, model_version)
             VALUES (%s, %s, %s, %s, %s, %s)
         """, (model.model_id, model.model_type, model.algorithm,
               model.model_accuracy, "2025-01-21", "v1.0"))
-    
+
     conn.commit()
 ```
 
@@ -218,10 +218,10 @@ def store_analytics_data(analytics_data: DataAnalyticsSchema, conn):
 def analyze_analytics_data(conn, period_start, period_end):
     """分析数据分析数据"""
     cursor = conn.cursor()
-    
+
     # 查询数据质量趋势
     cursor.execute("""
-        SELECT 
+        SELECT
             check_date,
             AVG(metric_value) as avg_quality_score,
             COUNT(CASE WHEN is_passed THEN 1 END) as passed_metrics,
@@ -231,12 +231,12 @@ def analyze_analytics_data(conn, period_start, period_end):
         GROUP BY check_date
         ORDER BY check_date
     """, (period_start, period_end))
-    
+
     quality_trends = cursor.fetchall()
-    
+
     # 查询模型准确率
     cursor.execute("""
-        SELECT 
+        SELECT
             model_type,
             AVG(model_accuracy) as avg_accuracy,
             COUNT(*) as model_count
@@ -245,9 +245,9 @@ def analyze_analytics_data(conn, period_start, period_end):
         GROUP BY model_type
         ORDER BY avg_accuracy DESC
     """, (period_start, period_end))
-    
+
     model_performance = cursor.fetchall()
-    
+
     return {
         "quality_trends": quality_trends,
         "model_performance": model_performance
@@ -265,4 +265,3 @@ def analyze_analytics_data(conn, period_start, period_end):
 
 **创建时间**：2025-01-21
 **最后更新**：2025-01-21
-

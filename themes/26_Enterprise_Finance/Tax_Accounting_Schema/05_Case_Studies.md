@@ -197,29 +197,29 @@ def convert_accounting_to_tax(accounting_data: AccountingSchema) -> TaxAccountin
     """将会计数据转换为税务数据"""
     tax_accounting = TaxAccountingSchema()
     tax_accounting.company_code = accounting_data.company_code
-    
+
     # 转换所得税
     income_tax = IncomeTaxAccounting()
-    
+
     # 计算应纳税所得额（会计利润调整）
     accounting_profit = accounting_data.income_statement.profit.net_profit
-    
+
     # 税务调整（例如：不可扣除费用、非应税收入等）
     tax_adjustments = {
         "non_deductible_expenses": 10000.00,  # 不可扣除费用
         "non_taxable_income": -5000.00  # 非应税收入（减少）
     }
-    
+
     income_tax.tax_calculation.taxable_income = accounting_profit + sum(tax_adjustments.values())
     income_tax.tax_calculation.tax_rate = 25.0  # 企业所得税率25%
     income_tax.tax_calculation.tax_payable = income_tax.tax_calculation.taxable_income * 25.0 / 100
-    
+
     # 计算所得税费用
     income_tax.tax_expense.current_tax_expense = income_tax.tax_calculation.tax_payable
     income_tax.tax_expense.deferred_tax_expense = calculate_deferred_tax(accounting_data)
-    
+
     tax_accounting.income_tax_accounting = income_tax
-    
+
     return tax_accounting
 
 # 使用示例
@@ -253,41 +253,41 @@ from tax_accounting_schema import TaxAccountingSchema, IncomeTaxAccounting, VATA
 class TaxDataStore:
     def __init__(self, db_config):
         self.conn = psycopg2.connect(**db_config)
-    
+
     def store_tax_data(self, tax_data: TaxAccountingSchema):
         """存储税务数据"""
         cursor = self.conn.cursor()
-        
+
         # 插入所得税费用
         expense_id = f"ITE-{tax_data.company_code}-{tax_data.income_tax_accounting.tax_calculation.filing_period}"
         cursor.execute("""
-            INSERT INTO income_tax_expense 
+            INSERT INTO income_tax_expense
             (expense_id, company_code, tax_period, current_tax_expense, deferred_tax_expense)
             VALUES (%s, %s, %s, %s, %s)
         """, (expense_id, tax_data.company_code,
               tax_data.income_tax_accounting.tax_calculation.filing_period,
               tax_data.income_tax_accounting.tax_expense.current_tax_expense,
               tax_data.income_tax_accounting.tax_expense.deferred_tax_expense))
-        
+
         # 插入增值税交易
         for output_vat in tax_data.vat_accounting.output_vat:
             cursor.execute("""
-                INSERT INTO vat_transactions 
+                INSERT INTO vat_transactions
                 (transaction_id, transaction_type, transaction_amount, vat_rate, transaction_date, is_output_vat)
                 VALUES (%s, %s, %s, %s, %s, %s)
             """, (output_vat.transaction_id, output_vat.transaction_type,
                   output_vat.transaction_amount, output_vat.vat_rate,
                   output_vat.transaction_date, True))
-        
+
         self.conn.commit()
-    
+
     def generate_tax_analysis(self, company_code, period_start, period_end):
         """生成税务分析报告"""
         cursor = self.conn.cursor()
-        
+
         # 查询所得税费用趋势
         cursor.execute("""
-            SELECT 
+            SELECT
                 tax_period,
                 current_tax_expense,
                 deferred_tax_expense,
@@ -296,12 +296,12 @@ class TaxDataStore:
             WHERE company_code = %s AND tax_period BETWEEN %s AND %s
             ORDER BY tax_period
         """, (company_code, period_start, period_end))
-        
+
         income_tax_trends = cursor.fetchall()
-        
+
         # 查询增值税汇总
         cursor.execute("""
-            SELECT 
+            SELECT
                 DATE_TRUNC('month', transaction_date) as month,
                 SUM(CASE WHEN is_output_vat THEN vat_amount ELSE 0 END) as total_output_vat,
                 SUM(CASE WHEN NOT is_output_vat THEN vat_amount ELSE 0 END) as total_input_vat,
@@ -311,9 +311,9 @@ class TaxDataStore:
             GROUP BY DATE_TRUNC('month', transaction_date)
             ORDER BY month
         """, (period_start, period_end))
-        
+
         vat_summary = cursor.fetchall()
-        
+
         return {
             "income_tax_trends": income_tax_trends,
             "vat_summary": vat_summary
@@ -351,4 +351,3 @@ for row in tax_analysis["vat_summary"]:
 
 **创建时间**：2025-01-21
 **最后更新**：2025-01-21
-
