@@ -37,6 +37,7 @@
 将企业会计数据转换为XBRL格式，用于向监管机构提交标准化财务报告。
 
 **业务需求**：
+
 - 支持XBRL 2.1标准
 - 支持IFRS Taxonomy分类标准
 - 自动生成XBRL实例文档
@@ -92,6 +93,7 @@ schema AccountingToXBRLConversion {
 将企业财务报告转换为XBRL格式，用于财务报告标准化和监管报告。
 
 **业务需求**：
+
 - 支持IFRS 18财务报表列报标准
 - 支持XBRL实例文档生成
 - 支持XBRL验证
@@ -142,6 +144,7 @@ schema FinancialReportToXBRLConversion {
 验证XBRL实例文档的正确性，确保符合XBRL标准和分类标准要求。
 
 **业务需求**：
+
 - 验证实例文档结构
 - 验证分类标准引用
 - 验证链接库一致性
@@ -187,6 +190,7 @@ schema XBRLValidation {
 XBRL数据存储与分析系统，支持XBRL数据存储、查询、分析和报表生成。
 
 **业务需求**：
+
 - PostgreSQL数据库存储
 - 支持复杂查询和分析
 - 支持XBRL数据对比分析
@@ -271,6 +275,7 @@ for row in xbrl_data:
 企业向监管机构提交XBRL格式的财务报告，包括报告生成、验证、提交。
 
 **业务需求**：
+
 - 生成XBRL格式财务报告
 - 验证XBRL报告正确性
 - 提交XBRL报告到监管机构

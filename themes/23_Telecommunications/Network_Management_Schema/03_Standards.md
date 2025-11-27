@@ -6,8 +6,11 @@
   - [📑 目录](#-目录)
   - [1. 标准体系概述](#1-标准体系概述)
   - [2. SNMP标准](#2-snmp标准)
+    - [2.1 SNMP概述](#21-snmp概述)
   - [3. NETCONF标准](#3-netconf标准)
+    - [3.1 NETCONF概述](#31-netconf概述)
   - [4. YANG标准](#4-yang标准)
+    - [4.1 YANG概述](#41-yang概述)
   - [5. 标准对比矩阵](#5-标准对比矩阵)
 
 ---
@@ -29,6 +32,7 @@
 **标准名称**：Simple Network Management Protocol
 
 **核心内容**：
+
 - **MIB**：管理信息库
 - **OID**：对象标识符
 - **Trap**：陷阱消息
@@ -44,6 +48,7 @@
 **标准名称**：Network Configuration Protocol
 
 **核心内容**：
+
 - **配置数据**：XML格式配置数据
 - **操作**：get、get-config、edit-config
 - **通知**：事件通知机制
@@ -59,6 +64,7 @@
 **标准名称**：YANG Data Modeling Language
 
 **核心内容**：
+
 - **数据模型**：YANG数据模型
 - **模块**：YANG模块定义
 - **类型**：YANG类型系统

@@ -356,6 +356,7 @@ mindmap
 - `../Control_Schema/` - 控制Schema
 - `../Security_Schema/` - 安全Schema
 
+```text
 ├─ 12. 中国国家标准体系
     │
     ├─ 12.1 IT服务标准

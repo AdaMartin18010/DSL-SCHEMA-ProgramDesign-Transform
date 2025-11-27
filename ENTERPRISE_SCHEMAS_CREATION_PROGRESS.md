@@ -19,8 +19,6 @@
    - ✅ `04_Transformation.md`
    - ✅ `05_Case_Studies.md`
 
-### ✅ 已完成Schema
-
 2. **Budget_Management_Schema** ✅ **完成** (5/5文档)
    - ✅ `01_Overview.md`
    - ✅ `02_Formal_Definition.md`
@@ -34,26 +32,26 @@
 
 ### 企业财务Schema（剩余6个）
 
-3. **Cost_Accounting_Schema** ⏳ 待创建
-4. **Management_Accounting_Schema** ⏳ 待创建
-5. **XBRL_Schema** ⏳ 待创建
-6. **Financial_Reporting_Schema** ⏳ 待创建
-7. **Tax_Accounting_Schema** ⏳ 待创建
-8. **Audit_Schema** ⏳ 待创建
+1. **Cost_Accounting_Schema** ⏳ 待创建
+2. **Management_Accounting_Schema** ⏳ 待创建
+3. **XBRL_Schema** ⏳ 待创建
+4. **Financial_Reporting_Schema** ⏳ 待创建
+5. **Tax_Accounting_Schema** ⏳ 待创建
+6. **Audit_Schema** ⏳ 待创建
 
 ### 数据分析Schema（5个）
 
-9. **Data_Analytics_Schema** ⏳ 待创建
-10. **Business_Intelligence_Schema** ⏳ 待创建
-11. **Data_Warehouse_Schema** ⏳ 待创建
-12. **ETL_Schema** ⏳ 待创建
-13. **Data_Lake_Schema** ⏳ 待创建
+1. **Data_Analytics_Schema** ⏳ 待创建
+2. **Business_Intelligence_Schema** ⏳ 待创建
+3. **Data_Warehouse_Schema** ⏳ 待创建
+4. **ETL_Schema** ⏳ 待创建
+5. **Data_Lake_Schema** ⏳ 待创建
 
 ### 企业绩效管理Schema（3个）
 
-14. **EPM_Schema** ⏳ 待创建
-15. **KPI_Schema** ⏳ 待创建
-16. **Balanced_Scorecard_Schema** ⏳ 待创建
+1. **EPM_Schema** ⏳ 待创建
+2. **KPI_Schema** ⏳ 待创建
+3. **Balanced_Scorecard_Schema** ⏳ 待创建
 
 ---
 

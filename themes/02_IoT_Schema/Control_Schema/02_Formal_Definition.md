@@ -143,7 +143,7 @@ schema Parameter_Configuration {
         bool: Bool,
         enum: Enum_Value,
         array: List[Any],
-        struct: Map<String, Any]
+        struct: Map<String, Any>
       } @type_dispatch(type)
 
       range: Optional[Range] {
@@ -212,7 +212,7 @@ schema Event_Management {
       handler: struct {
         action: Enum { Log, Notify, Execute_Function, Change_State }
         function: Optional[Function_Reference]
-        parameters: Optional[Map<String, Any]]
+        parameters: Optional[Map<String, Any>]
       }
 
       notification: struct {
@@ -260,17 +260,17 @@ schema State_Machine {
 
       entry_action: Optional[Action] {
         function: Function_Reference
-        parameters: Optional[Map<String, Any]]
+        parameters: Optional[Map<String, Any>]
       }
 
       exit_action: Optional[Action] {
         function: Function_Reference
-        parameters: Optional[Map<String, Any]]
+        parameters: Optional[Map<String, Any>]
       }
 
       do_action: Optional[Action] {
         function: Function_Reference
-        parameters: Optional[Map<String, Any]]
+        parameters: Optional[Map<String, Any>]
       } @execution_mode("continuous")
     }
   }
@@ -285,7 +285,7 @@ schema State_Machine {
 
       action: Optional[Action] {
         function: Function_Reference
-        parameters: Optional[Map<String, Any]]
+        parameters: Optional[Map<String, Any>]
       }
     }
   }
