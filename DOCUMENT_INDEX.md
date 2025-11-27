@@ -226,6 +226,25 @@
    - 技术架构说明
    - 实施路线图
 
+5. **`analysis/11_MCP_Performance_Optimization.md`** ⭐新增
+   - MCP协议性能优化分析
+   - 连接池优化策略
+   - 请求批处理机制
+   - 缓存策略设计
+   - 异步处理优化
+
+6. **`analysis/12_Incremental_Transformation_Algorithm.md`** ⭐新增
+   - 增量转换算法分析
+   - 变更检测机制
+   - 增量更新策略
+   - 依赖关系分析
+
+7. **`analysis/13_VSCode_Extension_Architecture.md`** ⭐新增
+   - VS Code插件架构设计
+   - Schema编辑器设计
+   - 转换功能设计
+   - 用户界面设计
+
 ### 3.2 工具链对比
 
 1. **`analysis/02_DSL_Transformation_Toolchain_Comparison.md`**
@@ -374,6 +393,24 @@
    - MCP Server模板
    - 转换器模板
 
+2. **`practices/14_MCP_Performance_Optimization_Guide.md`** ⭐新增
+   - MCP协议性能优化实施指南
+   - 连接池优化实现
+   - 请求批处理实现
+   - 缓存策略实现
+
+3. **`practices/15_Incremental_Transformation_Guide.md`** ⭐新增
+   - 增量转换实施指南
+   - 变更检测实现
+   - 增量更新实现
+   - 依赖分析实现
+
+4. **`practices/16_VSCode_Extension_Implementation_Guide.md`** ⭐新增
+   - VS Code插件实施指南
+   - 项目初始化
+   - 核心功能实现
+   - 打包与发布
+
 ---
 
 ## 6. 主题文档
@@ -398,6 +435,38 @@
 ### 6.5 DSL理论
 
 - `view/ai_prompt.md` - DSL Schema转换理论
+
+### 6.6 企业财务Schema（26_Enterprise_Finance）
+
+- `themes/26_Enterprise_Finance/Accounting_Schema/01_Overview.md` - 会计Schema概述
+- `themes/26_Enterprise_Finance/AR_AP_Schema/01_Overview.md` - 应收应付Schema概述
+- `themes/26_Enterprise_Finance/Cash_Management_Schema/01_Overview.md` - 资金管理Schema概述
+- `themes/26_Enterprise_Finance/Consolidated_Reporting_Schema/01_Overview.md` - 合并报表Schema概述
+- `themes/26_Enterprise_Finance/Budget_Management_Schema/01_Overview.md` - 预算管理Schema概述
+- `themes/26_Enterprise_Finance/Cost_Accounting_Schema/01_Overview.md` - 成本会计Schema概述
+- `themes/26_Enterprise_Finance/Financial_Reporting_Schema/01_Overview.md` - 财务报告Schema概述
+- `themes/26_Enterprise_Finance/Tax_Accounting_Schema/01_Overview.md` - 税务会计Schema概述
+- `themes/26_Enterprise_Finance/Audit_Schema/01_Overview.md` - 审计Schema概述
+- `themes/26_Enterprise_Finance/XBRL_Schema/01_Overview.md` - XBRL Schema概述
+- `themes/26_Enterprise_Finance/Management_Accounting_Schema/01_Overview.md` - 管理会计Schema概述
+
+### 6.7 数据分析Schema（27_Enterprise_Data_Analytics）
+
+- `themes/27_Enterprise_Data_Analytics/Data_Warehouse_Schema/01_Overview.md` - 数据仓库Schema概述
+- `themes/27_Enterprise_Data_Analytics/OLAP_Schema/01_Overview.md` - OLAP Schema概述
+- `themes/27_Enterprise_Data_Analytics/Data_Mining_Schema/01_Overview.md` - 数据挖掘Schema概述
+- `themes/27_Enterprise_Data_Analytics/Machine_Learning_Schema/01_Overview.md` - 机器学习Schema概述
+- `themes/27_Enterprise_Data_Analytics/Data_Visualization_Schema/01_Overview.md` - 数据可视化Schema概述
+- `themes/27_Enterprise_Data_Analytics/Business_Intelligence_Schema/01_Overview.md` - 商业智能Schema概述
+- `themes/27_Enterprise_Data_Analytics/Data_Lake_Schema/01_Overview.md` - 数据湖Schema概述
+- `themes/27_Enterprise_Data_Analytics/ETL_Schema/01_Overview.md` - ETL Schema概述
+- `themes/27_Enterprise_Data_Analytics/Data_Analytics_Schema/01_Overview.md` - 数据分析Schema概述
+
+### 6.8 企业绩效管理Schema（28_Enterprise_Performance_Management）
+
+- `themes/28_Enterprise_Performance_Management/KPI_Management_Schema/01_Overview.md` - KPI管理Schema概述
+- `themes/28_Enterprise_Performance_Management/Balanced_Scorecard_Schema/01_Overview.md` - 平衡计分卡Schema概述
+- `themes/28_Enterprise_Performance_Management/Performance_Evaluation_Schema/01_Overview.md` - 绩效评估Schema概述
 
 ---
 
@@ -455,6 +524,28 @@
    - 文档质量检查结果
    - 项目统计信息
 
+2. **`PROJECT_COMPLETION_FINAL_REPORT.md`**
+   - 项目最终完成报告
+   - P0和P1优先级任务完成情况
+
+3. **`PROJECT_COMPLETE_FINAL_SUMMARY.md`**
+   - 项目完成最终总结
+   - 23个Schema体系，123个标准化文档
+
+### 7.5 全局关系分析
+
+1. **`structure/GLOBAL_THEME_RELATIONSHIP_ANALYSIS.md`** ⭐新增
+   - 全局主题知识关系梳理
+   - 全局思维导图：28个主题全景
+   - 主题分类矩阵：4大分类体系
+   - 主题依赖关系矩阵：依赖关系分析
+   - 主题价值-复杂度矩阵：价值评估
+   - 主题标准覆盖矩阵：72个标准
+   - 主题应用场景矩阵：应用广度分析
+   - 知识图谱：主题关系网络
+   - 主题演进路径图：时间线演进
+   - 主题转换关系矩阵：转换能力分析
+
 ---
 
 ## 8. 快速查找表
@@ -474,6 +565,7 @@
 | 多维矩阵 | `theory/08_Multidimensional_Knowledge_Matrix.md` |
 | 思维导图 | `view/diagrams/mindmap_dsl_schema_transformation.md` |
 | 概念关系 | `view/diagrams/comprehensive_concept_relationship.md` |
+| 全局关系 | `structure/GLOBAL_THEME_RELATIONSHIP_ANALYSIS.md` ⭐新增 |
 | 论证过程 | `view/diagrams/proof_process_summary.md` |
 | 多维对比 | `view/diagrams/multi_dimensional_comparison_matrix.md` |
 | 具体示例 | `view/diagrams/concrete_examples_and_implementations.md` |
