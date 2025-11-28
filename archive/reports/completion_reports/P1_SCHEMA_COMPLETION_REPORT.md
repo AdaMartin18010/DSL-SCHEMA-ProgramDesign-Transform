@@ -135,7 +135,7 @@
 
 ### 企业绩效管理Schema
 
-```
+```text
 themes/28_Enterprise_Performance_Management/
 ├── KPI_Management_Schema/
 │   ├── 01_Overview.md

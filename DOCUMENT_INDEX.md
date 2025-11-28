@@ -33,11 +33,15 @@
     - [6.3 物理设备](#63-物理设备)
     - [6.4 编程转换](#64-编程转换)
     - [6.5 DSL理论](#65-dsl理论)
+    - [6.6 企业财务Schema（26\_Enterprise\_Finance）](#66-企业财务schema26_enterprise_finance)
+    - [6.7 数据分析Schema（27\_Enterprise\_Data\_Analytics）](#67-数据分析schema27_enterprise_data_analytics)
+    - [6.8 企业绩效管理Schema（28\_Enterprise\_Performance\_Management）](#68-企业绩效管理schema28_enterprise_performance_management)
   - [7. 辅助文档](#7-辅助文档)
     - [7.1 项目状态](#71-项目状态)
     - [7.2 改进计划](#72-改进计划)
     - [7.3 更新日志](#73-更新日志)
     - [7.4 完成报告](#74-完成报告)
+    - [7.5 全局关系分析](#75-全局关系分析)
   - [8. 快速查找表](#8-快速查找表)
     - [8.1 按关键词查找](#81-按关键词查找)
     - [8.2 按问题查找](#82-按问题查找)
@@ -436,6 +440,27 @@
 
 - `view/ai_prompt.md` - DSL Schema转换理论
 
+### 6.6 Structure目录文档
+
+- `structure/README.md` ⭐新增 - Structure目录导航文档
+- `structure/STRUCTURE_DIRECTORY_INTEGRATION.md` ⭐新增 - Structure目录文档整合说明
+- `structure/UNIFIED_LOGIC_FRAMEWORK.md` ⭐新增 - 统一逻辑框架与形式理论
+- `structure/THINKING_REPRESENTATION_SYSTEM.md` ⭐新增 - 思维表征体系
+- `structure/FRAMEWORK_SUMMARY.md` ⭐新增 - 框架总结
+- `structure/FRAMEWORK_QUICK_START.md` ⭐新增 - 快速入门指南
+- `structure/FRAMEWORK_NAVIGATION.md` ⭐新增 - 导航地图
+- `structure/GLOBAL_THEME_RELATIONSHIP_ANALYSIS.md` - 全局主题关系梳理
+- `structure/DETAILED_THEME_CONVERSION_PATHS.md` - 详细转换路径分析
+- `structure/THEME_STANDARD_MAPPING_ANALYSIS.md` - 标准映射分析
+- `structure/THEME_APPLICATION_SCENARIOS_ANALYSIS.md` - 应用场景分析
+- `structure/GLOBAL_RELATIONSHIP_QUICK_REFERENCE.md` - 快速参考指南
+- `structure/GLOBAL_RELATIONSHIP_COMPLETION_REPORT.md` - 完成报告
+- `structure/EXPANSION_THEMES_AND_TASKS.md` - 扩展主题与任务
+- `structure/EXPANSION_VISUALIZATION.md` - 扩展可视化
+- `structure/view01.md` - 树形分层结构通用模型论证
+- `structure/view02.md` - 树形分层结构多维度系统论证
+- `structure/view03.md` - 树形分层模型技术论证
+
 ### 6.6 企业财务Schema（26_Enterprise_Finance）
 
 - `themes/26_Enterprise_Finance/Accounting_Schema/01_Overview.md` - 会计Schema概述
@@ -532,6 +557,12 @@
    - 项目完成最终总结
    - 23个Schema体系，123个标准化文档
 
+4. **`PROJECT_COMPREHENSIVE_COMPLETION_REPORT.md`** ⭐新增
+   - 项目综合完成报告
+   - 整合所有已完成工作
+   - 包含Schema、技术实现、全局关系梳理
+   - 完整的项目统计和成果展示
+
 ### 7.5 全局关系分析
 
 1. **`structure/GLOBAL_THEME_RELATIONSHIP_ANALYSIS.md`** ⭐新增
@@ -545,6 +576,48 @@
    - 知识图谱：主题关系网络
    - 主题演进路径图：时间线演进
    - 主题转换关系矩阵：转换能力分析
+
+2. **`structure/DETAILED_THEME_CONVERSION_PATHS.md`** ⭐新增
+   - 详细主题转换路径分析
+   - 45+条转换路径详细分析
+   - 高频转换路径（12条）
+   - 复杂转换路径（8条）
+   - 转换路径性能分析
+   - 转换路径最佳实践
+
+3. **`structure/THEME_STANDARD_MAPPING_ANALYSIS.md`** ⭐新增
+   - 主题标准映射关系详细分析
+   - 72个标准覆盖详细分析
+   - 标准分类体系
+   - 标准依赖关系图
+   - 标准成熟度分析
+   - 标准应用场景分析
+
+4. **`structure/THEME_APPLICATION_SCENARIOS_ANALYSIS.md`** ⭐新增
+   - 主题应用场景详细分析
+   - 150+个应用场景详细分析
+   - 5大应用场景分类
+   - 企业应用场景分析
+   - 行业应用场景分析
+   - 技术研究场景分析
+
+5. **`structure/GLOBAL_RELATIONSHIP_COMPLETION_REPORT.md`** ⭐新增
+   - 全局主题关系梳理完成报告
+   - 完成工作总览
+   - 文档统计
+   - 核心成果
+   - 关键发现
+
+6. **`structure/GLOBAL_RELATIONSHIP_QUICK_REFERENCE.md`** ⭐新增
+   - 全局主题关系梳理快速参考指南
+   - 文档导航
+   - 核心概念速查
+   - 关键数据速查
+   - 关系类型速查
+   - 转换路径速查
+   - 标准映射速查
+   - 应用场景速查
+   - 快速查找表
 
 ---
 
