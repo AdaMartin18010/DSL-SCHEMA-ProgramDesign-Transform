@@ -160,6 +160,40 @@ DSL SCHEMA Programming Design Transform Interaction Sql NoSql
 
 ## 2. 项目结构
 
+### 2.1 三大核心目录
+
+项目包含**三大核心目录**，共同构成完整的DSL Schema转换理论与实践体系：
+
+| 目录 | 定位 | 文档数 | 主要内容 |
+|------|------|--------|---------|
+| **themes/** | 主题实践目录 | 425+ | 28个主题、81个Schema的完整文档集 |
+| **view/** | 视图理论目录 | 30+ | 理论分析、实践指南、案例研究 |
+| **structure/** | 结构框架目录 | 16 | 统一逻辑框架、全局关系梳理、理论论证 |
+
+**详细说明**：
+
+- `PROJECT_DIRECTORY_INTEGRATION.md` ⭐新增 - 三大目录整合说明
+- `PROJECT_NAVIGATION.md` ⭐新增 - 项目全局导航地图
+
+### 2.2 目录关系
+
+```mermaid
+graph TB
+    Root[项目根目录]
+
+    Root --> Themes[themes/<br/>主题实践<br/>425+文档]
+    Root --> View[view/<br/>视图理论<br/>30+文档]
+    Root --> Structure[structure/<br/>结构框架<br/>16文档]
+
+    Structure -->|统一框架| Themes
+    Structure -->|理论基础| View
+    View -->|实践指导| Themes
+    Themes -->|应用反馈| View
+    Themes -->|关系数据| Structure
+```
+
+---
+
 ```text
 DSL-SCHEMA-ProgramDesign-Transform/
 ├── README.md                                    # 项目说明文档（本文档）
@@ -1723,6 +1757,7 @@ f 保持类型信息 ∧ f 保持值信息 ∧ f 保持约束信息
 **版本**：v2.1.0
 
 **项目完成度**：
+
 - ✅ P0优先级Schema：20个（100个文档）
 - ✅ P1优先级Schema：3个（15个文档）
 - ✅ P1优先级技术实现：4个任务（8个文档）

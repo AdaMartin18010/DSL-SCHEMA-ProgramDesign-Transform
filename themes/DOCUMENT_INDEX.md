@@ -70,6 +70,13 @@
       - [ERP Schema](#erp-schema)
     - [1.15 海运与航运Schema（08\_Maritime\_Shipping）](#115-海运与航运schema08_maritime_shipping)
       - [Maritime Schema](#maritime-schema)
+    - [1.29 API和协议Schema（29\_API\_Protocol\_Schemas）](#129-api和协议schema29_api_protocol_schemas)
+      - [GraphQL Schema](#graphql-schema)
+      - [gRPC Schema](#grpc-schema)
+      - [Protocol Buffers Schema](#protocol-buffers-schema)
+      - [Avro Schema](#avro-schema)
+      - [JSON Schema](#json-schema)
+      - [AsyncAPI Schema](#asyncapi-schema)
   - [2. 按文档类型索引](#2-按文档类型索引)
     - [2.1 概述文档（01\_Overview.md）](#21-概述文档01_overviewmd)
     - [2.2 形式化定义（02\_Formal\_Definition.md）](#22-形式化定义02_formal_definitionmd)
@@ -510,6 +517,56 @@
 - [转换体系](./08_Maritime_Shipping/Maritime_Schema/04_Transformation.md)
 - [实践案例](./08_Maritime_Shipping/Maritime_Schema/05_Case_Studies.md)
 
+### 1.29 API和协议Schema（29_API_Protocol_Schemas）⭐新增
+
+#### GraphQL Schema
+
+- [概述](./29_API_Protocol_Schemas/GraphQL_Schema/01_Overview.md)
+- [形式化定义](./29_API_Protocol_Schemas/GraphQL_Schema/02_Formal_Definition.md)
+- [标准对标](./29_API_Protocol_Schemas/GraphQL_Schema/03_Standards.md)
+- [转换体系](./29_API_Protocol_Schemas/GraphQL_Schema/04_Transformation.md)
+- [实践案例](./29_API_Protocol_Schemas/GraphQL_Schema/05_Case_Studies.md)
+
+#### gRPC Schema
+
+- [概述](./29_API_Protocol_Schemas/gRPC_Schema/01_Overview.md)
+- [形式化定义](./29_API_Protocol_Schemas/gRPC_Schema/02_Formal_Definition.md)
+- [标准对标](./29_API_Protocol_Schemas/gRPC_Schema/03_Standards.md)
+- [转换体系](./29_API_Protocol_Schemas/gRPC_Schema/04_Transformation.md)
+- [实践案例](./29_API_Protocol_Schemas/gRPC_Schema/05_Case_Studies.md)
+
+#### Protocol Buffers Schema
+
+- [概述](./29_API_Protocol_Schemas/Protocol_Buffers_Schema/01_Overview.md)
+- [形式化定义](./29_API_Protocol_Schemas/Protocol_Buffers_Schema/02_Formal_Definition.md)
+- [标准对标](./29_API_Protocol_Schemas/Protocol_Buffers_Schema/03_Standards.md)
+- [转换体系](./29_API_Protocol_Schemas/Protocol_Buffers_Schema/04_Transformation.md)
+- [实践案例](./29_API_Protocol_Schemas/Protocol_Buffers_Schema/05_Case_Studies.md)
+
+#### Avro Schema
+
+- [概述](./29_API_Protocol_Schemas/Avro_Schema/01_Overview.md)
+- [形式化定义](./29_API_Protocol_Schemas/Avro_Schema/02_Formal_Definition.md)
+- [标准对标](./29_API_Protocol_Schemas/Avro_Schema/03_Standards.md)
+- [转换体系](./29_API_Protocol_Schemas/Avro_Schema/04_Transformation.md)
+- [实践案例](./29_API_Protocol_Schemas/Avro_Schema/05_Case_Studies.md)
+
+#### JSON Schema
+
+- [概述](./29_API_Protocol_Schemas/JSON_Schema/01_Overview.md)
+- [形式化定义](./29_API_Protocol_Schemas/JSON_Schema/02_Formal_Definition.md)
+- [标准对标](./29_API_Protocol_Schemas/JSON_Schema/03_Standards.md)
+- [转换体系](./29_API_Protocol_Schemas/JSON_Schema/04_Transformation.md)
+- [实践案例](./29_API_Protocol_Schemas/JSON_Schema/05_Case_Studies.md)
+
+#### AsyncAPI Schema
+
+- [概述](./29_API_Protocol_Schemas/AsyncAPI_Schema/01_Overview.md)
+- [形式化定义](./29_API_Protocol_Schemas/AsyncAPI_Schema/02_Formal_Definition.md)
+- [标准对标](./29_API_Protocol_Schemas/AsyncAPI_Schema/03_Standards.md)
+- [转换体系](./29_API_Protocol_Schemas/AsyncAPI_Schema/04_Transformation.md)
+- [实践案例](./29_API_Protocol_Schemas/AsyncAPI_Schema/05_Case_Studies.md)
+
 ---
 
 ## 2. 按文档类型索引
@@ -825,7 +882,7 @@
 ---
 
 **创建时间**：2025-01-21
-**最后更新**：2025-01-21
+**最后更新**：2025-01-21（新增29_API_Protocol_Schemas主题）
 
 **相关文档**：
 

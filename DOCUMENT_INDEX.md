@@ -440,7 +440,19 @@
 
 - `view/ai_prompt.md` - DSL Schema转换理论
 
-### 6.6 Structure目录文档
+### 6.6 项目整合文档
+
+- `PROJECT_DIRECTORY_INTEGRATION.md` ⭐新增 - 三大目录（themes、view、structure）整合说明
+- `PROJECT_NAVIGATION.md` ⭐新增 - 项目全局导航地图
+
+### 6.7 扩展计划文档
+
+- `themes/NETWORK_BENCHMARKING_AND_EXPANSION_PLAN.md` ⭐新增 - 网络对标分析与扩展完善计划
+- `themes/EXPANSION_PLAN_V2.md` - 扩展计划V2
+- `themes/DOCUMENT_EXPANSION_PLAN.md` - 文档扩展计划
+- `structure/EXPANSION_THEMES_AND_TASKS.md` - 扩展主题与任务清单
+
+### 6.7 Structure目录文档
 
 - `structure/README.md` ⭐新增 - Structure目录导航文档
 - `structure/STRUCTURE_DIRECTORY_INTEGRATION.md` ⭐新增 - Structure目录文档整合说明

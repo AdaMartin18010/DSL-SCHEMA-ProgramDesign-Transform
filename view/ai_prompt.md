@@ -3511,6 +3511,38 @@ $$f_{matrix}: KnowledgeGraph \rightarrow MultidimensionalMatrix$$
 
 ---
 
+---
+
+## 16. 参考文档
+
+### 16.1 统一逻辑框架
+
+- `../structure/UNIFIED_LOGIC_FRAMEWORK.md` ⭐新增 - 统一逻辑框架与形式理论
+- `../structure/FRAMEWORK_QUICK_START.md` ⭐新增 - 快速入门指南
+- `../structure/THINKING_REPRESENTATION_SYSTEM.md` ⭐新增 - 思维表征体系
+- `../structure/GLOBAL_THEME_RELATIONSHIP_ANALYSIS.md` - 全局主题关系梳理
+
+### 16.2 理论基础
+
+- `../structure/view01.md` - 树形分层结构通用模型论证
+- `../structure/view02.md` - 多维度系统论证
+- `../structure/view03.md` - 技术论证
+- `theory/09_Information_Theory_Analysis.md` - 信息论分析
+- `theory/10_Formal_Language_Theory_Analysis.md` - 形式语言理论分析
+
+### 16.3 实践指南
+
+- `practices/` - 实践指南文档
+- `analysis/` - 分析文档
+- `../themes/` - 主题实践文档
+
+### 16.4 项目整合
+
+- `../PROJECT_DIRECTORY_INTEGRATION.md` ⭐新增 - 三大目录整合说明
+- `../README.md` - 项目主文档
+
+---
+
 **文档版本**：2.0
 **最后更新**：2025-01-21
 **维护者**：DSL Schema研究团队

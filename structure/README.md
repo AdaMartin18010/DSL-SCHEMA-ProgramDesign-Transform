@@ -133,6 +133,8 @@
 - `../README.md` - 项目主文档
 - `../DOCUMENT_INDEX.md` - 完整文档索引
 - `../PROJECT_COMPREHENSIVE_COMPLETION_REPORT.md` - 项目综合完成报告
+- `../PROJECT_DIRECTORY_INTEGRATION.md` ⭐新增 - 三大目录整合说明
+- `../PROJECT_NAVIGATION.md` ⭐新增 - 项目全局导航地图
 
 ### 主题文档
 
@@ -205,6 +207,8 @@ graph TB
 
 - **2025-01-21**：创建全局关系梳理文档体系（6个文档）
 - **2025-01-21**：创建structure目录README导航文档
+- **2025-01-21**：创建统一逻辑框架文档体系（5个文档）
+- **2025-01-21**：创建项目全局导航地图
 
 ---
 
