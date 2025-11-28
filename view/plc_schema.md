@@ -5,6 +5,10 @@
 - [PLC Schema存在性论证与多维转换体系](#plc-schema存在性论证与多维转换体系)
   - [📑 目录](#-目录)
   - [1. 核心结论：PLC存在Schema，且为五层嵌套结构](#1-核心结论plc存在schema且为五层嵌套结构)
+    - [1.1 PLC Schema五层结构思维导图](#11-plc-schema五层结构思维导图)
+      - [🗺️ PLC Schema体系全景](#️-plc-schema体系全景)
+    - [1.2 PLC编程语言对比矩阵](#12-plc编程语言对比矩阵)
+      - [📊 IEC 61131-3编程语言对比](#-iec-61131-3编程语言对比)
   - [2. 五层Schema结构形式化定义](#2-五层schema结构形式化定义)
     - [2.1 第1层：硬件结构Schema（物理拓扑）](#21-第1层硬件结构schema物理拓扑)
     - [2.2 第2层：程序组织单元Schema（POU）](#22-第2层程序组织单元schemapou)
@@ -30,6 +34,51 @@ PLC_Schema = Hardware_Schema ⊕ Program_Schema ⊕ Communication_Schema ⊕ Dat
 （国际电工委员会PLC编程语言标准）和
 **GB/T 33008.1-2016**国标，
 其核心是**XML Schema驱动的程序交互格式**。
+
+### 1.1 PLC Schema五层结构思维导图
+
+#### 🗺️ PLC Schema体系全景
+
+```mermaid
+mindmap
+  root((PLC Schema五层))
+    第1层: 硬件结构
+      CPU模块
+      IO模块
+      电源模块
+      拓扑结构
+    第2层: 程序组织单元
+      POU类型
+      变量声明
+      五种语言
+      编译规则
+    第3层: 任务调度
+      周期任务
+      事件任务
+      优先级
+      执行顺序
+    第4层: 通信协议
+      Profinet
+      Modbus
+      OPC UA
+      数据交换
+    第5层: 行业功能块
+      行业标准
+      功能库
+      领域模型
+```
+
+### 1.2 PLC编程语言对比矩阵
+
+#### 📊 IEC 61131-3编程语言对比
+
+| 语言 | 类型 | 易用性 | 表达能力 | 适用场景 | 标准化 |
+|------|------|--------|----------|----------|--------|
+| **LD (Ladder)** | 图形化 | ⭐⭐⭐⭐⭐ | ⭐⭐⭐ | 继电器逻辑 | IEC 61131-3 |
+| **FBD (Function Block)** | 图形化 | ⭐⭐⭐⭐ | ⭐⭐⭐⭐ | 功能块编程 | IEC 61131-3 |
+| **ST (Structured Text)** | 文本 | ⭐⭐⭐ | ⭐⭐⭐⭐⭐ | 复杂算法 | IEC 61131-3 |
+| **IL (Instruction List)** | 文本 | ⭐⭐ | ⭐⭐⭐ | 低级控制 | IEC 61131-3 |
+| **SFC (Sequential Function)** | 图形化 | ⭐⭐⭐⭐ | ⭐⭐⭐⭐ | 顺序控制 | IEC 61131-3 |
 
 ---
 

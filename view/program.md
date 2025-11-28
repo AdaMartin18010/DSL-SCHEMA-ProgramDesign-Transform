@@ -8,8 +8,16 @@
     - [1.1 问题域](#11-问题域)
     - [1.2 形式化模型](#12-形式化模型)
     - [1.3 形式化定理](#13-形式化定理)
-  - [2. 思维导图（文字版）](#2-思维导图文字版)
+  - [2. 思维导图](#2-思维导图)
+    - [2.1 Schema转换编程语言体系思维导图](#21-schema转换编程语言体系思维导图)
+      - [🗺️ 形式语言Schema转换编程语言全景](#️-形式语言schema转换编程语言全景)
+    - [2.2 思维导图（文字版）](#22-思维导图文字版)
   - [3. 多维知识矩阵](#3-多维知识矩阵)
+    - [3.1 编程语言类型系统对比矩阵](#31-编程语言类型系统对比矩阵)
+      - [📊 Schema类型到编程语言类型映射对比](#-schema类型到编程语言类型映射对比)
+      - [📊 转换工具对比矩阵](#-转换工具对比矩阵)
+      - [🗺️ Schema转换流程图](#️-schema转换流程图)
+    - [3.2 多维知识矩阵（详细）](#32-多维知识矩阵详细)
   - [4. 实际案例论证](#4-实际案例论证)
     - [4.1 Schema → Python（Pydantic）](#41-schema--pythonpydantic)
     - [4.2 Schema → Rust（Serde）](#42-schema--rustserde)
@@ -125,7 +133,40 @@ IoT Schema）转换为编程语言（如 Python、Rust、Java）
 
 ---
 
-## 2. 思维导图（文字版）
+## 2. 思维导图
+
+### 2.1 Schema转换编程语言体系思维导图
+
+#### 🗺️ 形式语言Schema转换编程语言全景
+
+```mermaid
+mindmap
+  root((Schema转换编程语言))
+    问题域
+      类型系统不匹配
+      约束丢失
+      序列化错误
+      控制逻辑缺失
+      并发模型差异
+    转换方案
+      Python Pydantic
+      Rust Serde
+      Java Jackson
+      Go Gin
+      TypeScript Zod
+    理论支撑
+      形式语言理论
+      信息论
+      类型系统理论
+      语义映射理论
+    实践应用
+      代码生成
+      验证逻辑
+      错误处理
+      性能优化
+```
+
+### 2.2 思维导图（文字版）
 
 ```text
 Schema → 编程语言转换问题
@@ -154,6 +195,57 @@ Schema → 编程语言转换问题
 ---
 
 ## 3. 多维知识矩阵
+
+### 3.1 编程语言类型系统对比矩阵
+
+#### 📊 Schema类型到编程语言类型映射对比
+
+| Schema类型 | Python (Pydantic) | Rust (Serde) | Java (Jackson) | Go (Gin) | TypeScript (Zod) |
+|-----------|-------------------|--------------|----------------|----------|------------------|
+| **string** | `str` | `String` | `String` | `string` | `z.string()` |
+| **integer** | `int` | `i32/i64` | `Integer/Long` | `int/int64` | `z.number().int()` |
+| **number** | `float` | `f32/f64` | `Double` | `float64` | `z.number()` |
+| **boolean** | `bool` | `bool` | `Boolean` | `bool` | `z.boolean()` |
+| **array** | `List[T]` | `Vec<T>` | `List<T>` | `[]T` | `z.array(T)` |
+| **object** | `BaseModel` | `struct` | `@JsonTypeInfo` | `struct` | `z.object({})` |
+| **null** | `Optional[T]` | `Option<T>` | `@Nullable` | `*T` | `z.nullable(T)` |
+| **date-time** | `datetime` | `chrono::DateTime` | `LocalDateTime` | `time.Time` | `z.date()` |
+
+#### 📊 转换工具对比矩阵
+
+| 工具 | 语言 | 性能 | 类型安全 | 验证能力 | 易用性 | 社区支持 |
+|------|------|------|----------|----------|--------|----------|
+| **Pydantic** | Python | ⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ |
+| **Serde** | Rust | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐⭐⭐⭐ |
+| **Jackson** | Java | ⭐⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐⭐⭐⭐ |
+| **Gin** | Go | ⭐⭐⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐⭐ |
+| **Zod** | TypeScript | ⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ |
+
+#### 🗺️ Schema转换流程图
+
+```mermaid
+flowchart TD
+    A[Schema定义] -->|解析| B[Schema AST]
+    B -->|类型映射| C[目标语言类型]
+    B -->|约束提取| D[验证规则]
+    B -->|结构分析| E[代码结构]
+
+    C -->|生成| F[类型定义代码]
+    D -->|生成| G[验证逻辑代码]
+    E -->|生成| H[序列化代码]
+
+    F -->|组合| I[完整代码]
+    G -->|组合| I
+    H -->|组合| I
+
+    I -->|编译/运行| J[可执行程序]
+
+    style A fill:#e1f5ff
+    style I fill:#e8f5e9
+    style J fill:#fff4e1
+```
+
+### 3.2 多维知识矩阵（详细）
 
 | **维度** | **问题** | **Python** | **Rust** | **Java** | **Go** |
 |----------|----------|------------|----------|----------|--------|
