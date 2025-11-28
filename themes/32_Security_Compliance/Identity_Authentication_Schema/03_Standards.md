@@ -15,7 +15,9 @@
     - [4.1 SAML 2.0核心规范](#41-saml-20核心规范)
     - [4.2 SAML绑定规范](#42-saml绑定规范)
   - [5. 标准对比矩阵](#5-标准对比矩阵)
-  - [6. 标准发展趋势](#6-标准发展趋势)
+  - [5. 标准发展趋势](#5-标准发展趋势)
+    - [5.1 2024-2025年趋势](#51-2024-2025年趋势)
+    - [5.2 2025-2026年展望](#52-2025-2026年展望)
 
 ---
 
@@ -35,17 +37,19 @@
 
 **标准名称**：OAuth 2.0 Authorization Framework (RFC 6749)
 **核心内容**：
+
 - 授权流程
 - 令牌类型
 - 安全要求
 
 **Schema支持**：完整支持
-**参考链接**：https://oauth.net/2/
+**参考链接**：<https://oauth.net/2/>
 
 ### 2.2 OAuth 2.0扩展
 
 **标准名称**：OAuth 2.0扩展
 **核心内容**：
+
 - PKCE扩展
 - 设备流程扩展
 - JWT Bearer Token扩展
@@ -60,17 +64,19 @@
 
 **标准名称**：OpenID Connect Core 1.0
 **核心内容**：
+
 - 认证流程
 - ID Token
 - 用户信息
 
 **Schema支持**：完整支持
-**参考链接**：https://openid.net/specs/openid-connect-core-1_0.html
+**参考链接**：<https://openid.net/specs/openid-connect-core-1_0.html>
 
 ### 3.2 OpenID Connect扩展
 
 **标准名称**：OpenID Connect扩展
 **核心内容**：
+
 - Discovery扩展
 - Dynamic Registration扩展
 - Session Management扩展
@@ -85,17 +91,19 @@
 
 **标准名称**：SAML 2.0
 **核心内容**：
+
 - SAML断言
 - SAML协议
 - SAML绑定
 
 **Schema支持**：完整支持
-**参考链接**：https://www.oasis-open.org/standards#samlv2.0
+**参考链接**：<https://www.oasis-open.org/standards#samlv2.0>
 
 ### 4.2 SAML绑定规范
 
 **标准名称**：SAML绑定规范
 **核心内容**：
+
 - HTTP Redirect绑定
 - HTTP Post绑定
 - SOAP绑定

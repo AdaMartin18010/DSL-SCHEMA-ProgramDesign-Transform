@@ -5,6 +5,7 @@
 - [合规Schema转换体系](#合规schema转换体系)
   - [📑 目录](#-目录)
   - [1. 转换体系概述](#1-转换体系概述)
+    - [1.1 转换目标](#11-转换目标)
   - [2. GDPR到HIPAA转换](#2-gdpr到hipaa转换)
   - [3. HIPAA到PCI-DSS转换](#3-hipaa到pci-dss转换)
   - [4. 合规Schema到安全标准Schema转换](#4-合规schema到安全标准schema转换)
@@ -31,6 +32,7 @@
 ## 2. GDPR到HIPAA转换
 
 **转换规则**：
+
 - GDPR数据保护原则 → HIPAA隐私规则
 - GDPR数据主体权利 → HIPAA患者权利
 - GDPR数据保护措施 → HIPAA安全措施
@@ -59,6 +61,7 @@ def gdpr_to_hipaa(gdpr_schema: dict) -> dict:
 ## 3. HIPAA到PCI-DSS转换
 
 **转换规则**：
+
 - HIPAA安全措施 → PCI-DSS安全要求
 - HIPAA访问控制 → PCI-DSS访问控制
 
@@ -67,6 +70,7 @@ def gdpr_to_hipaa(gdpr_schema: dict) -> dict:
 ## 4. 合规Schema到安全标准Schema转换
 
 **转换规则**：
+
 - GDPR要求 → ISO 27001控制措施
 - HIPAA要求 → NIST框架功能
 

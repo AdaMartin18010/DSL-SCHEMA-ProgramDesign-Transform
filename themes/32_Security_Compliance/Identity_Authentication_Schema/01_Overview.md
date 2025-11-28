@@ -15,7 +15,12 @@
     - [3.2 OpenID Connect Schema](#32-openid-connect-schema)
     - [3.3 SAML Schema](#33-saml-schema)
   - [4. 标准对标](#4-标准对标)
+    - [4.1 OAuth 2.0规范](#41-oauth-20规范)
+    - [4.2 OpenID Connect规范](#42-openid-connect规范)
+    - [4.3 SAML规范](#43-saml规范)
   - [5. 应用场景](#5-应用场景)
+    - [5.1 单点登录（SSO）](#51-单点登录sso)
+    - [5.2 API授权](#52-api授权)
 
 ---
 
@@ -59,6 +64,7 @@ Identity_Authentication_Schema = OAuth2_Schema ⊕ OIDC_Schema ⊕ SAML_Schema
 **定义**：描述OAuth 2.0授权流程的结构。
 
 **包含内容**：
+
 - **授权服务器**：授权服务器定义
 - **资源服务器**：资源服务器定义
 - **客户端**：客户端定义
@@ -69,6 +75,7 @@ Identity_Authentication_Schema = OAuth2_Schema ⊕ OIDC_Schema ⊕ SAML_Schema
 **定义**：描述OpenID Connect认证的结构。
 
 **包含内容**：
+
 - **身份提供者（IdP）**：IdP定义
 - **依赖方（RP）**：RP定义
 - **ID Token**：ID Token定义
@@ -79,6 +86,7 @@ Identity_Authentication_Schema = OAuth2_Schema ⊕ OIDC_Schema ⊕ SAML_Schema
 **定义**：描述SAML断言的结构。
 
 **包含内容**：
+
 - **SAML断言**：SAML断言定义
 - **SAML协议**：SAML协议定义
 - **SAML绑定**：SAML绑定定义
@@ -91,6 +99,7 @@ Identity_Authentication_Schema = OAuth2_Schema ⊕ OIDC_Schema ⊕ SAML_Schema
 
 **标准名称**：OAuth 2.0 Authorization Framework
 **核心内容**：
+
 - 授权流程
 - 令牌类型
 - 安全要求
@@ -101,6 +110,7 @@ Identity_Authentication_Schema = OAuth2_Schema ⊕ OIDC_Schema ⊕ SAML_Schema
 
 **标准名称**：OpenID Connect Core 1.0
 **核心内容**：
+
 - 认证流程
 - ID Token
 - 用户信息
@@ -111,6 +121,7 @@ Identity_Authentication_Schema = OAuth2_Schema ⊕ OIDC_Schema ⊕ SAML_Schema
 
 **标准名称**：SAML 2.0
 **核心内容**：
+
 - SAML断言
 - SAML协议
 - SAML绑定
@@ -126,6 +137,7 @@ Identity_Authentication_Schema = OAuth2_Schema ⊕ OIDC_Schema ⊕ SAML_Schema
 **场景描述**：企业实施单点登录。
 
 **Schema应用**：
+
 - 定义OIDC配置
 - 定义SAML配置
 - 统一身份认证
@@ -135,6 +147,7 @@ Identity_Authentication_Schema = OAuth2_Schema ⊕ OIDC_Schema ⊕ SAML_Schema
 **场景描述**：API服务使用OAuth 2.0授权。
 
 **Schema应用**：
+
 - 定义OAuth 2.0配置
 - 定义授权流程
 - 令牌管理

@@ -15,7 +15,13 @@
     - [3.2 HIPAA Schema](#32-hipaa-schema)
     - [3.3 PCI-DSS Schema](#33-pci-dss-schema)
   - [4. 标准对标](#4-标准对标)
+    - [4.1 GDPR规范](#41-gdpr规范)
+    - [4.2 HIPAA规范](#42-hipaa规范)
+    - [4.3 PCI-DSS规范](#43-pci-dss规范)
   - [5. 应用场景](#5-应用场景)
+    - [5.1 数据保护合规](#51-数据保护合规)
+    - [5.2 医疗数据合规](#52-医疗数据合规)
+    - [5.3 支付数据合规](#53-支付数据合规)
 
 ---
 
@@ -59,6 +65,7 @@ Compliance_Schema = GDPR_Schema ⊕ HIPAA_Schema ⊕ PCI_DSS_Schema
 **定义**：描述GDPR合规要求的结构。
 
 **包含内容**：
+
 - **数据主体权利**：数据主体权利定义
 - **数据处理原则**：数据处理原则
 - **数据保护措施**：数据保护措施
@@ -69,6 +76,7 @@ Compliance_Schema = GDPR_Schema ⊕ HIPAA_Schema ⊕ PCI_DSS_Schema
 **定义**：描述HIPAA合规要求的结构。
 
 **包含内容**：
+
 - **受保护健康信息（PHI）**：PHI定义和保护
 - **隐私规则**：隐私规则要求
 - **安全规则**：安全规则要求
@@ -79,6 +87,7 @@ Compliance_Schema = GDPR_Schema ⊕ HIPAA_Schema ⊕ PCI_DSS_Schema
 **定义**：描述PCI-DSS合规要求的结构。
 
 **包含内容**：
+
 - **持卡人数据**：持卡人数据定义
 - **安全要求**：12项安全要求
 - **合规验证**：合规验证要求
@@ -91,6 +100,7 @@ Compliance_Schema = GDPR_Schema ⊕ HIPAA_Schema ⊕ PCI_DSS_Schema
 
 **标准名称**：General Data Protection Regulation
 **核心内容**：
+
 - 数据保护原则
 - 数据主体权利
 - 数据处理要求
@@ -101,6 +111,7 @@ Compliance_Schema = GDPR_Schema ⊕ HIPAA_Schema ⊕ PCI_DSS_Schema
 
 **标准名称**：Health Insurance Portability and Accountability Act
 **核心内容**：
+
 - PHI保护要求
 - 隐私和安全规则
 - 违规通知要求
@@ -111,6 +122,7 @@ Compliance_Schema = GDPR_Schema ⊕ HIPAA_Schema ⊕ PCI_DSS_Schema
 
 **标准名称**：Payment Card Industry Data Security Standard
 **核心内容**：
+
 - 持卡人数据保护
 - 12项安全要求
 - 合规验证要求
@@ -126,6 +138,7 @@ Compliance_Schema = GDPR_Schema ⊕ HIPAA_Schema ⊕ PCI_DSS_Schema
 **场景描述**：企业实现GDPR数据保护合规。
 
 **Schema应用**：
+
 - 定义数据处理流程
 - 实施数据保护措施
 - 支持数据主体权利
@@ -135,6 +148,7 @@ Compliance_Schema = GDPR_Schema ⊕ HIPAA_Schema ⊕ PCI_DSS_Schema
 **场景描述**：医疗机构实现HIPAA合规。
 
 **Schema应用**：
+
 - 保护PHI数据
 - 实施隐私和安全措施
 - 违规通知管理
@@ -144,6 +158,7 @@ Compliance_Schema = GDPR_Schema ⊕ HIPAA_Schema ⊕ PCI_DSS_Schema
 **场景描述**：支付处理商实现PCI-DSS合规。
 
 **Schema应用**：
+
 - 保护持卡人数据
 - 实施安全控制措施
 - 合规验证管理

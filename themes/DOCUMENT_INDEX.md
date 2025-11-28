@@ -70,7 +70,7 @@
       - [ERP Schema](#erp-schema)
     - [1.15 海运与航运Schema（08\_Maritime\_Shipping）](#115-海运与航运schema08_maritime_shipping)
       - [Maritime Schema](#maritime-schema)
-    - [1.29 API和协议Schema（29\_API\_Protocol\_Schemas）](#129-api和协议schema29_api_protocol_schemas)
+    - [1.29 API和协议Schema（29\_API\_Protocol\_Schemas）⭐新增](#129-api和协议schema29_api_protocol_schemas新增)
       - [GraphQL Schema](#graphql-schema)
       - [gRPC Schema](#grpc-schema)
       - [Protocol Buffers Schema](#protocol-buffers-schema)

@@ -5,6 +5,7 @@
 - [身份认证Schema转换体系](#身份认证schema转换体系)
   - [📑 目录](#-目录)
   - [1. 转换体系概述](#1-转换体系概述)
+    - [1.1 转换目标](#11-转换目标)
   - [2. OAuth 2.0到OpenID Connect转换](#2-oauth-20到openid-connect转换)
   - [3. OpenID Connect到SAML转换](#3-openid-connect到saml转换)
   - [4. SAML到OAuth 2.0转换](#4-saml到oauth-20转换)
