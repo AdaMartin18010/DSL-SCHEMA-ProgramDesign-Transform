@@ -81,6 +81,7 @@
 ### 3.2 Schema定义
 
 **应用部署Ansible Schema**：
+
 - 应用安装任务
 - 应用配置任务
 - 应用启动任务
@@ -97,6 +98,7 @@
 ### 4.2 Schema定义
 
 **多环境Ansible Schema**：
+
 - 开发环境Playbook
 - 测试环境Playbook
 - 生产环境Playbook

@@ -9,9 +9,13 @@
   - [3. Flux Schema](#3-flux-schema)
   - [4. Git Repository Schema](#4-git-repository-schema)
   - [5. 类型系统](#5-类型系统)
+    - [5.1 GitOps类型](#51-gitops类型)
   - [6. 约束规则](#6-约束规则)
+    - [6.1 GitOps约束](#61-gitops约束)
   - [7. 转换函数](#7-转换函数)
+    - [7.1 ArgoCD到Flux转换](#71-argocd到flux转换)
   - [8. 形式化定理](#8-形式化定理)
+    - [8.1 GitOps一致性定理](#81-gitops一致性定理)
 
 ---
 

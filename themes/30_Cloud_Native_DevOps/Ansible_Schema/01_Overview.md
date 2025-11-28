@@ -15,7 +15,10 @@
     - [3.2 Task Schema](#32-task-schema)
     - [3.3 Role Schema](#33-role-schema)
   - [4. 标准对标](#4-标准对标)
+    - [4.1 Ansible规范](#41-ansible规范)
   - [5. 应用场景](#5-应用场景)
+    - [5.1 配置管理](#51-配置管理)
+    - [5.2 应用部署](#52-应用部署)
 
 ---
 
@@ -58,6 +61,7 @@ Ansible_Schema = Playbook_Schema ⊕ Task_Schema ⊕ Role_Schema
 **定义**：描述Ansible Playbook的结构。
 
 **包含内容**：
+
 - **hosts**：目标主机
 - **tasks**：任务列表
 - **vars**：变量定义
@@ -68,6 +72,7 @@ Ansible_Schema = Playbook_Schema ⊕ Task_Schema ⊕ Role_Schema
 **定义**：描述Ansible任务的结构。
 
 **包含内容**：
+
 - **任务名称**：任务名称
 - **模块**：Ansible模块
 - **参数**：模块参数
@@ -78,6 +83,7 @@ Ansible_Schema = Playbook_Schema ⊕ Task_Schema ⊕ Role_Schema
 **定义**：描述Ansible角色的结构。
 
 **包含内容**：
+
 - **tasks/**：任务目录
 - **vars/**：变量目录
 - **templates/**：模板目录
@@ -91,6 +97,7 @@ Ansible_Schema = Playbook_Schema ⊕ Task_Schema ⊕ Role_Schema
 
 **标准名称**：Ansible规范
 **核心内容**：
+
 - Playbook格式规范
 - 任务定义规范
 - 角色规范
@@ -106,6 +113,7 @@ Ansible_Schema = Playbook_Schema ⊕ Task_Schema ⊕ Role_Schema
 **场景描述**：使用Ansible进行配置管理。
 
 **Schema应用**：
+
 - 定义Playbook
 - 定义任务和角色
 - 自动化配置管理
@@ -115,6 +123,7 @@ Ansible_Schema = Playbook_Schema ⊕ Task_Schema ⊕ Role_Schema
 **场景描述**：使用Ansible进行应用部署。
 
 **Schema应用**：
+
 - 定义部署Playbook
 - 定义部署任务
 - 自动化应用部署

@@ -9,9 +9,13 @@
   - [3. Resource Schema](#3-resource-schema)
   - [4. Provider Schema](#4-provider-schema)
   - [5. 类型系统](#5-类型系统)
+    - [5.1 Pulumi类型](#51-pulumi类型)
   - [6. 约束规则](#6-约束规则)
+    - [6.1 Program约束](#61-program约束)
   - [7. 转换函数](#7-转换函数)
+    - [7.1 Pulumi到Terraform转换](#71-pulumi到terraform转换)
   - [8. 形式化定理](#8-形式化定理)
+    - [8.1 Pulumi程序有效性定理](#81-pulumi程序有效性定理)
 
 ---
 

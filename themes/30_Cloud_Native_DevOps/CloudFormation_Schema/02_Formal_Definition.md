@@ -9,9 +9,13 @@
   - [3. Resource Schema](#3-resource-schema)
   - [4. Parameter Schema](#4-parameter-schema)
   - [5. 类型系统](#5-类型系统)
+    - [5.1 CloudFormation类型](#51-cloudformation类型)
   - [6. 约束规则](#6-约束规则)
+    - [6.1 Template约束](#61-template约束)
   - [7. 转换函数](#7-转换函数)
+    - [7.1 CloudFormation到Terraform转换](#71-cloudformation到terraform转换)
   - [8. 形式化定理](#8-形式化定理)
+    - [8.1 CloudFormation模板有效性定理](#81-cloudformation模板有效性定理)
 
 ---
 

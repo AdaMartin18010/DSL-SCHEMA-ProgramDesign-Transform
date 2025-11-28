@@ -5,6 +5,7 @@
 - [Ansible Schema转换体系](#ansible-schema转换体系)
   - [📑 目录](#-目录)
   - [1. 转换体系概述](#1-转换体系概述)
+    - [1.1 转换目标](#11-转换目标)
   - [2. Ansible到Terraform转换](#2-ansible到terraform转换)
   - [3. Ansible到Kubernetes转换](#3-ansible到kubernetes转换)
   - [4. Ansible到Docker转换](#4-ansible到docker转换)
@@ -31,6 +32,7 @@ Ansible Schema转换体系支持Ansible Playbook与其他配置格式之间的�
 ## 2. Ansible到Terraform转换
 
 **转换规则**：
+
 - Ansible任务 → Terraform资源
 - Ansible变量 → Terraform变量
 - Ansible角色 → Terraform模块
@@ -58,6 +60,7 @@ def ansible_to_terraform(playbook_file: str) -> str:
 ## 3. Ansible到Kubernetes转换
 
 **转换规则**：
+
 - Ansible Kubernetes任务 → Kubernetes资源
 - Ansible配置 → Kubernetes配置
 
@@ -66,6 +69,7 @@ def ansible_to_terraform(playbook_file: str) -> str:
 ## 4. Ansible到Docker转换
 
 **转换规则**：
+
 - Ansible Docker任务 → Dockerfile指令
 - Ansible配置 → Docker Compose配置
 

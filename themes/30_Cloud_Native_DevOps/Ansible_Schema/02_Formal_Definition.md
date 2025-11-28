@@ -9,9 +9,13 @@
   - [3. Task Schema](#3-task-schema)
   - [4. Role Schema](#4-role-schema)
   - [5. 类型系统](#5-类型系统)
+    - [5.1 Ansible类型](#51-ansible类型)
   - [6. 约束规则](#6-约束规则)
+    - [6.1 Playbook约束](#61-playbook约束)
   - [7. 转换函数](#7-转换函数)
+    - [7.1 Ansible到Terraform转换](#71-ansible到terraform转换)
   - [8. 形式化定理](#8-形式化定理)
+    - [8.1 Ansible Playbook有效性定理](#81-ansible-playbook有效性定理)
 
 ---
 

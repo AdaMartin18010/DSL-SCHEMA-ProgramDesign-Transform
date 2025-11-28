@@ -9,9 +9,13 @@
   - [3. Docker Compose Schema](#3-docker-compose-schema)
   - [4. Docker Image Schema](#4-docker-image-schema)
   - [5. 类型系统](#5-类型系统)
+    - [5.1 Docker类型](#51-docker类型)
   - [6. 约束规则](#6-约束规则)
+    - [6.1 Dockerfile约束](#61-dockerfile约束)
   - [7. 转换函数](#7-转换函数)
+    - [7.1 Docker到Kubernetes转换](#71-docker到kubernetes转换)
   - [8. 形式化定理](#8-形式化定理)
+    - [8.1 Dockerfile有效性定理](#81-dockerfile有效性定理)
 
 ---
 

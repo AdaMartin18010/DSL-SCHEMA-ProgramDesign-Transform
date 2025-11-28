@@ -13,6 +13,8 @@
     - [3.2 YAML](#32-yaml)
   - [4. 标准对比矩阵](#4-标准对比矩阵)
   - [5. 标准发展趋势](#5-标准发展趋势)
+    - [5.1 2024-2025年趋势](#51-2024-2025年趋势)
+    - [5.2 2025-2026年展望](#52-2025-2026年展望)
 
 ---
 
@@ -31,17 +33,19 @@ Helm Schema标准体系分为两个层次：
 
 **标准名称**：Helm Chart规范
 **核心内容**：
+
 - Chart结构规范
 - Values规范
 - 模板规范
 
 **Schema支持**：完整支持
-**参考链接**：https://helm.sh/docs/
+**参考链接**：<https://helm.sh/docs/>
 
 ### 2.2 CNCF规范
 
 **标准名称**：CNCF规范
 **核心内容**：
+
 - 云原生标准
 - Helm最佳实践
 
@@ -55,10 +59,12 @@ Helm Schema标准体系分为两个层次：
 
 **标准名称**：Kubernetes
 **核心内容**：
+
 - Helm基于Kubernetes资源定义
 - Kubernetes API规范
 
 **与Helm的关系**：
+
 - Helm用于Kubernetes应用打包
 - Helm Chart渲染为Kubernetes资源
 
@@ -66,6 +72,7 @@ Helm Schema标准体系分为两个层次：
 
 **标准名称**：YAML
 **核心内容**：
+
 - Helm使用YAML格式
 - YAML语法规范
 

@@ -15,7 +15,10 @@
     - [3.2 Docker Compose Schema](#32-docker-compose-schema)
     - [3.3 Docker Image Schema](#33-docker-image-schema)
   - [4. 标准对标](#4-标准对标)
+    - [4.1 OCI规范](#41-oci规范)
   - [5. 应用场景](#5-应用场景)
+    - [5.1 应用容器化](#51-应用容器化)
+    - [5.2 多容器编排](#52-多容器编排)
 
 ---
 
@@ -59,6 +62,7 @@ Docker_Schema = Dockerfile_Schema ⊕ Docker_Compose_Schema
 **定义**：描述Dockerfile的结构。
 
 **包含内容**：
+
 - **FROM**：基础镜像
 - **RUN**：执行命令
 - **COPY/ADD**：复制文件
@@ -71,6 +75,7 @@ Docker_Schema = Dockerfile_Schema ⊕ Docker_Compose_Schema
 **定义**：描述Docker Compose配置的结构。
 
 **包含内容**：
+
 - **services**：服务定义
 - **networks**：网络定义
 - **volumes**：存储卷定义
@@ -80,6 +85,7 @@ Docker_Schema = Dockerfile_Schema ⊕ Docker_Compose_Schema
 **定义**：描述Docker镜像的结构。
 
 **包含内容**：
+
 - **镜像层**：镜像层定义
 - **元数据**：镜像元数据
 - **清单**：镜像清单
@@ -92,6 +98,7 @@ Docker_Schema = Dockerfile_Schema ⊕ Docker_Compose_Schema
 
 **标准名称**：Open Container Initiative
 **核心内容**：
+
 - 容器镜像格式
 - 容器运行时规范
 
@@ -106,6 +113,7 @@ Docker_Schema = Dockerfile_Schema ⊕ Docker_Compose_Schema
 **场景描述**：使用Docker进行应用容器化。
 
 **Schema应用**：
+
 - 定义Dockerfile
 - 构建容器镜像
 - 运行容器
@@ -115,6 +123,7 @@ Docker_Schema = Dockerfile_Schema ⊕ Docker_Compose_Schema
 **场景描述**：使用Docker Compose进行多容器编排。
 
 **Schema应用**：
+
 - 定义服务配置
 - 定义网络和存储
 - 编排多容器应用

@@ -15,7 +15,10 @@
     - [3.2 Values Schema](#32-values-schema)
     - [3.3 Template Schema](#33-template-schema)
   - [4. 标准对标](#4-标准对标)
+    - [4.1 Helm规范](#41-helm规范)
   - [5. 应用场景](#5-应用场景)
+    - [5.1 Kubernetes应用打包](#51-kubernetes应用打包)
+    - [5.2 应用部署管理](#52-应用部署管理)
 
 ---
 
@@ -58,6 +61,7 @@ Helm_Schema = Chart_Schema ⊕ Values_Schema ⊕ Template_Schema
 **定义**：描述Helm Chart的结构。
 
 **包含内容**：
+
 - **Chart.yaml**：Chart元数据
 - **values.yaml**：默认值配置
 - **templates/**：模板文件目录
@@ -68,6 +72,7 @@ Helm_Schema = Chart_Schema ⊕ Values_Schema ⊕ Template_Schema
 **定义**：描述Helm Values配置的结构。
 
 **包含内容**：
+
 - **默认值**：Chart默认值
 - **用户值**：用户自定义值
 - **值合并**：值合并规则
@@ -77,6 +82,7 @@ Helm_Schema = Chart_Schema ⊕ Values_Schema ⊕ Template_Schema
 **定义**：描述Helm模板的结构。
 
 **包含内容**：
+
 - **模板语法**：Go模板语法
 - **模板函数**：Helm模板函数
 - **模板变量**：模板变量定义
@@ -89,6 +95,7 @@ Helm_Schema = Chart_Schema ⊕ Values_Schema ⊕ Template_Schema
 
 **标准名称**：Helm Chart规范
 **核心内容**：
+
 - Chart结构规范
 - Values规范
 - 模板规范
@@ -104,6 +111,7 @@ Helm_Schema = Chart_Schema ⊕ Values_Schema ⊕ Template_Schema
 **场景描述**：使用Helm打包Kubernetes应用。
 
 **Schema应用**：
+
 - 定义Chart结构
 - 定义Values配置
 - 定义模板文件
@@ -113,6 +121,7 @@ Helm_Schema = Chart_Schema ⊕ Values_Schema ⊕ Template_Schema
 **场景描述**：使用Helm管理Kubernetes应用部署。
 
 **Schema应用**：
+
 - 安装和升级应用
 - 管理应用配置
 - 管理应用版本

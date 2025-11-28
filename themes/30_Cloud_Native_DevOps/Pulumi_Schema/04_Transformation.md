@@ -5,6 +5,7 @@
 - [Pulumi Schema转换体系](#pulumi-schema转换体系)
   - [📑 目录](#-目录)
   - [1. 转换体系概述](#1-转换体系概述)
+    - [1.1 转换目标](#11-转换目标)
   - [2. Pulumi到Terraform转换](#2-pulumi到terraform转换)
   - [3. Terraform到Pulumi转换](#3-terraform到pulumi转换)
   - [4. Pulumi到Kubernetes转换](#4-pulumi到kubernetes转换)
@@ -31,6 +32,7 @@ Pulumi Schema转换体系支持Pulumi程序与其他IaC格式之间的转换。
 ## 2. Pulumi到Terraform转换
 
 **转换规则**：
+
 - Pulumi资源 → Terraform资源
 - Pulumi配置 → Terraform变量
 - Pulumi输出 → Terraform输出
@@ -51,6 +53,7 @@ def pulumi_to_terraform(pulumi_program: str, language: str = "python") -> str:
 ## 3. Terraform到Pulumi转换
 
 **转换规则**：
+
 - Terraform资源 → Pulumi资源
 - Terraform配置 → Pulumi程序代码
 
@@ -59,6 +62,7 @@ def pulumi_to_terraform(pulumi_program: str, language: str = "python") -> str:
 ## 4. Pulumi到Kubernetes转换
 
 **转换规则**：
+
 - Pulumi Kubernetes资源 → Kubernetes YAML
 - Pulumi程序 → Kubernetes资源清单
 

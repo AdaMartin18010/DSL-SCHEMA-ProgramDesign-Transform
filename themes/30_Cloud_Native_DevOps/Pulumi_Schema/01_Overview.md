@@ -15,7 +15,10 @@
     - [3.2 Resource Schema](#32-resource-schema)
     - [3.3 Provider Schema](#33-provider-schema)
   - [4. 标准对标](#4-标准对标)
+    - [4.1 Pulumi规范](#41-pulumi规范)
   - [5. 应用场景](#5-应用场景)
+    - [5.1 多语言基础设施即代码](#51-多语言基础设施即代码)
+    - [5.2 云原生应用部署](#52-云原生应用部署)
 
 ---
 

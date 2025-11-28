@@ -15,7 +15,10 @@
     - [3.2 Resource Schema](#32-resource-schema)
     - [3.3 Parameter Schema](#33-parameter-schema)
   - [4. 标准对标](#4-标准对标)
+    - [4.1 CloudFormation规范](#41-cloudformation规范)
   - [5. 应用场景](#5-应用场景)
+    - [5.1 AWS基础设施即代码](#51-aws基础设施即代码)
+    - [5.2 AWS应用部署](#52-aws应用部署)
 
 ---
 
@@ -59,6 +62,7 @@ CloudFormation_Schema = Template_Schema ⊕ Resource_Schema
 **定义**：描述CloudFormation模板的结构。
 
 **包含内容**：
+
 - **AWSTemplateFormatVersion**：模板格式版本
 - **Description**：模板描述
 - **Parameters**：参数定义
@@ -70,6 +74,7 @@ CloudFormation_Schema = Template_Schema ⊕ Resource_Schema
 **定义**：描述CloudFormation资源的结构。
 
 **包含内容**：
+
 - **资源类型**：AWS资源类型
 - **资源属性**：资源属性定义
 - **资源依赖**：资源依赖关系
@@ -79,6 +84,7 @@ CloudFormation_Schema = Template_Schema ⊕ Resource_Schema
 **定义**：描述CloudFormation参数的结构。
 
 **包含内容**：
+
 - **参数类型**：参数类型定义
 - **参数默认值**：参数默认值
 - **参数约束**：参数约束规则
@@ -91,6 +97,7 @@ CloudFormation_Schema = Template_Schema ⊕ Resource_Schema
 
 **标准名称**：AWS CloudFormation规范
 **核心内容**：
+
 - 模板格式规范
 - 资源定义规范
 - 参数规范
@@ -106,6 +113,7 @@ CloudFormation_Schema = Template_Schema ⊕ Resource_Schema
 **场景描述**：使用CloudFormation定义和管理AWS基础设施。
 
 **Schema应用**：
+
 - 定义AWS资源
 - 管理基础设施堆栈
 - 自动化AWS资源部署
@@ -115,6 +123,7 @@ CloudFormation_Schema = Template_Schema ⊕ Resource_Schema
 **场景描述**：使用CloudFormation部署AWS应用。
 
 **Schema应用**：
+
 - 定义应用基础设施
 - 管理应用配置
 - 自动化应用部署

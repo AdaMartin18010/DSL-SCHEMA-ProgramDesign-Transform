@@ -5,6 +5,7 @@
 - [CloudFormation Schema转换体系](#cloudformation-schema转换体系)
   - [📑 目录](#-目录)
   - [1. 转换体系概述](#1-转换体系概述)
+    - [1.1 转换目标](#11-转换目标)
   - [2. CloudFormation到Terraform转换](#2-cloudformation到terraform转换)
   - [3. Terraform到CloudFormation转换](#3-terraform到cloudformation转换)
   - [4. CloudFormation到Kubernetes转换](#4-cloudformation到kubernetes转换)
@@ -31,6 +32,7 @@ CloudFormation Schema转换体系支持CloudFormation模板与其他IaC格式之
 ## 2. CloudFormation到Terraform转换
 
 **转换规则**：
+
 - CloudFormation资源 → Terraform资源
 - CloudFormation参数 → Terraform变量
 - CloudFormation输出 → Terraform输出
@@ -53,6 +55,7 @@ def cloudformation_to_terraform(cfn_template: dict) -> str:
 ## 3. Terraform到CloudFormation转换
 
 **转换规则**：
+
 - Terraform资源 → CloudFormation资源
 - Terraform配置 → CloudFormation模板
 
@@ -61,6 +64,7 @@ def cloudformation_to_terraform(cfn_template: dict) -> str:
 ## 4. CloudFormation到Kubernetes转换
 
 **转换规则**：
+
 - CloudFormation EKS资源 → Kubernetes资源
 - CloudFormation配置 → Kubernetes配置
 

@@ -15,7 +15,10 @@
     - [3.2 Flux Schema](#32-flux-schema)
     - [3.3 Git Repository Schema](#33-git-repository-schema)
   - [4. 标准对标](#4-标准对标)
+    - [4.1 GitOps规范](#41-gitops规范)
   - [5. 应用场景](#5-应用场景)
+    - [5.1 持续部署](#51-持续部署)
+    - [5.2 多环境管理](#52-多环境管理)
 
 ---
 
@@ -59,6 +62,7 @@ GitOps_Schema = ArgoCD_Schema ⊕ Flux_Schema ⊕ Git_Repository_Schema
 **定义**：描述ArgoCD应用的结构。
 
 **包含内容**：
+
 - **Application**：应用定义
 - **ApplicationSet**：应用集合定义
 - **Project**：项目定义
@@ -69,6 +73,7 @@ GitOps_Schema = ArgoCD_Schema ⊕ Flux_Schema ⊕ Git_Repository_Schema
 **定义**：描述Flux配置的结构。
 
 **包含内容**：
+
 - **GitRepository**：Git仓库定义
 - **Kustomization**：Kustomization定义
 - **HelmRelease**：Helm Release定义
@@ -79,6 +84,7 @@ GitOps_Schema = ArgoCD_Schema ⊕ Flux_Schema ⊕ Git_Repository_Schema
 **定义**：描述Git仓库配置的结构。
 
 **包含内容**：
+
 - **仓库URL**：Git仓库URL
 - **分支/标签**：Git分支或标签
 - **路径**：配置路径
@@ -92,6 +98,7 @@ GitOps_Schema = ArgoCD_Schema ⊕ Flux_Schema ⊕ Git_Repository_Schema
 
 **标准名称**：CNCF GitOps规范
 **核心内容**：
+
 - GitOps原则
 - 应用定义规范
 - 同步策略规范
@@ -107,6 +114,7 @@ GitOps_Schema = ArgoCD_Schema ⊕ Flux_Schema ⊕ Git_Repository_Schema
 **场景描述**：使用GitOps进行持续部署。
 
 **Schema应用**：
+
 - 定义应用配置
 - Git仓库管理
 - 自动化部署和同步
@@ -116,6 +124,7 @@ GitOps_Schema = ArgoCD_Schema ⊕ Flux_Schema ⊕ Git_Repository_Schema
 **场景描述**：使用GitOps管理多环境。
 
 **Schema应用**：
+
 - 定义环境配置
 - 环境同步策略
 - 环境状态管理

@@ -40,6 +40,7 @@ Kubernetes_Schema = Resource_Schema ⊕ Workload_Schema
 ```
 
 其中：
+
 - `Resource_Schema`：Kubernetes资源定义Schema
 - `Workload_Schema`：工作负载Schema（Deployment、StatefulSet、DaemonSet等）
 - `Service_Schema`：服务Schema（Service、Ingress等）
@@ -186,12 +187,13 @@ spec:
 
 **标准名称**：Kubernetes API规范
 **核心内容**：
+
 - 资源定义规范
 - API版本管理
 - 资源验证规则
 
 **Schema支持**：完整支持
-**参考链接**：https://kubernetes.io/docs/reference/
+**参考链接**：<https://kubernetes.io/docs/reference/>
 
 ### 4.2 相关标准
 
@@ -208,6 +210,7 @@ spec:
 **场景描述**：使用Kubernetes进行容器编排和管理。
 
 **Schema应用**：
+
 - 定义Pod和容器
 - 定义部署策略
 - 定义服务发现
@@ -217,6 +220,7 @@ spec:
 **场景描述**：微服务架构使用Kubernetes部署。
 
 **Schema应用**：
+
 - 定义微服务部署
 - 定义服务间通信
 - 定义配置管理
@@ -226,6 +230,7 @@ spec:
 **场景描述**：云原生应用使用Kubernetes运行。
 
 **Schema应用**：
+
 - 定义应用架构
 - 定义资源需求
 - 定义扩展策略
@@ -235,11 +240,13 @@ spec:
 **场景描述**：存储Kubernetes资源定义、事件、指标等数据。
 
 **Schema应用**：
+
 - 存储资源定义
 - 记录资源事件
 - 分析资源使用情况
 
 **数据库设计**：
+
 - 资源定义表：存储Kubernetes资源定义
 - 资源事件表：记录资源事件
 - 资源指标表：存储资源使用指标
@@ -285,6 +292,7 @@ graph TB
 **维护者**：DSL Schema研究团队
 
 **相关文档**：
+
 - `02_Formal_Definition.md` - 形式化定义
 - `03_Standards.md` - 标准对标
 - `04_Transformation.md` - 转换体系

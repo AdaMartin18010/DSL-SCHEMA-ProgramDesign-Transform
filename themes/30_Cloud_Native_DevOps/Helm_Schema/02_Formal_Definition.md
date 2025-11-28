@@ -9,9 +9,13 @@
   - [3. Values Schema](#3-values-schema)
   - [4. Template Schema](#4-template-schema)
   - [5. 类型系统](#5-类型系统)
+    - [5.1 Helm类型](#51-helm类型)
   - [6. 约束规则](#6-约束规则)
+    - [6.1 Chart约束](#61-chart约束)
   - [7. 转换函数](#7-转换函数)
+    - [7.1 Helm到Kubernetes转换](#71-helm到kubernetes转换)
   - [8. 形式化定理](#8-形式化定理)
+    - [8.1 Chart有效性定理](#81-chart有效性定理)
 
 ---
 

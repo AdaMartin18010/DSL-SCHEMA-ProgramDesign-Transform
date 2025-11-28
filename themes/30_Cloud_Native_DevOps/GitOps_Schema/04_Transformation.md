@@ -5,6 +5,7 @@
 - [GitOps Schema转换体系](#gitops-schema转换体系)
   - [📑 目录](#-目录)
   - [1. 转换体系概述](#1-转换体系概述)
+    - [1.1 转换目标](#11-转换目标)
   - [2. ArgoCD到Flux转换](#2-argocd到flux转换)
   - [3. Flux到ArgoCD转换](#3-flux到argocd转换)
   - [4. GitOps到Kubernetes转换](#4-gitops到kubernetes转换)
@@ -31,6 +32,7 @@ GitOps Schema转换体系支持不同GitOps工具之间的转换。
 ## 2. ArgoCD到Flux转换
 
 **转换规则**：
+
 - ArgoCD Application → Flux GitRepository + Kustomization
 - ArgoCD同步策略 → Flux同步策略
 - ArgoCD源配置 → Flux源配置
@@ -83,6 +85,7 @@ def argocd_to_flux(argocd_app: dict) -> dict:
 ## 3. Flux到ArgoCD转换
 
 **转换规则**：
+
 - Flux GitRepository + Kustomization → ArgoCD Application
 - Flux同步策略 → ArgoCD同步策略
 
@@ -91,6 +94,7 @@ def argocd_to_flux(argocd_app: dict) -> dict:
 ## 4. GitOps到Kubernetes转换
 
 **转换规则**：
+
 - GitOps应用配置 → Kubernetes资源
 - GitOps同步策略 → Kubernetes配置
 

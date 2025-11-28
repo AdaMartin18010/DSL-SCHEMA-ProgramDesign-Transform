@@ -13,6 +13,8 @@
     - [3.2 OCI](#32-oci)
   - [4. 标准对比矩阵](#4-标准对比矩阵)
   - [5. 标准发展趋势](#5-标准发展趋势)
+    - [5.1 2024-2025年趋势](#51-2024-2025年趋势)
+    - [5.2 2025-2026年展望](#52-2025-2026年展望)
 
 ---
 
@@ -31,17 +33,19 @@ Kubernetes Schema标准体系分为两个层次：
 
 **标准名称**：Kubernetes API规范
 **核心内容**：
+
 - 资源定义规范
 - API版本管理
 - 资源验证规则
 
 **Schema支持**：完整支持
-**参考链接**：https://kubernetes.io/docs/reference/
+**参考链接**：<https://kubernetes.io/docs/reference/>
 
 ### 2.2 CNCF规范
 
 **标准名称**：CNCF规范
 **核心内容**：
+
 - 云原生标准
 - Kubernetes最佳实践
 
@@ -55,10 +59,12 @@ Kubernetes Schema标准体系分为两个层次：
 
 **标准名称**：OpenAPI Specification
 **核心内容**：
+
 - Kubernetes使用OpenAPI定义API
 - API文档生成
 
 **与Kubernetes的关系**：
+
 - Kubernetes API使用OpenAPI定义
 - 支持OpenAPI工具链
 
@@ -66,10 +72,12 @@ Kubernetes Schema标准体系分为两个层次：
 
 **标准名称**：Open Container Initiative
 **核心内容**：
+
 - 容器镜像格式
 - 容器运行时规范
 
 **与Kubernetes的关系**：
+
 - Kubernetes支持OCI容器运行时
 
 ---

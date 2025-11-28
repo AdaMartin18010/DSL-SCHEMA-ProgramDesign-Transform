@@ -9,9 +9,13 @@
   - [3. Resource Schema](#3-resource-schema)
   - [4. Provider Schema](#4-provider-schema)
   - [5. 类型系统](#5-类型系统)
+    - [5.1 Terraform类型](#51-terraform类型)
   - [6. 约束规则](#6-约束规则)
+    - [6.1 HCL约束](#61-hcl约束)
   - [7. 转换函数](#7-转换函数)
+    - [7.1 Terraform到CloudFormation转换](#71-terraform到cloudformation转换)
   - [8. 形式化定理](#8-形式化定理)
+    - [8.1 Terraform配置有效性定理](#81-terraform配置有效性定理)
 
 ---
 
