@@ -72,7 +72,7 @@ graph TB
 
 ### 2.2 文档层级关系
 
-**第一层：框架核心文档**
+**第一层：框架核心文档**:
 
 - `FRAMEWORK_QUICK_START.md` - 快速入门指南（推荐新手）
 - `UNIFIED_LOGIC_FRAMEWORK.md` - 统一逻辑框架与形式理论
@@ -80,14 +80,14 @@ graph TB
 - `FRAMEWORK_SUMMARY.md` - 框架总结
 - `FRAMEWORK_NAVIGATION.md` - 导航地图（推荐查看）
 
-**第二层：关系分析文档**
+**第二层：关系分析文档**:
 
 - `GLOBAL_THEME_RELATIONSHIP_ANALYSIS.md` - 全局关系梳理主文档
 - `DETAILED_THEME_CONVERSION_PATHS.md` - 转换路径详细分析
 - `THEME_STANDARD_MAPPING_ANALYSIS.md` - 标准映射详细分析
 - `THEME_APPLICATION_SCENARIOS_ANALYSIS.md` - 应用场景详细分析
 
-**第三层：辅助文档**
+**第三层：辅助文档**:
 
 - `GLOBAL_RELATIONSHIP_COMPLETION_REPORT.md` - 完成报告
 - `GLOBAL_RELATIONSHIP_QUICK_REFERENCE.md` - 快速参考指南
@@ -144,7 +144,7 @@ graph LR
 
 ### 4.1 新手入门路径
 
-```
+```text
 1. README.md (本目录导航)
    ↓
 2. FRAMEWORK_QUICK_START.md (快速入门指南) ⭐推荐
@@ -162,7 +162,7 @@ graph LR
 
 ### 4.2 深入研究路径
 
-```
+```text
 1. UNIFIED_LOGIC_FRAMEWORK.md (统一逻辑框架)
    ↓
 2. THINKING_REPRESENTATION_SYSTEM.md (思维表征体系)
@@ -178,7 +178,7 @@ graph LR
 
 ### 4.3 项目规划路径
 
-```
+```text
 1. EXPANSION_THEMES_AND_TASKS.md (扩展计划)
    ↓
 2. EXPANSION_VISUALIZATION.md (可视化)

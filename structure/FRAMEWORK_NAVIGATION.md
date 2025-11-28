@@ -129,7 +129,7 @@ graph TB
 
 **理论依赖链**：
 
-```
+```text
 05_DSL_Theory (理论基础)
     ↓ 理论支撑
 所有主题 (01-28)
@@ -137,7 +137,7 @@ graph TB
 
 **技术依赖链**：
 
-```
+```text
 01_Industrial_Automation
     ↓ 技术依赖
 02_IoT_Schema
@@ -147,7 +147,7 @@ graph TB
 
 **业务依赖链**：
 
-```
+```text
 06_Financial_Services
     ↓ 业务扩展
 26_Enterprise_Finance
@@ -155,7 +155,7 @@ graph TB
 
 **数据依赖链**：
 
-```
+```text
 27_Enterprise_Data_Analytics
     ↓ 数据支撑
 28_Enterprise_Performance_Management
@@ -176,7 +176,7 @@ graph TB
 
 ## 4. 功能导航
 
-### 4.1 我想了解...
+### 4.1 我想了解
 
 | 需求 | 推荐文档 | 关键章节 |
 |------|---------|---------|
@@ -188,7 +188,7 @@ graph TB
 | **标准映射** | `THEME_STANDARD_MAPPING_ANALYSIS.md` | 全部 |
 | **应用场景** | `THEME_APPLICATION_SCENARIOS_ANALYSIS.md` | 全部 |
 
-### 4.2 我想实现...
+### 4.2 我想实现
 
 | 需求 | 推荐文档 | 关键章节 |
 |------|---------|---------|
@@ -198,7 +198,7 @@ graph TB
 | **理解主题关系** | `UNIFIED_LOGIC_FRAMEWORK.md` | 第3节 |
 | **应用转换理论** | `UNIFIED_LOGIC_FRAMEWORK.md` | 第6.2节 |
 
-### 4.3 我想研究...
+### 4.3 我想研究
 
 | 需求 | 推荐文档 | 关键章节 |
 |------|---------|---------|
@@ -249,7 +249,7 @@ graph TB
 
 ### 6.1 新手路径
 
-```
+```text
 1. FRAMEWORK_QUICK_START.md (5-10分钟)
    ↓
 2. UNIFIED_LOGIC_FRAMEWORK.md 第1-2节 (20-30分钟)
@@ -259,7 +259,7 @@ graph TB
 
 ### 6.2 研究者路径
 
-```
+```text
 1. UNIFIED_LOGIC_FRAMEWORK.md (完整阅读)
    ↓
 2. THINKING_REPRESENTATION_SYSTEM.md (完整阅读)
@@ -271,7 +271,7 @@ graph TB
 
 ### 6.3 实践者路径
 
-```
+```text
 1. FRAMEWORK_QUICK_START.md 场景3 (实现转换)
    ↓
 2. UNIFIED_LOGIC_FRAMEWORK.md 第6.2节 (应用转换理论)
@@ -283,7 +283,7 @@ graph TB
 
 ### 6.4 管理者路径
 
-```
+```text
 1. FRAMEWORK_SUMMARY.md (框架总结)
    ↓
 2. GLOBAL_THEME_RELATIONSHIP_ANALYSIS.md (全局关系)
@@ -298,6 +298,7 @@ graph TB
 **维护者**：DSL Schema研究团队
 
 **相关文档**：
+
 - `structure/FRAMEWORK_QUICK_START.md` - 快速入门指南
 - `structure/UNIFIED_LOGIC_FRAMEWORK.md` - 统一逻辑框架
 - `structure/THINKING_REPRESENTATION_SYSTEM.md` - 思维表征体系

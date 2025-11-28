@@ -101,7 +101,7 @@ graph TB
 
 **形式化定义**：
 
-```
+```text
 Tree = (N, E, r)
 其中：
 - N: 节点集合（组织单元）
@@ -142,7 +142,7 @@ Tree = (N, E, r)
 
 **形式化定义**：
 
-```
+```text
 Transform: Schema_A → Schema_B
 Transform = (T_mode, T_lang, T_prot, T_stor, T_ctrl, T_bin, T_meta)
 
@@ -170,7 +170,7 @@ Transform = (T_mode, T_lang, T_prot, T_stor, T_ctrl, T_bin, T_meta)
 
 **形式化定义框架**：
 
-```
+```text
 Schema = (E, A, R, C, F)
 其中：
 - E: 实体集合（Entities）
@@ -206,7 +206,7 @@ Constraint = (type, expression, message)
 
 **信息论证明**：
 
-```
+```text
 信息守恒定理：
 H(Schema_A) = H(Schema_B) + H(Transform)
 
@@ -221,7 +221,7 @@ H(Transform) = 0 或 H(Transform) ≤ ε（可接受误差）
 
 **形式语言理论证明**：
 
-```
+```text
 语法-语义一致性定理：
 ∀s ∈ L(Schema_A),
   Semantic(Transform(s)) = Transform(Semantic(s))
@@ -247,7 +247,7 @@ H(Transform) = 0 或 H(Transform) ≤ ε（可接受误差）
 
 **知识图谱定义**：
 
-```
+```text
 KG = (V, E, L)
 其中：
 - V: 顶点集合（主题、Schema、标准等）
@@ -264,7 +264,7 @@ KG = (V, E, L)
 
 **多维矩阵定义**：
 
-```
+```text
 Matrix[i][j] = value
 其中：
 - i: 行索引（主题、Schema等）
@@ -287,7 +287,7 @@ Matrix[i][j] = value
 
 **一级分类**（按应用领域）：
 
-```
+```text
 主题分类树：
 ├─ 基础技术主题（01-05）
 │   ├─ 01_Industrial_Automation（工业自动化）
@@ -467,7 +467,7 @@ graph TB
 4. **标准覆盖矩阵**：主题 × 标准 × 覆盖度
 5. **应用场景矩阵**：主题 × 应用场景 × 适用度
 
-**示例：主题分类矩阵**
+**示例：主题分类矩阵**:
 
 | 主题 | 应用领域 | 技术类型 | Schema数 | 文档数 |
 |------|---------|---------|---------|--------|
@@ -530,7 +530,7 @@ graph TB
 
 **证明树结构**：
 
-```
+```text
 证明树：
 ├─ 树形分层结构证明
 │   ├─ 信息熵最小化证明
@@ -566,7 +566,7 @@ graph TB
 
 **论证脉络**：
 
-```
+```text
 理论视角论证脉络：
 1. 树形分层结构理论（元模型）
    ↓
@@ -592,7 +592,7 @@ graph TB
 
 **论证脉络**：
 
-```
+```text
 实践视角论证脉络：
 1. 行业应用案例（06-24主题）
    ↓
@@ -614,7 +614,7 @@ graph TB
 
 **论证脉络**：
 
-```
+```text
 标准视角论证脉络：
 1. 国际标准对标（ISO、IEC、W3C等）
    ↓
@@ -637,7 +637,7 @@ graph TB
 
 **论证脉络**：
 
-```
+```text
 行业视角论证脉络：
 1. 基础技术行业（01-05）
    ↓
