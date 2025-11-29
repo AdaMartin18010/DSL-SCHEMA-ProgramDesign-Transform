@@ -11,6 +11,9 @@
     - [2.3 解决方案](#23-解决方案)
     - [2.4 完整代码实现](#24-完整代码实现)
     - [2.5 效果评估](#25-效果评估)
+  - [3. 案例2：OLAP到MDX转换](#3-案例2olap到mdx转换)
+    - [3.1 场景描述](#31-场景描述)
+    - [3.2 实现代码](#32-实现代码)
   - [4. 案例3：OLAP到SQL转换](#4-案例3olap到sql转换)
     - [4.1 场景描述](#41-场景描述)
     - [4.2 实现代码](#42-实现代码)
@@ -281,14 +284,6 @@ if __name__ == '__main__':
 
 - [OLAP Cube设计最佳实践](https://www.kimballgroup.com/)
 - [MDX查询优化指南](https://docs.microsoft.com/en-us/analysis-services/)
-      measure_type: Enum @value("Sum")
-      data_type: Enum @value("Decimal")
-      aggregation_function: String @value("SUM")
-    }
-  }
-}
-
-```
 
 ---
 

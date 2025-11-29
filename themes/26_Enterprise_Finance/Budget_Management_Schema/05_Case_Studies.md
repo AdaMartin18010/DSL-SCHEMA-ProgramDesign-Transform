@@ -11,6 +11,9 @@
     - [2.3 解决方案](#23-解决方案)
     - [2.4 完整代码实现](#24-完整代码实现)
     - [2.5 效果评估](#25-效果评估)
+  - [3. 案例2：预算执行监控](#3-案例2预算执行监控)
+    - [3.1 场景描述](#31-场景描述)
+    - [3.2 Schema定义](#32-schema定义)
   - [4. 案例3：预算差异分析](#4-案例3预算差异分析)
     - [4.1 场景描述](#41-场景描述)
     - [4.2 Schema定义](#42-schema定义)
@@ -281,25 +284,6 @@ if __name__ == '__main__':
 
 - [预算管理最佳实践](https://www.cfo.com/)
 - [企业绩效管理](https://www.epm.com/)
-      scenario_type: Enum @value("Base")
-      probability: Decimal @value(60.0)
-    }
-    optimistic: BudgetScenario {
-      scenario_id: String @value("SCENARIO-OPT")
-      scenario_name: String @value("乐观场景")
-      scenario_type: Enum @value("Optimistic")
-      probability: Decimal @value(20.0)
-    }
-    pessimistic: BudgetScenario {
-      scenario_id: String @value("SCENARIO-PESS")
-      scenario_name: String @value("悲观场景")
-      scenario_type: Enum @value("Pessimistic")
-      probability: Decimal @value(20.0)
-    }
-  }
-} @standard("EPM", "ZBB")
-
-```
 
 ---
 

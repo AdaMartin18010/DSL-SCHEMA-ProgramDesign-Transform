@@ -11,6 +11,9 @@
     - [2.3 解决方案](#23-解决方案)
     - [2.4 完整代码实现](#24-完整代码实现)
     - [2.5 效果评估](#25-效果评估)
+  - [3. 案例2：可视化到Vega-Lite转换](#3-案例2可视化到vega-lite转换)
+    - [3.1 场景描述](#31-场景描述)
+    - [3.2 实现代码](#32-实现代码)
   - [4. 案例3：交互式可视化系统](#4-案例3交互式可视化系统)
     - [4.1 场景描述](#41-场景描述)
     - [4.2 实现代码](#42-实现代码)
@@ -236,23 +239,6 @@ if __name__ == '__main__':
 
 - [D3.js数据可视化](https://d3js.org/)
 - [Vega-Lite图表语法](https://vega.github.io/vega-lite/)
-        }
-      }
-    }
-    dashboard_interactions: List<DashboardInteraction> {
-      filter_interaction: DashboardInteraction {
-        interaction_id: String @value("INT-FILTER-001")
-        interaction_type: Enum @value("Filter")
-        source_component_id: String @value("COMP-REGION-FILTER")
-        target_component_ids: List<String> {
-          "COMP-SALES-CHART"
-        }
-      }
-    }
-  }
-}
-
-```
 
 ---
 

@@ -11,6 +11,9 @@
     - [2.3 解决方案](#23-解决方案)
     - [2.4 完整代码实现](#24-完整代码实现)
     - [2.5 效果评估](#25-效果评估)
+  - [3. 案例2：战略地图构建](#3-案例2战略地图构建)
+    - [3.1 场景描述](#31-场景描述)
+    - [3.2 实现代码](#32-实现代码)
   - [4. 案例3：指标关联与监控](#4-案例3指标关联与监控)
     - [4.1 场景描述](#41-场景描述)
     - [4.2 实现代码](#42-实现代码)
@@ -268,14 +271,6 @@ if __name__ == '__main__':
 
 - [平衡计分卡官方](https://www.balancedscorecard.org/)
 - [战略地图最佳实践](https://www.balancedscorecard.org/)
-    objective_dimension: Enum @value("Learning_Growth")
-    objective_priority: Enum @value("Medium")
-    owner: String @value("人力资源部")
-    target_date: Date @value("2025-12-31")
-  }
-}
-
-```
 
 ---
 

@@ -11,6 +11,9 @@
     - [2.3 解决方案](#23-解决方案)
     - [2.4 完整代码实现](#24-完整代码实现)
     - [2.5 效果评估](#25-效果评估)
+  - [3. 案例2：标准成本差异分析](#3-案例2标准成本差异分析)
+    - [3.1 场景描述](#31-场景描述)
+    - [3.2 Schema定义](#32-schema定义)
   - [4. 案例3：成本分配](#4-案例3成本分配)
     - [4.1 场景描述](#41-场景描述)
     - [4.2 Schema定义](#42-schema定义)
@@ -274,25 +277,6 @@ if __name__ == '__main__':
 
 - [作业成本法最佳实践](https://www.imanet.org/)
 - [成本会计标准](https://www.fasb.org/)
-    }
-  }
-
-  cost_objects: List<ABCCostObject> {
-    product1: ABCCostObject {
-      object_id: String @value("PROD-001")
-      object_code: String @value("产品A")
-      direct_costs: Decimal @value(100000.00)
-      activity_consumption: Map<String, Decimal> {
-        "ACT-001": Decimal @value(20.00)
-        "ACT-002": Decimal @value(10.00)
-      }
-      allocated_costs: Decimal @value(16000.00)
-      total_costs: Decimal @value(116000.00)
-    }
-  }
-} @standard("ABC")
-
-```
 
 ---
 

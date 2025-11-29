@@ -11,6 +11,9 @@
     - [2.3 解决方案](#23-解决方案)
     - [2.4 完整代码实现](#24-完整代码实现)
     - [2.5 效果评估](#25-效果评估)
+  - [3. 案例2：数据湖到数据仓库转换](#3-案例2数据湖到数据仓库转换)
+    - [3.1 场景描述](#31-场景描述)
+    - [3.2 实现代码](#32-实现代码)
   - [4. 案例3：数据目录与数据血缘系统](#4-案例3数据目录与数据血缘系统)
     - [4.1 场景描述](#41-场景描述)
     - [4.2 实现代码](#42-实现代码)
@@ -260,26 +263,6 @@ if __name__ == '__main__':
 
 - [Delta Lake官方文档](https://delta.io/)
 - [数据湖最佳实践](https://databricks.com/blog/)
-      }
-      sale_date: TableColumn {
-        column_name: String @value("sale_date")
-        column_type: Enum @value("Date")
-        is_nullable: Boolean @value(false)
-      }
-      sale_amount: TableColumn {
-        column_name: String @value("sale_amount")
-        column_type: Enum @value("Decimal")
-        is_nullable: Boolean @value(false)
-      }
-    }
-    partition_columns: List<String> {
-      "year"
-      "month"
-    }
-  }
-}
-
-```
 
 ---
 

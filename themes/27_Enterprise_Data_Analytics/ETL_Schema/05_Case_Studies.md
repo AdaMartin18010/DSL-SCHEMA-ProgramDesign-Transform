@@ -11,6 +11,9 @@
     - [2.3 解决方案](#23-解决方案)
     - [2.4 完整代码实现](#24-完整代码实现)
     - [2.5 效果评估](#25-效果评估)
+  - [3. 案例2：ETL到Informatica转换](#3-案例2etl到informatica转换)
+    - [3.1 场景描述](#31-场景描述)
+    - [3.2 实现代码](#32-实现代码)
   - [4. 案例3：增量ETL流程](#4-案例3增量etl流程)
     - [4.1 场景描述](#41-场景描述)
     - [4.2 实现代码](#42-实现代码)
@@ -312,35 +315,6 @@ if __name__ == '__main__':
 
 - [Informatica ETL最佳实践](https://www.informatica.com/)
 - [Talend ETL设计指南](https://www.talend.com/)
-      "sale_date"
-      "customer_key"
-      "product_key"
-      "sale_amount"
-      "sale_quantity"
-    }
-    transform_logic: String @value("customer_key = lookup_customer(customer_id); product_key = lookup_product(product_id);")
-  }
-
-  load_strategy: LoadStrategy {
-    strategy_id: String @value("STRATEGY-SALES-LOAD")
-    table_id: String @value("TBL-FACT-SALES")
-    strategy_type: Enum @value("Incremental_Load")
-    load_frequency: Enum @value("Daily")
-  }
-
-  etl_process: ProcessDefinition {
-    process_id: String @value("PROC-SALES-ETL")
-    process_name: String @value("销售数据ETL流程")
-    process_type: Enum @value("Batch")
-    extract_rule_id: String @value("RULE-SALES-EXTRACT")
-    transform_rule_ids: List<String> {
-      "RULE-SALES-TRANSFORM"
-    }
-    load_strategy_id: String @value("STRATEGY-SALES-LOAD")
-  }
-}
-
-```
 
 ---
 

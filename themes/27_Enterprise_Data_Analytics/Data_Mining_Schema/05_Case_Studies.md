@@ -11,6 +11,9 @@
     - [2.3 解决方案](#23-解决方案)
     - [2.4 完整代码实现](#24-完整代码实现)
     - [2.5 效果评估](#25-效果评估)
+  - [3. 案例2：CRISP-DM流程实施](#3-案例2crisp-dm流程实施)
+    - [3.1 场景描述](#31-场景描述)
+    - [3.2 实现代码](#32-实现代码)
   - [4. 案例3：模型训练与评估](#4-案例3模型训练与评估)
     - [4.1 场景描述](#41-场景描述)
     - [4.2 实现代码](#42-实现代码)
@@ -289,29 +292,6 @@ if __name__ == '__main__':
 
 - [CRISP-DM数据挖掘流程](https://www.ibm.com/docs/en/spss-modeler/saas)
 - [数据挖掘最佳实践](https://www.kdnuggets.com/)
-      algorithm: Enum @value("Random_Forest")
-      training_parameters: TrainingParameters {
-        learning_rate: Decimal @value(0.01)
-        max_iterations: Int @value(1000)
-        batch_size: Int @value(32)
-      }
-    }
-  }
-
-  model_evaluation: ModelEvaluation {
-    evaluation_result: EvaluationResult {
-      model_id: String @value("MODEL-CHURN-001")
-      metrics: Map<String, Decimal> {
-        "Accuracy": Decimal @value(0.85)
-        "Precision": Decimal @value(0.82)
-        "Recall": Decimal @value(0.88)
-        "F1_Score": Decimal @value(0.85)
-      }
-    }
-  }
-}
-
-```
 
 ---
 

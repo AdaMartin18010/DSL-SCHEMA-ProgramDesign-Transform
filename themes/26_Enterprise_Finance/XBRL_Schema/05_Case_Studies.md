@@ -11,6 +11,9 @@
     - [2.3 解决方案](#23-解决方案)
     - [2.4 完整代码实现](#24-完整代码实现)
     - [2.5 效果评估](#25-效果评估)
+  - [3. 案例2：财务报告到XBRL转换](#3-案例2财务报告到xbrl转换)
+    - [3.1 场景描述](#31-场景描述)
+    - [3.2 Schema定义](#32-schema定义)
   - [4. 案例3：XBRL验证](#4-案例3xbrl验证)
     - [4.1 场景描述](#41-场景描述)
     - [4.2 Schema定义](#42-schema定义)
@@ -307,11 +310,6 @@ if __name__ == '__main__':
 
 - [XBRL 2.1规范](https://www.xbrl.org/specification/)
 - [IFRS Taxonomy](https://www.ifrs.org/xbrl/ifrs-taxonomy/)
-    }
-  }
-} @standard("XBRL 2.1", "IFRS Taxonomy")
-
-```
 
 ---
 

@@ -11,6 +11,9 @@
     - [2.3 解决方案](#23-解决方案)
     - [2.4 完整代码实现](#24-完整代码实现)
     - [2.5 效果评估](#25-效果评估)
+  - [3. 案例2：客户行为分析](#3-案例2客户行为分析)
+    - [3.1 场景描述](#31-场景描述)
+    - [3.2 Schema定义](#32-schema定义)
   - [4. 案例3：预测分析](#4-案例3预测分析)
     - [4.1 场景描述](#41-场景描述)
     - [4.2 Schema定义](#42-schema定义)
@@ -279,34 +282,6 @@ if __name__ == '__main__':
 
 - [数据分析最佳实践](https://www.kdnuggets.com/)
 - [预测分析指南](https://www.analyticsvidhya.com/)
-          forecast_period: Date @value("2025-12-31")
-          forecast_value: Decimal @value(1200000.00)
-          confidence_level: Decimal @value(85.00)
-        }
-      }
-    }
-  }
-
-  data_visualization: DataVisualization {
-    dashboards: List<Dashboard> {
-      dashboard1: Dashboard {
-        dashboard_id: String @value("DASHBOARD-SALES")
-        dashboard_name: String @value("销售分析仪表板")
-        dashboard_components: List<DashboardComponent> {
-          component1: DashboardComponent {
-            component_type: Enum @value("Chart")
-            component_config: Map<String, String> {
-              "chart_type": String @value("Line")
-              "data_source": String @value("sales_trend")
-            }
-          }
-        }
-      }
-    }
-  }
-} @standard("Kimball", "OLAP")
-
-```
 
 ---
 
