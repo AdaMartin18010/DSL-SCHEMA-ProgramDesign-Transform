@@ -196,7 +196,9 @@ type SensorData struct {
 - `../README.md` - 主题概览
 - `../Formal_Model/` - 形式化模型
 - `../Code_Generation/` - 代码生成
-- `02_Detailed_Mapping.md` - 详细映射规则
+- `02_Formal_Definition.md` - 形式化定义
+- `04_Transformation.md` - 转换实现
+- `05_Case_Studies.md` - 实践案例
 
 **创建时间**：2025-01-21
 **最后更新**：2025-01-21

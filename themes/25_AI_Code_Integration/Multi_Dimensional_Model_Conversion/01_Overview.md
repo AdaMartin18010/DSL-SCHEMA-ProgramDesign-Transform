@@ -75,9 +75,9 @@ Multi_Dimensional_Model_Conversion = (Dimension_Definition ⊕ Dimension_Mapping
 
 **参考文档**：
 
-- `02_Multi_Dimensional_Model_Theory.md` - 多维模型理论
-- `03_Conversion_Proof.md` - 转换论证
-- `04_Formal_Verification.md` - 形式化验证
+- `02_Formal_Definition.md` - 多维模型理论
+- `03_Standards.md` - 转换论证
+- `04_Transformation.md` - 形式化验证
 - `05_Case_Studies.md` - 实践案例
 
 **创建时间**：2025-01-21

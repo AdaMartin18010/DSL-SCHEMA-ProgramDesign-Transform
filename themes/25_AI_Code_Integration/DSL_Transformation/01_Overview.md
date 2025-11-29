@@ -107,9 +107,9 @@ DSL_Transformation = (Transformation_Algorithm ⊕ Transformation_Rules
 
 **参考文档**：
 
-- `02_Transformation_Algorithms.md` - 转换算法
-- `03_Transformation_Rules.md` - 转换规则
-- `04_Transformation_Tools.md` - 转换工具
+- `02_Formal_Definition.md` - 转换算法
+- `03_Standards.md` - 转换规则
+- `04_Transformation.md` - 转换工具
 - `05_Case_Studies.md` - 实践案例
 
 **创建时间**：2025-01-21

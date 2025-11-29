@@ -84,8 +84,8 @@
 **参考文档**：
 
 - `01_Overview.md` - 概述
-- `03_Control_Logic_Analysis.md` - 控制逻辑分析
-- `04_Schema_Conversion_Application.md` - Schema转换应用
+- `03_Standards.md` - 控制逻辑分析
+- `04_Transformation.md` - Schema转换应用
 - `05_Case_Studies.md` - 实践案例
 
 **创建时间**：2025-01-21

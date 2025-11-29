@@ -818,9 +818,9 @@ if __name__ == "__main__":
 **参考文档**：
 
 - `01_Overview.md` - 概述
-- `02_Type_System_Analysis.md` - 类型系统分析
-- `03_Control_Logic_Analysis.md` - 控制逻辑分析
-- `04_Schema_Conversion_Application.md` - Schema转换应用
+- `02_Formal_Definition.md` - 类型系统分析
+- `03_Standards.md` - 控制逻辑分析
+- `04_Transformation.md` - Schema转换应用
 
 **创建时间**：2025-01-21
 **最后更新**：2025-01-21

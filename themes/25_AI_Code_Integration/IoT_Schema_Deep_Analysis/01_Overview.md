@@ -106,9 +106,9 @@ IoT_Schema_Deep_Analysis = (IoT_Characteristics ⊕ IoT_Standards
 
 **参考文档**：
 
-- `02_IoT_Schema_Characteristics.md` - IoT Schema特点
-- `03_IoT_Standards_Analysis.md` - IoT标准分析
-- `04_IoT_Transformation_Rules.md` - IoT转换规则
+- `02_Formal_Definition.md` - IoT Schema特点
+- `03_Standards.md` - IoT标准分析
+- `04_Transformation.md` - IoT转换规则
 - `05_Case_Studies.md` - 实践案例
 
 **创建时间**：2025-01-21

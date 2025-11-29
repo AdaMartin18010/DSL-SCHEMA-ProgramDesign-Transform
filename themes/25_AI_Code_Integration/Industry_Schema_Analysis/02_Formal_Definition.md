@@ -78,8 +78,8 @@
 **参考文档**：
 
 - `01_Overview.md` - 概述
-- `03_Cross_Industry_Conversion.md` - 跨行业转换
-- `04_Industry_Standards_Mapping.md` - 行业标准映射
+- `03_Standards.md` - 跨行业转换
+- `04_Transformation.md` - 行业标准映射
 - `05_Case_Studies.md` - 实践案例
 
 **创建时间**：2025-01-21

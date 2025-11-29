@@ -151,9 +151,9 @@ Domain_Language_Conversion = (OpenAPI ⊕ AsyncAPI ⊕ IoTSchema
 
 **参考文档**：
 
-- `02_OpenAPI_AsyncAPI_IoT_Analysis.md` - 三大Schema差异分析
-- `03_MCP_Protocol_Standardization.md` - MCP协议标准化
-- `04_DSL_to_Code_Conversion.md` - DSL到代码转换
+- `02_Formal_Definition.md` - 三大Schema差异分析
+- `03_Standards.md` - MCP协议标准化
+- `04_Transformation.md` - DSL到代码转换
 - `05_Case_Studies.md` - 实践案例
 
 **创建时间**：2025-01-21

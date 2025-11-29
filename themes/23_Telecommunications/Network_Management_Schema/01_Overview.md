@@ -26,8 +26,6 @@
 ### 1.1 网络管理Schema定义
 
 ```text
-
-```text
 Network_Management_Schema = (SNMP_Schema ⊕ NETCONF_Schema
                             ⊕ YANG_Schema ⊕ Network_Device_Schema
                             ⊕ Network_Monitoring_Schema) × Management_Profile

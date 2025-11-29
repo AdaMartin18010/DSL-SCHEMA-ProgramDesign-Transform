@@ -85,9 +85,9 @@ Programming_Language_Type_System = (Type_System_Analysis ⊕ Control_Logic_Analy
 
 **参考文档**：
 
-- `02_Type_System_Analysis.md` - 类型系统分析
-- `03_Control_Logic_Analysis.md` - 控制逻辑分析
-- `04_Schema_Conversion_Application.md` - Schema转换应用
+- `02_Formal_Definition.md` - 类型系统分析
+- `03_Standards.md` - 控制逻辑分析
+- `04_Transformation.md` - Schema转换应用
 - `05_Case_Studies.md` - 实践案例
 
 **创建时间**：2025-01-21

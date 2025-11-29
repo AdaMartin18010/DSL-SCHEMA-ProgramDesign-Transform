@@ -16,6 +16,9 @@
     - [3.2 Azure IoT Hub](#32-azure-iot-hub)
     - [3.3 OGC SensorThings API](#33-ogc-sensorthings-api)
   - [4. 标准对比](#4-标准对比)
+  - [5. 标准发展趋势](#5-标准发展趋势)
+    - [5.1 2024-2025年趋势](#51-2024-2025年趋势)
+    - [5.2 2025-2026年展望](#52-2025-2026年展望)
 
 ---
 
@@ -86,11 +89,53 @@
 
 ---
 
+## 5. 标准发展趋势
+
+### 5.1 2024-2025年趋势
+
+**IoT Schema标准发展趋势**：
+
+1. **IoT协议标准化**
+   - MQTT 5.0广泛应用
+   - CoAP标准完善
+   - LoRaWAN标准成熟
+
+2. **IoT平台标准化**
+   - OGC SensorThings API普及
+   - 统一IoT数据模型
+   - 跨平台互操作
+
+3. **IoT安全标准化**
+   - IoT安全标准完善
+   - 设备认证标准
+   - 数据加密标准
+
+### 5.2 2025-2026年展望
+
+**未来发展方向**：
+
+1. **统一IoT标准**
+   - 跨协议互操作
+   - 统一数据模型
+   - 标准化接口
+
+2. **智能化IoT**
+   - AI驱动的IoT
+   - 边缘智能
+   - 预测性维护
+
+3. **IoT即服务**
+   - 云端IoT平台
+   - IoT即服务模式
+   - 实时数据处理
+
+---
+
 **参考文档**：
 
 - `01_Overview.md` - 概述
-- `02_IoT_Schema_Characteristics.md` - IoT Schema特点
-- `04_IoT_Transformation_Rules.md` - IoT转换规则
+- `02_Formal_Definition.md` - IoT Schema特点
+- `04_Transformation.md` - IoT转换规则
 - `05_Case_Studies.md` - 实践案例
 
 **创建时间**：2025-01-21

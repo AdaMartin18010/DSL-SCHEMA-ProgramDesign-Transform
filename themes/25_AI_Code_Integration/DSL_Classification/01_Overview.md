@@ -94,9 +94,9 @@ DSL_Classification = (Application_Domain_DSL ⊕ Configuration_DSL
 
 **参考文档**：
 
-- `02_Classification_System.md` - 分类体系
-- `03_Typical_Examples.md` - 典型示例
-- `04_Best_Practices.md` - 最佳实践
+- `02_Formal_Definition.md` - 分类体系
+- `03_Standards.md` - 典型示例
+- `04_Transformation.md` - 最佳实践
 - `05_Case_Studies.md` - 实践案例
 
 **创建时间**：2025-01-21

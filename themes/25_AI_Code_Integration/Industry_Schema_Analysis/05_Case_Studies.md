@@ -769,9 +769,9 @@ class CrossIndustryStandardMapper:
 **参考文档**：
 
 - `01_Overview.md` - 概述
-- `02_Industry_Schema_Comparison.md` - 行业Schema对比
-- `03_Cross_Industry_Conversion.md` - 跨行业转换
-- `04_Industry_Standards_Mapping.md` - 行业标准映射
+- `02_Formal_Definition.md` - 行业Schema对比
+- `03_Standards.md` - 跨行业转换
+- `04_Transformation.md` - 行业标准映射
 
 **创建时间**：2025-01-21
 **最后更新**：2025-01-21

@@ -274,9 +274,9 @@ if __name__ == '__main__':
 **参考文档**：
 
 - `01_Overview.md` - 概述
-- `02_IoT_Schema_Characteristics.md` - IoT Schema特点
-- `03_IoT_Standards_Analysis.md` - IoT标准分析
-- `04_IoT_Transformation_Rules.md` - IoT转换规则
+- `02_Formal_Definition.md` - IoT Schema特点
+- `03_Standards.md` - IoT标准分析
+- `04_Transformation.md` - IoT转换规则
 
 **创建时间**：2025-01-21
 **最后更新**：2025-01-21

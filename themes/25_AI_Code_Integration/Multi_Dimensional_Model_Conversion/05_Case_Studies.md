@@ -684,9 +684,9 @@ class DimensionConversionVerifier:
 **参考文档**：
 
 - `01_Overview.md` - 概述
-- `02_Multi_Dimensional_Model_Theory.md` - 多维模型理论
-- `03_Conversion_Proof.md` - 转换论证
-- `04_Formal_Verification.md` - 形式化验证
+- `02_Formal_Definition.md` - 多维模型理论
+- `03_Standards.md` - 转换论证
+- `04_Transformation.md` - 形式化验证
 
 **创建时间**：2025-01-21
 **最后更新**：2025-01-21
