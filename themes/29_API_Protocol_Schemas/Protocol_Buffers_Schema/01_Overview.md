@@ -40,6 +40,7 @@ Protocol_Buffers_Schema = Message_Schema ⊕ Field_Schema
 ```
 
 其中：
+
 - `Message_Schema`：消息定义Schema
 - `Field_Schema`：字段定义Schema
 - `Service_Schema`：服务定义Schema
@@ -180,13 +181,14 @@ service UserService {
 
 **标准名称**：Protocol Buffers 3.x
 **核心内容**：
+
 - 消息定义语法
 - 字段类型系统
 - 编码规则
 - Schema演进规则
 
 **Schema支持**：完整支持
-**参考链接**：https://developers.google.com/protocol-buffers
+**参考链接**：<https://developers.google.com/protocol-buffers>
 
 ### 4.2 相关标准
 
@@ -203,11 +205,13 @@ service UserService {
 **场景描述**：使用Protocol Buffers进行高效数据序列化。
 
 **Schema应用**：
+
 - 定义消息类型
 - 序列化/反序列化
 - 跨语言数据交换
 
 **优势**：
+
 - 高效序列化
 - 紧凑格式
 - 跨语言支持
@@ -217,11 +221,13 @@ service UserService {
 **场景描述**：使用Protocol Buffers定义gRPC服务接口。
 
 **Schema应用**：
+
 - 定义服务接口
 - 定义消息类型
 - 生成代码
 
 **优势**：
+
 - 类型安全
 - 代码生成
 - 高效通信
@@ -231,11 +237,13 @@ service UserService {
 **场景描述**：使用Protocol Buffers格式存储数据。
 
 **Schema应用**：
+
 - 定义存储格式
 - 数据压缩
 - 版本兼容
 
 **优势**：
+
 - 紧凑存储
 - 快速读写
 - 版本兼容
@@ -245,11 +253,13 @@ service UserService {
 **场景描述**：存储Protocol Buffers Schema定义、消息实例、性能指标等数据。
 
 **Schema应用**：
+
 - 存储Schema定义
 - 记录消息实例
 - 分析性能指标
 
 **数据库设计**：
+
 - Schema定义表：存储Protocol Buffers Schema定义
 - 消息实例表：记录消息实例
 - 性能指标表：存储序列化/反序列化性能数据
@@ -290,6 +300,7 @@ graph TB
 **维护者**：DSL Schema研究团队
 
 **相关文档**：
+
 - `02_Formal_Definition.md` - 形式化定义
 - `03_Standards.md` - 标准对标
 - `04_Transformation.md` - 转换体系

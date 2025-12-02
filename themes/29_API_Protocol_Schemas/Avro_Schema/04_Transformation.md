@@ -5,6 +5,7 @@
 - [Avro Schema转换体系](#avro-schema转换体系)
   - [📑 目录](#-目录)
   - [1. 转换体系概述](#1-转换体系概述)
+    - [1.1 转换目标](#11-转换目标)
   - [2. Avro到JSON Schema转换](#2-avro到json-schema转换)
   - [3. Avro到Protocol Buffers转换](#3-avro到protocol-buffers转换)
   - [4. Avro到Parquet转换](#4-avro到parquet转换)
@@ -31,6 +32,7 @@ Avro Schema转换体系支持Avro Schema与其他数据格式之间的转换。
 ## 2. Avro到JSON Schema转换
 
 **转换规则**：
+
 - Avro类型 → JSON Schema类型
 - Avro记录 → JSON Schema对象
 - Avro数组 → JSON Schema数组
@@ -66,6 +68,7 @@ def avro_to_json_schema(avro_schema_str: str) -> dict:
 ## 3. Avro到Protocol Buffers转换
 
 **转换规则**：
+
 - Avro记录 → Protocol Buffers消息
 - Avro字段 → Protocol Buffers字段
 - Avro类型 → Protocol Buffers类型
@@ -75,6 +78,7 @@ def avro_to_json_schema(avro_schema_str: str) -> dict:
 ## 4. Avro到Parquet转换
 
 **转换规则**：
+
 - Avro记录 → Parquet行组
 - Avro字段 → Parquet列
 - Avro类型 → Parquet类型

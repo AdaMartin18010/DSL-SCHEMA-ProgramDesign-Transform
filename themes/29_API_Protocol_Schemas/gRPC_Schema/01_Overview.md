@@ -41,6 +41,7 @@ gRPC_Schema = Service_Definition ⊕ Message_Type_Schema
 ```
 
 其中：
+
 - `Service_Definition`：gRPC服务定义
 - `Message_Type_Schema`：Protocol Buffers消息类型Schema
 - `RPC_Method_Schema`：RPC方法Schema
@@ -175,35 +176,38 @@ service ChatService {
 
 **标准名称**：gRPC
 **核心内容**：
+
 - gRPC服务定义
 - RPC方法定义
 - 流式RPC支持
 - 错误处理机制
 
 **Schema支持**：完整支持
-**参考链接**：https://grpc.io/
+**参考链接**：<https://grpc.io/>
 
 ### 4.2 Protocol Buffers规范
 
 **标准名称**：Protocol Buffers 3.x
 **核心内容**：
+
 - 消息定义语法
 - 字段类型系统
 - 编码规则
 
 **Schema支持**：完整支持
-**参考链接**：https://developers.google.com/protocol-buffers
+**参考链接**：<https://developers.google.com/protocol-buffers>
 
 ### 4.3 HTTP/2规范
 
 **标准名称**：HTTP/2
 **核心内容**：
+
 - HTTP/2传输协议
 - 多路复用
 - 流控制
 
 **Schema支持**：传输层支持
-**参考链接**：https://http2.github.io/
+**参考链接**：<https://http2.github.io/>
 
 ---
 
@@ -214,11 +218,13 @@ service ChatService {
 **场景描述**：微服务架构中使用gRPC进行服务间通信。
 
 **Schema应用**：
+
 - 定义服务接口
 - 定义消息类型
 - 生成客户端和服务器代码
 
 **优势**：
+
 - 高性能通信
 - 类型安全
 - 跨语言支持
@@ -228,11 +234,13 @@ service ChatService {
 **场景描述**：高性能API服务使用gRPC。
 
 **Schema应用**：
+
 - 定义API接口
 - 优化数据传输
 - 支持流式传输
 
 **优势**：
+
 - 低延迟
 - 高吞吐量
 - 高效序列化
@@ -242,11 +250,13 @@ service ChatService {
 **场景描述**：实时数据处理使用gRPC流式RPC。
 
 **Schema应用**：
+
 - 定义流式接口
 - 实时数据传输
 - 流控制
 
 **优势**：
+
 - 实时性
 - 高效传输
 - 流控制
@@ -256,11 +266,13 @@ service ChatService {
 **场景描述**：存储gRPC服务定义、调用日志、性能指标等数据，进行API分析和优化。
 
 **Schema应用**：
+
 - 存储服务定义
 - 记录调用日志
 - 分析性能指标
 
 **数据库设计**：
+
 - 服务定义表：存储gRPC服务定义
 - 调用日志表：记录gRPC调用历史
 - 性能指标表：存储调用性能数据
@@ -303,6 +315,7 @@ graph TB
 **维护者**：DSL Schema研究团队
 
 **相关文档**：
+
 - `02_Formal_Definition.md` - 形式化定义
 - `03_Standards.md` - 标准对标
 - `04_Transformation.md` - 转换体系

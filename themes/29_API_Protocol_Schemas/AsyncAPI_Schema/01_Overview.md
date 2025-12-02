@@ -40,6 +40,7 @@ AsyncAPI_Schema = Message_Schema ⊕ Channel_Schema
 ```
 
 其中：
+
 - `Message_Schema`：消息定义Schema
 - `Channel_Schema`：通道定义Schema
 - `Server_Schema`：服务器定义Schema
@@ -212,13 +213,14 @@ channels:
 
 **标准名称**：AsyncAPI Specification 2.x
 **核心内容**：
+
 - 异步API定义语法
 - 消息格式定义
 - 通道和服务器定义
 - 协议绑定
 
 **Schema支持**：完整支持
-**参考链接**：https://www.asyncapi.com/docs/specifications/2.0.0
+**参考链接**：<https://www.asyncapi.com/docs/specifications/2.0.0>
 
 ### 4.2 相关标准
 
@@ -236,11 +238,13 @@ channels:
 **场景描述**：事件驱动架构使用AsyncAPI定义事件接口。
 
 **Schema应用**：
+
 - 定义事件格式
 - 定义事件通道
 - 事件文档生成
 
 **优势**：
+
 - 标准化事件定义
 - 自动文档生成
 - 工具支持丰富
@@ -250,11 +254,13 @@ channels:
 **场景描述**：消息队列系统使用AsyncAPI定义消息格式。
 
 **Schema应用**：
+
 - 定义消息格式
 - 定义主题/队列
 - 消息验证
 
 **优势**：
+
 - 标准化消息格式
 - 跨系统兼容
 - 工具集成
@@ -264,11 +270,13 @@ channels:
 **场景描述**：微服务使用AsyncAPI进行异步通信。
 
 **Schema应用**：
+
 - 定义服务接口
 - 定义消息格式
 - 服务文档生成
 
 **优势**：
+
 - 异步通信支持
 - 标准化接口
 - 服务发现
@@ -278,11 +286,13 @@ channels:
 **场景描述**：存储AsyncAPI Schema定义、消息实例、性能指标等数据。
 
 **Schema应用**：
+
 - 存储Schema定义
 - 记录消息实例
 - 分析性能指标
 
 **数据库设计**：
+
 - Schema定义表：存储AsyncAPI Schema定义
 - 消息实例表：记录消息实例
 - 性能指标表：存储消息处理性能数据
@@ -327,6 +337,7 @@ graph TB
 **维护者**：DSL Schema研究团队
 
 **相关文档**：
+
 - `02_Formal_Definition.md` - 形式化定义
 - `03_Standards.md` - 标准对标
 - `04_Transformation.md` - 转换体系

@@ -39,6 +39,7 @@ JSON_Schema = Data_Type_Schema ⊕ Validation_Rule_Schema
 ```
 
 其中：
+
 - `Data_Type_Schema`：数据类型Schema（string、number、integer、boolean、array、object、null）
 - `Validation_Rule_Schema`：验证规则Schema（format、pattern、minimum、maximum等）
 - `Reference_Schema`：引用Schema（$ref、$defs）
@@ -210,13 +211,14 @@ JSON_Schema = Data_Type_Schema ⊕ Validation_Rule_Schema
 
 **标准名称**：JSON Schema Draft 2020-12
 **核心内容**：
+
 - Schema定义语法
 - 数据类型系统
 - 验证规则
 - 引用机制
 
 **Schema支持**：完整支持
-**参考链接**：https://json-schema.org/specification.html
+**参考链接**：<https://json-schema.org/specification.html>
 
 ### 4.2 相关标准
 
@@ -233,11 +235,13 @@ JSON_Schema = Data_Type_Schema ⊕ Validation_Rule_Schema
 **场景描述**：使用JSON Schema进行数据验证。
 
 **Schema应用**：
+
 - 定义数据格式
 - 验证数据有效性
 - 错误报告
 
 **优势**：
+
 - 强大验证能力
 - 详细错误信息
 - 工具支持丰富
@@ -247,11 +251,13 @@ JSON_Schema = Data_Type_Schema ⊕ Validation_Rule_Schema
 **场景描述**：使用JSON Schema定义API文档。
 
 **Schema应用**：
+
 - 定义请求/响应格式
 - 生成API文档
 - API测试
 
 **优势**：
+
 - 标准化格式
 - 自动文档生成
 - 工具集成
@@ -261,11 +267,13 @@ JSON_Schema = Data_Type_Schema ⊕ Validation_Rule_Schema
 **场景描述**：使用JSON Schema进行表单验证。
 
 **Schema应用**：
+
 - 定义表单字段
 - 实时验证
 - 错误提示
 
 **优势**：
+
 - 前后端一致
 - 实时验证
 - 用户体验好
@@ -275,11 +283,13 @@ JSON_Schema = Data_Type_Schema ⊕ Validation_Rule_Schema
 **场景描述**：存储JSON Schema定义、验证结果、性能指标等数据。
 
 **Schema应用**：
+
 - 存储Schema定义
 - 记录验证结果
 - 分析性能指标
 
 **数据库设计**：
+
 - Schema定义表：存储JSON Schema定义
 - 验证结果表：记录验证结果
 - 性能指标表：存储验证性能数据
@@ -323,6 +333,7 @@ graph TB
 **维护者**：DSL Schema研究团队
 
 **相关文档**：
+
 - `02_Formal_Definition.md` - 形式化定义
 - `03_Standards.md` - 标准对标
 - `04_Transformation.md` - 转换体系

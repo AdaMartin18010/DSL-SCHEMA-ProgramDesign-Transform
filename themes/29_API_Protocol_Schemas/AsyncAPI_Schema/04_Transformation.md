@@ -5,6 +5,7 @@
 - [AsyncAPI Schema转换体系](#asyncapi-schema转换体系)
   - [📑 目录](#-目录)
   - [1. 转换体系概述](#1-转换体系概述)
+    - [1.1 转换目标](#11-转换目标)
   - [2. AsyncAPI到OpenAPI转换](#2-asyncapi到openapi转换)
   - [3. AsyncAPI到GraphQL转换](#3-asyncapi到graphql转换)
   - [4. AsyncAPI到gRPC转换](#4-asyncapi到grpc转换)
@@ -31,6 +32,7 @@ AsyncAPI Schema转换体系支持AsyncAPI与其他API格式之间的转换。
 ## 2. AsyncAPI到OpenAPI转换
 
 **转换规则**：
+
 - AsyncAPI通道 → OpenAPI路径
 - AsyncAPI操作 → OpenAPI操作
 - AsyncAPI消息 → OpenAPI Schema
@@ -74,6 +76,7 @@ def convert_channels_to_paths(channels: dict) -> dict:
 ## 3. AsyncAPI到GraphQL转换
 
 **转换规则**：
+
 - AsyncAPI通道 → GraphQL订阅
 - AsyncAPI消息 → GraphQL类型
 - AsyncAPI操作 → GraphQL订阅字段
@@ -83,6 +86,7 @@ def convert_channels_to_paths(channels: dict) -> dict:
 ## 4. AsyncAPI到gRPC转换
 
 **转换规则**：
+
 - AsyncAPI通道 → gRPC服务
 - AsyncAPI消息 → Protocol Buffers消息
 - AsyncAPI操作 → gRPC方法

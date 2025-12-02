@@ -13,6 +13,8 @@
     - [3.2 JSON-LD](#32-json-ld)
   - [4. 标准对比矩阵](#4-标准对比矩阵)
   - [5. 标准发展趋势](#5-标准发展趋势)
+    - [5.1 2024-2025年趋势](#51-2024-2025年趋势)
+    - [5.2 2025-2026年展望](#52-2025-2026年展望)
 
 ---
 
@@ -31,18 +33,20 @@ JSON Schema标准体系分为两个层次：
 
 **标准名称**：JSON Schema Draft 2020-12
 **核心内容**：
+
 - Schema定义语法
 - 数据类型系统
 - 验证规则
 - 引用机制
 
 **Schema支持**：完整支持
-**参考链接**：https://json-schema.org/specification.html
+**参考链接**：<https://json-schema.org/specification.html>
 
 ### 2.2 JSON Schema Validation
 
 **标准名称**：JSON Schema Validation
 **核心内容**：
+
 - 验证算法
 - 错误报告
 - 验证实现
@@ -57,10 +61,12 @@ JSON Schema标准体系分为两个层次：
 
 **标准名称**：OpenAPI Specification
 **核心内容**：
+
 - 使用JSON Schema定义API
 - API文档生成
 
 **与JSON Schema的关系**：
+
 - OpenAPI使用JSON Schema定义请求/响应格式
 - JSON Schema是OpenAPI的核心组件
 
@@ -68,6 +74,7 @@ JSON Schema标准体系分为两个层次：
 
 **标准名称**：JSON-LD
 **核心内容**：
+
 - JSON Schema与JSON-LD集成
 - 语义Web支持
 

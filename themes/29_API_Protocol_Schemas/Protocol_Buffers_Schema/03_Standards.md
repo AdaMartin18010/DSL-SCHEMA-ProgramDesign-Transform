@@ -13,6 +13,8 @@
     - [3.2 JSON](#32-json)
   - [4. 标准对比矩阵](#4-标准对比矩阵)
   - [5. 标准发展趋势](#5-标准发展趋势)
+    - [5.1 2024-2025年趋势](#51-2024-2025年趋势)
+    - [5.2 2025-2026年展望](#52-2025-2026年展望)
 
 ---
 
@@ -31,18 +33,20 @@ Protocol Buffers Schema标准体系分为两个层次：
 
 **标准名称**：Protocol Buffers 3.x
 **核心内容**：
+
 - 消息定义语法
 - 字段类型系统
 - 编码规则
 - Schema演进规则
 
 **Schema支持**：完整支持
-**参考链接**：https://developers.google.com/protocol-buffers
+**参考链接**：<https://developers.google.com/protocol-buffers>
 
 ### 2.2 Protocol Buffers编码规范
 
 **标准名称**：Protocol Buffers Encoding
 **核心内容**：
+
 - Varint编码
 - ZigZag编码
 - 固定长度编码
@@ -58,10 +62,12 @@ Protocol Buffers Schema标准体系分为两个层次：
 
 **标准名称**：gRPC
 **核心内容**：
+
 - 使用Protocol Buffers定义服务
 - RPC方法定义
 
 **与Protocol Buffers的关系**：
+
 - Protocol Buffers是gRPC的消息格式
 - gRPC使用Protocol Buffers定义服务接口
 
@@ -69,6 +75,7 @@ Protocol Buffers Schema标准体系分为两个层次：
 
 **标准名称**：JSON
 **核心内容**：
+
 - Protocol Buffers与JSON的转换
 - JSON编码格式
 

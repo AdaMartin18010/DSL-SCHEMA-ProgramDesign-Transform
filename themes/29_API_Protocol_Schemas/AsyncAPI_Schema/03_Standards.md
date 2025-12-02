@@ -15,6 +15,8 @@
     - [3.4 AMQP](#34-amqp)
   - [4. 标准对比矩阵](#4-标准对比矩阵)
   - [5. 标准发展趋势](#5-标准发展趋势)
+    - [5.1 2024-2025年趋势](#51-2024-2025年趋势)
+    - [5.2 2025-2026年展望](#52-2025-2026年展望)
 
 ---
 
@@ -33,25 +35,27 @@ AsyncAPI Schema标准体系分为两个层次：
 
 **标准名称**：AsyncAPI Specification 2.x
 **核心内容**：
+
 - 异步API定义语法
 - 消息格式定义
 - 通道和服务器定义
 - 协议绑定
 
 **Schema支持**：完整支持
-**参考链接**：https://www.asyncapi.com/docs/specifications/2.0.0
+**参考链接**：<https://www.asyncapi.com/docs/specifications/2.0.0>
 
 ### 2.2 AsyncAPI绑定规范
 
 **标准名称**：AsyncAPI Bindings
 **核心内容**：
+
 - MQTT绑定
 - Kafka绑定
 - AMQP绑定
 - WebSocket绑定
 
 **Schema支持**：完整支持
-**参考链接**：https://www.asyncapi.com/docs/specifications/2.0.0#bindingsObject
+**参考链接**：<https://www.asyncapi.com/docs/specifications/2.0.0#bindingsObject>
 
 ---
 
@@ -61,10 +65,12 @@ AsyncAPI Schema标准体系分为两个层次：
 
 **标准名称**：OpenAPI Specification
 **核心内容**：
+
 - 与AsyncAPI兼容的规范
 - RESTful API定义
 
 **与AsyncAPI的关系**：
+
 - AsyncAPI与OpenAPI兼容
 - 可以共享组件定义
 
@@ -72,10 +78,12 @@ AsyncAPI Schema标准体系分为两个层次：
 
 **标准名称**：MQTT Protocol
 **核心内容**：
+
 - MQTT协议规范
 - AsyncAPI MQTT绑定
 
 **与AsyncAPI的关系**：
+
 - AsyncAPI支持MQTT协议绑定
 - MQTT消息可以使用AsyncAPI定义
 
@@ -83,10 +91,12 @@ AsyncAPI Schema标准体系分为两个层次：
 
 **标准名称**：Apache Kafka
 **核心内容**：
+
 - Kafka协议规范
 - AsyncAPI Kafka绑定
 
 **与AsyncAPI的关系**：
+
 - AsyncAPI支持Kafka协议绑定
 - Kafka主题可以使用AsyncAPI定义
 
@@ -94,10 +104,12 @@ AsyncAPI Schema标准体系分为两个层次：
 
 **标准名称**：AMQP Protocol
 **核心内容**：
+
 - AMQP协议规范
 - AsyncAPI AMQP绑定
 
 **与AsyncAPI的关系**：
+
 - AsyncAPI支持AMQP协议绑定
 - AMQP消息可以使用AsyncAPI定义
 

@@ -33,24 +33,26 @@ gRPC Schema标准体系分为三个层次：
 
 **标准名称**：gRPC
 **核心内容**：
+
 - gRPC服务定义
 - RPC方法定义
 - 流式RPC支持
 - 错误处理机制
 
 **Schema支持**：完整支持
-**参考链接**：https://grpc.io/
+**参考链接**：<https://grpc.io/>
 
 ### 2.2 gRPC-Web规范
 
 **标准名称**：gRPC-Web
 **核心内容**：
+
 - Web浏览器支持
 - HTTP/1.1传输
 - 流式RPC支持
 
 **Schema支持**：完整支持
-**参考链接**：https://github.com/grpc/grpc-web
+**参考链接**：<https://github.com/grpc/grpc-web>
 
 ---
 
@@ -58,12 +60,13 @@ gRPC Schema标准体系分为三个层次：
 
 **标准名称**：Protocol Buffers 3.x
 **核心内容**：
+
 - 消息定义语法
 - 字段类型系统
 - 编码规则
 
 **Schema支持**：完整支持
-**参考链接**：https://developers.google.com/protocol-buffers
+**参考链接**：<https://developers.google.com/protocol-buffers>
 
 ---
 
@@ -71,12 +74,13 @@ gRPC Schema标准体系分为三个层次：
 
 **标准名称**：HTTP/2
 **核心内容**：
+
 - HTTP/2传输协议
 - 多路复用
 - 流控制
 
 **Schema支持**：传输层支持
-**参考链接**：https://http2.github.io/
+**参考链接**：<https://http2.github.io/>
 
 ---
 

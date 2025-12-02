@@ -5,6 +5,7 @@
 - [gRPC Schema转换体系](#grpc-schema转换体系)
   - [📑 目录](#-目录)
   - [1. 转换体系概述](#1-转换体系概述)
+    - [1.1 转换目标](#11-转换目标)
   - [2. gRPC到OpenAPI转换](#2-grpc到openapi转换)
   - [3. gRPC到GraphQL转换](#3-grpc到graphql转换)
   - [4. Protocol Buffers到JSON转换](#4-protocol-buffers到json转换)
@@ -31,6 +32,7 @@ gRPC Schema转换体系支持gRPC服务与其他API格式之间的转换。
 ## 2. gRPC到OpenAPI转换
 
 **转换规则**：
+
 - gRPC服务 → OpenAPI路径
 - gRPC方法 → OpenAPI操作
 - Protocol Buffers消息 → OpenAPI Schema
@@ -52,6 +54,7 @@ def grpc_to_openapi(proto_file: str) -> dict:
 ## 3. gRPC到GraphQL转换
 
 **转换规则**：
+
 - gRPC服务 → GraphQL类型
 - gRPC方法 → GraphQL查询/变更
 - Protocol Buffers消息 → GraphQL类型
@@ -61,6 +64,7 @@ def grpc_to_openapi(proto_file: str) -> dict:
 ## 4. Protocol Buffers到JSON转换
 
 **转换规则**：
+
 - Protocol Buffers消息 → JSON对象
 - Protocol Buffers字段 → JSON属性
 

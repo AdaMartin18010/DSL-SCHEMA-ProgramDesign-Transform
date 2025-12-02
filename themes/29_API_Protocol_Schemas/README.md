@@ -21,6 +21,9 @@
     - [4.1 国际标准](#41-国际标准)
     - [4.2 行业标准](#42-行业标准)
   - [5. 应用场景](#5-应用场景)
+    - [5.1 微服务架构](#51-微服务架构)
+    - [5.2 数据交换](#52-数据交换)
+    - [5.3 云原生应用](#53-云原生应用)
 
 ---
 
@@ -63,6 +66,7 @@ API_Protocol_Schema = GraphQL_Schema ⊕ gRPC_Schema
 ```
 
 其中：
+
 - `GraphQL_Schema`：GraphQL查询语言Schema
 - `gRPC_Schema`：gRPC服务定义Schema
 - `Protocol_Buffers_Schema`：Protocol Buffers数据序列化Schema
@@ -169,5 +173,6 @@ API_Protocol_Schema = GraphQL_Schema ⊕ gRPC_Schema
 **维护者**：DSL Schema研究团队
 
 **相关文档**：
+
 - `../NETWORK_BENCHMARKING_AND_EXPANSION_PLAN.md` - 网络对标分析与扩展计划
 - `../README.md` - 主题总览

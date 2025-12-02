@@ -39,6 +39,7 @@ Avro_Schema = Primitive_Type_Schema ⊕ Complex_Type_Schema
 ```
 
 其中：
+
 - `Primitive_Type_Schema`：原始类型Schema（null、boolean、int、long、float、double、bytes、string）
 - `Complex_Type_Schema`：复杂类型Schema（record、enum、array、map、union、fixed）
 - `Schema_Evolution_Schema`：Schema演进Schema
@@ -166,13 +167,14 @@ Avro_Schema = Primitive_Type_Schema ⊕ Complex_Type_Schema
 
 **标准名称**：Apache Avro Specification
 **核心内容**：
+
 - Schema定义语法
 - 数据类型系统
 - Schema演进规则
 - 序列化格式
 
 **Schema支持**：完整支持
-**参考链接**：https://avro.apache.org/docs/current/spec.html
+**参考链接**：<https://avro.apache.org/docs/current/spec.html>
 
 ### 4.2 相关标准
 
@@ -189,11 +191,13 @@ Avro_Schema = Primitive_Type_Schema ⊕ Complex_Type_Schema
 **场景描述**：大数据系统使用Avro进行数据序列化。
 
 **Schema应用**：
+
 - 定义数据格式
 - 高效序列化
 - Schema演进管理
 
 **优势**：
+
 - 高效处理
 - Schema演进
 - 跨语言支持
@@ -203,11 +207,13 @@ Avro_Schema = Primitive_Type_Schema ⊕ Complex_Type_Schema
 **场景描述**：消息队列系统使用Avro作为消息格式。
 
 **Schema应用**：
+
 - 定义消息格式
 - Schema注册表
 - 版本兼容
 
 **优势**：
+
 - 紧凑格式
 - Schema管理
 - 版本兼容
@@ -217,11 +223,13 @@ Avro_Schema = Primitive_Type_Schema ⊕ Complex_Type_Schema
 **场景描述**：数据存储系统使用Avro格式。
 
 **Schema应用**：
+
 - 定义存储格式
 - 数据压缩
 - Schema演进
 
 **优势**：
+
 - 高效存储
 - Schema演进
 - 快速查询
@@ -231,11 +239,13 @@ Avro_Schema = Primitive_Type_Schema ⊕ Complex_Type_Schema
 **场景描述**：存储Avro Schema定义、数据实例、性能指标等数据。
 
 **Schema应用**：
+
 - 存储Schema定义
 - 记录数据实例
 - 分析性能指标
 
 **数据库设计**：
+
 - Schema定义表：存储Avro Schema定义
 - 数据实例表：记录数据实例
 - 性能指标表：存储序列化/反序列化性能数据
@@ -281,6 +291,7 @@ graph TB
 **维护者**：DSL Schema研究团队
 
 **相关文档**：
+
 - `02_Formal_Definition.md` - 形式化定义
 - `03_Standards.md` - 标准对标
 - `04_Transformation.md` - 转换体系

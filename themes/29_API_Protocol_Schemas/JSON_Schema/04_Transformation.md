@@ -5,6 +5,7 @@
 - [JSON Schema转换体系](#json-schema转换体系)
   - [📑 目录](#-目录)
   - [1. 转换体系概述](#1-转换体系概述)
+    - [1.1 转换目标](#11-转换目标)
   - [2. JSON Schema到GraphQL转换](#2-json-schema到graphql转换)
   - [3. JSON Schema到OpenAPI转换](#3-json-schema到openapi转换)
   - [4. JSON Schema到Avro转换](#4-json-schema到avro转换)
@@ -31,6 +32,7 @@ JSON Schema转换体系支持JSON Schema与其他Schema格式之间的转换。
 ## 2. JSON Schema到GraphQL转换
 
 **转换规则**：
+
 - JSON Schema对象 → GraphQL对象类型
 - JSON Schema数组 → GraphQL列表类型
 - JSON Schema类型 → GraphQL标量类型
@@ -77,6 +79,7 @@ def convert_json_type_to_graphql(json_schema: dict) -> str:
 ## 3. JSON Schema到OpenAPI转换
 
 **转换规则**：
+
 - JSON Schema → OpenAPI Schema对象
 - JSON Schema引用 → OpenAPI引用
 
@@ -107,6 +110,7 @@ def json_schema_to_openapi(json_schema: dict) -> dict:
 ## 4. JSON Schema到Avro转换
 
 **转换规则**：
+
 - JSON Schema对象 → Avro记录
 - JSON Schema类型 → Avro类型
 

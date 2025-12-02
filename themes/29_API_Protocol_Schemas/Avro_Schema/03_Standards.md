@@ -13,6 +13,8 @@
     - [3.2 Apache Spark](#32-apache-spark)
   - [4. 标准对比矩阵](#4-标准对比矩阵)
   - [5. 标准发展趋势](#5-标准发展趋势)
+    - [5.1 2024-2025年趋势](#51-2024-2025年趋势)
+    - [5.2 2025-2026年展望](#52-2025-2026年展望)
 
 ---
 
@@ -31,24 +33,26 @@ Avro Schema标准体系分为两个层次：
 
 **标准名称**：Apache Avro Specification
 **核心内容**：
+
 - Schema定义语法
 - 数据类型系统
 - Schema演进规则
 - 序列化格式
 
 **Schema支持**：完整支持
-**参考链接**：https://avro.apache.org/docs/current/spec.html
+**参考链接**：<https://avro.apache.org/docs/current/spec.html>
 
 ### 2.2 Avro Schema Registry
 
 **标准名称**：Confluent Schema Registry
 **核心内容**：
+
 - Schema版本管理
 - Schema兼容性检查
 - Schema注册表API
 
 **Schema支持**：完整支持
-**参考链接**：https://docs.confluent.io/platform/current/schema-registry/
+**参考链接**：<https://docs.confluent.io/platform/current/schema-registry/>
 
 ---
 
@@ -58,10 +62,12 @@ Avro Schema标准体系分为两个层次：
 
 **标准名称**：Apache Kafka
 **核心内容**：
+
 - 使用Avro作为消息格式
 - Schema Registry集成
 
 **与Avro的关系**：
+
 - Kafka广泛使用Avro作为消息格式
 - Schema Registry管理Kafka消息Schema
 
@@ -69,6 +75,7 @@ Avro Schema标准体系分为两个层次：
 
 **标准名称**：Apache Spark
 **核心内容**：
+
 - 使用Avro进行数据序列化
 - Avro数据源支持
 

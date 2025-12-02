@@ -5,6 +5,7 @@
 - [Protocol Buffers Schema转换体系](#protocol-buffers-schema转换体系)
   - [📑 目录](#-目录)
   - [1. 转换体系概述](#1-转换体系概述)
+    - [1.1 转换目标](#11-转换目标)
   - [2. Protocol Buffers到JSON转换](#2-protocol-buffers到json转换)
   - [3. Protocol Buffers到Avro转换](#3-protocol-buffers到avro转换)
   - [4. Protocol Buffers到OpenAPI转换](#4-protocol-buffers到openapi转换)
@@ -31,6 +32,7 @@ Protocol Buffers Schema转换体系支持Protocol Buffers与其他数据格式�
 ## 2. Protocol Buffers到JSON转换
 
 **转换规则**：
+
 - Protocol Buffers消息 → JSON对象
 - Protocol Buffers字段 → JSON属性
 - Protocol Buffers类型 → JSON类型
@@ -56,6 +58,7 @@ def json_to_protobuf(json_str, message_class):
 ## 3. Protocol Buffers到Avro转换
 
 **转换规则**：
+
 - Protocol Buffers消息 → Avro记录
 - Protocol Buffers字段 → Avro字段
 - Protocol Buffers类型 → Avro类型
@@ -65,6 +68,7 @@ def json_to_protobuf(json_str, message_class):
 ## 4. Protocol Buffers到OpenAPI转换
 
 **转换规则**：
+
 - Protocol Buffers服务 → OpenAPI路径
 - Protocol Buffers消息 → OpenAPI Schema
 
