@@ -1,0 +1,198 @@
+# 医疗AI Schema标准对标
+
+## 📑 目录
+
+- [医疗AI Schema标准对标](#医疗ai-schema标准对标)
+  - [📑 目录](#-目录)
+  - [1. 标准概述](#1-标准概述)
+  - [2. 国际标准](#2-国际标准)
+    - [2.1 DICOM标准](#21-dicom标准)
+    - [2.2 HL7 FHIR标准](#22-hl7-fhir标准)
+    - [2.3 HIPAA标准](#23-hipaa标准)
+  - [3. 行业标准](#3-行业标准)
+    - [3.1 ISO 27799标准](#31-iso-27799标准)
+    - [3.2 FDA AI/ML标准](#32-fda-aiml标准)
+  - [4. 标准对比分析](#4-标准对比分析)
+  - [5. 标准映射](#5-标准映射)
+  - [6. 标准采用建议](#6-标准采用建议)
+
+---
+
+## 1. 标准概述
+
+医疗AI Schema标准对标涵盖**医疗AI领域的国际标准和行业标准**，包括DICOM、HL7 FHIR、HIPAA等医疗和安全标准。
+
+**标准覆盖**：
+
+- **医学影像标准**：DICOM
+- **医疗信息标准**：HL7 FHIR
+- **隐私安全标准**：HIPAA、ISO 27799
+- **AI监管标准**：FDA AI/ML指南
+
+---
+
+## 2. 国际标准
+
+### 2.1 DICOM标准
+
+**标准名称**：Digital Imaging and Communications in Medicine
+
+**标准组织**：NEMA
+
+**标准版本**：DICOM PS3（持续更新）
+
+**核心内容**：
+
+- 医学影像格式
+- 影像通信协议
+- 影像存储标准
+- 影像工作流
+
+**标准特点**：
+
+- ✅ 医学影像标准
+- ✅ 广泛采用
+- ✅ 持续更新
+
+**采用率**：⭐⭐⭐⭐⭐（5/5）
+
+### 2.2 HL7 FHIR标准
+
+**标准名称**：HL7 Fast Healthcare Interoperability Resources
+
+**标准组织**：HL7 International
+
+**标准版本**：FHIR R5（2024年）
+
+**核心内容**：
+
+- 医疗信息交换标准
+- 资源定义
+- API标准
+- 互操作性
+
+**标准特点**：
+
+- ✅ 现代化标准
+- ✅ RESTful API
+- ✅ 广泛采用
+
+**采用率**：⭐⭐⭐⭐⭐（5/5）
+
+### 2.3 HIPAA标准
+
+**标准名称**：Health Insurance Portability and Accountability Act
+
+**标准组织**：U.S. Department of Health and Human Services
+
+**核心内容**：
+
+- 健康信息隐私保护
+- 数据安全要求
+- 患者权利
+- 违规处罚
+
+**采用率**：⭐⭐⭐⭐⭐（5/5，美国）
+
+---
+
+## 3. 行业标准
+
+### 3.1 ISO 27799标准
+
+**标准名称**：ISO 27799 - Health informatics
+
+**标准组织**：ISO/TC 215
+
+**核心内容**：
+
+- 健康信息安全管理
+- 基于ISO 27002
+- 医疗特定要求
+
+**采用率**：⭐⭐⭐⭐（4/5）
+
+### 3.2 FDA AI/ML标准
+
+**标准名称**：FDA AI/ML-Based Medical Device Guidance
+
+**标准组织**：FDA
+
+**核心内容**：
+
+- AI/ML医疗器械监管
+- 软件即医疗器械（SaMD）
+- 持续学习监管
+
+**采用率**：⭐⭐⭐⭐（4/5，美国）
+
+---
+
+## 4. 标准对比分析
+
+| 标准 | 类型 | 应用场景 | 采用率 |
+|------|------|---------|--------|
+| **DICOM** | 影像标准 | 医学影像 | 100% |
+| **HL7 FHIR** | 信息标准 | 医疗信息交换 | 90%+ |
+| **HIPAA** | 隐私标准 | 数据保护 | 100%（美国） |
+| **ISO 27799** | 安全标准 | 信息安全 | 80%+ |
+| **FDA AI/ML** | 监管标准 | AI医疗器械 | 100%（美国） |
+
+---
+
+## 5. 标准映射
+
+### 5.1 Medical_AI_Schema到DICOM映射
+
+**映射规则**：
+
+```text
+Medical_AI_Schema → DICOM
+
+Medical_Imaging → DICOM Image
+Image_Info → DICOM Header
+Image_Data → DICOM Pixel Data
+```
+
+### 5.2 Medical_AI_Schema到HL7 FHIR映射
+
+**映射规则**：
+
+```text
+Medical_AI_Schema → HL7 FHIR
+
+Electronic_Health_Record → FHIR Patient Resource
+Diagnosis → FHIR Condition Resource
+Treatment → FHIR MedicationRequest Resource
+```
+
+---
+
+## 6. 标准采用建议
+
+**场景1：医学影像处理**
+
+- **推荐**：DICOM
+- **理由**：标准影像格式
+
+**场景2：医疗信息交换**
+
+- **推荐**：HL7 FHIR
+- **理由**：现代化API标准
+
+**场景3：数据保护**
+
+- **推荐**：HIPAA + ISO 27799
+- **理由**：隐私和安全要求
+
+**场景4：AI医疗器械**
+
+- **推荐**：FDA AI/ML指南
+- **理由**：监管合规要求
+
+---
+
+**创建时间**：2025-01-21
+**最后更新**：2025-01-21
+**文档版本**：v1.0
+**维护者**：DSL Schema研究团队

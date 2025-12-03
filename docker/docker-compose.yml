@@ -1,0 +1,244 @@
+version: '3.8'
+
+services:
+  # PostgreSQL数据库（多模态知识图谱）
+  multimodal_db:
+    image: pgvector/pgvector:pg16
+    container_name: multimodal_kg_db
+    environment:
+      POSTGRES_USER: multimodal_user
+      POSTGRES_PASSWORD: multimodal_pass
+      POSTGRES_DB: multimodal_kg
+    ports:
+      - "5432:5432"
+    volumes:
+      - multimodal_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U multimodal_user"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # PostgreSQL数据库（时序知识图谱）
+  temporal_db:
+    image: postgres:16
+    container_name: temporal_kg_db
+    environment:
+      POSTGRES_USER: temporal_user
+      POSTGRES_PASSWORD: temporal_pass
+      POSTGRES_DB: temporal_kg
+    ports:
+      - "5433:5432"
+    volumes:
+      - temporal_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U temporal_user"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # 多模态知识图谱API
+  multimodal_api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.multimodal
+    container_name: multimodal_kg_api
+    environment:
+      DATABASE_URL: postgresql://multimodal_user:multimodal_pass@multimodal_db:5432/multimodal_kg
+    ports:
+      - "8000:8000"
+    depends_on:
+      multimodal_db:
+        condition: service_healthy
+    volumes:
+      - ./code:/app/code
+
+  # 时序知识图谱API
+  temporal_api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.temporal
+    container_name: temporal_kg_api
+    environment:
+      DATABASE_URL: postgresql://temporal_user:temporal_pass@temporal_db:5432/temporal_kg
+    ports:
+      - "8001:8000"
+    depends_on:
+      temporal_db:
+        condition: service_healthy
+    volumes:
+      - ./code:/app/code
+
+  # LLM推理引擎API
+  llm_reasoning_api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.llm
+    container_name: llm_reasoning_api
+    environment:
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+    ports:
+      - "8002:8000"
+    volumes:
+      - ./code:/app/code
+
+  # USL API
+  usl_api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.usl
+    container_name: usl_api
+    ports:
+      - "8003:8000"
+    volumes:
+      - ./code:/app/code
+
+  # 层次化知识表示API
+  hierarchical_kg_api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.hierarchical
+    container_name: hierarchical_kg_api
+    environment:
+      DATABASE_URL: postgresql://hierarchical_user:hierarchical_pass@hierarchical_db:5432/hierarchical_kg
+    ports:
+      - "8004:8000"
+    depends_on:
+      - hierarchical_db
+    volumes:
+      - ./code:/app/code
+
+  # 知识链方法API
+  knowledge_chain_api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.knowledge_chain
+    container_name: knowledge_chain_api
+    environment:
+      DATABASE_URL: postgresql://knowledge_chain_user:knowledge_chain_pass@knowledge_chain_db:5432/knowledge_chain
+    ports:
+      - "8005:8000"
+    depends_on:
+      - knowledge_chain_db
+    volumes:
+      - ./code:/app/code
+
+  # 层次化知识表示数据库
+  hierarchical_db:
+    image: postgres:16
+    container_name: hierarchical_kg_db
+    environment:
+      POSTGRES_USER: hierarchical_user
+      POSTGRES_PASSWORD: hierarchical_pass
+      POSTGRES_DB: hierarchical_kg
+    ports:
+      - "5434:5432"
+    volumes:
+      - hierarchical_db_data:/var/lib/postgresql/data
+
+  # 知识链数据库
+  knowledge_chain_db:
+    image: postgres:16
+    container_name: knowledge_chain_db
+    environment:
+      POSTGRES_USER: knowledge_chain_user
+      POSTGRES_PASSWORD: knowledge_chain_pass
+      POSTGRES_DB: knowledge_chain
+    ports:
+      - "5435:5432"
+    volumes:
+      - knowledge_chain_db_data:/var/lib/postgresql/data
+
+  # 可解释性推理数据库
+  explainable_reasoning_db:
+    image: postgres:16
+    container_name: explainable_reasoning_db
+    environment:
+      POSTGRES_USER: explainable_user
+      POSTGRES_PASSWORD: explainable_pass
+      POSTGRES_DB: explainable_reasoning
+    ports:
+      - "5436:5432"
+    volumes:
+      - explainable_reasoning_db_data:/var/lib/postgresql/data
+
+  # Schema版本管理数据库
+  schema_versioning_db:
+    image: postgres:16
+    container_name: schema_versioning_db
+    environment:
+      POSTGRES_USER: versioning_user
+      POSTGRES_PASSWORD: versioning_pass
+      POSTGRES_DB: schema_versioning
+    ports:
+      - "5437:5432"
+    volumes:
+      - schema_versioning_db_data:/var/lib/postgresql/data
+
+  # 统一API网关
+  api_gateway:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.gateway
+    container_name: api_gateway
+    environment:
+      MULTIMODAL_KG_URL: http://multimodal_api:8000
+      TEMPORAL_KG_URL: http://temporal_api:8000
+      LLM_REASONING_URL: http://llm_reasoning_api:8000
+      USL_URL: http://usl_api:8000
+      HIERARCHICAL_KG_URL: http://hierarchical_kg_api:8000
+      KNOWLEDGE_CHAIN_URL: http://knowledge_chain_api:8000
+      EXPLAINABLE_REASONING_URL: http://explainable_reasoning_api:8000
+      SCHEMA_VERSIONING_URL: http://schema_versioning_api:8000
+    ports:
+      - "8080:8080"
+    depends_on:
+      - multimodal_api
+      - temporal_api
+      - llm_reasoning_api
+      - usl_api
+      - hierarchical_kg_api
+      - knowledge_chain_api
+      - explainable_reasoning_api
+      - schema_versioning_api
+    volumes:
+      - ./code:/app/code
+
+  # 可解释性推理API
+  explainable_reasoning_api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.explainable
+    container_name: explainable_reasoning_api
+    environment:
+      DATABASE_URL: postgresql://explainable_user:explainable_pass@explainable_reasoning_db:5432/explainable_reasoning
+    ports:
+      - "8006:8000"
+    depends_on:
+      - explainable_reasoning_db
+    volumes:
+      - ./code:/app/code
+
+  # Schema版本管理API
+  schema_versioning_api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.versioning
+    container_name: schema_versioning_api
+    environment:
+      DATABASE_URL: postgresql://versioning_user:versioning_pass@schema_versioning_db:5432/schema_versioning
+    ports:
+      - "8007:8000"
+    depends_on:
+      - schema_versioning_db
+    volumes:
+      - ./code:/app/code
+
+volumes:
+  multimodal_db_data:
+  temporal_db_data:
+  hierarchical_db_data:
+  knowledge_chain_db_data:
+  explainable_reasoning_db_data:
+  schema_versioning_db_data:

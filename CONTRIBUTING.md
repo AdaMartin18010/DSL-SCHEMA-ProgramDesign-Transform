@@ -1,439 +1,198 @@
 # 贡献指南
 
-## 📑 目录
+## 📋 欢迎贡献
 
-- [贡献指南](#贡献指南)
-  - [📑 目录](#-目录)
-  - [1. 欢迎贡献](#1-欢迎贡献)
-    - [1.1 贡献方式](#11-贡献方式)
-    - [1.2 贡献类型](#12-贡献类型)
-  - [2. 贡献流程](#2-贡献流程)
-    - [2.1 准备工作](#21-准备工作)
-    - [2.2 提交贡献](#22-提交贡献)
-    - [2.3 代码审查](#23-代码审查)
-  - [3. 文档贡献](#3-文档贡献)
-    - [3.1 文档格式规范](#31-文档格式规范)
-    - [3.2 文档结构要求](#32-文档结构要求)
-    - [3.3 文档内容要求](#33-文档内容要求)
-  - [4. 代码贡献](#4-代码贡献)
-    - [4.1 代码规范](#41-代码规范)
-    - [4.2 测试要求](#42-测试要求)
-    - [4.3 提交规范](#43-提交规范)
-  - [5. 问题报告](#5-问题报告)
-    - [5.1 Bug报告](#51-bug报告)
-    - [5.2 功能请求](#52-功能请求)
-    - [5.3 文档问题](#53-文档问题)
-  - [6. 贡献奖励](#6-贡献奖励)
-  - [7. 行为准则](#7-行为准则)
-    - [7.1 基本原则](#71-基本原则)
-    - [7.2 禁止行为](#72-禁止行为)
-    - [7.3 冲突解决](#73-冲突解决)
-  - [8. 参考资源](#8-参考资源)
-    - [8.1 项目文档](#81-项目文档)
-    - [8.2 相关资源](#82-相关资源)
+感谢您对DSL Schema项目的关注！我们欢迎所有形式的贡献。
 
 ---
 
-## 1. 欢迎贡献
+## 🤝 如何贡献
 
-### 1.1 贡献方式
+### 1. 报告问题
 
-我们欢迎各种形式的贡献：
+如果您发现了bug或有功能建议，请：
 
-- **文档贡献**：完善现有文档、补充新内容
-- **代码贡献**：实现新功能、修复Bug、优化代码
-- **问题报告**：报告Bug、提出改进建议
-- **社区支持**：回答问题、帮助其他贡献者
+1. 检查[现有Issues](https://github.com/your-repo/issues)是否已有相关讨论
+2. 创建新Issue，提供：
+   - 问题描述
+   - 复现步骤
+   - 预期行为
+   - 实际行为
+   - 环境信息
 
-### 1.2 贡献类型
+### 2. 提交代码
 
-**文档贡献**：
+#### 开发流程
 
-- 完善现有文档
-- 补充缺失主题
-- 优化文档结构
-- 添加示例代码
-- 翻译文档
+1. **Fork项目**
+   ```bash
+   git clone https://github.com/your-username/DSL-SCHEMA-ProgramDesign-Transform.git
+   cd DSL-SCHEMA-ProgramDesign-Transform
+   ```
 
-**代码贡献**：
+2. **创建分支**
+   ```bash
+   git checkout -b feature/your-feature-name
+   # 或
+   git checkout -b fix/your-bug-fix
+   ```
 
-- 实现新功能
-- 修复Bug
-- 性能优化
-- 代码重构
-- 测试补充
+3. **开发代码**
+   - 遵循代码规范
+   - 编写测试
+   - 更新文档
 
-**问题报告**：
+4. **提交代码**
+   ```bash
+   git add .
+   git commit -m "feat: add new feature"
+   git push origin feature/your-feature-name
+   ```
 
-- Bug报告
-- 功能请求
-- 文档问题
-- 改进建议
+5. **创建Pull Request**
+   - 填写PR描述
+   - 关联相关Issue
+   - 等待代码审查
+
+#### 提交信息规范
+
+使用[Conventional Commits](https://www.conventionalcommits.org/)格式：
+
+- `feat:` - 新功能
+- `fix:` - 修复bug
+- `docs:` - 文档更新
+- `style:` - 代码格式
+- `refactor:` - 重构
+- `test:` - 测试
+- `chore:` - 构建/工具
+
+示例：
+```
+feat: add multimodal knowledge graph support
+fix: resolve database connection issue
+docs: update API documentation
+```
 
 ---
 
-## 2. 贡献流程
+## 📝 代码规范
 
-### 2.1 准备工作
+### Python代码
 
-**1. Fork项目**：
+- 遵循[PEP 8](https://www.python.org/dev/peps/pep-0008/)
+- 使用类型提示
+- 编写文档字符串
+- 行长度不超过120字符
+
+### TypeScript代码
+
+- 遵循[TypeScript风格指南](https://typescript-eslint.io/)
+- 使用ESLint检查
+- 使用Prettier格式化
+
+### 测试
+
+- 为新功能编写测试
+- 测试覆盖率目标：80%+
+- 运行所有测试确保通过
 
 ```bash
-# Fork项目到你的GitHub账户
-# 然后克隆到本地
-git clone https://github.com/YOUR_USERNAME/DSL-SCHEMA-ProgramDesign-Transform.git
-cd DSL-SCHEMA-ProgramDesign-Transform
+# 运行测试
+pytest code/tests/ -v
+
+# 检查覆盖率
+pytest code/tests/ --cov=code --cov-report=html
 ```
 
-**2. 创建分支**：
+---
+
+## 📚 文档规范
+
+### Markdown文档
+
+- 使用标准Markdown格式
+- 添加目录（如果文档较长）
+- 使用代码块时指定语言
+- 添加适当的标题层级
+
+### 代码文档
+
+- 使用Google风格的文档字符串
+- 为所有公共函数/类添加文档
+- 包含参数说明和返回值说明
+
+示例：
+```python
+def add_entity(entity_id: str, entity_type: str, properties: dict) -> bool:
+    """
+    添加实体到知识图谱
+
+    Args:
+        entity_id: 实体ID
+        entity_type: 实体类型
+        properties: 实体属性
+
+    Returns:
+        是否添加成功
+
+    Raises:
+        ValueError: 如果实体ID已存在
+    """
+    pass
+```
+
+---
+
+## 🧪 测试指南
+
+### 运行测试
 
 ```bash
-# 创建新的功能分支
-git checkout -b feature/your-feature-name
+# 运行所有测试
+pytest code/tests/
 
-# 或创建修复分支
-git checkout -b fix/your-bug-fix
+# 运行特定测试
+pytest code/tests/test_multimodal_kg.py
+
+# 运行性能测试
+pytest code/tests/test_performance.py
 ```
 
-**3. 设置上游**：
-
-```bash
-# 添加上游仓库
-git remote add upstream https://github.com/ORIGINAL_OWNER/DSL-SCHEMA-ProgramDesign-Transform.git
-
-# 同步最新代码
-git fetch upstream
-git merge upstream/main
-```
-
-### 2.2 提交贡献
-
-**1. 进行修改**：
-
-- 按照项目规范进行修改
-- 确保代码/文档质量
-- 添加必要的测试
-
-**2. 提交更改**：
-
-```bash
-# 添加修改的文件
-git add .
-
-# 提交更改（使用清晰的提交信息）
-git commit -m "feat: 添加新功能描述"
-
-# 推送到你的Fork
-git push origin feature/your-feature-name
-```
-
-**3. 创建Pull Request**：
-
-- 在GitHub上创建Pull Request
-- 填写详细的描述信息
-- 关联相关Issue（如果有）
-
-### 2.3 代码审查
-
-**审查流程**：
-
-1. **自动检查**：CI/CD自动运行测试和格式检查
-2. **人工审查**：维护者审查代码/文档
-3. **反馈修改**：根据反馈进行修改
-4. **合并代码**：审查通过后合并到主分支
-
-**审查标准**：
-
-- 代码/文档质量
-- 符合项目规范
-- 测试覆盖率
-- 文档完整性
-
----
-
-## 3. 文档贡献
-
-### 3.1 文档格式规范
-
-**目录格式**：
-
-```markdown
-## 📑 目录
-
-- [文档标题](#文档标题)
-  - [1. 章节1](#1-章节1)
-    - [1.1 子章节1](#11-子章节1)
-```
-
-**标题编号**：
-
-- 使用数字编号：`## 1.`、`### 1.1`、`#### 1.1.1`
-- 保持编号连续性
-- 不超过4级标题
-
-**行长度**：
-
-- 控制在75字符以内
-- 长句拆分为多行
-- 代码块和URL保持原样
-
-### 3.2 文档结构要求
-
-**必需部分**：
-
-1. **标题**：文档标题
-2. **目录**：完整的目录结构
-3. **正文**：主要内容
-4. **参考**：相关文档链接
-5. **元信息**：版本、更新日期、维护者
-
-**可选部分**：
-
-- 概述
-- 快速开始
-- 示例代码
-- 常见问题
-- 附录
-
-### 3.3 文档内容要求
-
-**内容质量**：
-
-- 准确性和完整性
-- 清晰易懂
-- 结构合理
-- 示例充分
-
-**引用规范**：
-
-- 使用相对路径引用其他文档
-- 格式统一：`[文档名](path/to/doc.md)`
-- 确保链接正确
-
-**代码示例**：
-
-- 提供完整的代码示例
-- 添加必要的注释
-- 确保代码可运行
-- 标注代码语言
-
----
-
-## 4. 代码贡献
-
-### 4.1 代码规范
-
-**编程语言**：
-
-- TypeScript/JavaScript：遵循ESLint规范
-- Python：遵循PEP 8规范
-- Go：遵循Go官方规范
-
-**命名规范**：
-
-- 变量：使用驼峰命名（camelCase）
-- 函数：使用驼峰命名（camelCase）
-- 类：使用帕斯卡命名（PascalCase）
-- 常量：使用大写下划线（UPPER_SNAKE_CASE）
-
-**代码风格**：
-
-- 保持一致的缩进（2或4空格）
-- 添加必要的注释
-- 避免过长的函数（<50行）
-- 避免过深的嵌套（<4层）
-
-### 4.2 测试要求
-
-**测试类型**：
-
-- **单元测试**：测试单个函数/方法
-- **集成测试**：测试模块间交互
-- **端到端测试**：测试完整流程
-
-**测试覆盖率**：
-
-- 新功能：覆盖率 > 80%
-- Bug修复：添加回归测试
-- 关键功能：覆盖率 > 90%
-
-**测试文件**：
-
-- 测试文件命名：`*.test.ts`、`*_test.py`、`*_test.go`
-- 测试文件位置：与源文件同目录或`tests/`目录
-
-### 4.3 提交规范
-
-**提交信息格式**：
-
-```text
-<type>(<scope>): <subject>
-
-<body>
-
-<footer>
-```
-
-**类型（type）**：
-
-- `feat`：新功能
-- `fix`：Bug修复
-- `docs`：文档更新
-- `style`：代码格式
-- `refactor`：代码重构
-- `test`：测试相关
-- `chore`：构建/工具
-
-**示例**：
-
-```text
-feat(mcp): 添加OpenAPI到AsyncAPI转换功能
-
-实现了OpenAPI 3.0到AsyncAPI 2.x的转换功能，
-包括路径到通道的映射、操作到消息的映射等。
-
-Closes #123
+### 编写测试
+
+```python
+def test_add_entity():
+    """测试添加实体"""
+    storage = MultimodalKGStorage()
+    result = storage.add_entity(
+        entity_id="test_001",
+        entity_type="schema",
+        properties={}
+    )
+    assert result == True
 ```
 
 ---
 
-## 5. 问题报告
+## 🔍 代码审查
 
-### 5.1 Bug报告
+### 审查清单
 
-**报告模板**：
-
-```markdown
-## Bug描述
-
-简要描述Bug
-
-## 重现步骤
-
-1. 步骤1
-2. 步骤2
-3. 步骤3
-
-## 预期行为
-
-描述预期行为
-
-## 实际行为
-
-描述实际行为
-
-## 环境信息
-
-- 操作系统：
-- 版本：
-- 其他相关信息
-
-## 附加信息
-
-截图、日志等
-```
-
-### 5.2 功能请求
-
-**请求模板**：
-
-```markdown
-## 功能描述
-
-简要描述功能需求
-
-## 使用场景
-
-描述使用场景和需求
-
-## 解决方案
-
-描述建议的解决方案
-
-## 替代方案
-
-描述其他可能的解决方案
-
-## 附加信息
-
-相关文档、参考等
-```
-
-### 5.3 文档问题
-
-**问题类型**：
-
-- 内容错误
-- 格式问题
-- 链接失效
-- 缺失内容
-- 翻译问题
-
-**报告方式**：
-
-- 创建Issue
-- 直接提交PR修复
-- 在文档中添加注释
+- [ ] 代码符合规范
+- [ ] 测试通过
+- [ ] 文档更新
+- [ ] 无安全漏洞
+- [ ] 性能可接受
 
 ---
 
-## 6. 贡献奖励
+## 📞 获取帮助
 
-**贡献者认可**：
-
-- 在README中列出贡献者
-- 在发布说明中提及贡献
-- 授予贡献者徽章
-
-**贡献类型**：
-
-- **文档贡献**：完善文档、翻译文档
-- **代码贡献**：实现功能、修复Bug
-- **社区贡献**：回答问题、帮助他人
+- 查看[文档](docs/)
+- 查看[FAQ](FAQ.md)
+- 创建[Issue](https://github.com/your-repo/issues)
+- 联系维护者
 
 ---
 
-## 7. 行为准则
-
-### 7.1 基本原则
-
-- **尊重**：尊重所有贡献者
-- **包容**：欢迎不同背景的贡献者
-- **专业**：保持专业和礼貌
-- **协作**：积极协作和沟通
-
-### 7.2 禁止行为
-
-- 骚扰或歧视
-- 恶意攻击
-- 垃圾信息
-- 违反法律法规
-
-### 7.3 冲突解决
-
-- 通过友好沟通解决
-- 寻求维护者帮助
-- 遵循项目决策
-
----
-
-## 8. 参考资源
-
-### 8.1 项目文档
-
-- `README.md` - 项目总览
-- `GETTING_STARTED.md` - 快速入门
-- `DOCUMENTATION_STYLE_GUIDE.md` - 文档格式规范
-- `DOCUMENT_INDEX.md` - 文档索引
-
-### 8.2 相关资源
-
-- [GitHub贡献指南](https://opensource.guide/how-to-contribute/)
-- [提交信息规范](https://www.conventionalcommits.org/)
-- [代码审查指南](https://google.github.io/eng-practices/review/)
-
----
-
-**文档版本**：1.0
-**最后更新**：2025-01-21
-**维护者**：DSL Schema研究团队
+**感谢您的贡献！** 🎉
