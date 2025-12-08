@@ -1086,11 +1086,23 @@ OpenAPI规范。
 
 **参考文档**：
 
+### 实践文档
+
 - `analysis/06_Comprehensive_Integration_Analysis.md`（综合整合）
 - `practices/09_Performance_Optimization.md`（性能优化）
 - `practices/10_Security_Considerations.md`（安全考虑）
 - `practices/11_Testing_Validation.md`（测试验证）
 
-**文档版本**：1.0
-**最后更新**：2025-01-21
+### 模式文档 ⭐新增
+
+- `docs/structure/ARCHITECTURE_PATTERNS_SUMMARY.md`：架构模式总结（12个模式）
+  - 案例中提到的微服务架构、API网关等可以参考架构模式文档
+- `docs/structure/DESIGN_PATTERNS_SUMMARY.md`：设计模式总结（15个模式）
+  - 案例中提到的适配器模式、工厂模式等可以参考设计模式文档
+- `docs/structure/INFORMATION_PROCESSING_PATTERNS_SUMMARY.md`：信息处理模式总结（12个模式）
+  - 案例中提到的ETL、流处理等可以参考信息处理模式文档
+- `docs/structure/PATTERNS_QUICK_REFERENCE.md`：模式快速参考指南 ⭐推荐
+
+**文档版本**：1.1
+**最后更新**：2025-01-27
 **维护者**：DSL Schema研究团队

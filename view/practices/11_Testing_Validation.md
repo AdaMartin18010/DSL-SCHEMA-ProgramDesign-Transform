@@ -51,6 +51,9 @@
   - [8. 总结](#8-总结)
     - [8.1 关键成果](#81-关键成果)
     - [8.2 测试建议](#82-测试建议)
+  - [9. 相关文档](#9-相关文档)
+    - [模式文档 ⭐新增](#模式文档-新增)
+    - [其他实践文档](#其他实践文档)
 
 
 ---
@@ -638,6 +641,26 @@ semgrep --config=auto src/
 
 ---
 
-**文档版本**：1.0
-**最后更新**：2025-01-21
+## 9. 相关文档
+
+### 模式文档 ⭐新增
+
+- `docs/structure/DESIGN_PATTERNS_SUMMARY.md`：设计模式总结（15个模式）
+  - 在测试框架设计中，可以参考工厂模式、策略模式、模板方法模式等
+- `docs/structure/ARCHITECTURE_PATTERNS_SUMMARY.md`：架构模式总结（12个模式）
+  - 在测试系统架构设计中，可以参考分层架构、微服务架构等模式
+- `docs/structure/INFORMATION_PROCESSING_PATTERNS_SUMMARY.md`：信息处理模式总结（12个模式）
+  - 在测试数据处理中，可以参考批处理模式、实时处理模式等
+- `docs/structure/PATTERNS_QUICK_REFERENCE.md`：模式快速参考指南 ⭐推荐
+
+### 其他实践文档
+
+- `practices/09_Performance_Optimization.md`：性能优化指南
+- `practices/10_Security_Considerations.md`：安全考虑指南
+- `practices/12_Real_World_Case_Studies.md`：实际应用案例研究
+
+---
+
+**文档版本**：1.1
+**最后更新**：2025-01-27
 **维护者**：DSL Schema研究团队

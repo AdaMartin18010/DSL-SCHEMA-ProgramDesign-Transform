@@ -139,6 +139,7 @@
 ### 已创建文件
 
 #### 多模态知识图谱
+
 - `code/multimodal_kg/models.py` - 数据模型（约80行）
 - `code/multimodal_kg/storage.py` - 存储实现（约250行）
 - `code/multimodal_kg/text_processor.py` - 文本处理器（约100行）
@@ -147,6 +148,7 @@
 - `code/multimodal_kg/api.py` - REST API（约150行）
 
 #### 时序知识图谱
+
 - `code/temporal_kg/models.py` - 数据模型（约50行）
 - `code/temporal_kg/storage.py` - 存储实现（约200行）
 - `code/temporal_kg/evolution.py` - 演化追踪（约80行）
@@ -154,10 +156,12 @@
 - `code/temporal_kg/api.py` - REST API（约120行）
 
 #### 测试
+
 - `code/tests/test_multimodal_kg.py` - 多模态KG测试（约50行）
 - `code/tests/test_temporal_kg.py` - 时序KG测试（约60行）
 
 #### 其他
+
 - `code/requirements.txt` - 依赖管理
 - `code/README.md` - 项目说明
 
@@ -184,4 +188,3 @@
 **创建时间**：2025-01-21
 **最后更新**：2025-01-21
 **维护者**：DSL Schema研究团队
-

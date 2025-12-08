@@ -31,6 +31,8 @@
     - [7.1 版本管理](#71-版本管理)
     - [7.2 更新策略](#72-更新策略)
     - [7.3 用户反馈](#73-用户反馈)
+    - [架构文档](#架构文档)
+    - [模式文档 ⭐新增](#模式文档-新增)
 
 ---
 
@@ -481,8 +483,18 @@ suite('E2E Tests', () => {
 
 **参考文档**：
 
+### 架构文档
+
 - `analysis/13_VSCode_Extension_Architecture.md` - 插件架构设计
 - `tools/vscode-extension/` - 插件代码实现
 
+### 模式文档 ⭐新增
+
+- `docs/structure/ARCHITECTURE_PATTERNS_SUMMARY.md`：架构模式总结（12个模式）
+  - 在VS Code插件架构设计中，可以参考分层架构、微服务架构等模式
+- `docs/structure/DESIGN_PATTERNS_SUMMARY.md`：设计模式总结（15个模式）
+  - 在插件实现中，可以参考工厂模式、策略模式、观察者模式等
+- `docs/structure/PATTERNS_QUICK_REFERENCE.md`：模式快速参考指南 ⭐推荐
+
 **创建时间**：2025-01-21
-**最后更新**：2025-01-21
+**最后更新**：2025-01-27

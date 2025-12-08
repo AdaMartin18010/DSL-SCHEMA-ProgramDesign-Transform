@@ -71,18 +71,47 @@
 
 ### 🏗️ 结构框架（docs/structure/）
 
+#### 统一逻辑框架
+
+| 文档 | 说明 |
+|------|------|
+| FRAMEWORK_QUICK_START.md | 快速入门指南 ⭐推荐新手 |
+| UNIFIED_LOGIC_FRAMEWORK.md | 统一逻辑框架与形式理论 |
+| THINKING_REPRESENTATION_SYSTEM.md | 思维表征体系 |
+| FRAMEWORK_SUMMARY.md | 框架总结 |
+| FRAMEWORK_NAVIGATION.md | 导航地图 ⭐推荐查看 |
+
+#### 全局关系梳理
+
+| 文档 | 说明 |
+|------|------|
+| GLOBAL_THEME_RELATIONSHIP_ANALYSIS.md | 全局关系梳理主文档 |
+| DETAILED_THEME_CONVERSION_PATHS.md | 转换路径分析 |
+| THEME_STANDARD_MAPPING_ANALYSIS.md | 标准映射分析 |
+| THEME_APPLICATION_SCENARIOS_ANALYSIS.md | 应用场景分析 |
+| GLOBAL_RELATIONSHIP_QUICK_REFERENCE.md | 快速参考指南 |
+
+#### 模式总结文档 ⭐新增
+
+| 文档 | 说明 | 模式数 |
+|------|------|--------|
+| ARCHITECTURE_PATTERNS_SUMMARY.md | 架构模式总结 | 12个 |
+| DESIGN_PATTERNS_SUMMARY.md | 设计模式总结 | 15个 |
+| INFORMATION_PROCESSING_PATTERNS_SUMMARY.md | 信息处理模式总结 | 12个 |
+| REPRESENTATION_PATTERNS_SUMMARY.md | 表征模式总结 | 12个 |
+| PATTERN_RELATIONSHIP_GRAPH.md | 模式关系图谱 | 51个 |
+| PATTERNS_QUICK_REFERENCE.md | 模式快速参考指南 ⭐新增 | 速查表 |
+
+#### 其他结构文档
+
 | 文档 | 说明 |
 |------|------|
 | GLOBAL_MINDMAP.md | 全局思维导图 |
 | MULTIDIMENSIONAL_MATRICES.md | 多维概念矩阵 |
-| DECISION_TREES.md | 决策树 |
+| DECISION_TREES.md | 决策树体系 |
 | KNOWLEDGE_STRUCTURE_GRAPHS.md | 知识结构图 |
 | PROOF_TREES.md | 证明数图 |
 | METAMODEL_THEORY_FRAMEWORK.md | 元模型理论框架 |
-| DESIGN_PATTERNS_SUMMARY.md | 设计模式总结 |
-| ARCHITECTURE_PATTERNS_SUMMARY.md | 架构模式总结 |
-| REPRESENTATION_PATTERNS_SUMMARY.md | 表征模式总结 |
-| INFORMATION_PROCESSING_PATTERNS_SUMMARY.md | 信息处理模式总结 |
 
 ---
 
@@ -106,5 +135,11 @@
 ---
 
 **创建时间**：2025-01-21
-**最后更新**：2025-01-21
+**最后更新**：2025-01-27
 **维护者**：DSL Schema研究团队
+
+---
+
+## 📝 更新记录
+
+- **2025-01-27**：添加模式总结文档导航（4个模式文档，51个模式）

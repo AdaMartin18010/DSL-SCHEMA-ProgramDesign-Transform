@@ -50,29 +50,35 @@
 ### 企业级Schema（23个）
 
 #### 企业财务Schema（11个）
+
 - Accounting、Financial Reporting、Management Accounting、Cost Accounting
 - Tax Accounting、XBRL、Budget Management、AR AP
 - Cash Management、Audit、Consolidated Reporting
 
 #### 企业数据分析Schema（9个）
+
 - Data Warehouse、Data Lake、ETL、OLAP
 - Data Mining、Machine Learning、Data Visualization
 - Business Intelligence、Data Analytics
 
 #### 企业绩效管理Schema（3个）
+
 - KPI Management、Balanced Scorecard、Performance Evaluation
 
 ### 其他Schema（12个）
 
 #### AI代码集成Schema（6个）
+
 - Domain Language Conversion、DSL Classification、DSL Transformation
 - Industry Schema Analysis、IoT Schema Deep Analysis
 - Multi Dimensional Model Conversion
 
 #### 电信通信Schema（3个）
+
 - 5G Network、Telecom Operations、Network Management
 
 #### 其他行业Schema（3个）
+
 - CRM、Quality Management、Consumer Traceability
 
 ---
@@ -110,10 +116,12 @@
 ## 📝 计划调整
 
 ### 原计划
+
 - P0优先级：API和协议Schema（6个）→ **已完成**
 - P1优先级：云原生DevOps、安全合规（13个）→ **已完成**
 
 ### 新重点
+
 - **P2优先级**：企业级Schema（23个）→ **待验证**
 - **P3优先级**：其他Schema（12个）→ **待验证**
 

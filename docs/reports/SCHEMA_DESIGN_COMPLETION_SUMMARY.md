@@ -82,6 +82,7 @@
 - 🔄 统一Schema语言实现
 
 **参考文档**：
+
 - `implementation/MULTIMODAL_KG_IMPLEMENTATION_GUIDE.md`
 - `implementation/TEMPORAL_KG_IMPLEMENTATION_GUIDE.md`
 - `implementation/LLM_REASONING_IMPLEMENTATION_GUIDE.md`

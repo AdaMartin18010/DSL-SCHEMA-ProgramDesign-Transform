@@ -23,6 +23,9 @@
     - [7.1 完整示例](#71-完整示例)
   - [8. 测试与验证](#8-测试与验证)
     - [8.1 单元测试](#81-单元测试)
+  - [9. 相关文档](#9-相关文档)
+    - [架构和设计模式参考](#架构和设计模式参考)
+    - [其他实现指南](#其他实现指南)
 
 ---
 
@@ -37,7 +40,7 @@
 
 ### 1.2 实现架构
 
-```
+```text
 USL系统
 ├── 语法层
 │   ├── USL语法定义（BNF/EBNF）
@@ -549,8 +552,35 @@ def test_usl_to_openapi():
 
 ---
 
-**创建时间**：2025-01-21
-**最后更新**：2025-01-21
-**文档版本**：v1.0
-**维护者**：DSL Schema研究团队
+## 9. 相关文档
 
+### 架构和设计模式参考
+
+在实现过程中，建议参考以下模式文档：
+
+- **架构模式**：`../structure/ARCHITECTURE_PATTERNS_SUMMARY.md`
+  - 推荐使用**四层架构**（语法层、解析层、验证层、转换层、API层）
+- **设计模式**：`../structure/DESIGN_PATTERNS_SUMMARY.md`
+  - 工厂模式：创建解析器、验证器、转换器
+  - 策略模式：选择转换策略
+  - 适配器模式：不同格式之间的适配
+  - 建造者模式：构建复杂Schema
+- **信息处理模式**：`../structure/INFORMATION_PROCESSING_PATTERNS_SUMMARY.md`
+  - ETL模式：提取、转换、加载
+- **表征模式**：`../structure/REPRESENTATION_PATTERNS_SUMMARY.md`
+  - 形式语言表征：USL语法定义
+- **模式快速参考**：`../structure/PATTERNS_QUICK_REFERENCE.md` ⭐推荐
+
+### 其他实现指南
+
+- `MULTIMODAL_KG_IMPLEMENTATION_GUIDE.md` - 多模态知识图谱实现指南
+- `TEMPORAL_KG_IMPLEMENTATION_GUIDE.md` - 时序知识图谱实现指南
+- `LLM_REASONING_IMPLEMENTATION_GUIDE.md` - LLM推理引擎实现指南
+- `README.md` - 实现指南目录
+
+---
+
+**创建时间**：2025-01-21
+**最后更新**：2025-01-27
+**文档版本**：v2.0
+**维护者**：DSL Schema研究团队

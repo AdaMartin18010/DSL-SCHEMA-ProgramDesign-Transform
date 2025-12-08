@@ -2,7 +2,7 @@
 
 ## 📋 目录结构
 
-```
+```text
 docs/
 ├── README.md                    # 本文件
 ├── INDEX.md                     # 文档索引 ⭐新增

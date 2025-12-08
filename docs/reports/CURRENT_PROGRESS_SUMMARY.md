@@ -167,17 +167,21 @@
 ### 统一技术栈
 
 **数据库**：
+
 - PostgreSQL（主数据库）
 - pgvector（向量支持）
 
 **后端框架**：
+
 - FastAPI（REST API）
 - SQLAlchemy（ORM）
 
 **Python版本**：
+
 - Python 3.10+
 
 **LLM支持**：
+
 - OpenAI GPT-4
 - Anthropic Claude 3
 - 开源LLM（Llama 2、Mistral）

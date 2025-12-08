@@ -23,6 +23,9 @@
     - [7.1 完整数据库Schema](#71-完整数据库schema)
   - [8. 测试与验证](#8-测试与验证)
     - [8.1 单元测试](#81-单元测试)
+  - [9. 相关文档](#9-相关文档)
+    - [架构和设计模式参考](#架构和设计模式参考)
+    - [其他实现指南](#其他实现指南)
 
 ---
 
@@ -540,8 +543,32 @@ def test_temporal_reasoning():
 
 ---
 
-**创建时间**：2025-01-21
-**最后更新**：2025-01-21
-**文档版本**：v1.0
-**维护者**：DSL Schema研究团队
+## 9. 相关文档
 
+### 架构和设计模式参考
+
+在实现过程中，建议参考以下模式文档：
+
+- **架构模式**：`../structure/ARCHITECTURE_PATTERNS_SUMMARY.md`
+  - 推荐使用**四层架构**（数据层、处理层、查询层、API层）
+- **设计模式**：`../structure/DESIGN_PATTERNS_SUMMARY.md`
+  - 工厂模式：创建处理器
+  - 策略模式：选择时间推理策略
+  - 状态模式：管理时间状态
+- **信息处理模式**：`../structure/INFORMATION_PROCESSING_PATTERNS_SUMMARY.md`
+  - 流处理模式：实时时间事件处理
+- **模式快速参考**：`../structure/PATTERNS_QUICK_REFERENCE.md` ⭐推荐
+
+### 其他实现指南
+
+- `MULTIMODAL_KG_IMPLEMENTATION_GUIDE.md` - 多模态知识图谱实现指南
+- `LLM_REASONING_IMPLEMENTATION_GUIDE.md` - LLM推理引擎实现指南
+- `USL_IMPLEMENTATION_GUIDE.md` - 统一Schema语言实现指南
+- `README.md` - 实现指南目录
+
+---
+
+**创建时间**：2025-01-21
+**最后更新**：2025-01-27
+**文档版本**：v2.0
+**维护者**：DSL Schema研究团队

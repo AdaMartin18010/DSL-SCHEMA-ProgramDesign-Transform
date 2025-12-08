@@ -95,6 +95,8 @@
     - [12.1 关键成果](#121-关键成果)
     - [12.2 多维度证明体系](#122-多维度证明体系)
     - [12.3 未来工作](#123-未来工作)
+    - [理论文档](#理论文档)
+    - [模式文档 ⭐新增](#模式文档-新增)
 
 
 ---
@@ -769,10 +771,22 @@ $$\forall s_1: [\![f_G(s_1)]\!]_2 = f_\Sigma([\![s_1]\!]_1)$$
 
 **参考文档**：
 
+### 理论文档
+
 - `theory/09_Information_Theory_Analysis.md`：信息论分析详细内容
 - `theory/10_Formal_Language_Theory_Analysis.md`：形式语言理论分析详细内容
 - `ai_prompt.md` 第13-14章：信息论和形式语言理论形式化证明
 
-**文档版本**：2.0
-**最后更新**：2025-01-21
+### 模式文档 ⭐新增
+
+- `docs/structure/ARCHITECTURE_PATTERNS_SUMMARY.md`：架构模式总结（12个模式）
+  - 在形式化验证系统设计中，可以参考分层架构、微服务架构等模式
+- `docs/structure/DESIGN_PATTERNS_SUMMARY.md`：设计模式总结（15个模式）
+  - 在验证工具实现中，可以参考工厂模式、策略模式、装饰器模式等
+- `docs/structure/REPRESENTATION_PATTERNS_SUMMARY.md`：表征模式总结（12个模式）
+  - 在形式化证明的文档化中，可以参考形式化表征、图形化表征等模式
+- `docs/structure/PATTERNS_QUICK_REFERENCE.md`：模式快速参考指南 ⭐推荐
+
+**文档版本**：2.1
+**最后更新**：2025-01-27
 **维护者**：DSL Schema研究团队

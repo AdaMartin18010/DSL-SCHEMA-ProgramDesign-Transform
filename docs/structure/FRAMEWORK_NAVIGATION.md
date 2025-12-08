@@ -19,17 +19,21 @@
     - [4.1 我想了解](#41-我想了解)
     - [4.2 我想实现](#42-我想实现)
     - [4.3 我想研究](#43-我想研究)
+    - [4.4 我想了解模式](#44-我想了解模式)
   - [5. 快速链接](#5-快速链接)
     - [5.1 框架核心文档](#51-框架核心文档)
     - [5.2 关系分析文档](#52-关系分析文档)
     - [5.3 理论论证文档](#53-理论论证文档)
     - [5.4 主题文档](#54-主题文档)
-    - [5.5 项目文档](#55-项目文档)
+    - [5.4 模式总结文档 ⭐新增](#54-模式总结文档-新增)
+    - [5.5 主题文档](#55-主题文档)
+    - [5.6 项目文档](#56-项目文档)
   - [6. 使用建议](#6-使用建议)
     - [6.1 新手路径](#61-新手路径)
     - [6.2 研究者路径](#62-研究者路径)
     - [6.3 实践者路径](#63-实践者路径)
     - [6.4 管理者路径](#64-管理者路径)
+    - [6.5 架构师/开发者路径](#65-架构师开发者路径)
 
 ---
 
@@ -229,6 +233,18 @@ graph TB
 | **形式语言理论** | `themes/05_DSL_Theory/Formal_Language_Theory/` | 全部 |
 | **知识图谱** | `themes/05_DSL_Theory/Knowledge_Graph/` | 全部 |
 
+### 4.4 我想了解模式
+
+| 需求 | 推荐文档 | 关键章节 |
+|------|---------|---------|
+| **架构模式** | `ARCHITECTURE_PATTERNS_SUMMARY.md` | 全部（12个模式） |
+| **设计模式** | `DESIGN_PATTERNS_SUMMARY.md` | 全部（15个模式） |
+| **信息处理模式** | `INFORMATION_PROCESSING_PATTERNS_SUMMARY.md` | 全部（12个模式） |
+| **表征模式** | `REPRESENTATION_PATTERNS_SUMMARY.md` | 全部（12个模式） |
+| **模式关系** | `PATTERN_RELATIONSHIP_GRAPH.md` | 全部（51个模式关系） |
+| **模式快速参考** | `PATTERNS_QUICK_REFERENCE.md` ⭐新增 | 全部（模式速查表） |
+| **模式选择** | `DECISION_TREES.md` | 第2-4节（决策树） |
+
 ---
 
 ## 5. 快速链接
@@ -259,7 +275,22 @@ graph TB
 - 📁 [主题总览](../themes/README.md) - 所有主题概览
 - 📁 [主题索引](../themes/DOCUMENT_INDEX.md) - 完整文档索引
 
-### 5.5 项目文档
+### 5.4 模式总结文档 ⭐新增
+
+- 🏗️ [架构模式总结](./ARCHITECTURE_PATTERNS_SUMMARY.md) - 12个架构模式
+- 🎨 [设计模式总结](./DESIGN_PATTERNS_SUMMARY.md) - 15个设计模式
+- 🔄 [信息处理模式总结](./INFORMATION_PROCESSING_PATTERNS_SUMMARY.md) - 12个信息处理模式
+- 📊 [表征模式总结](./REPRESENTATION_PATTERNS_SUMMARY.md) - 12个表征模式
+- 🔗 [模式关系图谱](./PATTERN_RELATIONSHIP_GRAPH.md) - 51个模式关系
+- ⚡ [模式快速参考](./PATTERNS_QUICK_REFERENCE.md) ⭐新增 - 模式速查表
+- 🌳 [决策树体系](./DECISION_TREES.md) - 模式选择决策树
+
+### 5.5 主题文档
+
+- 📁 [主题总览](../themes/README.md) - 所有主题概览
+- 📁 [主题索引](../themes/DOCUMENT_INDEX.md) - 完整文档索引
+
+### 5.6 项目文档
 
 - 📖 [项目主文档](../README.md) - 项目概述
 - 📑 [文档索引](../DOCUMENT_INDEX.md) - 完整文档索引
@@ -312,10 +343,25 @@ graph TB
 3. EXPANSION_THEMES_AND_TASKS.md (扩展计划)
 ```
 
+### 6.5 架构师/开发者路径
+
+```text
+1. ARCHITECTURE_PATTERNS_SUMMARY.md (架构模式)
+   ↓
+2. DESIGN_PATTERNS_SUMMARY.md (设计模式)
+   ↓
+3. INFORMATION_PROCESSING_PATTERNS_SUMMARY.md (信息处理模式)
+   ↓
+4. PATTERN_RELATIONSHIP_GRAPH.md (模式关系)
+   ↓
+5. DECISION_TREES.md (模式选择决策树)
+```
+
 ---
 
 **文档创建时间**：2025-01-21
-**文档版本**：v1.0
+**最后更新**：2025-01-27
+**文档版本**：v2.0
 **维护者**：DSL Schema研究团队
 
 **相关文档**：

@@ -54,6 +54,9 @@
   - [7. 总结](#7-总结)
     - [7.1 关键成果](#71-关键成果)
     - [7.2 安全建议](#72-安全建议)
+  - [8. 相关文档](#8-相关文档)
+    - [模式文档 ⭐新增](#模式文档-新增)
+    - [其他实践文档](#其他实践文档)
 
 ---
 
@@ -565,6 +568,24 @@ class SecurityMonitor:
 
 ---
 
-**文档版本**：1.0
-**最后更新**：2025-01-21
+## 8. 相关文档
+
+### 模式文档 ⭐新增
+
+- `docs/structure/DESIGN_PATTERNS_SUMMARY.md`：设计模式总结（15个模式）
+  - 在安全系统设计中，可以参考代理模式、装饰器模式、外观模式等
+- `docs/structure/ARCHITECTURE_PATTERNS_SUMMARY.md`：架构模式总结（12个模式）
+  - 在安全架构设计中，可以参考API网关模式、微服务架构等
+- `docs/structure/PATTERNS_QUICK_REFERENCE.md`：模式快速参考指南 ⭐推荐
+
+### 其他实践文档
+
+- `practices/09_Performance_Optimization.md`：性能优化指南
+- `practices/11_Testing_Validation.md`：测试验证指南
+- `practices/12_Real_World_Case_Studies.md`：实际应用案例研究
+
+---
+
+**文档版本**：1.1
+**最后更新**：2025-01-27
 **维护者**：DSL Schema研究团队

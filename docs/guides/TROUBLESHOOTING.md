@@ -16,12 +16,14 @@
 #### 问题：无法连接到PostgreSQL数据库
 
 **症状**：
+
 - 错误信息：`could not connect to server`
 - 服务启动失败
 
 **解决方案**：
 
 1. **检查PostgreSQL是否运行**
+
    ```bash
    # Windows
    Get-Service postgresql*
@@ -31,12 +33,14 @@
    ```
 
 2. **检查数据库URL配置**
+
    ```bash
    # 检查.env文件中的数据库URL
    cat .env | grep DB_URL
    ```
 
 3. **检查端口是否被占用**
+
    ```bash
    # Windows
    netstat -ano | findstr :5432
@@ -46,6 +50,7 @@
    ```
 
 4. **检查pgvector扩展是否安装**
+
    ```sql
    -- 连接到数据库
    psql -U your_user -d your_database
@@ -64,6 +69,7 @@
 #### 问题：API服务无法启动
 
 **症状**：
+
 - 端口已被占用
 - 模块导入错误
 - 依赖缺失
@@ -71,6 +77,7 @@
 **解决方案**：
 
 1. **检查端口占用**
+
    ```bash
    # Windows
    netstat -ano | findstr :8000
@@ -80,17 +87,20 @@
    ```
 
 2. **检查Python路径**
+
    ```bash
    # 确保code目录在Python路径中
    export PYTHONPATH="${PYTHONPATH}:$(pwd)/code"
    ```
 
 3. **检查依赖安装**
+
    ```bash
    pip install -r code/requirements.txt
    ```
 
 4. **检查模块导入**
+
    ```bash
    # 测试导入
    python -c "from multimodal_kg import MultimodalKGStorage"
@@ -103,24 +113,28 @@
 #### 问题：Docker容器无法启动
 
 **症状**：
+
 - 容器启动后立即退出
 - 无法连接到服务
 
 **解决方案**：
 
 1. **检查Docker日志**
+
    ```bash
    cd docker
    docker-compose logs -f [service_name]
    ```
 
 2. **检查docker-compose.yml配置**
+
    ```bash
    # 验证配置
    docker-compose config
    ```
 
 3. **检查构建上下文**
+
    ```bash
    # 确保在项目根目录
    cd docker
@@ -128,6 +142,7 @@
    ```
 
 4. **检查环境变量**
+
    ```bash
    # 检查.env文件
    cat .env
@@ -140,6 +155,7 @@
 #### 问题：LLM推理API调用失败
 
 **症状**：
+
 - API密钥错误
 - 请求超时
 - 配额不足
@@ -147,6 +163,7 @@
 **解决方案**：
 
 1. **检查API密钥**
+
    ```bash
    # 检查环境变量
    echo $OPENAI_API_KEY
@@ -154,6 +171,7 @@
    ```
 
 2. **检查网络连接**
+
    ```bash
    # 测试连接
    curl https://api.openai.com/v1/models
@@ -170,6 +188,7 @@
 #### 问题：单元测试或集成测试失败
 
 **症状**：
+
 - 测试用例失败
 - 数据库连接错误
 - 模块导入错误
@@ -177,17 +196,20 @@
 **解决方案**：
 
 1. **检查测试数据库配置**
+
    ```bash
    # 检查测试数据库URL
    echo $TEST_DATABASE_URL
    ```
 
 2. **运行单个测试**
+
    ```bash
    pytest code/tests/test_multimodal_kg.py::test_add_entity -v
    ```
 
 3. **检查测试数据**
+
    ```bash
    # 清理测试数据
    pytest --cache-clear

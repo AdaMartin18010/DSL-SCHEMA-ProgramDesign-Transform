@@ -857,13 +857,23 @@ TIMEOUT_MS=5000
 
 ## 7. 参考文档
 
+### MCP文档
+
 - **实施指南**：
   `analysis/08_MCP_Based_Schema_Transformation_Implementation_Guide.md`
 - **快速参考**：
   `analysis/09_MCP_Schema_Transformation_Quick_Reference.md`
 
+### 模式文档 ⭐新增
+
+- `docs/structure/DESIGN_PATTERNS_SUMMARY.md`：设计模式总结（15个模式）
+  - 在代码模板设计中，可以参考工厂模式、建造者模式、模板方法模式等
+- `docs/structure/ARCHITECTURE_PATTERNS_SUMMARY.md`：架构模式总结（12个模式）
+  - 在MCP系统架构设计中，可以参考分层架构、微服务架构等
+- `docs/structure/PATTERNS_QUICK_REFERENCE.md`：模式快速参考指南 ⭐推荐
+
 ---
 
-**文档版本**：1.0
-**最后更新**：2025-01-21
+**文档版本**：1.1
+**最后更新**：2025-01-27
 **维护者**：DSL Schema研究团队

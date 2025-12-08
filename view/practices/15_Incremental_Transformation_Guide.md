@@ -905,8 +905,20 @@ conflictResolution:
 
 **参考文档**：
 
+### 算法文档
+
 - `analysis/12_Incremental_Transformation_Algorithm.md` - 增量转换算法分析
 - `src/transformers/incremental/` - 增量转换代码实现
 
+### 模式文档 ⭐新增
+
+- `docs/structure/INFORMATION_PROCESSING_PATTERNS_SUMMARY.md`：信息处理模式总结（12个模式）
+  - 在增量转换中，可以参考流处理模式、实时处理模式、批处理模式等
+- `docs/structure/ARCHITECTURE_PATTERNS_SUMMARY.md`：架构模式总结（12个模式）
+  - 在增量转换系统架构设计中，可以参考事件驱动架构、微服务架构等
+- `docs/structure/DESIGN_PATTERNS_SUMMARY.md`：设计模式总结（15个模式）
+  - 在增量转换实现中，可以参考观察者模式、策略模式、状态模式等
+- `docs/structure/PATTERNS_QUICK_REFERENCE.md`：模式快速参考指南 ⭐推荐
+
 **创建时间**：2025-01-21
-**最后更新**：2025-01-21
+**最后更新**：2025-01-27

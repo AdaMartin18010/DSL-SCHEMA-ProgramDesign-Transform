@@ -5,11 +5,39 @@
 - [项目全局导航地图](#项目全局导航地图)
   - [📑 目录](#-目录)
   - [1. 快速导航](#1-快速导航)
+    - [1.1 新手必读（5分钟）](#11-新手必读5分钟)
+    - [1.2 核心框架（30分钟）](#12-核心框架30分钟)
+    - [1.3 全局关系（20分钟）](#13-全局关系20分钟)
   - [2. 三大目录导航](#2-三大目录导航)
+    - [2.1 themes/ 目录：主题实践](#21-themes-目录主题实践)
+    - [2.2 view/ 目录：视图理论](#22-view-目录视图理论)
+    - [2.3 structure/ 目录：结构框架](#23-structure-目录结构框架)
   - [3. 按需求导航](#3-按需求导航)
+    - [3.1 我想快速了解项目](#31-我想快速了解项目)
+    - [3.2 我想理解统一逻辑框架](#32-我想理解统一逻辑框架)
+    - [3.3 我想研究主题关系](#33-我想研究主题关系)
+    - [3.4 我想实现Schema转换](#34-我想实现schema转换)
+    - [3.5 我想研究理论证明](#35-我想研究理论证明)
+    - [3.6 我想了解标准对标](#36-我想了解标准对标)
   - [4. 按角色导航](#4-按角色导航)
+    - [4.1 新手/学习者](#41-新手学习者)
+    - [4.2 理论研究者](#42-理论研究者)
+    - [4.3 实践应用者](#43-实践应用者)
+    - [4.4 项目管理者](#44-项目管理者)
   - [5. 核心文档速查](#5-核心文档速查)
+    - [5.1 统一逻辑框架文档](#51-统一逻辑框架文档)
+    - [5.2 全局关系梳理文档](#52-全局关系梳理文档)
+    - [5.3 理论文档](#53-理论文档)
+    - [5.4 实践文档](#54-实践文档)
   - [6. 快速链接](#6-快速链接)
+    - [6.1 统一逻辑框架](#61-统一逻辑框架)
+    - [6.2 全局关系梳理](#62-全局关系梳理)
+    - [6.3 三大目录](#63-三大目录)
+    - [6.4 项目文档](#64-项目文档)
+  - [7. 使用建议](#7-使用建议)
+    - [7.1 首次访问](#71-首次访问)
+    - [7.2 日常使用](#72-日常使用)
+    - [7.3 深入研究](#73-深入研究)
 
 ---
 
@@ -43,16 +71,19 @@
 **定位**：28个主题、81个Schema的完整文档集
 
 **快速入口**：
+
 - 📖 [主题总览](./themes/README.md)
 - 📑 [文档索引](./themes/DOCUMENT_INDEX.md)
 - 🔍 [快速参考](./themes/QUICK_REFERENCE.md)
 
 **主题分类**：
+
 - **基础技术**（01-05）：工业自动化、IoT、物理设备、编程转换、DSL理论
 - **行业应用**（06-24）：金融服务、物流、医疗、教育、农业等19个行业
 - **企业级**（25-28）：AI+Code集成、企业财务、数据分析、绩效管理
 
 **Schema文档结构**（每个Schema包含5个文档）：
+
 - `01_Overview.md` - 概述
 - `02_Formal_Definition.md` - 形式化定义
 - `03_Standards.md` - 标准对标
@@ -66,6 +97,7 @@
 **定位**：理论分析、实践指南、案例研究
 
 **快速入口**：
+
 - 📖 [七维转换体系理论](./view/ai_prompt.md) - 核心理论文档
 - 📊 [分析文档](./view/analysis/) - MCP协议、工具链对比等
 - 💼 [实践指南](./view/practices/) - 性能优化、安全考虑等
@@ -73,6 +105,7 @@
 - 📈 [图表文档](./view/diagrams/) - 思维导图、关系图等
 
 **核心文档**：
+
 - `view/ai_prompt.md` - 七维转换体系理论（核心）
 - `view/analysis/01_MCP_Protocol_Integration_Analysis.md` - MCP协议分析
 - `view/analysis/02_DSL_Transformation_Toolchain_Comparison.md` - 工具链对比
@@ -86,11 +119,13 @@
 **定位**：统一逻辑框架、全局关系梳理、理论论证
 
 **快速入口**：
+
 - 🚀 [快速入门指南](./structure/FRAMEWORK_QUICK_START.md) ⭐推荐新手
 - 🗺️ [导航地图](./structure/FRAMEWORK_NAVIGATION.md) ⭐推荐查看
 - 📖 [Structure目录导航](./structure/README.md)
 
 **文档分类**：
+
 - **统一逻辑框架**（5个文档）：统一框架、思维表征、总结、快速入门、导航
 - **全局关系梳理**（6个文档）：全局关系、转换路径、标准映射、应用场景等
 - **扩展主题与任务**（2个文档）：扩展计划、可视化
@@ -104,7 +139,7 @@
 
 **推荐路径**：
 
-```
+```text
 1. PROJECT_DIRECTORY_INTEGRATION.md (三大目录整合) ⭐5分钟
    ↓
 2. structure/FRAMEWORK_QUICK_START.md (快速入门) ⭐5分钟
@@ -217,6 +252,7 @@
 ```
 
 **推荐文档**：
+
 - `structure/FRAMEWORK_QUICK_START.md` - 快速入门指南
 - `PROJECT_DIRECTORY_INTEGRATION.md` - 三大目录整合说明
 - `themes/README.md` - 主题总览
@@ -240,6 +276,7 @@
 ```
 
 **推荐文档**：
+
 - `structure/UNIFIED_LOGIC_FRAMEWORK.md` - 统一逻辑框架
 - `structure/view01.md`, `view02.md`, `view03.md` - 树形结构理论
 - `view/ai_prompt.md` - 七维转换体系理论
@@ -266,6 +303,7 @@
 ```
 
 **推荐文档**：
+
 - `view/practices/` - 实践指南目录
 - `view/analysis/` - 分析文档目录
 - 各Schema的`04_Transformation.md` - 转换实现
@@ -288,6 +326,7 @@
 ```
 
 **推荐文档**：
+
 - `PROJECT_COMPREHENSIVE_COMPLETION_REPORT.md` - 项目完成报告
 - `structure/EXPANSION_THEMES_AND_TASKS.md` - 扩展主题与任务
 - `structure/GLOBAL_THEME_RELATIONSHIP_ANALYSIS.md` - 全局关系梳理
@@ -398,6 +437,7 @@
 **维护者**：DSL Schema研究团队
 
 **相关文档**：
+
 - `PROJECT_DIRECTORY_INTEGRATION.md` - 三大目录整合说明
 - `structure/FRAMEWORK_QUICK_START.md` - 快速入门指南
 - `structure/FRAMEWORK_NAVIGATION.md` - 统一逻辑框架导航地图

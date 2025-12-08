@@ -877,8 +877,20 @@ cache:
 
 **参考文档**：
 
+### 性能优化文档
+
 - `analysis/11_MCP_Performance_Optimization.md` - 性能优化分析
 - `src/server/performance/` - 性能优化代码实现
 
+### 模式文档 ⭐新增
+
+- `docs/structure/INFORMATION_PROCESSING_PATTERNS_SUMMARY.md`：信息处理模式总结（12个模式）
+  - 在MCP性能优化中，可以参考流处理模式、批处理模式、实时处理模式等
+- `docs/structure/DESIGN_PATTERNS_SUMMARY.md`：设计模式总结（15个模式）
+  - 在性能优化实现中，可以参考装饰器模式（缓存装饰器）、策略模式（优化策略）等
+- `docs/structure/ARCHITECTURE_PATTERNS_SUMMARY.md`：架构模式总结（12个模式）
+  - 在MCP系统架构设计中，可以参考微服务架构、事件驱动架构等
+- `docs/structure/PATTERNS_QUICK_REFERENCE.md`：模式快速参考指南 ⭐推荐
+
 **创建时间**：2025-01-21
-**最后更新**：2025-01-21
+**最后更新**：2025-01-27

@@ -91,6 +91,7 @@ DSL-SCHEMA-ProgramDesign-Transform/
 ### 根目录文件
 
 **核心文档**（保留）：
+
 - `README.md` - 项目主文档
 - `LICENSE` - 许可证
 - `CONTRIBUTING.md` - 贡献指南
@@ -99,10 +100,12 @@ DSL-SCHEMA-ProgramDesign-Transform/
 - `DOCUMENTATION_STYLE_GUIDE.md` - 文档风格指南
 
 **导航文档**（保留）：
+
 - `DOCUMENT_INDEX.md` - 文档索引
 - `PROJECT_NAVIGATION.md` - 项目导航
 
 **归档说明**（新增）：
+
 - `ARCHIVE_SUMMARY.md` - 归档总结
 
 ---
@@ -150,4 +153,3 @@ DSL-SCHEMA-ProgramDesign-Transform/
 
 **创建时间**：2025-01-21
 **维护者**：DSL Schema研究团队
-

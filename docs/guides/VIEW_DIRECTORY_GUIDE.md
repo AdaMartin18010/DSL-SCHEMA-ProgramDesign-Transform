@@ -15,7 +15,7 @@
 
 ### 目录结构
 
-```
+```text
 view/
 ├── README.md                    # 目录说明
 ├── NAVIGATION.md                # 导航指南 ⭐新增

@@ -563,6 +563,26 @@ def profile_convert(schemas):
 
 ---
 
-**文档版本**：1.0
-**最后更新**：2025-01-21
+## 9. 相关文档
+
+### 模式文档 ⭐新增
+
+- `docs/structure/INFORMATION_PROCESSING_PATTERNS_SUMMARY.md`：信息处理模式总结（12个模式）
+  - 在性能优化中，可以参考流处理模式、批处理模式、实时处理模式等
+- `docs/structure/DESIGN_PATTERNS_SUMMARY.md`：设计模式总结（15个模式）
+  - 在性能优化实现中，可以参考装饰器模式（缓存装饰器）、策略模式（优化策略）等
+- `docs/structure/ARCHITECTURE_PATTERNS_SUMMARY.md`：架构模式总结（12个模式）
+  - 在性能优化架构设计中，可以参考微服务架构、事件驱动架构等
+- `docs/structure/PATTERNS_QUICK_REFERENCE.md`：模式快速参考指南 ⭐推荐
+
+### 其他实践文档
+
+- `practices/10_Security_Considerations.md`：安全考虑指南
+- `practices/11_Testing_Validation.md`：测试验证指南
+- `practices/12_Real_World_Case_Studies.md`：实际应用案例研究
+
+---
+
+**文档版本**：1.1
+**最后更新**：2025-01-27
 **维护者**：DSL Schema研究团队

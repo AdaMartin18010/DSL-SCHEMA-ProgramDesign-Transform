@@ -245,6 +245,57 @@ code/
 
 ---
 
+## 🏗️ 架构和设计模式参考
+
+### 架构模式参考
+
+在实现过程中，建议参考以下架构模式文档：
+
+- **分层架构模式**：`structure/ARCHITECTURE_PATTERNS_SUMMARY.md`
+  - 推荐使用**四层架构**（表示层、应用层、领域层、基础设施层）
+  - 适用于：复杂业务系统、领域驱动设计
+
+- **微服务架构模式**：`structure/ARCHITECTURE_PATTERNS_SUMMARY.md`
+  - API网关模式：统一API入口
+  - 服务发现模式：动态服务管理
+  - 配置中心模式：集中配置管理
+
+### 设计模式参考
+
+在代码实现中，建议使用以下设计模式：
+
+- **工厂模式**：`structure/DESIGN_PATTERNS_SUMMARY.md`
+  - 用于创建不同类型的转换器、处理器
+
+- **策略模式**：`structure/DESIGN_PATTERNS_SUMMARY.md`
+  - 用于选择不同的转换策略、处理策略
+
+- **装饰器模式**：`structure/DESIGN_PATTERNS_SUMMARY.md`
+  - 用于添加验证、缓存等功能
+
+- **外观模式**：`structure/DESIGN_PATTERNS_SUMMARY.md`
+  - 用于提供统一的转换接口
+
+### 信息处理模式参考
+
+在数据处理实现中，建议参考：
+
+- **ETL模式**：`structure/INFORMATION_PROCESSING_PATTERNS_SUMMARY.md`
+  - 提取模式：从源系统提取Schema
+  - 转换模式：Schema格式转换
+  - 加载模式：加载到PostgreSQL
+
+- **流处理模式**：`structure/INFORMATION_PROCESSING_PATTERNS_SUMMARY.md`
+  - 事件流处理：实时Schema变更处理
+
+### 模式选择指南
+
+- **模式快速参考**：`structure/PATTERNS_QUICK_REFERENCE.md` ⭐推荐
+- **模式关系图谱**：`structure/PATTERN_RELATIONSHIP_GRAPH.md`
+- **决策树体系**：`structure/DECISION_TREES.md`
+
+---
+
 ## 📈 成功标准
 
 ### 功能标准
@@ -267,7 +318,26 @@ code/
 
 ---
 
-**创建时间**：2025-01-21
-**最后更新**：2025-01-21
-**维护者**：DSL Schema研究团队
+---
 
+## 📚 相关文档
+
+### 实现指南
+
+- `implementation/MULTIMODAL_KG_IMPLEMENTATION_GUIDE.md` - 多模态知识图谱实现指南
+- `implementation/TEMPORAL_KG_IMPLEMENTATION_GUIDE.md` - 时序知识图谱实现指南
+- `implementation/LLM_REASONING_IMPLEMENTATION_GUIDE.md` - LLM推理引擎实现指南
+- `implementation/USL_IMPLEMENTATION_GUIDE.md` - 统一Schema语言实现指南
+
+### 模式文档
+
+- `structure/ARCHITECTURE_PATTERNS_SUMMARY.md` - 架构模式总结（12个模式）
+- `structure/DESIGN_PATTERNS_SUMMARY.md` - 设计模式总结（15个模式）
+- `structure/INFORMATION_PROCESSING_PATTERNS_SUMMARY.md` - 信息处理模式总结（12个模式）
+- `structure/PATTERNS_QUICK_REFERENCE.md` - 模式快速参考指南 ⭐推荐
+
+---
+
+**创建时间**：2025-01-21
+**最后更新**：2025-01-27
+**维护者**：DSL Schema研究团队

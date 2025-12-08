@@ -352,6 +352,7 @@ let encoded: Vec<u8> = bincode::serialize(&log).unwrap();
 #### ⚠️ TCP协议常见问题
 
 1. **粘包问题**：
+
    ```go
    // 问题：TCP是流协议，数据可能粘在一起
    // 解决方案：使用长度前缀
@@ -373,6 +374,7 @@ let encoded: Vec<u8> = bincode::serialize(&log).unwrap();
    ```
 
 2. **半包问题**：
+
    ```rust
    // 问题：数据可能分多次接收
    // 解决方案：使用缓冲区累积数据
@@ -400,6 +402,7 @@ let encoded: Vec<u8> = bincode::serialize(&log).unwrap();
 3. **性能优化**：
    - **Nagle算法**：TCP默认启用，可能增加延迟
    - **解决方案**：使用`TCP_NODELAY`选项禁用Nagle算法
+
    ```go
    conn, _ := net.DialTCP("tcp", nil, addr)
    conn.SetNoDelay(true)  // 禁用Nagle算法
@@ -421,6 +424,7 @@ let encoded: Vec<u8> = bincode::serialize(&log).unwrap();
 1. **高频传感器数据**：
    - **挑战**：100Hz的加速度计数据，每秒100条消息
    - **解决方案**：使用二进制格式（如protobuf），批量发送
+
    ```rust
    // 批量发送，减少网络开销
    let mut batch = Vec::new();
@@ -434,6 +438,7 @@ let encoded: Vec<u8> = bincode::serialize(&log).unwrap();
 2. **低功耗设备**：
    - **挑战**：电池供电设备，需要最小化数据传输
    - **解决方案**：使用压缩算法，减少数据大小
+
    ```go
    // 使用gzip压缩
    var buf bytes.Buffer
