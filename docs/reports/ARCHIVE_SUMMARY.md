@@ -24,7 +24,7 @@
 
 ## 📁 归档目录结构
 
-```
+```text
 archive/
 ├── plans/              # 计划文档（6个）
 │   ├── COMPREHENSIVE_ADVANCEMENT_PLAN.md

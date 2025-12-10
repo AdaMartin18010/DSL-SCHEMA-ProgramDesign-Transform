@@ -27,19 +27,19 @@
 
 #### 企业财务Schema（26_Enterprise_Finance）- 3个
 
-10. ✅ Accounting_Schema - 6. 会计数据存储与分析
-11. ✅ AR_AP_Schema - 5. 应收应付数据存储与分析
-12. ✅ Budget_Management_Schema - 5. 预算数据存储与分析
+1. ✅ Accounting_Schema - 6. 会计数据存储与分析
+2. ✅ AR_AP_Schema - 5. 应收应付数据存储与分析
+3. ✅ Budget_Management_Schema - 5. 预算数据存储与分析
 
 #### 工业自动化Schema（01_Industrial_Automation）- 1个
 
-13. ✅ PLC_Schema - 8. PLC数据存储与分析
+1. ✅ PLC_Schema - 8. PLC数据存储与分析
 
 #### 其他Schema - 3个
 
-14. ✅ SWIFT_Schema - 6. SWIFT数据存储与分析
-15. ✅ CAD_Schema - 8. CAD数据存储与分析
-16. ✅ Digital_Twin_Schema - 5. PostgreSQL存储
+1. ✅ SWIFT_Schema - 6. SWIFT数据存储与分析
+2. ✅ CAD_Schema - 8. CAD数据存储与分析
+3. ✅ Digital_Twin_Schema - 5. PostgreSQL存储
 
 ---
 

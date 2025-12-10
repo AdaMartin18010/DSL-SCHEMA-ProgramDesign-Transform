@@ -50,40 +50,40 @@
 
 ### 优先级2：企业财务Schema（短期补充）
 
-6. ⏳ **AR_AP_Schema** - 应收应付Schema
-7. ⏳ **Budget_Management_Schema** - 预算管理Schema
-8. ⏳ **Cash_Management_Schema** - 现金管理Schema
-9. ⏳ **Cost_Accounting_Schema** - 成本会计Schema
-10. ⏳ **Financial_Reporting_Schema** - 财务报告Schema
-11. ⏳ **Management_Accounting_Schema** - 管理会计Schema
-12. ⏳ **Tax_Accounting_Schema** - 税务会计Schema
-13. ⏳ **XBRL_Schema** - XBRL Schema
-14. ⏳ **Audit_Schema** - 审计Schema
-15. ⏳ **Consolidated_Reporting_Schema** - 合并报表Schema
+1. ⏳ **AR_AP_Schema** - 应收应付Schema
+2. ⏳ **Budget_Management_Schema** - 预算管理Schema
+3. ⏳ **Cash_Management_Schema** - 现金管理Schema
+4. ⏳ **Cost_Accounting_Schema** - 成本会计Schema
+5. ⏳ **Financial_Reporting_Schema** - 财务报告Schema
+6. ⏳ **Management_Accounting_Schema** - 管理会计Schema
+7. ⏳ **Tax_Accounting_Schema** - 税务会计Schema
+8. ⏳ **XBRL_Schema** - XBRL Schema
+9. ⏳ **Audit_Schema** - 审计Schema
+10. ⏳ **Consolidated_Reporting_Schema** - 合并报表Schema
 
 ### 优先级3：企业绩效管理Schema
 
-16. ⏳ **KPI_Management_Schema** - KPI管理Schema
-17. ⏳ **Balanced_Scorecard_Schema** - 平衡计分卡Schema
-18. ⏳ **Performance_Evaluation_Schema** - 绩效评估Schema
+1. ⏳ **KPI_Management_Schema** - KPI管理Schema
+2. ⏳ **Balanced_Scorecard_Schema** - 平衡计分卡Schema
+3. ⏳ **Performance_Evaluation_Schema** - 绩效评估Schema
 
 ### 优先级4：其他重要Schema
 
-19. ⏳ **ERP_Schema** - ERP Schema
-20. ⏳ **BPMN_Schema** - BPMN Schema
-21. ⏳ **Workflow_Engine_Schema** - 工作流引擎Schema
-22. ⏳ **Healthcare_Schema** - 医疗Schema
-23. ⏳ **FHIR_Schema** - FHIR Schema
-24. ⏳ **HL7_Schema** - HL7 Schema
-25. ⏳ **GS1_Schema** - GS1 Schema
-26. ⏳ **EDI_Schema** - EDI Schema
-27. ⏳ **Smart_City_Schema** - 智慧城市Schema
-28. ⏳ **Smart_Home_Schema** - 智能家居Schema
-29. ⏳ **Matter_Schema** - Matter Schema
-30. ⏳ **Thread_Schema** - Thread Schema
-31. ⏳ **OA_Schema** - 办公自动化Schema
-32. ⏳ **Maritime_Schema** - 海运Schema
-33. ⏳ **Food_Industry_Schema** - 食品行业Schema
+1. ⏳ **ERP_Schema** - ERP Schema
+2. ⏳ **BPMN_Schema** - BPMN Schema
+3. ⏳ **Workflow_Engine_Schema** - 工作流引擎Schema
+4. ⏳ **Healthcare_Schema** - 医疗Schema
+5. ⏳ **FHIR_Schema** - FHIR Schema
+6. ⏳ **HL7_Schema** - HL7 Schema
+7. ⏳ **GS1_Schema** - GS1 Schema
+8. ⏳ **EDI_Schema** - EDI Schema
+9. ⏳ **Smart_City_Schema** - 智慧城市Schema
+10. ⏳ **Smart_Home_Schema** - 智能家居Schema
+11. ⏳ **Matter_Schema** - Matter Schema
+12. ⏳ **Thread_Schema** - Thread Schema
+13. ⏳ **OA_Schema** - 办公自动化Schema
+14. ⏳ **Maritime_Schema** - 海运Schema
+15. ⏳ **Food_Industry_Schema** - 食品行业Schema
 
 ---
 
