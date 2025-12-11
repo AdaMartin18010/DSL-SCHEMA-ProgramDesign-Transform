@@ -6,6 +6,7 @@
 - **[09-跨行业转换体系扩展论证](./09-跨行业转换体系扩展论证.md)** - 跨行业转换的理论框架
 - **[06-多维模型转换论证](./06-多维模型转换论证.md)** - 多维模型转换的理论基础
 - **[03-DSL转换方案与技术分析](./03-DSL转换方案与技术分析.md)** - DSL转换的技术方案
+- **[17-Schema深化模块指南](../../practices/17_Schema_Deepening_Module_Guide.md)** ⭐新增 - Schema深化模块实践指南（Smart Home、OA、Maritime、Food Industry实现）
 
 ---
 
@@ -1719,6 +1720,7 @@ flowchart TD
 - **[09-跨行业转换体系扩展论证](./09-跨行业转换体系扩展论证.md)** - 深入学习跨行业转换的理论框架
 - **[06-多维模型转换论证](./06-多维模型转换论证.md)** - 学习多维模型转换的理论基础
 - **[03-DSL转换方案与技术分析](./03-DSL转换方案与技术分析.md)** - 掌握DSL转换的技术方案
+- **[17-Schema深化模块指南](../../practices/17_Schema_Deepening_Module_Guide.md)** ⭐新增 - Schema深化模块实践指南（Smart Home、OA、Maritime、Food Industry实现）
 
 ### 导航文档
 

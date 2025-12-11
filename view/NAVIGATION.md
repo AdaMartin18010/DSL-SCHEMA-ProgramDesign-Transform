@@ -62,7 +62,7 @@
 | 09_Information_Theory_Analysis.md | 信息论分析 | [查看](theory/09_Information_Theory_Analysis.md) |
 | 10_Formal_Language_Theory_Analysis.md | 形式语言理论分析 | [查看](theory/10_Formal_Language_Theory_Analysis.md) |
 
-### 🛠️ 实践指南文档（8个）
+### 🛠️ 实践指南文档（9个）
 
 位于 `view/practices/` 目录：
 
@@ -76,6 +76,7 @@
 | 14_MCP_Performance_Optimization_Guide.md | MCP性能优化 | [查看](practices/14_MCP_Performance_Optimization_Guide.md) |
 | 15_Incremental_Transformation_Guide.md | 增量转换指南 | [查看](practices/15_Incremental_Transformation_Guide.md) |
 | 16_VSCode_Extension_Implementation_Guide.md | VSCode扩展实现 | [查看](practices/16_VSCode_Extension_Implementation_Guide.md) |
+| 17_Schema_Deepening_Module_Guide.md | Schema深化模块指南 ⭐新增 | [查看](practices/17_Schema_Deepening_Module_Guide.md) |
 
 ### 📊 图表文档（8个）
 

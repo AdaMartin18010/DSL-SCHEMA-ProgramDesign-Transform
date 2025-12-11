@@ -217,7 +217,7 @@ trajectory = processor.get_vessel_trajectory(mmsi)
 
 ## 📁 文件结构
 
-```
+```text
 code/schema_deepening/
 ├── __init__.py                          # 模块初始化
 ├── logger.py                            # 日志工具
@@ -235,12 +235,21 @@ code/schema_deepening/
 ├── food_industry_converter.py           # 食品行业转换器
 ├── food_industry_storage.py             # 食品行业存储
 ├── epcis_processor.py                   # EPCIS处理器
+├── utils.py                             # 通用工具函数
+├── examples.py                          # 使用示例
 ├── tests/                               # 测试目录
 │   ├── __init__.py
-│   ├── test_smart_home_converter.py    # 转换器测试
-│   ├── test_smart_home_storage.py       # 存储测试
+│   ├── test_smart_home_converter.py    # Smart Home转换器测试
+│   ├── test_smart_home_storage.py       # Smart Home存储测试
+│   ├── test_oa_converter.py            # OA转换器测试
+│   ├── test_maritime_converter.py      # Maritime转换器测试
+│   ├── test_food_industry_converter.py # Food Industry转换器测试
 │   └── test_cache.py                    # 缓存测试
-└── README.md                            # 本文档
+├── README.md                            # 本文档
+├── CHANGELOG.md                         # 更新日志
+├── BEST_PRACTICES.md                    # 最佳实践
+├── IMPROVEMENTS_SUMMARY.md              # 改进总结
+└── FINAL_SUMMARY.md                     # 最终总结
 ```
 
 ## 🔧 依赖
@@ -250,6 +259,8 @@ code/schema_deepening/
 - 标准库：typing, dataclasses, enum, datetime, xml.etree.ElementTree, zipfile, json, re, struct
 
 ## 📝 使用说明
+
+### 快速开始
 
 1. **导入模块**：
 
@@ -264,6 +275,20 @@ from code.schema_deepening import (
     EDIFACTParser,
     AISProcessor
 )
+
+# 工具函数
+from code.schema_deepening.utils import (
+    validate_email,
+    parse_datetime,
+    format_file_size,
+    generate_id
+)
+```
+
+2. **运行示例**：
+
+```bash
+python -m code.schema_deepening.examples
 ```
 
 2. **使用转换器**：
@@ -317,15 +342,20 @@ storage.store_device(device)
 
 ## 📊 代码统计
 
-- **总代码行数**：约5,250行
+- **总代码行数**：约8,500行（包含测试和文档）
 - **核心类数量**：13个
-- **方法数量**：约150个
+- **方法数量**：约200个
+- **工具函数**：20+个
+- **单元测试**：6个测试文件
+- **数据库索引**：25个优化索引
 
 ## 🔄 后续计划
 
 1. ✅ **功能完善**：完善错误处理、添加日志记录、添加单元测试
 2. ✅ **性能优化**：查询优化、索引优化、缓存机制
-3. **文档完善**：API文档、使用示例、最佳实践
+3. ✅ **文档完善**：API文档、使用示例、最佳实践
+4. **扩展测试**：为所有模块创建完整的单元测试
+5. **性能监控**：添加性能指标收集和分析
 
 ## ✨ 最新更新 (2025-01-21)
 
