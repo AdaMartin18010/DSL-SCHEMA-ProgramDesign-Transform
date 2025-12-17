@@ -54,7 +54,8 @@
   - [7. 总结](#7-总结)
     - [7.1 关键成果](#71-关键成果)
     - [7.2 安全建议](#72-安全建议)
-  - [8. 相关文档](#8-相关文档)
+  - [8. 安全实践综合应用实际示例](#8-安全实践综合应用实际示例)
+  - [9. 相关文档](#9-相关文档)
     - [模式文档 ⭐新增](#模式文档-新增)
     - [其他实践文档](#其他实践文档)
 
@@ -568,7 +569,323 @@ class SecurityMonitor:
 
 ---
 
-## 8. 相关文档
+## 8. 安全实践综合应用实际示例
+
+**示例：实现Schema转换安全框架**
+
+```python
+import hashlib
+import hmac
+import json
+import time
+from dataclasses import dataclass
+from typing import Dict, List, Optional, Any
+from functools import wraps
+
+@dataclass
+class SecurityContext:
+    """安全上下文"""
+    user_id: str
+    roles: List[str]
+    permissions: List[str]
+    session_id: str
+    ip_address: str
+    timestamp: float
+
+class SchemaTransformationSecurityFramework:
+    """Schema转换安全框架"""
+
+    def __init__(self, secret_key: str):
+        self.secret_key = secret_key
+        self.audit_logs = []
+        self.rate_limits = {}
+
+        # 敏感字段配置（基于2.3节）
+        self.sensitive_fields = {
+            'password', 'api_key', 'secret', 'token',
+            'credit_card', 'ssn', 'email', 'phone'
+        }
+
+        # RBAC配置（基于3.2节）
+        self.role_permissions = {
+            'admin': ['read', 'write', 'delete', 'transform', 'audit'],
+            'developer': ['read', 'write', 'transform'],
+            'viewer': ['read']
+        }
+
+    def authenticate(self, token: str) -> Optional[SecurityContext]:
+        """身份认证（基于3.1节）"""
+        try:
+            # 验证JWT令牌
+            payload = self._verify_token(token)
+
+            return SecurityContext(
+                user_id=payload.get('user_id'),
+                roles=payload.get('roles', []),
+                permissions=self._get_permissions(payload.get('roles', [])),
+                session_id=payload.get('session_id'),
+                ip_address=payload.get('ip_address'),
+                timestamp=time.time()
+            )
+        except Exception as e:
+            self._log_security_event('authentication_failed', {'error': str(e)})
+            return None
+
+    def authorize(self, context: SecurityContext, required_permission: str) -> bool:
+        """授权检查（基于3.2节）"""
+        if required_permission in context.permissions:
+            self._log_security_event('authorization_granted', {
+                'user_id': context.user_id,
+                'permission': required_permission
+            })
+            return True
+
+        self._log_security_event('authorization_denied', {
+            'user_id': context.user_id,
+            'permission': required_permission
+        })
+        return False
+
+    def check_rate_limit(self, context: SecurityContext, limit: int = 100, window: int = 60) -> bool:
+        """速率限制检查（基于3.3节）"""
+        key = f"{context.user_id}:{context.ip_address}"
+        current_time = time.time()
+
+        if key not in self.rate_limits:
+            self.rate_limits[key] = []
+
+        # 清除过期请求记录
+        self.rate_limits[key] = [
+            t for t in self.rate_limits[key]
+            if current_time - t < window
+        ]
+
+        if len(self.rate_limits[key]) >= limit:
+            self._log_security_event('rate_limit_exceeded', {
+                'user_id': context.user_id,
+                'ip_address': context.ip_address
+            })
+            return False
+
+        self.rate_limits[key].append(current_time)
+        return True
+
+    def validate_schema_input(self, schema_data: Dict) -> Dict:
+        """输入验证（基于2.2节）"""
+        validation_result = {
+            'valid': True,
+            'errors': [],
+            'warnings': []
+        }
+
+        # 检查注入攻击
+        if self._detect_injection(schema_data):
+            validation_result['valid'] = False
+            validation_result['errors'].append('检测到潜在的注入攻击')
+
+        # 检查Schema结构
+        if not self._validate_structure(schema_data):
+            validation_result['valid'] = False
+            validation_result['errors'].append('Schema结构无效')
+
+        # 检查敏感字段
+        sensitive_found = self._detect_sensitive_fields(schema_data)
+        if sensitive_found:
+            validation_result['warnings'].append(
+                f'发现敏感字段: {sensitive_found}'
+            )
+
+        return validation_result
+
+    def mask_sensitive_data(self, schema_data: Dict) -> Dict:
+        """数据脱敏（基于2.3节）"""
+        return self._recursive_mask(schema_data)
+
+    def encrypt_data(self, data: str) -> str:
+        """数据加密（基于2.1节）"""
+        # 使用HMAC-SHA256加密
+        return hmac.new(
+            self.secret_key.encode(),
+            data.encode(),
+            hashlib.sha256
+        ).hexdigest()
+
+    def secure_transform(self, context: SecurityContext,
+                         source_schema: Dict,
+                         transformation_type: str) -> Dict:
+        """安全转换（综合应用）"""
+        result = {
+            'success': False,
+            'data': None,
+            'audit_id': None,
+            'errors': []
+        }
+
+        # 1. 授权检查
+        if not self.authorize(context, 'transform'):
+            result['errors'].append('未授权执行转换操作')
+            return result
+
+        # 2. 速率限制检查
+        if not self.check_rate_limit(context):
+            result['errors'].append('超出速率限制')
+            return result
+
+        # 3. 输入验证
+        validation = self.validate_schema_input(source_schema)
+        if not validation['valid']:
+            result['errors'].extend(validation['errors'])
+            return result
+
+        # 4. 数据脱敏（日志用）
+        masked_schema = self.mask_sensitive_data(source_schema)
+
+        # 5. 执行转换
+        try:
+            transformed_schema = self._execute_transformation(
+                source_schema, transformation_type
+            )
+            result['success'] = True
+            result['data'] = transformed_schema
+        except Exception as e:
+            result['errors'].append(f'转换失败: {str(e)}')
+
+        # 6. 审计日志
+        audit_id = self._create_audit_log(context, {
+            'action': 'secure_transform',
+            'transformation_type': transformation_type,
+            'source_schema': masked_schema,
+            'success': result['success']
+        })
+        result['audit_id'] = audit_id
+
+        return result
+
+    def _verify_token(self, token: str) -> Dict:
+        """验证令牌"""
+        # 简化实现：实际应使用JWT库
+        return {
+            'user_id': 'user123',
+            'roles': ['developer'],
+            'session_id': 'session456',
+            'ip_address': '127.0.0.1'
+        }
+
+    def _get_permissions(self, roles: List[str]) -> List[str]:
+        """获取角色权限"""
+        permissions = set()
+        for role in roles:
+            permissions.update(self.role_permissions.get(role, []))
+        return list(permissions)
+
+    def _detect_injection(self, data: Any) -> bool:
+        """检测注入攻击"""
+        dangerous_patterns = ['<script>', 'DROP TABLE', 'UNION SELECT', '{{', '}}']
+        data_str = json.dumps(data)
+        return any(pattern in data_str for pattern in dangerous_patterns)
+
+    def _validate_structure(self, schema_data: Dict) -> bool:
+        """验证Schema结构"""
+        return isinstance(schema_data, dict)
+
+    def _detect_sensitive_fields(self, data: Any, path: str = '') -> List[str]:
+        """检测敏感字段"""
+        found = []
+        if isinstance(data, dict):
+            for key, value in data.items():
+                current_path = f"{path}.{key}" if path else key
+                if key.lower() in self.sensitive_fields:
+                    found.append(current_path)
+                found.extend(self._detect_sensitive_fields(value, current_path))
+        elif isinstance(data, list):
+            for i, item in enumerate(data):
+                found.extend(self._detect_sensitive_fields(item, f"{path}[{i}]"))
+        return found
+
+    def _recursive_mask(self, data: Any) -> Any:
+        """递归脱敏"""
+        if isinstance(data, dict):
+            return {
+                key: '***MASKED***' if key.lower() in self.sensitive_fields
+                else self._recursive_mask(value)
+                for key, value in data.items()
+            }
+        elif isinstance(data, list):
+            return [self._recursive_mask(item) for item in data]
+        return data
+
+    def _execute_transformation(self, schema: Dict, transformation_type: str) -> Dict:
+        """执行转换"""
+        return {'transformed': True, 'type': transformation_type, 'data': schema}
+
+    def _log_security_event(self, event_type: str, details: Dict):
+        """记录安全事件（基于4.1节）"""
+        self.audit_logs.append({
+            'timestamp': time.time(),
+            'event_type': event_type,
+            'details': details
+        })
+
+    def _create_audit_log(self, context: SecurityContext, details: Dict) -> str:
+        """创建审计日志"""
+        audit_id = hashlib.sha256(
+            f"{context.user_id}{time.time()}".encode()
+        ).hexdigest()[:16]
+
+        self.audit_logs.append({
+            'audit_id': audit_id,
+            'timestamp': time.time(),
+            'user_id': context.user_id,
+            'session_id': context.session_id,
+            'ip_address': context.ip_address,
+            'details': details
+        })
+
+        return audit_id
+
+# 实际应用示例
+security_framework = SchemaTransformationSecurityFramework(secret_key='my_secret_key')
+
+# 示例1：身份认证
+print("=== 示例1：身份认证 ===")
+context = security_framework.authenticate('valid_token')
+if context:
+    print(f"认证成功: 用户={context.user_id}, 角色={context.roles}")
+
+# 示例2：授权检查
+print("\n=== 示例2：授权检查 ===")
+can_transform = security_framework.authorize(context, 'transform')
+print(f"转换权限: {can_transform}")
+
+# 示例3：输入验证
+print("\n=== 示例3：输入验证 ===")
+test_schema = {
+    'openapi': '3.1.0',
+    'info': {'title': 'Test API'},
+    'paths': {},
+    'password': 'secret123'  # 敏感字段
+}
+validation = security_framework.validate_schema_input(test_schema)
+print(f"验证结果: {validation['valid']}")
+print(f"警告: {validation['warnings']}")
+
+# 示例4：数据脱敏
+print("\n=== 示例4：数据脱敏 ===")
+masked = security_framework.mask_sensitive_data(test_schema)
+print(f"脱敏后: password={masked['password']}")
+
+# 示例5：安全转换
+print("\n=== 示例5：安全转换 ===")
+transform_result = security_framework.secure_transform(
+    context, test_schema, 'openapi_to_asyncapi'
+)
+print(f"转换成功: {transform_result['success']}")
+print(f"审计ID: {transform_result['audit_id']}")
+```
+
+---
+
+## 9. 相关文档
 
 ### 模式文档 ⭐新增
 
@@ -586,6 +903,25 @@ class SecurityMonitor:
 
 ---
 
-**文档版本**：1.1
+## 📝 版本历史
+
+### v1.2 (2025-01-21) - 实际应用示例增强版
+
+- ✅ 扩展第8章：为安全实践添加综合应用实际示例（包含Schema转换安全框架实现、身份认证、授权控制、速率限制、输入验证、数据脱敏、安全转换、审计日志）
+- ✅ 添加版本历史章节
+- ✅ 更新文档版本号至v1.2
+
+### v1.1 (2025-01-27) - 初始版本
+
+- ✅ 创建文档：安全考虑与实践
+- ✅ 添加数据安全章节
+- ✅ 添加访问控制章节
+- ✅ 添加安全审计章节
+- ✅ 添加安全最佳实践章节
+- ✅ 添加合规性章节
+
+---
+
+**文档版本**：1.2（实际应用示例增强版）
 **最后更新**：2025-01-27
 **维护者**：DSL Schema研究团队

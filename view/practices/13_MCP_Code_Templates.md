@@ -28,7 +28,8 @@
     - [6.1 Docker配置](#61-docker配置)
     - [6.2 Kubernetes配置](#62-kubernetes配置)
     - [6.3 环境变量配置](#63-环境变量配置)
-  - [7. 参考文档](#7-参考文档)
+  - [7. MCP模板综合应用实际示例](#7-mcp模板综合应用实际示例)
+  - [8. 参考文档](#8-参考文档)
     - [MCP文档](#mcp文档)
     - [模式文档 ⭐新增](#模式文档-新增)
 
@@ -857,7 +858,684 @@ TIMEOUT_MS=5000
 
 ---
 
-## 7. 参考文档
+## 7. MCP模板综合应用实际示例
+
+**示例：实现完整的MCP Schema转换服务生成器**
+
+```python
+from dataclasses import dataclass
+from typing import Dict, List, Optional, Any
+from enum import Enum
+import json
+
+class Language(Enum):
+    """支持的语言"""
+    TYPESCRIPT = "typescript"
+    PYTHON = "python"
+    GO = "go"
+
+class TemplateType(Enum):
+    """模板类型"""
+    PROJECT = "project"
+    SERVER = "server"
+    TRANSFORMER = "transformer"
+    TOOL = "tool"
+    TEST = "test"
+    CONFIG = "config"
+
+@dataclass
+class GeneratedFile:
+    """生成的文件"""
+    path: str
+    content: str
+    language: str
+
+class MCPTemplateGenerator:
+    """MCP模板生成器"""
+
+    def __init__(self, project_name: str, language: Language = Language.TYPESCRIPT):
+        self.project_name = project_name
+        self.language = language
+        self.generated_files: List[GeneratedFile] = []
+
+    def generate_complete_project(self, transformers: List[str]) -> List[GeneratedFile]:
+        """生成完整项目"""
+        self.generated_files = []
+
+        # 1. 生成项目配置（基于第1章）
+        self._generate_project_config()
+
+        # 2. 生成MCP Server（基于第2章）
+        self._generate_mcp_server(transformers)
+
+        # 3. 生成转换器（基于第3章）
+        for transformer in transformers:
+            self._generate_transformer(transformer)
+
+        # 4. 生成工具定义（基于第4章）
+        self._generate_tool_definitions(transformers)
+
+        # 5. 生成测试（基于第5章）
+        self._generate_tests(transformers)
+
+        # 6. 生成配置（基于第6章）
+        self._generate_deployment_config()
+
+        return self.generated_files
+
+    def _generate_project_config(self):
+        """生成项目配置（基于第1章）"""
+        if self.language == Language.TYPESCRIPT:
+            # package.json
+            package_json = {
+                "name": self.project_name,
+                "version": "1.0.0",
+                "type": "module",
+                "description": "MCP Schema转换服务器",
+                "main": "dist/index.js",
+                "scripts": {
+                    "build": "tsc",
+                    "start": "node dist/index.js",
+                    "dev": "tsx watch src/index.ts",
+                    "test": "vitest"
+                },
+                "dependencies": {
+                    "@modelcontextprotocol/sdk": "^0.5.0",
+                    "ajv": "^8.12.0",
+                    "openapi-types": "^12.0.0"
+                },
+                "devDependencies": {
+                    "@types/node": "^20.0.0",
+                    "tsx": "^4.7.0",
+                    "typescript": "^5.3.0",
+                    "vitest": "^1.0.0"
+                }
+            }
+            self.generated_files.append(GeneratedFile(
+                path="package.json",
+                content=json.dumps(package_json, indent=2),
+                language="json"
+            ))
+
+            # tsconfig.json
+            tsconfig = {
+                "compilerOptions": {
+                    "target": "ES2022",
+                    "module": "ESNext",
+                    "moduleResolution": "node",
+                    "outDir": "./dist",
+                    "rootDir": "./src",
+                    "strict": True,
+                    "esModuleInterop": True,
+                    "declaration": True
+                },
+                "include": ["src/**/*"],
+                "exclude": ["node_modules"]
+            }
+            self.generated_files.append(GeneratedFile(
+                path="tsconfig.json",
+                content=json.dumps(tsconfig, indent=2),
+                language="json"
+            ))
+
+        elif self.language == Language.PYTHON:
+            # requirements.txt
+            requirements = """mcp>=0.5.0
+pydantic>=2.0.0
+fastapi>=0.100.0
+uvicorn>=0.23.0
+pytest>=7.0.0
+pytest-asyncio>=0.21.0
+"""
+            self.generated_files.append(GeneratedFile(
+                path="requirements.txt",
+                content=requirements,
+                language="txt"
+            ))
+
+            # pyproject.toml
+            pyproject = f'''[project]
+name = "{self.project_name}"
+version = "1.0.0"
+description = "MCP Schema转换服务器"
+requires-python = ">=3.10"
+
+[build-system]
+requires = ["setuptools>=45", "wheel"]
+build-backend = "setuptools.build_meta"
+'''
+            self.generated_files.append(GeneratedFile(
+                path="pyproject.toml",
+                content=pyproject,
+                language="toml"
+            ))
+
+    def _generate_mcp_server(self, transformers: List[str]):
+        """生成MCP Server（基于第2章）"""
+        if self.language == Language.TYPESCRIPT:
+            server_code = self._generate_typescript_server(transformers)
+        else:
+            server_code = self._generate_python_server(transformers)
+
+        ext = "ts" if self.language == Language.TYPESCRIPT else "py"
+        self.generated_files.append(GeneratedFile(
+            path=f"src/index.{ext}",
+            content=server_code,
+            language=ext
+        ))
+
+    def _generate_typescript_server(self, transformers: List[str]) -> str:
+        """生成TypeScript服务器代码"""
+        transformer_imports = "\n".join([
+            f'import {{ {t}Transformer }} from "./transformers/{t.lower()}";'
+            for t in transformers
+        ])
+
+        tool_registrations = "\n".join([
+            f'''    server.setRequestHandler(ListToolsRequestSchema, async () => {{
+      return {{
+        tools: [
+          {{
+            name: "transform_{t.lower()}",
+            description: "{t} Schema转换",
+            inputSchema: {{
+              type: "object",
+              properties: {{
+                source: {{ type: "object", description: "源Schema" }},
+                options: {{ type: "object", description: "转换选项" }}
+              }},
+              required: ["source"]
+            }}
+          }}
+        ]
+      }};
+    }});'''
+            for t in transformers
+        ])
+
+        return f'''import {{ Server }} from "@modelcontextprotocol/sdk/server/index.js";
+import {{ StdioServerTransport }} from "@modelcontextprotocol/sdk/server/stdio.js";
+import {{ ListToolsRequestSchema, CallToolRequestSchema }} from "@modelcontextprotocol/sdk/types.js";
+{transformer_imports}
+
+const server = new Server(
+  {{ name: "{self.project_name}", version: "1.0.0" }},
+  {{ capabilities: {{ tools: {{}} }} }}
+);
+
+// 工具列表
+{tool_registrations}
+
+// 工具调用处理
+server.setRequestHandler(CallToolRequestSchema, async (request) => {{
+  const {{ name, arguments: args }} = request.params;
+
+  switch (name) {{
+{self._generate_typescript_switch_cases(transformers)}
+    default:
+      throw new Error(`Unknown tool: ${{name}}`);
+  }}
+}});
+
+// 启动服务器
+async function main() {{
+  const transport = new StdioServerTransport();
+  await server.connect(transport);
+  console.error("{self.project_name} MCP server running");
+}}
+
+main().catch(console.error);
+'''
+
+    def _generate_typescript_switch_cases(self, transformers: List[str]) -> str:
+        """生成TypeScript switch cases"""
+        cases = []
+        for t in transformers:
+            cases.append(f'''    case "transform_{t.lower()}":
+      const {t.lower()}Result = new {t}Transformer().transform(args.source, args.options);
+      return {{ content: [{{ type: "text", text: JSON.stringify({t.lower()}Result, null, 2) }}] }};''')
+        return "\n".join(cases)
+
+    def _generate_python_server(self, transformers: List[str]) -> str:
+        """生成Python服务器代码"""
+        transformer_imports = "\n".join([
+            f'from transformers.{t.lower()} import {t}Transformer'
+            for t in transformers
+        ])
+
+        return f'''import asyncio
+from mcp.server import Server
+from mcp.server.stdio import stdio_server
+from mcp.types import Tool, TextContent
+{transformer_imports}
+
+server = Server("{self.project_name}")
+
+# 转换器实例
+transformers = {{
+{self._generate_python_transformer_dict(transformers)}
+}}
+
+@server.list_tools()
+async def list_tools() -> list[Tool]:
+    return [
+{self._generate_python_tool_list(transformers)}
+    ]
+
+@server.call_tool()
+async def call_tool(name: str, arguments: dict) -> list[TextContent]:
+    if name.startswith("transform_"):
+        transformer_name = name.replace("transform_", "")
+        if transformer_name in transformers:
+            result = transformers[transformer_name].transform(
+                arguments.get("source", {{}}),
+                arguments.get("options", {{}})
+            )
+            return [TextContent(type="text", text=str(result))]
+
+    raise ValueError(f"Unknown tool: {{name}}")
+
+async def main():
+    async with stdio_server() as (read_stream, write_stream):
+        await server.run(read_stream, write_stream)
+
+if __name__ == "__main__":
+    asyncio.run(main())
+'''
+
+    def _generate_python_transformer_dict(self, transformers: List[str]) -> str:
+        """生成Python转换器字典"""
+        return ",\n".join([
+            f'    "{t.lower()}": {t}Transformer()'
+            for t in transformers
+        ])
+
+    def _generate_python_tool_list(self, transformers: List[str]) -> str:
+        """生成Python工具列表"""
+        tools = []
+        for t in transformers:
+            tools.append(f'''        Tool(
+            name="transform_{t.lower()}",
+            description="{t} Schema转换",
+            inputSchema={{
+                "type": "object",
+                "properties": {{
+                    "source": {{"type": "object", "description": "源Schema"}},
+                    "options": {{"type": "object", "description": "转换选项"}}
+                }},
+                "required": ["source"]
+            }}
+        )''')
+        return ",\n".join(tools)
+
+    def _generate_transformer(self, transformer_name: str):
+        """生成转换器（基于第3章）"""
+        if self.language == Language.TYPESCRIPT:
+            content = self._generate_typescript_transformer(transformer_name)
+            ext = "ts"
+        else:
+            content = self._generate_python_transformer(transformer_name)
+            ext = "py"
+
+        self.generated_files.append(GeneratedFile(
+            path=f"src/transformers/{transformer_name.lower()}.{ext}",
+            content=content,
+            language=ext
+        ))
+
+    def _generate_typescript_transformer(self, name: str) -> str:
+        """生成TypeScript转换器"""
+        return f'''export interface TransformOptions {{
+  preserveComments?: boolean;
+  strictMode?: boolean;
+}}
+
+export interface TransformResult {{
+  success: boolean;
+  data: any;
+  errors?: string[];
+}}
+
+export class {name}Transformer {{
+  transform(source: any, options: TransformOptions = {{}}): TransformResult {{
+    try {{
+      // TODO: 实现{name}转换逻辑
+      const transformed = this._doTransform(source, options);
+
+      return {{
+        success: true,
+        data: transformed
+      }};
+    }} catch (error) {{
+      return {{
+        success: false,
+        data: null,
+        errors: [error.message]
+      }};
+    }}
+  }}
+
+  private _doTransform(source: any, options: TransformOptions): any {{
+    // 基础转换实现
+    return {{
+      transformed: true,
+      originalType: "{name}",
+      timestamp: new Date().toISOString(),
+      ...source
+    }};
+  }}
+
+  validate(schema: any): boolean {{
+    // TODO: 实现验证逻辑
+    return true;
+  }}
+}}
+'''
+
+    def _generate_python_transformer(self, name: str) -> str:
+        """生成Python转换器"""
+        return f'''from dataclasses import dataclass
+from typing import Dict, Any, Optional, List
+
+@dataclass
+class TransformOptions:
+    preserve_comments: bool = False
+    strict_mode: bool = False
+
+@dataclass
+class TransformResult:
+    success: bool
+    data: Optional[Dict[str, Any]]
+    errors: Optional[List[str]] = None
+
+class {name}Transformer:
+    def transform(self, source: Dict[str, Any],
+                  options: Optional[Dict[str, Any]] = None) -> TransformResult:
+        """执行{name}转换"""
+        try:
+            opts = TransformOptions(**(options or {{}}))
+            transformed = self._do_transform(source, opts)
+
+            return TransformResult(
+                success=True,
+                data=transformed
+            )
+        except Exception as e:
+            return TransformResult(
+                success=False,
+                data=None,
+                errors=[str(e)]
+            )
+
+    def _do_transform(self, source: Dict[str, Any],
+                      options: TransformOptions) -> Dict[str, Any]:
+        """内部转换实现"""
+        from datetime import datetime
+
+        return {{
+            "transformed": True,
+            "originalType": "{name}",
+            "timestamp": datetime.now().isoformat(),
+            **source
+        }}
+
+    def validate(self, schema: Dict[str, Any]) -> bool:
+        """验证Schema"""
+        # TODO: 实现验证逻辑
+        return True
+'''
+
+    def _generate_tool_definitions(self, transformers: List[str]):
+        """生成工具定义（基于第4章）"""
+        if self.language == Language.TYPESCRIPT:
+            content = self._generate_typescript_tools(transformers)
+            ext = "ts"
+        else:
+            content = self._generate_python_tools(transformers)
+            ext = "py"
+
+        self.generated_files.append(GeneratedFile(
+            path=f"src/tools/definitions.{ext}",
+            content=content,
+            language=ext
+        ))
+
+    def _generate_typescript_tools(self, transformers: List[str]) -> str:
+        """生成TypeScript工具定义"""
+        tool_defs = []
+        for t in transformers:
+            tool_defs.append(f'''  {{
+    name: "transform_{t.lower()}",
+    description: "{t} Schema转换工具",
+    inputSchema: {{
+      type: "object",
+      properties: {{
+        source: {{ type: "object", description: "源Schema" }},
+        options: {{
+          type: "object",
+          properties: {{
+            preserveComments: {{ type: "boolean", default: false }},
+            strictMode: {{ type: "boolean", default: false }}
+          }}
+        }}
+      }},
+      required: ["source"]
+    }}
+  }}''')
+
+        return f'''export const toolDefinitions = [
+{",".join(tool_defs)}
+];
+'''
+
+    def _generate_python_tools(self, transformers: List[str]) -> str:
+        """生成Python工具定义"""
+        return f'''TOOL_DEFINITIONS = [
+{self._generate_python_tool_defs(transformers)}
+]
+'''
+
+    def _generate_python_tool_defs(self, transformers: List[str]) -> str:
+        """生成Python工具定义列表"""
+        defs = []
+        for t in transformers:
+            defs.append(f'''    {{
+        "name": "transform_{t.lower()}",
+        "description": "{t} Schema转换工具",
+        "inputSchema": {{
+            "type": "object",
+            "properties": {{
+                "source": {{"type": "object", "description": "源Schema"}},
+                "options": {{
+                    "type": "object",
+                    "properties": {{
+                        "preserve_comments": {{"type": "boolean", "default": False}},
+                        "strict_mode": {{"type": "boolean", "default": False}}
+                    }}
+                }}
+            }},
+            "required": ["source"]
+        }}
+    }}''')
+        return ",\n".join(defs)
+
+    def _generate_tests(self, transformers: List[str]):
+        """生成测试（基于第5章）"""
+        for t in transformers:
+            if self.language == Language.TYPESCRIPT:
+                content = self._generate_typescript_test(t)
+                ext = "test.ts"
+            else:
+                content = self._generate_python_test(t)
+                ext = "test.py"
+
+            self.generated_files.append(GeneratedFile(
+                path=f"tests/{t.lower()}.{ext}",
+                content=content,
+                language=ext.split(".")[-1]
+            ))
+
+    def _generate_typescript_test(self, transformer_name: str) -> str:
+        """生成TypeScript测试"""
+        return f'''import {{ describe, it, expect }} from "vitest";
+import {{ {transformer_name}Transformer }} from "../src/transformers/{transformer_name.lower()}";
+
+describe("{transformer_name}Transformer", () => {{
+  const transformer = new {transformer_name}Transformer();
+
+  it("should transform valid schema", () => {{
+    const source = {{ type: "object", properties: {{}} }};
+    const result = transformer.transform(source);
+
+    expect(result.success).toBe(true);
+    expect(result.data).toBeDefined();
+    expect(result.data.transformed).toBe(true);
+  }});
+
+  it("should handle empty schema", () => {{
+    const result = transformer.transform({{}});
+
+    expect(result.success).toBe(true);
+  }});
+
+  it("should pass validation", () => {{
+    const schema = {{ type: "object" }};
+    expect(transformer.validate(schema)).toBe(true);
+  }});
+}});
+'''
+
+    def _generate_python_test(self, transformer_name: str) -> str:
+        """生成Python测试"""
+        return f'''import pytest
+from src.transformers.{transformer_name.lower()} import {transformer_name}Transformer
+
+class Test{transformer_name}Transformer:
+    def setup_method(self):
+        self.transformer = {transformer_name}Transformer()
+
+    def test_transform_valid_schema(self):
+        source = {{"type": "object", "properties": {{}}}}
+        result = self.transformer.transform(source)
+
+        assert result.success is True
+        assert result.data is not None
+        assert result.data["transformed"] is True
+
+    def test_transform_empty_schema(self):
+        result = self.transformer.transform({{}})
+
+        assert result.success is True
+
+    def test_validate_schema(self):
+        schema = {{"type": "object"}}
+        assert self.transformer.validate(schema) is True
+'''
+
+    def _generate_deployment_config(self):
+        """生成部署配置（基于第6章）"""
+        # Dockerfile
+        if self.language == Language.TYPESCRIPT:
+            dockerfile = f'''FROM node:20-alpine
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --production
+COPY dist ./dist
+CMD ["node", "dist/index.js"]
+'''
+        else:
+            dockerfile = f'''FROM python:3.11-slim
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+COPY src ./src
+CMD ["python", "-m", "src.index"]
+'''
+
+        self.generated_files.append(GeneratedFile(
+            path="Dockerfile",
+            content=dockerfile,
+            language="dockerfile"
+        ))
+
+        # docker-compose.yml
+        docker_compose = f'''version: "3.8"
+
+services:
+  mcp-server:
+    build: .
+    environment:
+      - LOG_LEVEL=info
+      - CACHE_ENABLED=true
+    volumes:
+      - ./logs:/app/logs
+'''
+        self.generated_files.append(GeneratedFile(
+            path="docker-compose.yml",
+            content=docker_compose,
+            language="yaml"
+        ))
+
+        # .env.example
+        env_example = '''LOG_LEVEL=info
+CACHE_ENABLED=true
+CACHE_TTL=3600
+MAX_CONCURRENT_TRANSFORMS=10
+TIMEOUT_MS=5000
+'''
+        self.generated_files.append(GeneratedFile(
+            path=".env.example",
+            content=env_example,
+            language="env"
+        ))
+
+    def get_project_summary(self) -> Dict:
+        """获取项目摘要"""
+        file_types = {}
+        for f in self.generated_files:
+            ext = f.path.split(".")[-1]
+            file_types[ext] = file_types.get(ext, 0) + 1
+
+        return {
+            "project_name": self.project_name,
+            "language": self.language.value,
+            "total_files": len(self.generated_files),
+            "file_types": file_types,
+            "files": [f.path for f in self.generated_files]
+        }
+
+# 实际应用示例
+generator = MCPTemplateGenerator(
+    project_name="my-mcp-transformer",
+    language=Language.TYPESCRIPT
+)
+
+# 生成完整项目
+transformers = ["OpenAPI", "AsyncAPI", "JSONSchema"]
+files = generator.generate_complete_project(transformers)
+
+# 输出项目摘要
+print("=== MCP项目生成摘要 ===")
+summary = generator.get_project_summary()
+print(f"项目名称: {summary['project_name']}")
+print(f"语言: {summary['language']}")
+print(f"生成文件数: {summary['total_files']}")
+print(f"\n文件列表:")
+for file_path in summary['files']:
+    print(f"  - {file_path}")
+
+# 预览生成的主文件
+print("\n=== 主文件预览（前50行）===")
+main_file = next((f for f in files if "index" in f.path), None)
+if main_file:
+    lines = main_file.content.split('\n')[:50]
+    for i, line in enumerate(lines, 1):
+        print(f"{i:3}: {line}")
+```
+
+---
+
+## 8. 参考文档
 
 ### MCP文档
 
@@ -876,6 +1554,26 @@ TIMEOUT_MS=5000
 
 ---
 
-**文档版本**：1.1
+## 📝 版本历史
+
+### v1.2 (2025-01-21) - 实际应用示例增强版
+
+- ✅ 扩展第7章：为MCP模板添加综合应用实际示例（包含完整项目生成器实现、TypeScript/Python双语言支持、Server生成、转换器生成、工具定义生成、测试生成、部署配置生成）
+- ✅ 添加版本历史章节
+- ✅ 更新文档版本号至v1.2
+
+### v1.1 (2025-01-27) - 初始版本
+
+- ✅ 创建文档：MCP Schema转换代码模板库
+- ✅ 添加项目模板
+- ✅ 添加MCP Server模板
+- ✅ 添加转换器模板
+- ✅ 添加工具定义模板
+- ✅ 添加测试模板
+- ✅ 添加配置模板
+
+---
+
+**文档版本**：1.2（实际应用示例增强版）
 **最后更新**：2025-01-27
 **维护者**：DSL Schema研究团队

@@ -35,8 +35,11 @@
     - [8.1 部署配置](#81-部署配置)
     - [8.2 监控告警](#82-监控告警)
     - [8.3 故障处理](#83-故障处理)
+  - [9. 增量转换综合应用实际示例](#9-增量转换综合应用实际示例)
+  - [10. 参考文档](#10-参考文档)
     - [算法文档](#算法文档)
     - [模式文档 ⭐新增](#模式文档-新增)
+  - [📝 版本历史](#-版本历史)
 
 ---
 
@@ -905,7 +908,456 @@ conflictResolution:
 
 ---
 
-**参考文档**：
+## 9. 增量转换综合应用实际示例
+
+**示例：实现增量Schema转换综合框架**
+
+```python
+import hashlib
+import time
+from dataclasses import dataclass, field
+from typing import Dict, List, Optional, Any, Set, Tuple
+from enum import Enum
+from collections import defaultdict
+
+class ChangeType(Enum):
+    """变更类型"""
+    ADD = "add"
+    MODIFY = "modify"
+    DELETE = "delete"
+
+class ConflictResolution(Enum):
+    """冲突解决策略"""
+    LAST_WRITE_WINS = "last_write_wins"
+    FIRST_WRITE_WINS = "first_write_wins"
+    MERGE = "merge"
+    MANUAL = "manual"
+
+@dataclass
+class SchemaChange:
+    """Schema变更"""
+    path: str
+    change_type: ChangeType
+    old_value: Any = None
+    new_value: Any = None
+    timestamp: float = field(default_factory=time.time)
+
+@dataclass
+class DependencyNode:
+    """依赖节点"""
+    schema_id: str
+    dependencies: Set[str] = field(default_factory=set)
+    dependents: Set[str] = field(default_factory=set)
+
+@dataclass
+class ConflictInfo:
+    """冲突信息"""
+    path: str
+    conflicting_changes: List[SchemaChange]
+    resolution: Optional[str] = None
+
+class IncrementalTransformationFramework:
+    """增量转换综合框架"""
+
+    def __init__(self):
+        # 变更检测（基于第2章）
+        self.schema_hashes: Dict[str, str] = {}
+        self.change_history: Dict[str, List[SchemaChange]] = defaultdict(list)
+
+        # 依赖分析（基于第4章）
+        self.dependency_graph: Dict[str, DependencyNode] = {}
+
+        # 缓存（基于第6章）
+        self.transform_cache: Dict[str, Dict] = {}
+        self.cache_timestamps: Dict[str, float] = {}
+
+        # 冲突处理（基于第5章）
+        self.conflicts: List[ConflictInfo] = []
+        self.default_resolution = ConflictResolution.MERGE
+
+    # ===== 变更检测（基于第2章）=====
+    def compute_hash(self, schema: Dict) -> str:
+        """计算Schema哈希（基于第2.1章）"""
+        normalized = self._normalize_schema(schema)
+        return hashlib.sha256(str(normalized).encode()).hexdigest()
+
+    def detect_changes(self, schema_id: str, old_schema: Dict, new_schema: Dict) -> List[SchemaChange]:
+        """检测变更（基于第2.2章）"""
+        changes = []
+        self._diff_schemas(old_schema, new_schema, "", changes)
+
+        # 记录变更历史
+        self.change_history[schema_id].extend(changes)
+
+        # 更新哈希
+        self.schema_hashes[schema_id] = self.compute_hash(new_schema)
+
+        return changes
+
+    def _diff_schemas(self, old: Any, new: Any, path: str, changes: List[SchemaChange]):
+        """递归比较Schema"""
+        if old is None and new is not None:
+            changes.append(SchemaChange(path=path, change_type=ChangeType.ADD, new_value=new))
+        elif old is not None and new is None:
+            changes.append(SchemaChange(path=path, change_type=ChangeType.DELETE, old_value=old))
+        elif isinstance(old, dict) and isinstance(new, dict):
+            all_keys = set(old.keys()) | set(new.keys())
+            for key in all_keys:
+                new_path = f"{path}.{key}" if path else key
+                self._diff_schemas(old.get(key), new.get(key), new_path, changes)
+        elif old != new:
+            changes.append(SchemaChange(
+                path=path, change_type=ChangeType.MODIFY,
+                old_value=old, new_value=new
+            ))
+
+    def _normalize_schema(self, schema: Any) -> Any:
+        """规范化Schema用于哈希计算"""
+        if isinstance(schema, dict):
+            return tuple(sorted((k, self._normalize_schema(v)) for k, v in schema.items()))
+        elif isinstance(schema, list):
+            return tuple(self._normalize_schema(item) for item in schema)
+        return schema
+
+    # ===== 增量更新（基于第3章）=====
+    def incremental_transform(self, schema_id: str, changes: List[SchemaChange],
+                               base_result: Dict, transformer: callable) -> Dict:
+        """增量转换（基于第3.1章）"""
+        if not changes:
+            return base_result
+
+        result = base_result.copy()
+
+        # 分析影响范围
+        affected_paths = self._analyze_affected_paths(changes)
+
+        # 按变更类型处理
+        for change in changes:
+            if change.change_type == ChangeType.ADD:
+                self._apply_add_change(result, change, transformer)
+            elif change.change_type == ChangeType.MODIFY:
+                self._apply_modify_change(result, change, transformer)
+            elif change.change_type == ChangeType.DELETE:
+                self._apply_delete_change(result, change)
+
+        # 更新缓存
+        self.transform_cache[schema_id] = result
+        self.cache_timestamps[schema_id] = time.time()
+
+        return result
+
+    def _analyze_affected_paths(self, changes: List[SchemaChange]) -> Set[str]:
+        """分析受影响的路径"""
+        affected = set()
+        for change in changes:
+            affected.add(change.path)
+            # 添加父路径
+            parts = change.path.split('.')
+            for i in range(len(parts)):
+                affected.add('.'.join(parts[:i+1]))
+        return affected
+
+    def _apply_add_change(self, result: Dict, change: SchemaChange, transformer: callable):
+        """应用添加变更"""
+        path_parts = change.path.split('.') if change.path else []
+        current = result
+
+        for part in path_parts[:-1]:
+            if part not in current:
+                current[part] = {}
+            current = current[part]
+
+        if path_parts:
+            transformed = transformer({path_parts[-1]: change.new_value})
+            current[path_parts[-1]] = transformed.get(path_parts[-1], change.new_value)
+
+    def _apply_modify_change(self, result: Dict, change: SchemaChange, transformer: callable):
+        """应用修改变更"""
+        self._apply_add_change(result, change, transformer)
+
+    def _apply_delete_change(self, result: Dict, change: SchemaChange):
+        """应用删除变更"""
+        path_parts = change.path.split('.') if change.path else []
+        current = result
+
+        for part in path_parts[:-1]:
+            if part not in current:
+                return
+            current = current[part]
+
+        if path_parts and path_parts[-1] in current:
+            del current[path_parts[-1]]
+
+    # ===== 依赖分析（基于第4章）=====
+    def build_dependency_graph(self, schemas: Dict[str, Dict]):
+        """构建依赖图（基于第4.1章）"""
+        self.dependency_graph.clear()
+
+        for schema_id, schema in schemas.items():
+            node = DependencyNode(schema_id=schema_id)
+            self.dependency_graph[schema_id] = node
+
+        # 分析依赖关系
+        for schema_id, schema in schemas.items():
+            refs = self._extract_references(schema)
+            for ref in refs:
+                if ref in self.dependency_graph:
+                    self.dependency_graph[schema_id].dependencies.add(ref)
+                    self.dependency_graph[ref].dependents.add(schema_id)
+
+    def _extract_references(self, schema: Any, refs: Set[str] = None) -> Set[str]:
+        """提取Schema引用"""
+        if refs is None:
+            refs = set()
+
+        if isinstance(schema, dict):
+            if '$ref' in schema:
+                ref = schema['$ref']
+                # 提取引用的Schema ID
+                if ref.startswith('#/components/schemas/'):
+                    refs.add(ref.split('/')[-1])
+            for value in schema.values():
+                self._extract_references(value, refs)
+        elif isinstance(schema, list):
+            for item in schema:
+                self._extract_references(item, refs)
+
+        return refs
+
+    def get_affected_schemas(self, schema_id: str) -> Set[str]:
+        """获取受影响的Schema（基于第4.2章）"""
+        affected = set()
+        self._propagate_dependencies(schema_id, affected)
+        return affected
+
+    def _propagate_dependencies(self, schema_id: str, affected: Set[str]):
+        """传播依赖"""
+        if schema_id in affected:
+            return
+
+        affected.add(schema_id)
+
+        if schema_id in self.dependency_graph:
+            for dependent in self.dependency_graph[schema_id].dependents:
+                self._propagate_dependencies(dependent, affected)
+
+    def get_transform_order(self) -> List[str]:
+        """获取转换顺序（拓扑排序）"""
+        visited = set()
+        order = []
+
+        def visit(node_id: str):
+            if node_id in visited:
+                return
+            visited.add(node_id)
+
+            if node_id in self.dependency_graph:
+                for dep in self.dependency_graph[node_id].dependencies:
+                    visit(dep)
+
+            order.append(node_id)
+
+        for node_id in self.dependency_graph:
+            visit(node_id)
+
+        return order
+
+    # ===== 冲突处理（基于第5章）=====
+    def detect_conflicts(self, changes1: List[SchemaChange],
+                          changes2: List[SchemaChange]) -> List[ConflictInfo]:
+        """检测冲突（基于第5.1章）"""
+        conflicts = []
+
+        # 按路径分组
+        changes1_by_path = {c.path: c for c in changes1}
+        changes2_by_path = {c.path: c for c in changes2}
+
+        # 检测同一路径的冲突
+        common_paths = set(changes1_by_path.keys()) & set(changes2_by_path.keys())
+
+        for path in common_paths:
+            c1 = changes1_by_path[path]
+            c2 = changes2_by_path[path]
+
+            if c1.new_value != c2.new_value:
+                conflicts.append(ConflictInfo(
+                    path=path,
+                    conflicting_changes=[c1, c2]
+                ))
+
+        self.conflicts.extend(conflicts)
+        return conflicts
+
+    def resolve_conflict(self, conflict: ConflictInfo,
+                          strategy: ConflictResolution = None) -> SchemaChange:
+        """解决冲突（基于第5.2章）"""
+        strategy = strategy or self.default_resolution
+        changes = conflict.conflicting_changes
+
+        if strategy == ConflictResolution.LAST_WRITE_WINS:
+            # 最后写入胜出
+            latest = max(changes, key=lambda c: c.timestamp)
+            conflict.resolution = f"last_write_wins: {latest.timestamp}"
+            return latest
+
+        elif strategy == ConflictResolution.FIRST_WRITE_WINS:
+            # 最先写入胜出
+            earliest = min(changes, key=lambda c: c.timestamp)
+            conflict.resolution = f"first_write_wins: {earliest.timestamp}"
+            return earliest
+
+        elif strategy == ConflictResolution.MERGE:
+            # 合并策略
+            merged = self._merge_changes(changes)
+            conflict.resolution = "merged"
+            return merged
+
+        else:
+            # 手动处理
+            conflict.resolution = "manual"
+            return changes[0]
+
+    def _merge_changes(self, changes: List[SchemaChange]) -> SchemaChange:
+        """合并变更"""
+        # 简单合并：使用最新的非空值
+        latest = max(changes, key=lambda c: c.timestamp)
+
+        if all(isinstance(c.new_value, dict) for c in changes if c.new_value):
+            merged_value = {}
+            for change in sorted(changes, key=lambda c: c.timestamp):
+                if isinstance(change.new_value, dict):
+                    merged_value.update(change.new_value)
+            return SchemaChange(
+                path=latest.path,
+                change_type=ChangeType.MODIFY,
+                new_value=merged_value
+            )
+
+        return latest
+
+    # ===== 性能优化（基于第6章）=====
+    def get_cached_result(self, schema_id: str) -> Optional[Dict]:
+        """获取缓存结果（基于第6.1章）"""
+        if schema_id in self.transform_cache:
+            return self.transform_cache[schema_id]
+        return None
+
+    def invalidate_cache(self, schema_id: str):
+        """失效缓存"""
+        if schema_id in self.transform_cache:
+            del self.transform_cache[schema_id]
+            del self.cache_timestamps[schema_id]
+
+        # 级联失效依赖的Schema
+        affected = self.get_affected_schemas(schema_id)
+        for affected_id in affected:
+            if affected_id in self.transform_cache:
+                del self.transform_cache[affected_id]
+
+    def get_transformation_stats(self) -> Dict:
+        """获取转换统计"""
+        return {
+            'total_schemas': len(self.dependency_graph),
+            'cached_results': len(self.transform_cache),
+            'total_changes': sum(len(changes) for changes in self.change_history.values()),
+            'unresolved_conflicts': len([c for c in self.conflicts if not c.resolution]),
+            'dependency_stats': {
+                'max_depth': self._calculate_max_depth(),
+                'avg_dependencies': self._calculate_avg_dependencies()
+            }
+        }
+
+    def _calculate_max_depth(self) -> int:
+        """计算最大依赖深度"""
+        def depth(node_id: str, visited: Set[str]) -> int:
+            if node_id in visited or node_id not in self.dependency_graph:
+                return 0
+            visited.add(node_id)
+            deps = self.dependency_graph[node_id].dependencies
+            if not deps:
+                return 1
+            return 1 + max(depth(d, visited) for d in deps)
+
+        if not self.dependency_graph:
+            return 0
+        return max(depth(n, set()) for n in self.dependency_graph)
+
+    def _calculate_avg_dependencies(self) -> float:
+        """计算平均依赖数"""
+        if not self.dependency_graph:
+            return 0
+        total_deps = sum(len(n.dependencies) for n in self.dependency_graph.values())
+        return total_deps / len(self.dependency_graph)
+
+# 实际应用示例
+framework = IncrementalTransformationFramework()
+
+# 示例1：变更检测
+print("=== 示例1：变更检测 ===")
+old_schema = {
+    'type': 'object',
+    'properties': {
+        'name': {'type': 'string'},
+        'age': {'type': 'integer'}
+    }
+}
+new_schema = {
+    'type': 'object',
+    'properties': {
+        'name': {'type': 'string', 'maxLength': 100},
+        'email': {'type': 'string'}
+    }
+}
+changes = framework.detect_changes('user_schema', old_schema, new_schema)
+print(f"检测到 {len(changes)} 个变更:")
+for change in changes:
+    print(f"  [{change.change_type.value}] {change.path}")
+
+# 示例2：依赖分析
+print("\n=== 示例2：依赖分析 ===")
+schemas = {
+    'User': {'type': 'object', 'properties': {}},
+    'Order': {
+        'type': 'object',
+        'properties': {
+            'user': {'$ref': '#/components/schemas/User'}
+        }
+    },
+    'Invoice': {
+        'type': 'object',
+        'properties': {
+            'order': {'$ref': '#/components/schemas/Order'}
+        }
+    }
+}
+framework.build_dependency_graph(schemas)
+print(f"转换顺序: {framework.get_transform_order()}")
+
+affected = framework.get_affected_schemas('User')
+print(f"User变更影响: {affected}")
+
+# 示例3：冲突检测与解决
+print("\n=== 示例3：冲突检测与解决 ===")
+changes1 = [SchemaChange(path='properties.name', change_type=ChangeType.MODIFY,
+                          new_value={'type': 'string', 'maxLength': 50})]
+changes2 = [SchemaChange(path='properties.name', change_type=ChangeType.MODIFY,
+                          new_value={'type': 'string', 'maxLength': 100})]
+conflicts = framework.detect_conflicts(changes1, changes2)
+print(f"检测到 {len(conflicts)} 个冲突")
+if conflicts:
+    resolved = framework.resolve_conflict(conflicts[0], ConflictResolution.MERGE)
+    print(f"解决方案: {resolved.new_value}")
+
+# 示例4：统计信息
+print("\n=== 转换统计 ===")
+stats = framework.get_transformation_stats()
+for key, value in stats.items():
+    print(f"  {key}: {value}")
+```
+
+---
+
+## 10. 参考文档
 
 ### 算法文档
 
@@ -922,5 +1374,29 @@ conflictResolution:
   - 在增量转换实现中，可以参考观察者模式、策略模式、状态模式等
 - `docs/structure/PATTERNS_QUICK_REFERENCE.md`：模式快速参考指南 ⭐推荐
 
+---
+
+## 📝 版本历史
+
+### v1.2 (2025-01-21) - 实际应用示例增强版
+
+- ✅ 扩展第9章：为增量转换添加综合应用实际示例（包含增量转换综合框架实现、变更检测、依赖图构建、依赖传播、冲突检测、冲突解决、缓存管理、统计分析）
+- ✅ 添加版本历史章节
+- ✅ 更新文档版本号至v1.2
+
+### v1.1 (2025-01-27) - 初始版本
+
+- ✅ 创建文档：增量转换实施指南
+- ✅ 添加变更检测实现
+- ✅ 添加增量更新实现
+- ✅ 添加依赖分析实现
+- ✅ 添加冲突处理实现
+- ✅ 添加性能优化实现
+- ✅ 添加测试与验证
+- ✅ 添加部署与运维
+
+---
+
+**文档版本**：1.2（实际应用示例增强版）
 **创建时间**：2025-01-21
-**最后更新**：2025-01-27
+**最后更新**：2025-01-21

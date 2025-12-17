@@ -612,7 +612,7 @@
 
 ### 1.1.5 快速开始实际应用示例
 
-**示例：5分钟快速体验Schema转换和验证**
+**示例：5分钟快速体验Schema转换和验证**:
 
 ```python
 # 快速开始示例：OpenAPI到AsyncAPI转换
@@ -5383,7 +5383,7 @@ graph TB
 
 #### 8.1.1 语法转换完备性证明实际应用示例
 
-**示例：OpenAPI到AsyncAPI的语法转换完备性验证**
+**示例：OpenAPI到AsyncAPI的语法转换完备性验证**:
 
 ```python
 class GrammarTransformer:
@@ -5578,7 +5578,7 @@ $$\forall w \in L(G_1), \llbracket w \rrbracket_1 = f_\Sigma(\llbracket w \rrbra
 
 #### 8.2.1 语义转换正确性证明实际应用示例
 
-**示例：OpenAPI到AsyncAPI的语义转换正确性验证**
+**示例：OpenAPI到AsyncAPI的语义转换正确性验证**:
 
 ```python
 class SemanticTransformer:
@@ -5804,7 +5804,7 @@ $$f_\Sigma(\llbracket w \rrbracket_1) = \llbracket f_G(w) \rrbracket_2$$
 
 #### 8.3.1 语法-语义一致性证明实际应用示例
 
-**示例：OpenAPI到AsyncAPI的语法-语义一致性验证**
+**示例：OpenAPI到AsyncAPI的语法-语义一致性验证**:
 
 ```python
 class SyntaxSemanticConsistencyVerifier:
@@ -5934,7 +5934,7 @@ graph TD
 
 #### 实际应用示例
 
-**示例：JSON Schema文法到SQL Schema文法的转换**
+**示例：JSON Schema文法到SQL Schema文法的转换**:
 
 **步骤1：定义JSON Schema文法 $G_{JSON}$**
 
@@ -5974,7 +5974,7 @@ $$f_G: L(G_{JSON}) \rightarrow L(G_{SQL})$$
 - $f_G(Type) = DataType$
 - $f_G(Constraint) = Constraint$
 
-**步骤4：证明语法转换完备性**
+**步骤4：证明语法转换完备性**:
 
 对于任意JSON Schema $w \in L(G_{JSON})$，需要证明存在 $f_G(w) \in L(G_{SQL})$。
 
@@ -5997,7 +5997,7 @@ $$f_\Sigma: \Sigma_{JSON} \rightarrow \Sigma_{SQL}$$
 - $\llbracket Table \rrbracket_{SQL} = \{columns: \{c_1, c_2, \ldots\}\}$
 - $f_\Sigma(\{properties: \{p_1, p_2, \ldots\}\}) = \{columns: \{f_G(p_1), f_G(p_2), \ldots\}\}$
 
-**步骤6：证明语义转换正确性**
+**步骤6：证明语义转换正确性**:
 
 对于任意JSON Schema $w \in L(G_{JSON})$，需要证明：
 
@@ -6011,7 +6011,7 @@ $$\llbracket w \rrbracket_{JSON} = f_\Sigma(\llbracket w \rrbracket_{JSON}) = \l
 
 由于 $f_G(p_i) = c_i$，因此语义等价性成立。
 
-**步骤7：验证语法-语义一致性**
+**步骤7：验证语法-语义一致性**:
 
 需要验证交换性条件：
 
@@ -6030,7 +6030,7 @@ $$f_\Sigma \circ \llbracket \cdot \rrbracket_{JSON} = \llbracket \cdot \rrbracke
 
 #### 文法转换算法
 
-**算法：文法转换与验证**
+**算法：文法转换与验证**:
 
 ```python
 class GrammarTransformer:

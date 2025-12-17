@@ -52,6 +52,10 @@
       - [7.1.3 企业绩效管理Schema（3个）](#713-企业绩效管理schema3个)
     - [7.2 改进计划](#72-改进计划)
     - [7.3 相关文档](#73-相关文档)
+  - [8. 概念关系图综合应用实际示例](#8-概念关系图综合应用实际示例)
+  - [📝 版本历史](#-版本历史)
+    - [v1.3 (2025-01-21) - 实际应用示例增强版](#v13-2025-01-21---实际应用示例增强版)
+    - [v1.2 (2025-01-21) - 初始版本](#v12-2025-01-21---初始版本)
 
 ---
 
@@ -968,7 +972,307 @@ DSL Schema转换体系
 
 ---
 
-**文档版本**：1.2
+## 8. 概念关系图综合应用实际示例
+
+**示例：实现基于概念关系图的Schema转换决策系统**
+
+```python
+class ConceptRelationshipManager:
+    """概念关系图管理器"""
+
+    def __init__(self):
+        # 核心概念定义（基于第2章）
+        self.concepts = {
+            'Schema': {
+                'type': 'core',
+                'definition': '描述数据结构、约束和语义的形式化规范',
+                'attributes': ['type', 'structure', 'constraints', 'semantics'],
+                'formal_definition': 'Schema = (T, V, C, M, Σ)'
+            },
+            'API_Schema': {
+                'type': 'schema',
+                'parent': 'Schema',
+                'definition': '用于定义API接口的Schema',
+                'instances': ['OpenAPI', 'AsyncAPI', 'GraphQL']
+            },
+            'IoT_Schema': {
+                'type': 'schema',
+                'parent': 'Schema',
+                'definition': '用于定义物联网设备和数据的Schema',
+                'instances': ['MQTT', 'CoAP', 'W3C_WoT']
+            },
+            'Transformation': {
+                'type': 'core',
+                'definition': '将一种Schema转换为另一种Schema的过程',
+                'attributes': ['source', 'target', 'function', 'rules'],
+                'formal_definition': 'T: S_source → S_target'
+            },
+            'MappingRule': {
+                'type': 'transformation',
+                'parent': 'Transformation',
+                'definition': '定义Schema元素之间映射关系的规则'
+            }
+        }
+
+        # 概念属性关系（基于第3章）
+        self.attribute_relations = {
+            'Schema': {
+                'structure': {'type': 'composition', 'target': 'Elements'},
+                'constraints': {'type': 'composition', 'target': 'Constraints'},
+                'semantics': {'type': 'association', 'target': 'Semantics'}
+            },
+            'Transformation': {
+                'source': {'type': 'dependency', 'target': 'Schema'},
+                'target': {'type': 'dependency', 'target': 'Schema'},
+                'function': {'type': 'association', 'target': 'Function'}
+            }
+        }
+
+        # 概念关系网络（基于第5章）
+        self.relationships = {
+            'inheritance': [
+                ('API_Schema', 'Schema'),
+                ('IoT_Schema', 'Schema'),
+                ('OpenAPI', 'API_Schema'),
+                ('AsyncAPI', 'API_Schema'),
+                ('MQTT', 'IoT_Schema')
+            ],
+            'composition': [
+                ('Schema', 'Structure'),
+                ('Schema', 'Constraints'),
+                ('Transformation', 'MappingRule')
+            ],
+            'dependency': [
+                ('Transformation', 'Schema'),
+                ('MappingRule', 'Schema')
+            ],
+            'transformation': [
+                ('OpenAPI', 'AsyncAPI', 'bidirectional'),
+                ('MQTT', 'OpenAPI', 'unidirectional'),
+                ('JSON_Schema', 'SQL_Schema', 'unidirectional')
+            ]
+        }
+
+        # 转换复杂度矩阵（基于第4.3章）
+        self.conversion_complexity = {
+            ('OpenAPI', 'AsyncAPI'): {'complexity': 'low', 'success_rate': 0.95},
+            ('AsyncAPI', 'OpenAPI'): {'complexity': 'low', 'success_rate': 0.95},
+            ('MQTT', 'OpenAPI'): {'complexity': 'medium', 'success_rate': 0.85},
+            ('JSON_Schema', 'SQL_Schema'): {'complexity': 'medium', 'success_rate': 0.90}
+        }
+
+    def get_concept(self, concept_name):
+        """获取概念定义"""
+        return self.concepts.get(concept_name, None)
+
+    def get_concept_hierarchy(self, concept_name):
+        """获取概念层次结构"""
+        hierarchy = [concept_name]
+        concept = self.concepts.get(concept_name)
+
+        while concept and 'parent' in concept:
+            parent = concept['parent']
+            hierarchy.append(parent)
+            concept = self.concepts.get(parent)
+
+        return hierarchy[::-1]  # 从根到叶子
+
+    def get_related_concepts(self, concept_name, relation_type=None):
+        """获取相关概念"""
+        related = []
+
+        for rel_type, relations in self.relationships.items():
+            if relation_type and rel_type != relation_type:
+                continue
+
+            for relation in relations:
+                if concept_name in relation:
+                    # 找到相关概念
+                    if relation[0] == concept_name:
+                        related.append({
+                            'concept': relation[1],
+                            'relation_type': rel_type,
+                            'direction': 'outgoing' if len(relation) == 2 else relation[2]
+                        })
+                    else:
+                        related.append({
+                            'concept': relation[0],
+                            'relation_type': rel_type,
+                            'direction': 'incoming' if len(relation) == 2 else relation[2]
+                        })
+
+        return related
+
+    def find_transformation_path(self, source_schema, target_schema):
+        """查找转换路径"""
+        # 直接转换
+        direct_key = (source_schema, target_schema)
+        if direct_key in self.conversion_complexity:
+            return {
+                'path': [source_schema, target_schema],
+                'direct': True,
+                'complexity': self.conversion_complexity[direct_key]
+            }
+
+        # 查找间接路径
+        visited = set()
+        queue = [(source_schema, [source_schema])]
+
+        while queue:
+            current, path = queue.pop(0)
+
+            if current in visited:
+                continue
+            visited.add(current)
+
+            # 检查所有可能的转换
+            for (src, tgt), complexity in self.conversion_complexity.items():
+                if src == current and tgt not in visited:
+                    new_path = path + [tgt]
+
+                    if tgt == target_schema:
+                        return {
+                            'path': new_path,
+                            'direct': False,
+                            'steps': len(new_path) - 1
+                        }
+
+                    queue.append((tgt, new_path))
+
+        return {'path': None, 'message': '未找到转换路径'}
+
+    def analyze_concept_network(self, concept_name):
+        """分析概念网络"""
+        analysis = {
+            'concept': concept_name,
+            'definition': self.get_concept(concept_name),
+            'hierarchy': self.get_concept_hierarchy(concept_name),
+            'related_concepts': self.get_related_concepts(concept_name),
+            'attributes': self.attribute_relations.get(concept_name, {})
+        }
+
+        # 计算网络指标
+        analysis['metrics'] = {
+            'hierarchy_depth': len(analysis['hierarchy']),
+            'related_count': len(analysis['related_concepts']),
+            'attribute_count': len(analysis['attributes'])
+        }
+
+        return analysis
+
+    def generate_concept_map(self, root_concept=None):
+        """生成概念图"""
+        concept_map = {
+            'nodes': [],
+            'edges': []
+        }
+
+        # 添加所有概念作为节点
+        for name, props in self.concepts.items():
+            concept_map['nodes'].append({
+                'id': name,
+                'type': props.get('type', 'unknown'),
+                'label': name
+            })
+
+        # 添加关系作为边
+        for rel_type, relations in self.relationships.items():
+            for relation in relations:
+                concept_map['edges'].append({
+                    'from': relation[0],
+                    'to': relation[1],
+                    'type': rel_type,
+                    'direction': relation[2] if len(relation) > 2 else 'directed'
+                })
+
+        return concept_map
+
+    def recommend_schema_for_use_case(self, use_case):
+        """根据用例推荐Schema"""
+        use_case_mapping = {
+            'web_api': ['OpenAPI', 'JSON_Schema'],
+            'async_messaging': ['AsyncAPI', 'MQTT'],
+            'iot_device': ['MQTT', 'W3C_WoT', 'CoAP'],
+            'database': ['SQL_Schema', 'JSON_Schema'],
+            'financial': ['SWIFT', 'ISO_20022'],
+            'medical': ['FHIR', 'HL7']
+        }
+
+        recommendations = use_case_mapping.get(use_case, [])
+
+        return {
+            'use_case': use_case,
+            'recommendations': recommendations,
+            'details': [self.get_concept(schema) for schema in recommendations if self.get_concept(schema)]
+        }
+
+# 实际应用示例
+manager = ConceptRelationshipManager()
+
+# 示例1：获取概念定义
+print("=== 示例1：获取概念定义 ===")
+schema_concept = manager.get_concept('Schema')
+print(f"概念: Schema")
+print(f"定义: {schema_concept['definition']}")
+print(f"形式化定义: {schema_concept['formal_definition']}")
+
+# 示例2：获取概念层次结构
+print("\n=== 示例2：获取概念层次结构 ===")
+hierarchy = manager.get_concept_hierarchy('OpenAPI')
+print(f"OpenAPI的层次结构: {' → '.join(hierarchy)}")
+
+# 示例3：获取相关概念
+print("\n=== 示例3：获取相关概念 ===")
+related = manager.get_related_concepts('Schema')
+print(f"Schema的相关概念:")
+for rel in related[:5]:
+    print(f"  {rel['concept']} ({rel['relation_type']})")
+
+# 示例4：查找转换路径
+print("\n=== 示例4：查找转换路径 ===")
+path_result = manager.find_transformation_path('OpenAPI', 'AsyncAPI')
+print(f"OpenAPI → AsyncAPI 转换路径:")
+print(f"  路径: {' → '.join(path_result['path'])}")
+print(f"  直接转换: {path_result['direct']}")
+
+# 示例5：分析概念网络
+print("\n=== 示例5：分析概念网络 ===")
+analysis = manager.analyze_concept_network('Transformation')
+print(f"Transformation概念分析:")
+print(f"  层次深度: {analysis['metrics']['hierarchy_depth']}")
+print(f"  相关概念数: {analysis['metrics']['related_count']}")
+print(f"  属性数: {analysis['metrics']['attribute_count']}")
+
+# 示例6：根据用例推荐Schema
+print("\n=== 示例6：根据用例推荐Schema ===")
+recommendations = manager.recommend_schema_for_use_case('web_api')
+print(f"用例: {recommendations['use_case']}")
+print(f"推荐的Schema: {recommendations['recommendations']}")
+```
+
+---
+
+## 📝 版本历史
+
+### v1.3 (2025-01-21) - 实际应用示例增强版
+
+- ✅ 扩展第8章：为概念关系图添加综合应用实际示例（包含概念关系图管理器实现、概念定义获取、层次结构分析、相关概念查找、转换路径查找、概念网络分析、Schema推荐）
+- ✅ 添加版本历史章节
+- ✅ 更新文档版本号至v1.3
+
+### v1.2 (2025-01-21) - 初始版本
+
+- ✅ 创建文档：项目全面概念关系图
+- ✅ 添加核心概念定义
+- ✅ 添加概念属性关系
+- ✅ 添加多维矩阵对比
+- ✅ 添加概念关系网络
+- ✅ 添加多表征表现方式
+- ✅ 添加缺失Schema说明
+
+---
+
+**文档版本**：1.3（实际应用示例增强版）
 **创建时间**：2025-01-21
 **最后更新**：2025-01-21
 **维护者**：DSL Schema研究团队
