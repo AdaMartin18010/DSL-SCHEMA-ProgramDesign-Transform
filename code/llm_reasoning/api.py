@@ -17,14 +17,63 @@ app = FastAPI(title="LLM推理引擎API", version="1.0.0")
 
 # 初始化组件（简化实现，实际应该从配置读取）
 llm: Optional[LLMInterface] = None
-kg_processor = None  # 知识图谱处理器（待实现）
+kg_processor = None  # 知识图谱处理器
 chain_builder: Optional[ReasoningChainBuilder] = None
 validator: Optional[ResultValidator] = None
 
 
+class KnowledgeGraphProcessor:
+    """知识图谱处理器（简化实现）"""
+    
+    def __init__(self):
+        """初始化知识图谱处理器"""
+        self.entities: Dict[str, Dict[str, Any]] = {}
+        self.relations: List[Dict[str, Any]] = []
+    
+    def get_entity(self, entity_id: str) -> Optional[Dict[str, Any]]:
+        """获取实体"""
+        return self.entities.get(entity_id)
+    
+    def search_entities(self, query: str) -> List[Dict[str, Any]]:
+        """搜索实体"""
+        results = []
+        query_lower = query.lower()
+        for entity_id, entity in self.entities.items():
+            if query_lower in str(entity).lower():
+                results.append(entity)
+        return results
+    
+    def get_related_entities(self, entity_id: str) -> List[Dict[str, Any]]:
+        """获取相关实体"""
+        related_ids = set()
+        for relation in self.relations:
+            if relation.get("source") == entity_id:
+                related_ids.add(relation.get("target"))
+            elif relation.get("target") == entity_id:
+                related_ids.add(relation.get("source"))
+        
+        return [self.entities[eid] for eid in related_ids if eid in self.entities]
+    
+    def add_entity(self, entity_id: str, entity_data: Dict[str, Any]):
+        """添加实体"""
+        self.entities[entity_id] = entity_data
+    
+    def add_relation(self, source: str, target: str, relation_type: str, data: Dict[str, Any] = None):
+        """添加关系"""
+        self.relations.append({
+            "source": source,
+            "target": target,
+            "type": relation_type,
+            "data": data or {}
+        })
+
+
 def initialize_llm(provider: str = "openai"):
     """初始化LLM"""
-    global llm, chain_builder, validator
+    global llm, kg_processor, chain_builder, validator
+    
+    # 初始化知识图谱处理器
+    kg_processor = KnowledgeGraphProcessor()
     
     if provider == "openai":
         api_key = os.getenv("OPENAI_API_KEY")

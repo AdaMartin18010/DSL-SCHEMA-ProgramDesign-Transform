@@ -385,6 +385,60 @@ from .data_transformation_test_framework import (
     TestStatus,
     TestType
 )
+from .data_transformation_security import (
+    DataTransformationSecurity,
+    SecurityLevel,
+    SecurityPolicyType,
+    ThreatType
+)
+from .data_transformation_compliance import (
+    DataTransformationCompliance,
+    ComplianceStandard,
+    ComplianceRuleType,
+    ComplianceStatus
+)
+from .data_transformation_authorization import (
+    DataTransformationAuthorization,
+    PermissionType,
+    ResourceType,
+    AccessLevel,
+    RoleType
+)
+from .data_transformation_api_gateway import (
+    DataTransformationApiGateway,
+    HttpMethod,
+    ApiVersion,
+    ResponseStatus
+)
+from .data_transformation_service_integration import (
+    DataTransformationServiceIntegration,
+    ServiceType,
+    ServiceStatus,
+    LoadBalanceStrategy
+)
+from .data_transformation_message_queue import (
+    DataTransformationMessageQueue,
+    MessagePriority,
+    MessageStatus,
+    QueueType
+)
+from .data_transformation_automation import (
+    DataTransformationAutomation,
+    AutomationTriggerType,
+    AutomationStatus,
+    RuleOperator
+)
+from .data_transformation_intelligence import (
+    DataTransformationIntelligence,
+    RecommendationType,
+    RecommendationPriority,
+    PatternType
+)
+from .data_transformation_learning import (
+    DataTransformationLearning,
+    LearningType,
+    KnowledgeType
+)
 
 __all__ = [
     # 增量转换器
@@ -681,5 +735,50 @@ __all__ = [
     # 数据转换测试框架
     'DataTransformationTestFramework',
     'TestStatus',
-    'TestType'
+    'TestType',
+    # 数据转换安全策略
+    'DataTransformationSecurity',
+    'SecurityLevel',
+    'SecurityPolicyType',
+    'ThreatType',
+    # 数据转换合规性检查
+    'DataTransformationCompliance',
+    'ComplianceStandard',
+    'ComplianceRuleType',
+    'ComplianceStatus',
+    # 数据转换权限管理
+    'DataTransformationAuthorization',
+    'PermissionType',
+    'ResourceType',
+    'AccessLevel',
+    'RoleType',
+    # 数据转换API网关
+    'DataTransformationApiGateway',
+    'HttpMethod',
+    'ApiVersion',
+    'ResponseStatus',
+    # 数据转换服务集成
+    'DataTransformationServiceIntegration',
+    'ServiceType',
+    'ServiceStatus',
+    'LoadBalanceStrategy',
+    # 数据转换消息队列
+    'DataTransformationMessageQueue',
+    'MessagePriority',
+    'MessageStatus',
+    'QueueType',
+    # 数据转换自动化引擎
+    'DataTransformationAutomation',
+    'AutomationTriggerType',
+    'AutomationStatus',
+    'RuleOperator',
+    # 数据转换智能推荐
+    'DataTransformationIntelligence',
+    'RecommendationType',
+    'RecommendationPriority',
+    'PatternType',
+    # 数据转换学习系统
+    'DataTransformationLearning',
+    'LearningType',
+    'KnowledgeType'
 ]

@@ -27,12 +27,27 @@ export async function registerIoTools(): Promise<Tool[]> {
               type: "string",
               description: "设备类型（sensor, actuator, gateway等）",
             },
+            protocol: {
+              type: "string",
+              description: "IoT协议（mqtt, coap, http等）",
+              enum: ["mqtt", "coap", "http", "websocket"],
+            },
           },
           required: ["iot_schema"],
         },
       },
       handler: async (args: any) => {
-        const { iot_schema, device_type } = args;
+        const { iot_schema, device_type, protocol } = args;
+
+        // 验证IoT Schema
+        try {
+          const schema = JSON.parse(iot_schema);
+          if (!schema.deviceId || !schema.capabilities) {
+            throw new Error("IoT Schema必须包含deviceId和capabilities字段");
+          }
+        } catch (error) {
+          throw new Error(`IoT Schema格式错误: ${error instanceof Error ? error.message : String(error)}`);
+        }
 
         // 执行转换
         const openApiSpec = await iotToOpenApi(iot_schema, device_type);
@@ -44,6 +59,7 @@ export async function registerIoTools(): Promise<Tool[]> {
             source_format: "iot",
             target_format: "openapi",
             device_type,
+            protocol: protocol || "mqtt",
           },
         };
       },
@@ -83,6 +99,58 @@ export async function registerIoTools(): Promise<Tool[]> {
             device_type,
           },
         };
+      },
+    },
+    {
+      definition: {
+        name: "validate_iot_schema",
+        description: "验证IoT Schema的有效性",
+        inputSchema: {
+          type: "object",
+          properties: {
+            iot_schema: {
+              type: "string",
+              description: "IoT Schema（JSON格式）",
+            },
+          },
+          required: ["iot_schema"],
+        },
+      },
+      handler: async (args: any) => {
+        const { iot_schema } = args;
+        const errors: string[] = [];
+        const warnings: string[] = [];
+
+        try {
+          const schema = JSON.parse(iot_schema);
+
+          // 验证必需字段
+          if (!schema.deviceId) {
+            errors.push("缺少必需字段: deviceId");
+          }
+          if (!schema.capabilities) {
+            errors.push("缺少必需字段: capabilities");
+          } else if (!Array.isArray(schema.capabilities)) {
+            errors.push("capabilities必须是数组");
+          }
+
+          // 验证设备类型
+          if (schema.deviceType && !["sensor", "actuator", "gateway"].includes(schema.deviceType)) {
+            warnings.push(`未知的设备类型: ${schema.deviceType}`);
+          }
+
+          return {
+            valid: errors.length === 0,
+            errors,
+            warnings,
+          };
+        } catch (error) {
+          return {
+            valid: false,
+            errors: [`JSON解析错误: ${error instanceof Error ? error.message : String(error)}`],
+            warnings: [],
+          };
+        }
       },
     },
   ];

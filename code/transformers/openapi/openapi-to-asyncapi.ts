@@ -11,11 +11,13 @@ import { parseYamlOrJson } from "../../utils/parser.js";
  * 
  * @param openApiSpec OpenAPI规范（JSON或YAML字符串）
  * @param targetVersion 目标AsyncAPI版本
+ * @param conversionRules 自定义转换规则（可选）
  * @returns AsyncAPI规范对象
  */
 export async function openApiToAsyncApi(
   openApiSpec: string,
-  targetVersion: string = "3.0.0"
+  targetVersion: string = "3.0.0",
+  conversionRules?: any
 ): Promise<any> {
   // 解析OpenAPI规范
   const openApi = parseYamlOrJson(openApiSpec);
@@ -28,18 +30,48 @@ export async function openApiToAsyncApi(
       version: openApi.info?.version || "1.0.0",
       description: openApi.info?.description || "",
     },
-    servers: convertServers(openApi.servers),
-    channels: convertPathsToChannels(openApi.paths),
+    servers: convertServers(openApi.servers, conversionRules),
+    channels: convertPathsToChannels(openApi.paths, conversionRules),
     components: convertComponents(openApi.components),
   };
+
+  // 应用自定义转换规则
+  if (conversionRules) {
+    applyConversionRules(asyncApi, conversionRules);
+  }
 
   return asyncApi;
 }
 
 /**
+ * 应用自定义转换规则
+ */
+function applyConversionRules(asyncApi: any, rules: any): void {
+  if (rules.channel_mapping) {
+    // 应用通道映射规则
+    const newChannels: Record<string, any> = {};
+    for (const [oldKey, newKey] of Object.entries(rules.channel_mapping)) {
+      if (asyncApi.channels[oldKey]) {
+        newChannels[newKey as string] = asyncApi.channels[oldKey];
+      }
+    }
+    asyncApi.channels = { ...asyncApi.channels, ...newChannels };
+  }
+
+  if (rules.server_protocols) {
+    // 应用服务器协议规则
+    for (const [serverName, protocol] of Object.entries(rules.server_protocols)) {
+      if (asyncApi.servers[serverName]) {
+        asyncApi.servers[serverName].protocol = protocol;
+      }
+    }
+  }
+}
+
+/**
  * 转换服务器定义
  */
-function convertServers(servers?: any[]): Record<string, any> {
+function convertServers(servers?: any[], conversionRules?: any): Record<string, any> {
   if (!servers || servers.length === 0) {
     return {
       production: {
@@ -65,7 +97,7 @@ function convertServers(servers?: any[]): Record<string, any> {
 /**
  * 转换路径为通道
  */
-function convertPathsToChannels(paths?: any): Record<string, any> {
+function convertPathsToChannels(paths?: any, conversionRules?: any): Record<string, any> {
   if (!paths) {
     return {};
   }

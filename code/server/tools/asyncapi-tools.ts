@@ -29,6 +29,15 @@ export async function registerAsyncApiTools(): Promise<Tool[]> {
               description: "目标OpenAPI版本（默认：3.1.0）",
               default: "3.1.0",
             },
+            protocol_binding: {
+              type: "object",
+              description: "协议绑定配置（可选）",
+              properties: {
+                mqtt: { type: "object" },
+                amqp: { type: "object" },
+                kafka: { type: "object" },
+              },
+            },
           },
           required: ["asyncapi_spec"],
         },

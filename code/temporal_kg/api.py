@@ -99,8 +99,33 @@ async def temporal_query(request: TemporalQueryRequest):
             entities.append(entity)
     
     if request.time_range:
-        # 时间区间查询（待实现）
-        pass
+        # 时间区间查询
+        start_time = request.time_range.get("start_time")
+        end_time = request.time_range.get("end_time")
+        
+        if start_time and end_time:
+            from datetime import datetime
+            start_dt = datetime.fromisoformat(start_time) if isinstance(start_time, str) else start_time
+            end_dt = datetime.fromisoformat(end_time) if isinstance(end_time, str) else end_time
+            
+            # 查询时间区间内的实体
+            range_entities = storage.get_entities_in_time_range(
+                entity_ids=request.entity_ids,
+                entity_types=request.entity_types,
+                start_time=start_dt,
+                end_time=end_dt
+            )
+            entities.extend(range_entities)
+            
+            # 查询时间区间内的关系
+            range_relations = storage.get_relations_in_time_range(
+                source_entity_id=request.source_entity_id,
+                target_entity_id=request.target_entity_id,
+                relation_type=request.relation_type,
+                start_time=start_dt,
+                end_time=end_dt
+            )
+            relations.extend(range_relations)
     
     query_time = time.time() - start_time
     

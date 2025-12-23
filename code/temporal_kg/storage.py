@@ -181,3 +181,153 @@ class TemporalKGStorage:
         except SQLAlchemyError as e:
             print(f"查询实体失败: {e}")
             return None
+    
+    def get_entities_in_time_range(
+        self,
+        entity_ids: Optional[List[str]] = None,
+        entity_types: Optional[List[str]] = None,
+        start_time: datetime = None,
+        end_time: datetime = None
+    ) -> List[Dict[str, Any]]:
+        """
+        获取时间区间内的实体
+        
+        Args:
+            entity_ids: 实体ID列表（可选）
+            entity_types: 实体类型列表（可选）
+            start_time: 开始时间
+            end_time: 结束时间
+            
+        Returns:
+            实体列表
+        """
+        try:
+            session = self.Session()
+            query = session.query(TemporalEntity)
+            
+            # 时间范围过滤
+            if start_time and end_time:
+                # 查询在时间区间内有重叠的实体
+                query = query.filter(
+                    and_(
+                        TemporalEntity.valid_from <= end_time,
+                        or_(
+                            TemporalEntity.valid_to >= start_time,
+                            TemporalEntity.valid_to.is_(None)
+                        )
+                    )
+                )
+            elif start_time:
+                query = query.filter(
+                    or_(
+                        TemporalEntity.valid_to >= start_time,
+                        TemporalEntity.valid_to.is_(None)
+                    )
+                )
+            elif end_time:
+                query = query.filter(
+                    TemporalEntity.valid_from <= end_time
+                )
+            
+            # 实体ID过滤
+            if entity_ids:
+                query = query.filter(TemporalEntity.entity_id.in_(entity_ids))
+            
+            # 实体类型过滤
+            if entity_types:
+                query = query.filter(TemporalEntity.entity_type.in_(entity_types))
+            
+            entities = query.all()
+            session.close()
+            
+            return [
+                {
+                    'entity_id': entity.entity_id,
+                    'entity_type': entity.entity_type,
+                    'properties': entity.properties,
+                    'valid_from': entity.valid_from,
+                    'valid_to': entity.valid_to
+                }
+                for entity in entities
+            ]
+        except SQLAlchemyError as e:
+            print(f"时间区间查询失败: {e}")
+            return []
+    
+    def get_relations_in_time_range(
+        self,
+        source_entity_id: Optional[str] = None,
+        target_entity_id: Optional[str] = None,
+        relation_type: Optional[str] = None,
+        start_time: datetime = None,
+        end_time: datetime = None
+    ) -> List[Dict[str, Any]]:
+        """
+        获取时间区间内的关系
+        
+        Args:
+            source_entity_id: 源实体ID（可选）
+            target_entity_id: 目标实体ID（可选）
+            relation_type: 关系类型（可选）
+            start_time: 开始时间
+            end_time: 结束时间
+            
+        Returns:
+            关系列表
+        """
+        try:
+            session = self.Session()
+            query = session.query(TemporalRelation)
+            
+            # 时间范围过滤
+            if start_time and end_time:
+                query = query.filter(
+                    and_(
+                        TemporalRelation.valid_from <= end_time,
+                        or_(
+                            TemporalRelation.valid_to >= start_time,
+                            TemporalRelation.valid_to.is_(None)
+                        )
+                    )
+                )
+            elif start_time:
+                query = query.filter(
+                    or_(
+                        TemporalRelation.valid_to >= start_time,
+                        TemporalRelation.valid_to.is_(None)
+                    )
+                )
+            elif end_time:
+                query = query.filter(
+                    TemporalRelation.valid_from <= end_time
+                )
+            
+            # 源实体过滤
+            if source_entity_id:
+                query = query.filter(TemporalRelation.source_entity_id == source_entity_id)
+            
+            # 目标实体过滤
+            if target_entity_id:
+                query = query.filter(TemporalRelation.target_entity_id == target_entity_id)
+            
+            # 关系类型过滤
+            if relation_type:
+                query = query.filter(TemporalRelation.relation_type == relation_type)
+            
+            relations = query.all()
+            session.close()
+            
+            return [
+                {
+                    'source_entity_id': relation.source_entity_id,
+                    'target_entity_id': relation.target_entity_id,
+                    'relation_type': relation.relation_type,
+                    'properties': relation.properties,
+                    'valid_from': relation.valid_from,
+                    'valid_to': relation.valid_to
+                }
+                for relation in relations
+            ]
+        except SQLAlchemyError as e:
+            print(f"时间区间关系查询失败: {e}")
+            return []
