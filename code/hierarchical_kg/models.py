@@ -45,5 +45,5 @@ class AbstractionRelation(Base):
     target_entity_id = Column(String(50), ForeignKey('hierarchical_entities.entity_id'))
     abstraction_type = Column(String(50))  # 'instance_to_pattern', 'pattern_to_concept', 'instance_to_concept'
     confidence = Column(Integer)  # 0-100
-    metadata = Column(JSON)
+    meta_data = Column(JSON)  # 使用meta_data避免与SQLAlchemy保留字冲突
     created_at = Column(DateTime, default=datetime.now)

@@ -23,7 +23,7 @@ class MultimodalEntity(Base):
     text_content = Column(Text)
     image_url = Column(Text)
     fused_embedding = Column(pgvector.sqlalchemy.Vector(512))
-    metadata = Column(JSON)
+    meta_data = Column(JSON)  # 使用meta_data避免与SQLAlchemy保留字冲突
     created_at = Column(DateTime, default=datetime.now)
     updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
     
@@ -71,5 +71,5 @@ class MultimodalRelation(Base):
     target_entity_id = Column(String(50), ForeignKey('multimodal_entities.entity_id'))
     relation_type = Column(String(50))
     confidence = Column(Integer)  # 0-100
-    metadata = Column(JSON)
+    meta_data = Column(JSON)  # 使用meta_data避免与SQLAlchemy保留字冲突
     created_at = Column(DateTime, default=datetime.now)

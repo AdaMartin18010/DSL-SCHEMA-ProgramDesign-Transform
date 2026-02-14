@@ -4,14 +4,25 @@
 实现图像嵌入、存储和检索功能
 """
 
-import torch
-from PIL import Image
-from transformers import CLIPProcessor, CLIPModel
-import requests
+from typing import List, Dict, Any, Optional, TYPE_CHECKING
 from io import BytesIO
-from typing import List, Dict, Any, Optional
 import numpy as np
 from .storage import MultimodalKGStorage
+
+# 条件导入 Heavy ML 库
+try:
+    import torch
+    from PIL import Image
+    from transformers import CLIPProcessor, CLIPModel
+    import requests
+    ML_DEPS_AVAILABLE = True
+except ImportError:
+    ML_DEPS_AVAILABLE = False
+    torch = None
+    Image = None
+    CLIPProcessor = None
+    CLIPModel = None
+    requests = None
 
 
 class ImageModalityProcessor:
@@ -26,6 +37,11 @@ class ImageModalityProcessor:
             model_name: CLIP模型名称
             storage: 存储管理器（如果为None，则创建新的）
         """
+        if not ML_DEPS_AVAILABLE:
+            raise ImportError(
+                "torch, Pillow, transformers and requests are required for ImageModalityProcessor. "
+                "Install them with: pip install torch Pillow transformers requests"
+            )
         self.model = CLIPModel.from_pretrained(model_name)
         self.processor = CLIPProcessor.from_pretrained(model_name)
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -33,7 +49,7 @@ class ImageModalityProcessor:
         self.model.eval()
         self.storage = storage or MultimodalKGStorage()
     
-    def load_image(self, image_url: str) -> Image.Image:
+    def load_image(self, image_url: str) -> "Image.Image":
         """
         加载图像
         
@@ -51,7 +67,7 @@ class ImageModalityProcessor:
         
         return image
     
-    def get_embedding(self, image: Image.Image) -> np.ndarray:
+    def get_embedding(self, image: "Image.Image") -> np.ndarray:
         """
         生成图像嵌入向量
         

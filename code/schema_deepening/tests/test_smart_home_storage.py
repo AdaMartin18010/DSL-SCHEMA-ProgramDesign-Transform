@@ -13,8 +13,8 @@ project_root = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(project_root))
 
 from unittest.mock import Mock, patch, MagicMock
-from code.schema_deepening import SmartHomeStorage
-from code.schema_deepening.exceptions import StorageError, ValidationError
+from schema_deepening import SmartHomeStorage
+from schema_deepening.exceptions import StorageError, ValidationError
 
 
 class TestSmartHomeStorage(unittest.TestCase):

@@ -16,8 +16,8 @@ project_root = Path(__file__).parent.parent.parent.parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
-from code.schema_deepening import OAConverter, DocumentFormat, DocumentType
-from code.schema_deepening.exceptions import ConversionError, ValidationError, ParseError
+from schema_deepening import OAConverter, DocumentFormat, DocumentType
+from schema_deepening.exceptions import ConversionError, ValidationError, ParseError
 
 
 class TestOAConverter(unittest.TestCase):

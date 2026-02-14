@@ -4,10 +4,17 @@
 实现文本嵌入、存储和检索功能
 """
 
-from sentence_transformers import SentenceTransformer
 from typing import List, Dict, Any, Optional
 import numpy as np
 from .storage import MultimodalKGStorage
+
+# 条件导入sentence_transformers
+try:
+    from sentence_transformers import SentenceTransformer
+    SENTENCE_TRANSFORMERS_AVAILABLE = True
+except ImportError:
+    SENTENCE_TRANSFORMERS_AVAILABLE = False
+    SentenceTransformer = None
 
 
 class TextModalityProcessor:
@@ -22,6 +29,11 @@ class TextModalityProcessor:
             model_name: 文本嵌入模型名称
             storage: 存储管理器（如果为None，则创建新的）
         """
+        if not SENTENCE_TRANSFORMERS_AVAILABLE:
+            raise ImportError(
+                "sentence_transformers is required for TextModalityProcessor. "
+                "Install it with: pip install sentence-transformers"
+            )
         self.model = SentenceTransformer(model_name)
         self.storage = storage or MultimodalKGStorage()
     

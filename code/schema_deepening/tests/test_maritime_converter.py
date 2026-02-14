@@ -13,8 +13,8 @@ project_root = Path(__file__).parent.parent.parent.parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
-from code.schema_deepening import MaritimeConverter, EDIFACTMessageType, AISMessageType
-from code.schema_deepening.exceptions import ParseError, ValidationError
+from schema_deepening import MaritimeConverter, EDIFACTMessageType, AISMessageType
+from schema_deepening.exceptions import ParseError, ValidationError
 
 
 class TestMaritimeConverter(unittest.TestCase):

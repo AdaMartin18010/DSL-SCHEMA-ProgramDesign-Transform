@@ -1,0 +1,243 @@
+{
+  "name": "dsl-schema-transform",
+  "displayName": "DSL Schema Transform",
+  "description": "VS Code extension for DSL Schema Program Design Transform - Edit and transform schema files with ease",
+  "version": "0.1.0",
+  "publisher": "dsl-schema-team",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.74.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Visualization",
+    "Snippets",
+    "Formatters"
+  ],
+  "keywords": [
+    "dsl",
+    "schema",
+    "transform",
+    "program design",
+    "visualization"
+  ],
+  "activationEvents": [
+    "onLanguage:json",
+    "onLanguage:yaml",
+    "onCommand:dslSchemaTransform.openSchemaEditor",
+    "onCommand:dslSchemaTransform.transformProgram"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "languages": [
+      {
+        "id": "dsl-schema",
+        "aliases": [
+          "DSL Schema",
+          "dsl-schema"
+        ],
+        "extensions": [
+          ".dsl",
+          ".schema"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "dsl-schema",
+        "scopeName": "source.dsl-schema",
+        "path": "./syntaxes/dsl-schema.tmLanguage.json"
+      }
+    ],
+    "commands": [
+      {
+        "command": "dslSchemaTransform.openSchemaEditor",
+        "title": "Open Schema Editor",
+        "category": "DSL Schema",
+        "icon": "$(edit)"
+      },
+      {
+        "command": "dslSchemaTransform.transformProgram",
+        "title": "Transform Program",
+        "category": "DSL Schema",
+        "icon": "$(sync)"
+      },
+      {
+        "command": "dslSchemaTransform.validateSchema",
+        "title": "Validate Schema",
+        "category": "DSL Schema",
+        "icon": "$(check)"
+      },
+      {
+        "command": "dslSchemaTransform.previewTransformation",
+        "title": "Preview Transformation",
+        "category": "DSL Schema",
+        "icon": "$(preview)"
+      },
+      {
+        "command": "dslSchemaTransform.generateCode",
+        "title": "Generate Code",
+        "category": "DSL Schema",
+        "icon": "$(code)"
+      }
+    ],
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "dslSchemaTransform.openSchemaEditor",
+          "when": "editorLangId == dsl-schema || editorLangId == json"
+        },
+        {
+          "command": "dslSchemaTransform.transformProgram",
+          "when": "editorLangId == dsl-schema || editorLangId == json"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "dslSchemaTransform.openSchemaEditor",
+          "group": "dsl-schema@1",
+          "when": "editorLangId == dsl-schema || editorLangId == json"
+        },
+        {
+          "command": "dslSchemaTransform.transformProgram",
+          "group": "dsl-schema@2",
+          "when": "editorLangId == dsl-schema || editorLangId == json"
+        },
+        {
+          "command": "dslSchemaTransform.validateSchema",
+          "group": "dsl-schema@3",
+          "when": "editorLangId == dsl-schema || editorLangId == json"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "dslSchemaTransform.openSchemaEditor",
+          "group": "dsl-schema@1",
+          "when": "resourceExtname == .dsl || resourceExtname == .schema || resourceExtname == .json"
+        },
+        {
+          "command": "dslSchemaTransform.transformProgram",
+          "group": "dsl-schema@2",
+          "when": "resourceExtname == .dsl || resourceExtname == .schema || resourceExtname == .json"
+        }
+      ]
+    },
+    "keybindings": [
+      {
+        "command": "dslSchemaTransform.openSchemaEditor",
+        "key": "ctrl+shift+e",
+        "mac": "cmd+shift+e",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "dslSchemaTransform.transformProgram",
+        "key": "ctrl+shift+t",
+        "mac": "cmd+shift+t",
+        "when": "editorTextFocus"
+      }
+    ],
+    "configuration": {
+      "title": "DSL Schema Transform",
+      "properties": {
+        "dslSchemaTransform.schemaValidation.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable schema validation on save"
+        },
+        "dslSchemaTransform.schemaValidation.strictMode": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable strict validation mode"
+        },
+        "dslSchemaTransform.transform.autoFormat": {
+          "type": "boolean",
+          "default": true,
+          "description": "Auto format transformed code"
+        },
+        "dslSchemaTransform.editor.theme": {
+          "type": "string",
+          "default": "default",
+          "enum": [
+            "default",
+            "dark",
+            "light"
+          ],
+          "description": "Schema editor theme"
+        },
+        "dslSchemaTransform.output.targetLanguage": {
+          "type": "string",
+          "default": "typescript",
+          "enum": [
+            "typescript",
+            "javascript",
+            "python",
+            "java",
+            "cpp"
+          ],
+          "description": "Default target language for code generation"
+        }
+      }
+    },
+    "views": {
+      "explorer": [
+        {
+          "id": "dslSchemaExplorer",
+          "name": "DSL Schema Explorer",
+          "when": "dslSchemaTransform.enabled"
+        }
+      ]
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "dslSchemaTransform",
+          "title": "DSL Schema Transform",
+          "icon": "$(symbol-class)"
+        }
+      ]
+    },
+    "snippets": [
+      {
+        "language": "dsl-schema",
+        "path": "./snippets/dsl-schema.json"
+      },
+      {
+        "language": "json",
+        "path": "./snippets/dsl-schema.json"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js",
+    "package": "vsce package",
+    "publish": "vsce publish"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.74.0",
+    "@types/node": "18.x",
+    "@typescript-eslint/eslint-plugin": "^5.45.0",
+    "@typescript-eslint/parser": "^5.45.0",
+    "eslint": "^8.28.0",
+    "typescript": "^4.9.4",
+    "@vscode/test-electron": "^2.2.0",
+    "@vscode/vsce": "^2.15.0"
+  },
+  "dependencies": {
+    "ajv": "^8.12.0",
+    "yaml": "^2.3.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-org/dsl-schema-transform.git"
+  },
+  "bugs": {
+    "url": "https://github.com/your-org/dsl-schema-transform/issues"
+  },
+  "homepage": "https://github.com/your-org/dsl-schema-transform#readme"
+}

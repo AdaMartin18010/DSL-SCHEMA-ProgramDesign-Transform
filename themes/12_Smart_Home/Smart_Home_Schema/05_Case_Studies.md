@@ -1464,3 +1464,918 @@ if __name__ == "__main__":
 
 **创建时间**：2025-01-21
 **最后更新**：2025-01-21
+
+
+---
+
+## 12. 案例12：智能窗帘与光照调节系统
+
+### 12.1 场景描述
+
+**业务背景**：
+现代智能家居需要根据自然光照条件自动调节窗帘开合度和室内灯光，实现节能和舒适的居住环境。系统需要集成光照传感器、智能窗帘电机、智能灯光，根据时间、天气、用户习惯自动调节。
+
+**技术挑战**：
+
+- 需要实时监测室内外光照强度
+- 需要根据季节和时间动态调整策略
+- 需要支持手动覆盖和自动模式的切换
+- 需要学习用户偏好并优化控制策略
+
+**解决方案**：
+使用Smart_Home_Schema定义光照调节场景，结合机器学习算法学习用户习惯，使用PostgreSQL存储历史数据用于分析和优化。
+
+### 12.2 Schema定义
+
+**智能光照调节Schema**：
+
+```json
+{
+  "scene_id": "scene_lighting_adjustment",
+  "scene_name": "智能光照调节",
+  "sensors": {
+    "outdoor_light_sensor": {
+      "device_id": "LIGHT_SENSOR_001",
+      "current_lux": 45000,
+      "location": "balcony"
+    },
+    "indoor_light_sensor": {
+      "device_id": "LIGHT_SENSOR_002",
+      "current_lux": 350,
+      "location": "living_room"
+    }
+  },
+  "actuators": {
+    "smart_curtain": {
+      "device_id": "CURTAIN_001",
+      "current_position": 30,
+      "target_position": 60
+    },
+    "smart_light": {
+      "device_id": "LIGHT_001",
+      "current_brightness": 80,
+      "target_brightness": 50
+    }
+  },
+  "control_rules": [
+    {
+      "condition": "outdoor_lux > 30000 AND time BETWEEN 09:00 AND 17:00",
+      "action": "open_curtain_to(60) AND dim_light_to(30)"
+    },
+    {
+      "condition": "outdoor_lux < 10000 OR time BETWEEN 17:00 AND 09:00",
+      "action": "close_curtain_to(0) AND brighten_light_to(80)"
+    }
+  ]
+}
+```
+
+### 12.3 实现代码
+
+```python
+from smart_home_storage import SmartHomeStorage
+from datetime import datetime, time
+import logging
+
+logger = logging.getLogger(__name__)
+
+class SmartLightingController:
+    """智能光照调节控制器"""
+
+    def __init__(self, storage: SmartHomeStorage):
+        self.storage = storage
+        self.outdoor_lux_threshold_high = 30000
+        self.outdoor_lux_threshold_low = 10000
+
+    def evaluate_lighting_conditions(self, outdoor_lux: int, indoor_lux: int) -> Dict:
+        """评估光照条件并决定控制策略"""
+        current_time = datetime.now().time()
+        is_daytime = time(9, 0) <= current_time <= time(17, 0)
+
+        if outdoor_lux > self.outdoor_lux_threshold_high and is_daytime:
+            return {
+                "curtain_position": 70,  # 打开70%
+                "light_brightness": 30,   # 调暗到30%
+                "reason": "充足自然光"
+            }
+        elif outdoor_lux < self.outdoor_lux_threshold_low or not is_daytime:
+            return {
+                "curtain_position": 0,    # 关闭窗帘
+                "light_brightness": 80,   # 调亮到80%
+                "reason": "自然光不足"
+            }
+        else:
+            return {
+                "curtain_position": 40,
+                "light_brightness": 60,
+                "reason": "适中光照"
+            }
+
+    def adjust_lighting(self, outdoor_sensor_id: str, indoor_sensor_id: str,
+                       curtain_id: str, light_id: str):
+        """执行光照调节"""
+        # 获取传感器数据
+        outdoor_state = self.storage.get_latest_device_state(outdoor_sensor_id)
+        indoor_state = self.storage.get_latest_device_state(indoor_sensor_id)
+
+        outdoor_lux = outdoor_state.get("state", {}).get("lux", 0) if outdoor_state else 0
+        indoor_lux = indoor_state.get("state", {}).get("lux", 0) if indoor_state else 0
+
+        # 评估并决定控制策略
+        strategy = self.evaluate_lighting_conditions(outdoor_lux, indoor_lux)
+
+        # 存储控制命令
+        curtain_cmd = self.storage.store_control_command(
+            curtain_id, "set_position",
+            {"position": strategy["curtain_position"]}
+        )
+        light_cmd = self.storage.store_control_command(
+            light_id, "set_brightness",
+            {"brightness": strategy["light_brightness"]}
+        )
+
+        # 记录场景执行
+        self.storage.record_scene_execution(
+            "scene_lighting_adjustment",
+            "auto",
+            True,
+            {"strategy": strategy, "outdoor_lux": outdoor_lux, "indoor_lux": indoor_lux}
+        )
+
+        logger.info(f"Lighting adjusted: curtain={strategy['curtain_position']}%, "
+                   f"light={strategy['light_brightness']}%, reason={strategy['reason']}")
+
+        return strategy
+
+# 使用示例
+def demo_smart_lighting():
+    storage = SmartHomeStorage("postgresql://user:pass@localhost/smarthome")
+    controller = SmartLightingController(storage)
+
+    # 模拟不同光照条件下的调节
+    strategies = [
+        {"outdoor_lux": 45000, "indoor_lux": 200, "time": "10:00"},
+        {"outdoor_lux": 8000, "indoor_lux": 150, "time": "19:00"},
+        {"outdoor_lux": 25000, "indoor_lux": 400, "time": "14:00"}
+    ]
+
+    for condition in strategies:
+        result = controller.evaluate_lighting_conditions(
+            condition["outdoor_lux"],
+            condition["indoor_lux"]
+        )
+        print(f"Time: {condition['time']}, Outdoor: {condition['outdoor_lux']}lux, "
+              f"Indoor: {condition['indoor_lux']}lux -> {result}")
+```
+
+---
+
+## 13. 案例13：智能空调与新风系统联动
+
+### 13.1 场景描述
+
+**业务背景**：
+智能空调与新风系统的联动可以实现室内温度和空气质量的双重优化。当室外空气质量良好时，优先使用新风系统；当室外温度适宜时，减少空调使用，实现节能。
+
+**技术挑战**：
+
+- 需要实时监测室内外温度、湿度、空气质量
+- 需要协调空调和新风系统的工作模式
+- 需要根据用户舒适度偏好动态调整
+- 需要实现节能与舒适的平衡
+
+**解决方案**：
+使用场景联动系统定义空调与新风系统的联动规则，根据环境条件自动选择最优运行模式。
+
+### 13.2 Schema定义
+
+**空调新风联动Schema**：
+
+```json
+{
+  "scene_id": "scene_hvac_air_quality",
+  "scene_name": "空调新风智能联动",
+  "sensors": {
+    "outdoor_air": {
+      "temperature": 26.5,
+      "humidity": 65,
+      "aqi": 45,
+      "pm25": 12
+    },
+    "indoor_air": {
+      "temperature": 28.0,
+      "humidity": 70,
+      "co2": 800,
+      "pm25": 8
+    }
+  },
+  "hvac_system": {
+    "air_conditioner": {
+      "device_id": "AC_001",
+      "mode": "Cool",
+      "target_temp": 26,
+      "fan_speed": "Auto"
+    },
+    "fresh_air_system": {
+      "device_id": "FRESH_AIR_001",
+      "mode": "Auto",
+      "fan_speed": 2,
+      "filter_status": "Good"
+    }
+  },
+  "control_strategy": {
+    "priority": "comfort",
+    "eco_mode": true,
+    "auto_switch": true
+  }
+}
+```
+
+### 13.3 实现代码
+
+```python
+class HVACAirQualityController:
+    """空调新风系统联动控制器"""
+
+    def __init__(self, storage: SmartHomeStorage):
+        self.storage = storage
+
+    def calculate_comfort_index(self, temp: float, humidity: float) -> float:
+        """计算舒适度指数(0-100)"""
+        # 基于温湿度的舒适度计算
+        temp_score = max(0, 100 - abs(temp - 24) * 5)  # 24°C为最佳温度
+        humidity_score = max(0, 100 - abs(humidity - 50) * 2)  # 50%为最佳湿度
+        return (temp_score + humidity_score) / 2
+
+    def determine_hvac_strategy(self, outdoor: Dict, indoor: Dict,
+                                user_preference: str = "comfort") -> Dict:
+        """确定空调新风控制策略"""
+        strategy = {
+            "ac_mode": "Off",
+            "ac_target_temp": 26,
+            "fresh_air_mode": "Off",
+            "fresh_air_speed": 0,
+            "reason": ""
+        }
+
+        indoor_comfort = self.calculate_comfort_index(
+            indoor["temperature"], indoor["humidity"]
+        )
+
+        # CO2浓度高，优先开启新风
+        if indoor.get("co2", 400) > 1000:
+            strategy["fresh_air_mode"] = "On"
+            strategy["fresh_air_speed"] = 3
+            strategy["reason"] = "CO2浓度过高，需要通风"
+
+        # 室外空气质量好且温度适宜，使用新风降温
+        elif (outdoor.get("aqi", 100) < 50 and
+              outdoor["temperature"] < indoor["temperature"] - 2):
+            strategy["fresh_air_mode"] = "On"
+            strategy["fresh_air_speed"] = 2
+            strategy["reason"] = "室外空气好且凉爽，使用新风"
+
+        # 室内舒适度低，使用空调
+        elif indoor_comfort < 60:
+            if indoor["temperature"] > 26:
+                strategy["ac_mode"] = "Cool"
+                strategy["ac_target_temp"] = 25
+            else:
+                strategy["ac_mode"] = "Heat"
+                strategy["ac_target_temp"] = 22
+            strategy["reason"] = f"舒适度低({indoor_comfort:.1f})，需要空调调节"
+
+        else:
+            strategy["reason"] = "室内环境舒适，保持当前状态"
+
+        return strategy
+
+    def execute_hvac_control(self, ac_id: str, fresh_air_id: str,
+                            outdoor_data: Dict, indoor_data: Dict):
+        """执行空调新风控制"""
+        strategy = self.determine_hvac_strategy(outdoor_data, indoor_data)
+
+        # 存储控制命令
+        if strategy["ac_mode"] != "Off":
+            self.storage.store_control_command(ac_id, "set_mode", {
+                "mode": strategy["ac_mode"],
+                "target_temperature": strategy["ac_target_temp"]
+            })
+
+        if strategy["fresh_air_mode"] != "Off":
+            self.storage.store_control_command(fresh_air_id, "set_fresh_air", {
+                "mode": strategy["fresh_air_mode"],
+                "fan_speed": strategy["fresh_air_speed"]
+            })
+
+        logger.info(f"HVAC control executed: AC={strategy['ac_mode']}, "
+                   f"FreshAir={strategy['fresh_air_mode']}, Reason={strategy['reason']}")
+
+        return strategy
+```
+
+---
+
+## 14. 案例14：智能灌溉与花园管理系统
+
+### 14.1 场景描述
+
+**业务背景**：
+智能花园管理系统根据土壤湿度、天气预报、植物类型自动执行灌溉，同时监测花园环境（光照、温度），为植物提供最佳生长条件。
+
+**技术挑战**：
+
+- 需要实时监测多点土壤湿度
+- 需要获取并解析天气预报数据
+- 需要根据不同植物类型制定灌溉策略
+- 需要考虑降雨预测避免过度灌溉
+
+**解决方案**：
+使用多传感器融合和天气预报API，结合植物数据库，实现精准灌溉控制。
+
+### 14.2 Schema定义
+
+**智能花园管理Schema**：
+
+```json
+{
+  "scene_id": "scene_garden_irrigation",
+  "scene_name": "智能花园灌溉",
+  "garden_zones": [
+    {
+      "zone_id": "zone_001",
+      "zone_name": "草坪区",
+      "plant_type": "grass",
+      "soil_moisture": 35,
+      "moisture_threshold": 40,
+      "irrigation_duration": 15
+    },
+    {
+      "zone_id": "zone_002",
+      "zone_name": "花卉区",
+      "plant_type": "flowers",
+      "soil_moisture": 55,
+      "moisture_threshold": 50,
+      "irrigation_duration": 10
+    }
+  ],
+  "weather_forecast": {
+    "today_rain_probability": 20,
+    "next_24h_rain": false,
+    "temperature_high": 32,
+    "temperature_low": 24
+  },
+  "irrigation_schedule": {
+    "morning_time": "06:00",
+    "evening_time": "18:00",
+    "max_daily_cycles": 2
+  }
+}
+```
+
+### 14.3 实现代码
+
+```python
+class SmartGardenController:
+    """智能花园控制器"""
+
+    PLANT_PROFILES = {
+        "grass": {"moisture_optimal": 45, "moisture_min": 35, "moisture_max": 60},
+        "flowers": {"moisture_optimal": 55, "moisture_min": 45, "moisture_max": 70},
+        "vegetables": {"moisture_optimal": 65, "moisture_min": 55, "moisture_max": 80},
+        "succulents": {"moisture_optimal": 25, "moisture_min": 15, "moisture_max": 35}
+    }
+
+    def __init__(self, storage: SmartHomeStorage):
+        self.storage = storage
+
+    def should_irrigate(self, zone: Dict, weather: Dict) -> Tuple[bool, str]:
+        """判断是否需要灌溉"""
+        plant_type = zone.get("plant_type", "grass")
+        current_moisture = zone.get("soil_moisture", 0)
+        profile = self.PLANT_PROFILES.get(plant_type, self.PLANT_PROFILES["grass"])
+
+        # 检查降雨预测
+        if weather.get("next_24h_rain", False):
+            return False, "24小时内有降雨预测，跳过灌溉"
+
+        if weather.get("today_rain_probability", 0) > 70:
+            return False, f"降雨概率{weather['today_rain_probability']}%，跳过灌溉"
+
+        # 检查土壤湿度
+        if current_moisture < profile["moisture_min"]:
+            return True, f"土壤湿度{current_moisture}%低于最小值{profile['moisture_min']}%，需要灌溉"
+
+        if current_moisture < profile["moisture_optimal"]:
+            return True, f"土壤湿度{current_moisture}%低于最佳值{profile['moisture_optimal']}%，建议灌溉"
+
+        return False, f"土壤湿度{current_moisture}%适宜，无需灌溉"
+
+    def calculate_irrigation_duration(self, zone: Dict, weather: Dict) -> int:
+        """计算灌溉时长（分钟）"""
+        base_duration = zone.get("irrigation_duration", 10)
+        plant_type = zone.get("plant_type", "grass")
+        profile = self.PLANT_PROFILES.get(plant_type, self.PLANT_PROFILES["grass"])
+
+        # 根据湿度缺口调整
+        moisture_gap = profile["moisture_optimal"] - zone.get("soil_moisture", 0)
+        adjustment = min(max(moisture_gap / 10, 0), 2)  # 最多增加2倍时长
+
+        # 根据温度调整
+        temp = weather.get("temperature_high", 25)
+        if temp > 35:
+            temp_factor = 1.3
+        elif temp > 30:
+            temp_factor = 1.1
+        else:
+            temp_factor = 1.0
+
+        duration = int(base_duration * (1 + adjustment) * temp_factor)
+        return min(duration, 30)  # 最长30分钟
+
+    def execute_irrigation(self, zones: List[Dict], weather: Dict):
+        """执行灌溉"""
+        results = []
+
+        for zone in zones:
+            should_water, reason = self.should_irrigate(zone, weather)
+
+            if should_water:
+                duration = self.calculate_irrigation_duration(zone, weather)
+                valve_id = f"VALVE_{zone['zone_id']}"
+
+                # 存储灌溉命令
+                self.storage.store_control_command(valve_id, "irrigate", {
+                    "duration_minutes": duration,
+                    "zone_name": zone["zone_name"],
+                    "reason": reason
+                })
+
+                results.append({
+                    "zone_id": zone["zone_id"],
+                    "action": "irrigate",
+                    "duration": duration,
+                    "reason": reason
+                })
+
+                logger.info(f"Zone {zone['zone_name']}: irrigation started for {duration}min, {reason}")
+            else:
+                results.append({
+                    "zone_id": zone["zone_id"],
+                    "action": "skip",
+                    "reason": reason
+                })
+                logger.info(f"Zone {zone['zone_name']}: irrigation skipped, {reason}")
+
+        return results
+
+# 使用示例
+def demo_garden_irrigation():
+    storage = SmartHomeStorage("postgresql://user:pass@localhost/smarthome")
+    controller = SmartGardenController(storage)
+
+    zones = [
+        {"zone_id": "zone_001", "zone_name": "草坪区", "plant_type": "grass", "soil_moisture": 32},
+        {"zone_id": "zone_002", "zone_name": "花卉区", "plant_type": "flowers", "soil_moisture": 58}
+    ]
+
+    weather = {
+        "today_rain_probability": 10,
+        "next_24h_rain": False,
+        "temperature_high": 33
+    }
+
+    results = controller.execute_irrigation(zones, weather)
+    for result in results:
+        print(f"Zone {result['zone_id']}: {result['action']} - {result['reason']}")
+```
+
+---
+
+## 15. 案例15：老人居家安全监护系统
+
+### 15.1 场景描述
+
+**业务背景**：
+针对独居老人的智能监护系统，通过运动传感器、紧急呼叫按钮、睡眠监测设备等，实时监测老人活动状态，检测异常情况（如长时间无活动、夜间异常活动等），并及时通知家属或护理人员。
+
+**技术挑战**：
+
+- 需要区分正常活动和异常情况
+- 需要处理误报（如老人外出）
+- 需要保护隐私的同时实现有效监护
+- 需要多级别的告警机制
+
+**解决方案**：
+使用多传感器数据融合和行为模式分析，建立老人日常行为基线，检测异常并及时告警。
+
+### 15.2 Schema定义
+
+**老人监护系统Schema**：
+
+```json
+{
+  "scene_id": "scene_elderly_care",
+  "scene_name": "老人居家安全监护",
+  "resident": {
+    "user_id": "elderly_001",
+    "name": "张爷爷",
+    "age": 78,
+    "emergency_contacts": [
+      {"name": "儿子", "phone": "13800138000", "relation": "son"},
+      {"name": "社区卫生服务中心", "phone": "120", "relation": "medical"}
+    ]
+  },
+  "monitoring_devices": {
+    "motion_sensors": ["MOTION_BEDROOM", "MOTION_LIVING", "MOTION_KITCHEN"],
+    "emergency_button": "EMERGENCY_001",
+    "sleep_monitor": "SLEEP_001",
+    "door_sensor": "DOOR_MAIN"
+  },
+  "alert_rules": [
+    {
+      "rule_id": "no_activity_12h",
+      "condition": "no_motion_detected > 12 hours",
+      "severity": "critical",
+      "action": "notify_emergency_contacts"
+    },
+    {
+      "rule_id": "bathroom_fall_risk",
+      "condition": "bathroom_motion > 30min AND nighttime",
+      "severity": "warning",
+      "action": "send_check_reminder"
+    }
+  ]
+}
+```
+
+### 15.3 实现代码
+
+```python
+from datetime import datetime, timedelta
+import logging
+
+logger = logging.getLogger(__name__)
+
+class ElderlyCareMonitor:
+    """老人居家安全监护系统"""
+
+    def __init__(self, storage: SmartHomeStorage):
+        self.storage = storage
+        self.alert_cooldown = {}  # 告警冷却时间
+
+    def check_activity_status(self, user_id: str, motion_sensors: List[str],
+                             hours: int = 12) -> Dict:
+        """检查活动状态"""
+        latest_activity = None
+        sensor_with_activity = None
+
+        for sensor_id in motion_sensors:
+            events = self.storage.get_recent_events(sensor_id, "motion_detected", limit=1)
+            if events:
+                event_time = events[0].get("event_time")
+                if latest_activity is None or event_time > latest_activity:
+                    latest_activity = event_time
+                    sensor_with_activity = sensor_id
+
+        if latest_activity is None:
+            return {
+                "status": "unknown",
+                "last_activity": None,
+                "hours_since_activity": None,
+                "alert_needed": False
+            }
+
+        hours_since = (datetime.now() - latest_activity).total_seconds() / 3600
+
+        status = "normal"
+        alert_needed = False
+
+        if hours_since > 24:
+            status = "critical"
+            alert_needed = True
+        elif hours_since > 12:
+            status = "warning"
+            alert_needed = True
+        elif hours_since > 6:
+            status = "attention"
+
+        return {
+            "status": status,
+            "last_activity": latest_activity,
+            "hours_since_activity": round(hours_since, 2),
+            "last_sensor": sensor_with_activity,
+            "alert_needed": alert_needed
+        }
+
+    def check_sleep_pattern(self, sleep_monitor_id: str, days: int = 7) -> Dict:
+        """检查睡眠模式"""
+        # 获取睡眠监测数据
+        sleep_data = self.storage.get_sensor_statistics(
+            sleep_monitor_id, "sleep_quality", hours=days*24
+        )
+
+        avg_sleep_duration = sleep_data.get("avg_value", 0)
+
+        pattern_analysis = {
+            "avg_sleep_hours": round(avg_sleep_duration, 1),
+            "pattern": "normal"
+        }
+
+        if avg_sleep_duration < 5:
+            pattern_analysis["pattern"] = "insufficient_sleep"
+            pattern_analysis["alert"] = "睡眠时间不足，建议关注健康状况"
+        elif avg_sleep_duration > 10:
+            pattern_analysis["pattern"] = "excessive_sleep"
+            pattern_analysis["alert"] = "睡眠时间过长，建议关注健康状况"
+
+        return pattern_analysis
+
+    def process_emergency_button(self, button_id: str, user_id: str):
+        """处理紧急按钮事件"""
+        logger.critical(f"EMERGENCY BUTTON PRESSED: {button_id}, User: {user_id}")
+
+        # 获取紧急联系人
+        user_prefs = self.storage.get_user_preferences(user_id)
+        emergency_contacts = user_prefs.get("emergency_contacts", [])
+
+        # 存储紧急事件
+        self.storage.store_event(button_id, "emergency_alert", {
+            "user_id": user_id,
+            "alert_type": "emergency_button",
+            "contacts_notified": len(emergency_contacts)
+        })
+
+        # 触发告警
+        alert_result = {
+            "timestamp": datetime.now().isoformat(),
+            "severity": "critical",
+            "message": "紧急按钮被按下",
+            "contacts_notified": [c["name"] for c in emergency_contacts]
+        }
+
+        return alert_result
+
+    def run_daily_check(self, user_id: str, config: Dict):
+        """执行每日检查"""
+        results = {
+            "user_id": user_id,
+            "check_time": datetime.now().isoformat(),
+            "checks": []
+        }
+
+        # 检查活动状态
+        activity_status = self.check_activity_status(
+            user_id, config.get("motion_sensors", [])
+        )
+        results["checks"].append({"type": "activity", "result": activity_status})
+
+        # 检查睡眠模式
+        if "sleep_monitor" in config:
+            sleep_pattern = self.check_sleep_pattern(config["sleep_monitor"])
+            results["checks"].append({"type": "sleep", "result": sleep_pattern})
+
+        # 汇总健康状态
+        critical_alerts = [c for c in results["checks"]
+                          if c["result"].get("status") == "critical" or
+                          c["result"].get("alert_needed")]
+
+        results["overall_status"] = "critical" if critical_alerts else "normal"
+        results["alert_count"] = len(critical_alerts)
+
+        return results
+
+# 使用示例
+def demo_elderly_care():
+    storage = SmartHomeStorage("postgresql://user:pass@localhost/smarthome")
+    monitor = ElderlyCareMonitor(storage)
+
+    config = {
+        "motion_sensors": ["MOTION_BEDROOM", "MOTION_LIVING"],
+        "sleep_monitor": "SLEEP_001"
+    }
+
+    # 模拟每日检查
+    results = monitor.run_daily_check("elderly_001", config)
+    print(f"Daily check for {results['user_id']}: {results['overall_status']}")
+    for check in results["checks"]:
+        print(f"  - {check['type']}: {check['result']}")
+```
+
+---
+
+## 16. 案例16：全屋智能能耗优化系统
+
+### 16.1 场景描述
+
+**业务背景**：
+全屋智能能耗优化系统通过分析各设备的能耗模式、电价时段、用户生活习惯，自动优化设备运行时间，在不影响用户体验的前提下实现最大节能效果。
+
+**技术挑战**：
+
+- 需要实时监测各设备能耗
+- 需要获取分时电价信息
+- 需要学习用户生活习惯
+- 需要平衡节能与舒适度
+
+**解决方案**：
+使用机器学习预测能耗模式，结合电价时段自动调整高耗能设备的运行时间，实现智能节能。
+
+### 16.2 Schema定义
+
+**能耗优化系统Schema**：
+
+```json
+{
+  "scene_id": "scene_energy_optimization",
+  "scene_name": "全屋能耗智能优化",
+  "energy_tariff": {
+    "peak_hours": ["08:00-11:00", "18:00-22:00"],
+    "peak_price": 0.85,
+    "valley_hours": ["23:00-07:00"],
+    "valley_price": 0.35,
+    "normal_price": 0.55
+  },
+  "controllable_devices": {
+    "water_heater": {
+      "device_id": "HEATER_001",
+      "power_kw": 2.5,
+      "flexible_hours": ["23:00-06:00"],
+      "priority": "medium"
+    },
+    "dishwasher": {
+      "device_id": "DISHWASHER_001",
+      "power_kw": 1.8,
+      "flexible": true,
+      "max_delay_hours": 4
+    },
+    "washing_machine": {
+      "device_id": "WASHER_001",
+      "power_kw": 2.0,
+      "flexible": true,
+      "max_delay_hours": 6
+    }
+  },
+  "optimization_goal": {
+    "target_savings_percent": 20,
+    "comfort_threshold": 0.9,
+    "max_inconvenience_minutes": 30
+  }
+}
+```
+
+### 16.3 实现代码
+
+```python
+class EnergyOptimizationController:
+    """能耗优化控制器"""
+
+    def __init__(self, storage: SmartHomeStorage):
+        self.storage = storage
+
+    def get_current_tariff(self, tariff_config: Dict) -> Tuple[str, float]:
+        """获取当前电价时段"""
+        current_time = datetime.now()
+        current_hour = current_time.hour
+        current_minute = current_time.minute
+        current_minutes = current_hour * 60 + current_minute
+
+        # 解析峰谷时段
+        def parse_time_range(time_str):
+            start, end = time_str.split("-")
+            start_h, start_m = map(int, start.split(":"))
+            end_h, end_m = map(int, end.split(":"))
+            return start_h * 60 + start_m, end_h * 60 + end_m
+
+        # 检查峰时
+        for period in tariff_config.get("peak_hours", []):
+            start, end = parse_time_range(period)
+            if start <= current_minutes < end:
+                return "peak", tariff_config["peak_price"]
+
+        # 检查谷时
+        for period in tariff_config.get("valley_hours", []):
+            start, end = parse_time_range(period)
+            if start <= current_minutes < end:
+                return "valley", tariff_config["valley_price"]
+
+        return "normal", tariff_config["normal_price"]
+
+    def calculate_optimal_schedule(self, device: Dict, tariff_config: Dict,
+                                   user_schedule: Dict) -> Dict:
+        """计算设备最优运行时间"""
+        current_period, current_price = self.get_current_tariff(tariff_config)
+
+        # 如果当前是谷时且设备灵活可调，立即运行
+        if current_period == "valley" and device.get("flexible", False):
+            return {
+                "action": "run_now",
+                "reason": "当前为谷时电价，是最优运行时机",
+                "estimated_cost": device["power_kw"] * current_price
+            }
+
+        # 如果是峰时，推迟到谷时
+        if current_period == "peak" and device.get("flexible", False):
+            next_valley_start = None
+            for period in tariff_config.get("valley_hours", []):
+                start, _ = map(lambda x: int(x.split(":")[0]) * 60 + int(x.split(":")[1]),
+                              period.split("-"))
+                if start > datetime.now().hour * 60 + datetime.now().minute:
+                    next_valley_start = start
+                    break
+
+            if next_valley_start:
+                valley_price = tariff_config["valley_price"]
+                savings = device["power_kw"] * (current_price - valley_price)
+                return {
+                    "action": "delay",
+                    "delay_until": f"{next_valley_start // 60:02d}:{next_valley_start % 60:02d}",
+                    "reason": "峰时电价高，建议推迟到谷时运行",
+                    "estimated_savings": round(savings, 2)
+                }
+
+        return {
+            "action": "run_now",
+            "reason": "设备不可灵活调度或已到最优时段"
+        }
+
+    def optimize_daily_energy(self, devices: List[Dict], tariff_config: Dict):
+        """优化全天能耗"""
+        optimization_results = []
+        total_potential_savings = 0
+
+        for device in devices:
+            schedule = self.calculate_optimal_schedule(device, tariff_config, {})
+            optimization_results.append({
+                "device_id": device["device_id"],
+                "device_name": device.get("device_name", device["device_id"]),
+                "schedule": schedule
+            })
+
+            if schedule.get("estimated_savings"):
+                total_potential_savings += schedule["estimated_savings"]
+
+            # 存储优化决策
+            self.storage.store_control_command(
+                device["device_id"],
+                "energy_optimization",
+                schedule
+            )
+
+        logger.info(f"Energy optimization completed. Potential daily savings: ${total_potential_savings:.2f}")
+
+        return {
+            "results": optimization_results,
+            "total_potential_savings": round(total_potential_savings, 2)
+        }
+
+    def generate_energy_report(self, days: int = 30) -> Dict:
+        """生成能耗报告"""
+        # 获取历史能耗数据
+        room_energy = self.storage.get_energy_consumption_by_room(days=days)
+
+        total_consumption = sum(row[1] for row in room_energy) if room_energy else 0
+
+        return {
+            "report_period_days": days,
+            "total_consumption_kwh": round(total_consumption, 2),
+            "room_breakdown": [
+                {"room": row[0], "consumption": round(row[1], 2), "percentage": round(row[1]/total_consumption*100, 1)}
+                for row in room_energy
+            ] if total_consumption > 0 else [],
+            "generated_at": datetime.now().isoformat()
+        }
+
+# 使用示例
+def demo_energy_optimization():
+    storage = SmartHomeStorage("postgresql://user:pass@localhost/smarthome")
+    controller = EnergyOptimizationController(storage)
+
+    tariff_config = {
+        "peak_hours": ["08:00-11:00", "18:00-22:00"],
+        "peak_price": 0.85,
+        "valley_hours": ["23:00-07:00"],
+        "valley_price": 0.35,
+        "normal_price": 0.55
+    }
+
+    devices = [
+        {"device_id": "DISHWASHER_001", "device_name": "洗碗机", "power_kw": 1.8, "flexible": True},
+        {"device_id": "WASHER_001", "device_name": "洗衣机", "power_kw": 2.0, "flexible": True}
+    ]
+
+    result = controller.optimize_daily_energy(devices, tariff_config)
+    print(f"Optimization potential: ${result['total_potential_savings']}/day")
+```
+
+---
+
+**参考文档**：
+
+- `01_Overview.md` - 概述
+- `02_Formal_Definition.md` - 形式化定义
+- `03_Standards.md` - 标准对标
+- `04_Transformation.md` - 转换体系
+
+**创建时间**：2025-01-21
+**最后更新**：2025-02-14（新增5个真实场景案例）

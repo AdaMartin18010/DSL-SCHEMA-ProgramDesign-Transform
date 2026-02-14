@@ -209,49 +209,55 @@ class FoodIndustryConverter:
             chain_id = f"chain_{epc}_{datetime.utcnow().timestamp()}"
             events = []
             visited = set()
-        
-        def dfs(current_epc: str, depth: int):
-            if depth > max_depth or current_epc in visited:
-                return
             
-            visited.add(current_epc)
-            
-            # 获取与当前EPC相关的事件
-            event_ids = self.epc_index.get(current_epc, [])
-            
-            for event_id in event_ids:
-                if event_id in self.events:
-                    event = self.events[event_id]
-                    
-                    # 只添加输出事件（向前追溯）
-                    if event.event_type == EPCISEventType.TRANSFORMATION_EVENT:
-                        if current_epc in event.input_epcs:
+            def dfs(current_epc: str, depth: int):
+                if depth > max_depth or current_epc in visited:
+                    return
+                
+                visited.add(current_epc)
+                
+                # 获取与当前EPC相关的事件
+                event_ids = self.epc_index.get(current_epc, [])
+                
+                for event_id in event_ids:
+                    if event_id in self.events:
+                        event = self.events[event_id]
+                        
+                        # 只添加输出事件（向前追溯）
+                        if event.event_type == EPCISEventType.TRANSFORMATION_EVENT:
+                            if current_epc in event.input_epcs:
+                                events.append(event)
+                                # 继续追溯输出EPC
+                                for output_epc in event.output_epcs:
+                                    dfs(output_epc, depth + 1)
+                        elif event.event_type == EPCISEventType.AGGREGATION_EVENT:
+                            if current_epc in event.child_epcs:
+                                events.append(event)
+                                dfs(event.parent_id, depth + 1)
+                        else:
                             events.append(event)
-                            # 继续追溯输出EPC
-                            for output_epc in event.output_epcs:
-                                dfs(output_epc, depth + 1)
-                    elif event.event_type == EPCISEventType.AGGREGATION_EVENT:
-                        if current_epc in event.child_epcs:
-                            events.append(event)
-                            dfs(event.parent_id, depth + 1)
-                    else:
-                        events.append(event)
-        
-        dfs(epc, 0)
-        
-        # 按时间排序
-        events.sort(key=lambda e: e.event_time)
-        
-        chain = TraceabilityChain(
-            chain_id=chain_id,
-            epc=epc,
-            events=events,
-            direction=TraceDirection.FORWARD,
-            created_at=datetime.utcnow()
-        )
-        
-        self.traceability_chains[chain_id] = chain
-        return chain
+            
+            dfs(epc, 0)
+            
+            # 按时间排序
+            events.sort(key=lambda e: e.event_time)
+            
+            chain = TraceabilityChain(
+                chain_id=chain_id,
+                epc=epc,
+                events=events,
+                direction=TraceDirection.FORWARD,
+                created_at=datetime.utcnow()
+            )
+            
+            self.traceability_chains[chain_id] = chain
+            return chain
+            
+        except ValidationError:
+            raise
+        except Exception as e:
+            logger.error(f"正向追溯失败: {str(e)}", exc_info=True)
+            raise ProcessingError(f"追溯失败: {str(e)}") from e
     
     def trace_backward(self, epc: str, max_depth: int = 10) -> TraceabilityChain:
         """

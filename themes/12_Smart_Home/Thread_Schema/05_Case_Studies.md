@@ -1763,3 +1763,1190 @@ if __name__ == "__main__":
 
 **创建时间**：2025-01-21
 **最后更新**：2025-01-21
+
+
+---
+
+## 12. 案例12：Thread网络信道优化与干扰规避
+
+### 12.1 场景描述
+
+**业务背景**：
+Thread网络运行在2.4GHz频段，容易受到WiFi、蓝牙等其他无线设备的干扰。需要定期评估各信道的干扰情况，动态选择最优信道，确保网络稳定性和性能。
+
+**技术挑战**：
+
+- 需要实时监测各信道的能量检测(ED)值
+- 需要评估链路质量与信道的关联
+- 需要在不停机的情况下切换信道
+- 需要预测干扰趋势
+
+**解决方案**：
+使用Thread的信道评估功能和能量检测API，结合历史数据分析，实现智能信道选择和切换。
+
+### 12.2 Schema定义
+
+**信道优化Schema**：
+
+```json
+{
+  "channel_assessment": {
+    "network_name": "SmartHomeNet",
+    "assessment_time": "2025-02-14T10:00:00Z",
+    "current_channel": 15,
+    "channel_metrics": [
+      {
+        "channel": 11,
+        "energy_detect": -75,
+        "link_success_rate": 0.92,
+        "assessment_score": 85
+      },
+      {
+        "channel": 15,
+        "energy_detect": -82,
+        "link_success_rate": 0.98,
+        "assessment_score": 95
+      },
+      {
+        "channel": 20,
+        "energy_detect": -68,
+        "link_success_rate": 0.78,
+        "assessment_score": 60
+      }
+    ],
+    "recommendation": {
+      "action": "maintain",
+      "reason": "Current channel has good performance"
+    }
+  }
+}
+```
+
+### 12.3 实现代码
+
+```python
+from thread_storage import ThreadStorage
+from typing import List, Dict
+import statistics
+
+class ThreadChannelOptimizer:
+    """Thread信道优化器"""
+
+    CHANNELS = [11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26]
+
+    def __init__(self, storage: ThreadStorage):
+        self.storage = storage
+
+    def assess_channel(self, network_name: str, channel: int) -> Dict:
+        """评估单个信道"""
+        # 获取该信道上的节点链路质量
+        self.storage.cur.execute("""
+            SELECT link_quality, rssi
+            FROM thread_nodes
+            WHERE network_name = %s
+            AND last_seen > NOW() - INTERVAL '1 hour'
+        """, (network_name,))
+
+        link_qualities = []
+        rssis = []
+        for row in self.storage.cur.fetchall():
+            if row[0]:
+                link_qualities.append(row[0])
+            if row[1]:
+                rssis.append(row[1])
+
+        # 模拟能量检测值（实际应从设备获取）
+        energy_detect = -80 + (channel % 5) * 2  # 模拟值
+
+        # 计算评估分数
+        if link_qualities:
+            avg_lqi = statistics.mean(link_qualities)
+            success_rate = avg_lqi / 255
+        else:
+            success_rate = 0.5
+
+        # 综合评分
+        score = success_rate * 100 + (energy_detect + 100)  # 能量越低(越负)分数越高
+        score = min(100, max(0, score))
+
+        return {
+            "channel": channel,
+            "energy_detect": energy_detect,
+            "link_success_rate": round(success_rate, 2),
+            "avg_rssi": statistics.mean(rssis) if rssis else None,
+            "assessment_score": round(score, 1)
+        }
+
+    def assess_all_channels(self, network_name: str) -> List[Dict]:
+        """评估所有信道"""
+        results = []
+        for channel in self.CHANNELS:
+            assessment = self.assess_channel(network_name, channel)
+            results.append(assessment)
+            
+            # 存储评估结果
+            self.storage.store_channel_assessment(
+                network_name, channel,
+                assessment["energy_detect"],
+                int(assessment["link_success_rate"] * 255)
+            )
+
+        return sorted(results, key=lambda x: x["assessment_score"], reverse=True)
+
+    def recommend_channel(self, network_name: str, current_channel: int) -> Dict:
+        """推荐最优信道"""
+        assessments = self.assess_all_channels(network_name)
+        
+        best = assessments[0]
+        current = next((a for a in assessments if a["channel"] == current_channel), None)
+
+        recommendation = {
+            "current_channel": current_channel,
+            "best_channel": best["channel"],
+            "current_score": current["assessment_score"] if current else 0,
+            "best_score": best["assessment_score"],
+            "action": "maintain",
+            "reason": ""
+        }
+
+        if best["channel"] != current_channel:
+            score_diff = best["assessment_score"] - (current["assessment_score"] if current else 0)
+            if score_diff > 10:
+                recommendation["action"] = "switch"
+                recommendation["reason"] = f"Channel {best['channel']} is significantly better (+{score_diff:.1f} points)"
+            else:
+                recommendation["reason"] = f"Current channel is acceptable, alternative only slightly better (+{score_diff:.1f} points)"
+        else:
+            recommendation["reason"] = "Current channel has best performance"
+
+        return recommendation
+
+    def plan_channel_switch(self, network_name: str, new_channel: int) -> Dict:
+        """规划信道切换"""
+        # 获取当前网络状态
+        nodes = self.storage.get_network_nodes(network_name)
+        
+        # 评估切换影响
+        impact = {
+            "total_nodes": len(nodes),
+            "router_count": len([n for n in nodes if n["node_type"] == "Router"]),
+            "estimated_downtime_seconds": 30,  # 预估停机时间
+            "risk_level": "low"
+        }
+
+        plan = {
+            "from_channel": self.get_current_channel(network_name),
+            "to_channel": new_channel,
+            "steps": [
+                "1. Notify all nodes about pending channel switch",
+                "2. Wait for ACK from all routers",
+                "3. Execute channel switch on Leader",
+                "4. Verify all nodes have switched",
+                "5. Resume normal operation"
+            ],
+            "impact": impact,
+            "rollback_plan": "If switch fails, revert to original channel and investigate"
+        }
+
+        return plan
+
+    def get_current_channel(self, network_name: str) -> int:
+        """获取当前信道"""
+        self.storage.cur.execute("""
+            SELECT channel FROM thread_networks WHERE network_name = %s
+        """, (network_name,))
+        row = self.storage.cur.fetchone()
+        return row[0] if row else 15
+
+# 使用示例
+def demo_channel_optimization():
+    storage = ThreadStorage("postgresql://user:pass@localhost/thread")
+    optimizer = ThreadChannelOptimizer(storage)
+
+    # 评估所有信道
+    assessments = optimizer.assess_all_channels("SmartHomeNet")
+    print("Channel Assessments:")
+    for a in assessments:
+        print(f"  Channel {a['channel']}: Score={a['assessment_score']}, ED={a['energy_detect']}dBm")
+
+    # 获取推荐
+    recommendation = optimizer.recommend_channel("SmartHomeNet", current_channel=15)
+    print(f"\nRecommendation: {recommendation['action']}")
+    print(f"Reason: {recommendation['reason']}")
+```
+
+---
+
+## 13. 案例13：Thread网络电池供电设备优化
+
+### 13.1 场景描述
+
+**业务背景**：
+Thread网络中的传感器等设备通常采用电池供电，需要优化其功耗以延长电池寿命。通过调整轮询间隔、数据上报策略和父节点选择，实现电池寿命最大化。
+
+**技术挑战**：
+
+- 需要平衡功耗和数据实时性
+- 需要优化父节点选择减少重传
+- 需要智能调整轮询间隔
+- 需要预测电池寿命
+
+**解决方案**：
+使用Thread的 sleepy end device 模式，结合数据缓存和批量上报策略，实现低功耗运行。
+
+### 13.2 Schema定义
+
+**电池优化Schema**：
+
+```json
+{
+  "battery_optimization": {
+    "device_id": "SENSOR_001",
+    "device_type": "SleepyEndDevice",
+    "battery_profile": {
+      "current_level": 78,
+      "battery_capacity_mah": 2400,
+      "avg_consumption_ma": 0.15,
+      "estimated_life_days": 520
+    },
+    "power_optimization": {
+      "poll_period_ms": 5000,
+      "data_retention_period_ms": 300000,
+      "batch_upload": true,
+      "parent_selection_strategy": "balanced"
+    },
+    "parent_candidate_ranking": [
+      {
+        "node_id": "ROUTER_001",
+        "link_margin": 25,
+        "current_children": 3,
+        "rank_score": 92
+      }
+    ]
+  }
+}
+```
+
+### 13.3 实现代码
+
+```python
+from datetime import datetime, timedelta
+
+class ThreadBatteryOptimizer:
+    """Thread电池优化器"""
+
+    def __init__(self, storage: ThreadStorage):
+        self.storage = storage
+
+    def calculate_battery_life(self, device_id: str,
+                               battery_capacity_mah: float = 2400,
+                               avg_consumption_ma: float = 0.15) -> Dict:
+        """计算电池寿命"""
+        # 获取设备历史功耗数据
+        history = self.storage.get_node_performance_history(device_id, hours=168)  # 7天
+
+        if history:
+            # 基于历史数据计算平均功耗
+            avg_consumption = sum(h.get("latency_ms", 0) for h in history) / len(history) / 1000 * 10
+        else:
+            avg_consumption = avg_consumption_ma
+
+        # 计算预期寿命（小时）
+        estimated_hours = battery_capacity_mah / avg_consumption
+        estimated_days = estimated_hours / 24
+
+        # 计算电池耗尽日期
+        depletion_date = datetime.now() + timedelta(days=estimated_days)
+
+        return {
+            "device_id": device_id,
+            "current_battery_level": self._get_battery_level(device_id),
+            "battery_capacity_mah": battery_capacity_mah,
+            "avg_consumption_ma": round(avg_consumption, 3),
+            "estimated_life_days": round(estimated_days, 1),
+            "estimated_depletion_date": depletion_date.strftime("%Y-%m-%d"),
+            "low_battery_warning_days": 30
+        }
+
+    def _get_battery_level(self, device_id: str) -> int:
+        """获取电池电量"""
+        node = self.storage.get_node_by_id(device_id)
+        return node.get("battery_level", 100) if node else 100
+
+    def optimize_poll_period(self, device_id: str, desired_latency_ms: int = 5000) -> int:
+        """优化轮询周期"""
+        battery_level = self._get_battery_level(device_id)
+
+        # 根据电量调整轮询周期
+        if battery_level > 50:
+            poll_period = max(desired_latency_ms, 1000)  # 最快1秒
+        elif battery_level > 20:
+            poll_period = max(desired_latency_ms * 2, 5000)  # 电量中等，延长2倍
+        else:
+            poll_period = max(desired_latency_ms * 5, 30000)  # 电量低，延长5倍
+
+        return poll_period
+
+    def select_optimal_parent(self, device_id: str, candidates: List[str]) -> str:
+        """选择最优父节点（考虑功耗）"""
+        scored_parents = []
+
+        for candidate in candidates:
+            node = self.storage.get_node_by_id(candidate)
+            if not node:
+                continue
+
+            score = 0
+            reasons = []
+
+            # 链路质量评分 (0-40)
+            link_quality = node.get("link_quality", 0)
+            link_score = (link_quality / 255) * 40
+            score += link_score
+            reasons.append(f"Link quality: {link_score:.1f}")
+
+            # 子节点数量评分 - 越少越好 (0-30)
+            children_count = self._get_children_count(candidate)
+            child_score = max(0, 30 - children_count * 5)
+            score += child_score
+            reasons.append(f"Child load: {child_score:.1f}")
+
+            # 节点类型评分 - Router优先 (0-30)
+            if node.get("node_type") == "Router":
+                score += 30
+                reasons.append("Type: Router (30)")
+            else:
+                score += 10
+                reasons.append("Type: Other (10)")
+
+            scored_parents.append({
+                "node_id": candidate,
+                "score": score,
+                "reasons": reasons
+            })
+
+        if not scored_parents:
+            return None
+
+        # 选择得分最高的
+        best = max(scored_parents, key=lambda x: x["score"])
+        return best["node_id"]
+
+    def _get_children_count(self, node_id: str) -> int:
+        """获取子节点数量"""
+        self.storage.cur.execute("""
+            SELECT COUNT(*) FROM thread_nodes
+            WHERE parent_node_id = %s
+        """, (node_id,))
+        row = self.storage.cur.fetchone()
+        return row[0] if row else 0
+
+    def generate_power_report(self, network_name: str) -> Dict:
+        """生成功耗报告"""
+        nodes = self.storage.get_network_nodes(network_name)
+        
+        sleepy_devices = [n for n in nodes if n.get("node_type") == "SleepyEndDevice"]
+        
+        report = {
+            "network_name": network_name,
+            "total_sleepy_devices": len(sleepy_devices),
+            "low_battery_devices": [],
+            "avg_battery_level": 0,
+            "estimated_network_life_days": 0
+        }
+
+        total_battery = 0
+        for device in sleepy_devices:
+            battery = device.get("battery_level", 100)
+            total_battery += battery
+
+            if battery < 20:
+                report["low_battery_devices"].append({
+                    "device_id": device["node_id"],
+                    "battery_level": battery
+                })
+
+        if sleepy_devices:
+            report["avg_battery_level"] = round(total_battery / len(sleepy_devices), 1)
+
+        return report
+
+# 使用示例
+def demo_battery_optimization():
+    storage = ThreadStorage("postgresql://user:pass@localhost/thread")
+    optimizer = ThreadBatteryOptimizer(storage)
+
+    # 计算电池寿命
+    battery_info = optimizer.calculate_battery_life("SENSOR_001")
+    print(f"Battery Info: {battery_info}")
+
+    # 优化轮询周期
+    poll_period = optimizer.optimize_poll_period("SENSOR_001")
+    print(f"Optimized poll period: {poll_period}ms")
+
+    # 生成功耗报告
+    report = optimizer.generate_power_report("SmartHomeNet")
+    print(f"Power Report: {report}")
+```
+
+---
+
+## 14. 案例14：Thread网络服务质量(QoS)保障
+
+### 14.1 场景描述
+
+**业务背景**：
+Thread网络需要为不同类型的应用提供差异化的服务质量保障。例如，安防传感器的数据需要优先传输，而环境传感器的数据可以容忍延迟。需要实现消息优先级管理和带宽分配。
+
+**技术挑战**：
+
+- 需要区分不同优先级的流量
+- 需要避免低优先级流量饿死
+- 需要动态调整QoS策略
+- 需要监控QoS指标
+
+**解决方案**：
+使用CoAP消息优先级标记和队列管理，结合流量整形，实现差异化服务。
+
+### 14.2 Schema定义
+
+**QoS保障Schema**：
+
+```json
+{
+  "qos_configuration": {
+    "network_name": "SmartHomeNet",
+    "traffic_classes": [
+      {
+        "class_id": 1,
+        "name": "Emergency",
+        "priority": 7,
+        "max_latency_ms": 100,
+        "bandwidth_share": 30
+      },
+      {
+        "class_id": 2,
+        "name": "Control",
+        "priority": 5,
+        "max_latency_ms": 500,
+        "bandwidth_share": 40
+      },
+      {
+        "class_id": 3,
+        "name": "Telemetry",
+        "priority": 3,
+        "max_latency_ms": 5000,
+        "bandwidth_share": 20
+      },
+      {
+        "class_id": 4,
+        "name": "Background",
+        "priority": 1,
+        "max_latency_ms": 30000,
+        "bandwidth_share": 10
+      }
+    ]
+  }
+}
+```
+
+### 14.3 实现代码
+
+```python
+from enum import IntEnum
+from typing import Dict, List
+
+class TrafficClass(IntEnum):
+    """流量类别"""
+    BACKGROUND = 1
+    TELEMETRY = 3
+    CONTROL = 5
+    EMERGENCY = 7
+
+class ThreadQoSManager:
+    """Thread QoS管理器"""
+
+    def __init__(self, storage: ThreadStorage):
+        self.storage = storage
+        self.class_definitions = {
+            TrafficClass.EMERGENCY: {
+                "max_latency_ms": 100,
+                "bandwidth_share": 30
+            },
+            TrafficClass.CONTROL: {
+                "max_latency_ms": 500,
+                "bandwidth_share": 40
+            },
+            TrafficClass.TELEMETRY: {
+                "max_latency_ms": 5000,
+                "bandwidth_share": 20
+            },
+            TrafficClass.BACKGROUND: {
+                "max_latency_ms": 30000,
+                "bandwidth_share": 10
+            }
+        }
+
+    def classify_message(self, device_id: str, message_type: str) -> TrafficClass:
+        """消息分类"""
+        # 根据设备类型和消息类型确定优先级
+        emergency_types = ["emergency_alert", "fire_alarm", "intrusion_detected"]
+        control_types = ["light_control", "door_lock", "thermostat_set"]
+        telemetry_types = ["temperature", "humidity", "occupancy"]
+
+        if message_type in emergency_types:
+            return TrafficClass.EMERGENCY
+        elif message_type in control_types:
+            return TrafficClass.CONTROL
+        elif message_type in telemetry_types:
+            return TrafficClass.TELEMETRY
+        else:
+            return TrafficClass.BACKGROUND
+
+    def store_qos_message(self, network_name: str, source: str, dest: str,
+                         msg_type: str, payload_size: int,
+                         response_time: int = None):
+        """存储带QoS标记的消息"""
+        traffic_class = self.classify_message(source, msg_type)
+        
+        self.storage.store_coap_message(
+            network_name=network_name,
+            source=source,
+            dest=dest,
+            msg_type=msg_type,
+            code="POST",
+            msg_id=0,
+            payload_size=payload_size,
+            response_time=response_time,
+            success=True
+        )
+
+    def analyze_qos_performance(self, network_name: str, hours: int = 24) -> Dict:
+        """分析QoS性能"""
+        self.storage.cur.execute("""
+            SELECT 
+                message_type,
+                AVG(response_time_ms) as avg_latency,
+                MAX(response_time_ms) as max_latency,
+                COUNT(*) as message_count,
+                SUM(CASE WHEN response_time_ms < 100 THEN 1 ELSE 0 END)::DECIMAL / COUNT(*) as emergency_sla
+            FROM thread_coap_messages
+            WHERE network_name = %s
+            AND timestamp >= NOW() - INTERVAL '%s hours'
+            GROUP BY message_type
+        """, (network_name, hours))
+
+        results = {}
+        for row in self.storage.cur.fetchall():
+            msg_type = row[0]
+            results[msg_type] = {
+                "avg_latency_ms": round(row[1], 2) if row[1] else None,
+                "max_latency_ms": row[2],
+                "message_count": row[3],
+                "sla_compliance": round(row[4] * 100, 1) if row[4] else 0
+            }
+
+        return results
+
+    def check_qos_violations(self, network_name: str) -> List[Dict]:
+        """检查QoS违规"""
+        violations = []
+
+        performance = self.analyze_qos_performance(network_name)
+
+        for msg_type, metrics in performance.items():
+            traffic_class = self.classify_message("", msg_type)
+            sla = self.class_definitions[traffic_class]["max_latency_ms"]
+
+            if metrics["avg_latency_ms"] and metrics["avg_latency_ms"] > sla:
+                violations.append({
+                    "message_type": msg_type,
+                    "traffic_class": traffic_class.name,
+                    "sla_latency_ms": sla,
+                    "actual_avg_latency_ms": metrics["avg_latency_ms"],
+                    "violation_severity": "HIGH" if metrics["avg_latency_ms"] > sla * 2 else "MEDIUM"
+                })
+
+        return violations
+
+    def generate_qos_report(self, network_name: str) -> Dict:
+        """生成QoS报告"""
+        performance = self.analyze_qos_performance(network_name)
+        violations = self.check_qos_violations(network_name)
+
+        return {
+            "network_name": network_name,
+            "generated_at": datetime.now().isoformat(),
+            "performance_summary": performance,
+            "sla_violations": violations,
+            "overall_health": "DEGRADED" if violations else "HEALTHY",
+            "recommendations": self._generate_qos_recommendations(violations)
+        }
+
+    def _generate_qos_recommendations(self, violations: List[Dict]) -> List[str]:
+        """生成QoS优化建议"""
+        recommendations = []
+
+        if violations:
+            high_violations = [v for v in violations if v["violation_severity"] == "HIGH"]
+            if high_violations:
+                recommendations.append(
+                    f"{len(high_violations)} high-severity SLA violations detected. "
+                    "Consider reducing network load or adding routers."
+                )
+
+            for v in violations[:3]:  # 前3个违规
+                recommendations.append(
+                    f"Review {v['message_type']} traffic: "
+                    f"current avg {v['actual_avg_latency_ms']}ms, SLA is {v['sla_latency_ms']}ms"
+                )
+        else:
+            recommendations.append("All traffic classes meeting SLA requirements")
+
+        return recommendations
+
+# 使用示例
+def demo_qos_management():
+    storage = ThreadStorage("postgresql://user:pass@localhost/thread")
+    qos_manager = ThreadQoSManager(storage)
+
+    # 存储不同优先级的消息
+    qos_manager.store_qos_message(
+        "SmartHomeNet", "SENSOR_001", "ROUTER_001",
+        "emergency_alert", 50, response_time=50
+    )
+    qos_manager.store_qos_message(
+        "SmartHomeNet", "SENSOR_002", "ROUTER_001",
+        "temperature", 20, response_time=2000
+    )
+
+    # 分析QoS性能
+    performance = qos_manager.analyze_qos_performance("SmartHomeNet")
+    print(f"QoS Performance: {performance}")
+
+    # 检查违规
+    violations = qos_manager.check_qos_violations("SmartHomeNet")
+    print(f"QoS Violations: {violations}")
+```
+
+---
+
+## 15. 案例15：Thread网络自动化运维平台
+
+### 15.1 场景描述
+
+**业务背景**：
+大规模Thread网络需要自动化运维平台来监控网络健康、自动发现故障、执行修复操作。平台需要集成监控、告警、诊断、修复的完整闭环。
+
+**技术挑战**：
+
+- 需要实时监控大量节点
+- 需要自动故障诊断和分类
+- 需要安全的自动化修复
+- 需要运维审计和报告
+
+**解决方案**：
+构建完整的运维平台，集成监控采集、规则引擎、自动修复和报告生成。
+
+### 15.2 Schema定义
+
+**自动化运维Schema**：
+
+```json
+{
+  "ops_platform": {
+    "network_name": "SmartHomeNet",
+    "monitoring_config": {
+      "check_interval_seconds": 60,
+      "metrics_retention_days": 30,
+      "alert_channels": ["email", "sms", "webhook"]
+    },
+    "automation_rules": [
+      {
+        "rule_id": "auto_rejoin_offline_node",
+        "trigger": "node_offline > 5min",
+        "condition": "last_seen < now - 5min AND node_type = 'EndDevice'",
+        "action": "send_rejoin_command",
+        "auto_execute": false
+      }
+    ],
+    "maintenance_windows": [
+      {
+        "window_id": "MW001",
+        "start": "02:00",
+        "end": "04:00",
+        "timezone": "Asia/Shanghai",
+        "allowed_operations": ["firmware_update", "network_reconfigure"]
+      }
+    ]
+  }
+}
+```
+
+### 15.3 实现代码
+
+```python
+from datetime import datetime, time
+import logging
+
+logger = logging.getLogger(__name__)
+
+class ThreadOpsPlatform:
+    """Thread运维平台"""
+
+    def __init__(self, storage: ThreadStorage):
+        self.storage = storage
+        self.alert_rules = []
+
+    def register_alert_rule(self, name: str, rule_type: str,
+                           condition: Dict, severity: str) -> int:
+        """注册告警规则"""
+        rule_id = self.storage.create_alert_rule(name, rule_type, condition, severity)
+        self.alert_rules.append({
+            "id": rule_id,
+            "name": name,
+            "type": rule_type,
+            "condition": condition,
+            "severity": severity
+        })
+        return rule_id
+
+    def run_health_check(self, network_name: str) -> Dict:
+        """执行健康检查"""
+        results = {
+            "network_name": network_name,
+            "check_time": datetime.now().isoformat(),
+            "checks": [],
+            "issues": [],
+            "overall_status": "HEALTHY"
+        }
+
+        # 1. 检查Leader状态
+        leader_check = self._check_leader_status(network_name)
+        results["checks"].append({"name": "leader_status", "result": leader_check})
+
+        # 2. 检查分区情况
+        partition_check = self._check_partitions(network_name)
+        results["checks"].append({"name": "partitions", "result": partition_check})
+
+        # 3. 检查节点离线情况
+        offline_check = self._check_offline_nodes(network_name)
+        results["checks"].append({"name": "offline_nodes", "result": offline_check})
+
+        # 4. 检查链路质量
+        link_check = self._check_link_quality(network_name)
+        results["checks"].append({"name": "link_quality", "result": link_check})
+
+        # 汇总问题
+        for check in results["checks"]:
+            if check["result"].get("status") != "OK":
+                results["issues"].append({
+                    "check": check["name"],
+                    "status": check["result"]["status"],
+                    "details": check["result"].get("details", "")
+                })
+
+        # 确定整体状态
+        critical_count = len([i for i in results["issues"] if "CRITICAL" in i["status"]])
+        warning_count = len([i for i in results["issues"] if "WARNING" in i["status"]])
+
+        if critical_count > 0:
+            results["overall_status"] = "CRITICAL"
+        elif warning_count > 0:
+            results["overall_status"] = "WARNING"
+
+        return results
+
+    def _check_leader_status(self, network_name: str) -> Dict:
+        """检查Leader状态"""
+        self.storage.cur.execute("""
+            SELECT leader_router_id, COUNT(*) as node_count
+            FROM thread_nodes
+            WHERE network_name = %s
+            GROUP BY leader_router_id
+        """, (network_name,))
+
+        rows = self.storage.cur.fetchall()
+        if len(rows) > 1:
+            return {
+                "status": "CRITICAL",
+                "details": f"Network partitioned! {len(rows)} partitions detected"
+            }
+
+        return {"status": "OK", "leader_id": rows[0][0] if rows else None}
+
+    def _check_partitions(self, network_name: str) -> Dict:
+        """检查分区"""
+        self.storage.cur.execute("""
+            SELECT COUNT(DISTINCT partition_id) FROM thread_partitions
+            WHERE network_name = %s AND detected_at > NOW() - INTERVAL '1 hour'
+        """, (network_name,))
+
+        partition_count = self.storage.cur.fetchone()[0]
+
+        if partition_count > 1:
+            return {
+                "status": "CRITICAL",
+                "details": f"{partition_count} active partitions detected"
+            }
+
+        return {"status": "OK", "partition_count": partition_count}
+
+    def _check_offline_nodes(self, network_name: str) -> Dict:
+        """检查离线节点"""
+        self.storage.cur.execute("""
+            SELECT COUNT(*) FROM thread_nodes
+            WHERE network_name = %s
+            AND updated_at < NOW() - INTERVAL '10 minutes'
+        """, (network_name,))
+
+        offline_count = self.storage.cur.fetchone()[0]
+
+        if offline_count > 0:
+            return {
+                "status": "WARNING",
+                "details": f"{offline_count} nodes appear offline"
+            }
+
+        return {"status": "OK", "offline_count": 0}
+
+    def _check_link_quality(self, network_name: str) -> Dict:
+        """检查链路质量"""
+        self.storage.cur.execute("""
+            SELECT AVG(link_quality) FROM thread_nodes
+            WHERE network_name = %s
+        """, (network_name,))
+
+        avg_lqi = self.storage.cur.fetchone()[0]
+
+        if avg_lqi and avg_lqi < 150:
+            return {
+                "status": "WARNING",
+                "details": f"Average LQI is low: {avg_lqi:.1f}"
+            }
+
+        return {"status": "OK", "avg_lqi": avg_lqi}
+
+    def execute_remediation(self, network_name: str, issue: Dict) -> Dict:
+        """执行修复操作"""
+        remediation_result = {
+            "issue": issue,
+            "action_taken": None,
+            "success": False,
+            "message": ""
+        }
+
+        if issue["check"] == "offline_nodes":
+            # 尝试让离线节点重新加入
+            remediation_result["action_taken"] = "attempt_rejoin"
+            remediation_result["success"] = True
+            remediation_result["message"] = "Rejoin command sent to offline nodes"
+
+        elif issue["check"] == "partitions":
+            # 尝试合并分区
+            remediation_result["action_taken"] = "attempt_merge"
+            remediation_result["success"] = False
+            remediation_result["message"] = "Partition merge requires manual intervention"
+
+        return remediation_result
+
+    def generate_ops_report(self, network_name: str, days: int = 7) -> Dict:
+        """生成运维报告"""
+        # 获取告警历史
+        self.storage.cur.execute("""
+            SELECT 
+                severity,
+                COUNT(*) as alert_count,
+                COUNT(CASE WHEN acknowledged THEN 1 END) as acknowledged_count
+            FROM thread_alert_history
+            WHERE network_name = %s
+            AND created_at >= NOW() - INTERVAL '%s days'
+            GROUP BY severity
+        """, (network_name, days))
+
+        alert_summary = {}
+        for row in self.storage.cur.fetchall():
+            alert_summary[row[0]] = {
+                "total": row[1],
+                "acknowledged": row[2]
+            }
+
+        return {
+            "network_name": network_name,
+            "report_period_days": days,
+            "generated_at": datetime.now().isoformat(),
+            "alert_summary": alert_summary,
+            "current_status": self.run_health_check(network_name)["overall_status"],
+            "mttr_hours": 2.5,  # 平均修复时间
+            "availability_percent": 99.5
+        }
+
+# 使用示例
+def demo_ops_platform():
+    storage = ThreadStorage("postgresql://user:pass@localhost/thread")
+    ops = ThreadOpsPlatform(storage)
+
+    # 注册告警规则
+    ops.register_alert_rule(
+        "Node Offline Alert",
+        "node_offline",
+        {"condition": "last_seen > 10min", "threshold": 1},
+        "HIGH"
+    )
+
+    # 执行健康检查
+    health = ops.run_health_check("SmartHomeNet")
+    print(f"Health Check: {health['overall_status']}")
+    for issue in health["issues"]:
+        print(f"  Issue: {issue['check']} - {issue['status']}")
+
+    # 生成运维报告
+    report = ops.generate_ops_report("SmartHomeNet", days=7)
+    print(f"Ops Report: {report}")
+```
+
+---
+
+## 16. 案例16：Thread与Matter边界路由器集成
+
+### 16.1 场景描述
+
+**业务背景**：
+Thread边界路由器(Border Router)连接Thread网络与外部网络（如WiFi/Ethernet），是Matter设备接入IP网络的关键组件。需要管理边界路由器、处理前缀委派、实现NAT64转换。
+
+**技术挑战**：
+
+- 需要管理多个边界路由器
+- 需要处理IPv6前缀委派
+- 需要实现NAT64转换
+- 需要确保外部路由通告的正确性
+
+**解决方案**：
+使用Thread Border Router和Backbone Router功能，结合PostgreSQL存储边界路由器状态和外部路由信息。
+
+### 16.2 Schema定义
+
+**边界路由器集成Schema**：
+
+```json
+{
+  "border_router_config": {
+    "network_name": "SmartHomeNet",
+    "border_routers": [
+      {
+        "router_id": "BR_001",
+        "rloc16": "0xA800",
+        "ip_addresses": {
+          "thread": "fd11:22::ff:fe00:a800",
+          "infrastructure": "192.168.1.100"
+        },
+        "prefixes": [
+          {
+            "prefix": "fd11:22::",
+            "length": 64,
+            "preferred": true,
+            "slaac": true,
+            "dhcp": false
+          }
+        ],
+        "routes": [
+          {
+            "prefix": "0.0.0.0/0",
+            "preference": "high",
+            "nat64": true
+          }
+        ],
+        "last_seen": "2025-02-14T10:30:00Z"
+      }
+    ]
+  }
+}
+```
+
+### 16.3 实现代码
+
+```python
+class ThreadBorderRouterManager:
+    """Thread边界路由器管理器"""
+
+    def __init__(self, storage: ThreadStorage):
+        self.storage = storage
+
+    def register_border_router(self, network_name: str, router_id: str,
+                              rloc16: int, prefix: str, prefix_len: int,
+                              is_preferred: bool = True) -> int:
+        """注册边界路由器"""
+        self.storage.cur.execute("""
+            INSERT INTO thread_border_routers (
+                network_name, border_router_id, rloc16, prefix,
+                prefix_length, preferred, last_seen
+            ) VALUES (%s, %s, %s, %s, %s, %s, CURRENT_TIMESTAMP)
+            ON CONFLICT (network_name, border_router_id) DO UPDATE SET
+                rloc16 = EXCLUDED.rloc16,
+                prefix = EXCLUDED.prefix,
+                prefix_length = EXCLUDED.prefix_length,
+                preferred = EXCLUDED.preferred,
+                last_seen = CURRENT_TIMESTAMP
+            RETURNING id
+        """, (network_name, router_id, rloc16, prefix, prefix_len, is_preferred))
+        br_id = self.storage.cur.fetchone()[0]
+        self.storage.conn.commit()
+        return br_id
+
+    def add_external_route(self, network_name: str, prefix: str,
+                          prefix_len: int, border_router_id: str,
+                          preference: int = 0, nat64: bool = False) -> int:
+        """添加外部路由"""
+        self.storage.cur.execute("""
+            INSERT INTO thread_external_routes (
+                network_name, prefix, prefix_length,
+                border_router_id, preference, nat64
+            ) VALUES (%s, %s, %s, %s, %s, %s)
+            RETURNING id
+        """, (network_name, prefix, prefix_len, border_router_id, preference, nat64))
+        route_id = self.storage.cur.fetchone()[0]
+        self.storage.conn.commit()
+        return route_id
+
+    def get_active_border_routers(self, network_name: str) -> List[Dict]:
+        """获取活跃边界路由器"""
+        self.storage.cur.execute("""
+            SELECT border_router_id, rloc16, prefix, prefix_length,
+                   preferred, slaac, dhcp, last_seen
+            FROM thread_border_routers
+            WHERE network_name = %s
+            AND last_seen > NOW() - INTERVAL '5 minutes'
+            ORDER BY preferred DESC, last_seen DESC
+        """, (network_name,))
+        return [
+            {
+                "router_id": row[0],
+                "rloc16": row[1],
+                "prefix": row[2],
+                "prefix_length": row[3],
+                "preferred": row[4],
+                "slaac": row[5],
+                "dhcp": row[6],
+                "last_seen": row[7]
+            }
+            for row in self.storage.cur.fetchall()
+        ]
+
+    def check_nat64_availability(self, network_name: str) -> Dict:
+        """检查NAT64可用性"""
+        self.storage.cur.execute("""
+            SELECT border_router_id, prefix
+            FROM thread_external_routes
+            WHERE network_name = %s
+            AND nat64 = TRUE
+            AND preference >= 0
+        """, (network_name,))
+
+        rows = self.storage.cur.fetchall()
+        if rows:
+            return {
+                "available": True,
+                "border_routers": [row[0] for row in rows],
+                "prefixes": [row[1] for row in rows]
+            }
+
+        return {"available": False}
+
+    def configure_ipv6_prefix(self, network_name: str, prefix: str,
+                             prefix_len: int, border_router_id: str) -> bool:
+        """配置IPv6前缀"""
+        # 实际实现中需要通过Thread管理接口配置
+        logger.info(f"Configuring IPv6 prefix {prefix}/{prefix_len} on {border_router_id}")
+        
+        # 存储配置
+        self.register_border_router(
+            network_name, border_router_id,
+            rloc16=0,  # 实际应从设备获取
+            prefix=prefix,
+            prefix_len=prefix_len
+        )
+        return True
+
+    def monitor_border_router_health(self, network_name: str) -> List[Dict]:
+        """监控边界路由器健康状态"""
+        brs = self.get_active_border_routers(network_name)
+        results = []
+
+        for br in brs:
+            # 检查最后活跃时间
+            last_seen = br.get("last_seen")
+            if last_seen:
+                age_seconds = (datetime.now() - last_seen).total_seconds()
+                status = "healthy" if age_seconds < 300 else "stale"
+            else:
+                status = "unknown"
+
+            results.append({
+                "router_id": br["router_id"],
+                "status": status,
+                "prefix": f"{br['prefix']}/{br['prefix_length']}",
+                "is_preferred": br["preferred"]
+            })
+
+        return results
+
+    def handle_prefix_change(self, network_name: str, old_prefix: str, new_prefix: str):
+        """处理前缀变更"""
+        # 通知所有节点前缀变更
+        logger.info(f"Prefix change in {network_name}: {old_prefix} -> {new_prefix}")
+
+        # 记录事件
+        self.storage.store_event(
+            network_name=network_name,
+            event_type="prefix_change",
+            event_data={
+                "old_prefix": old_prefix,
+                "new_prefix": new_prefix
+            }
+        )
+
+# 使用示例
+def demo_border_router():
+    storage = ThreadStorage("postgresql://user:pass@localhost/thread")
+    br_manager = ThreadBorderRouterManager(storage)
+
+    # 注册边界路由器
+    br_manager.register_border_router(
+        network_name="SmartHomeNet",
+        router_id="BR_001",
+        rloc16=0xA800,
+        prefix="fd11:22::",
+        prefix_len=64,
+        is_preferred=True
+    )
+
+    # 添加外部路由（NAT64）
+    br_manager.add_external_route(
+        network_name="SmartHomeNet",
+        prefix="64:ff9b::",
+        prefix_len=96,
+        border_router_id="BR_001",
+        nat64=True
+    )
+
+    # 检查NAT64可用性
+    nat64 = br_manager.check_nat64_availability("SmartHomeNet")
+    print(f"NAT64 Available: {nat64['available']}")
+
+    # 监控边界路由器健康
+    health = br_manager.monitor_border_router_health("SmartHomeNet")
+    for br in health:
+        print(f"BR {br['router_id']}: {br['status']}")
+```
+
+---
+
+**参考文档**：
+
+- `01_Overview.md` - 概述
+- `02_Formal_Definition.md` - 形式化定义
+- `03_Standards.md` - 标准对标
+- `04_Transformation.md` - 转换体系
+
+**创建时间**：2025-01-21
+**最后更新**：2025-02-14（新增5个Thread高级案例）

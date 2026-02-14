@@ -1,0 +1,75 @@
+{
+  "results": [
+    {
+      "check_type": "交叉引用",
+      "status": "warning",
+      "message": "发现 139 个损坏的链接 (检查了 20505 个)",
+      "details": [
+        "TASK_COMPREHENSIVE_REVIEW_AND_EXECUTION_PLAN.md: 链接指向不存在的文件 '路径'",
+        "docs\\API_DOCUMENTATION.md: 链接指向不存在的文件 '../../examples/quick_start.py'",
+        "themes\\GLOSSARY.md: 链接指向不存在的文件 './05_DSL_Theory/Formal_Language_Theory/README.md'",
+        "themes\\GLOSSARY.md: 链接指向不存在的文件 './01_Industrial_Automation/PLC_Schema/README.md'",
+        "themes\\GLOSSARY.md: 链接指向不存在的文件 './01_Industrial_Automation/CAN_Schema/README.md'",
+        "themes\\GLOSSARY.md: 链接指向不存在的文件 './02_IoT_Schema/Communication_Schema/README.md'",
+        "themes\\GLOSSARY.md: 链接指向不存在的文件 './02_IoT_Schema/Communication_Schema/README.md'",
+        "themes\\GLOSSARY.md: 链接指向不存在的文件 './01_Industrial_Automation/CAN_Schema/README.md'",
+        "themes\\GLOSSARY.md: 链接指向不存在的文件 './02_IoT_Schema/Communication_Schema/README.md'",
+        "themes\\GLOSSARY.md: 链接指向不存在的文件 './02_IoT_Schema/Communication_Schema/README.md'",
+        "themes\\GLOSSARY.md: 链接指向不存在的文件 './02_IoT_Schema/Communication_Schema/README.md'",
+        "themes\\GLOSSARY.md: 链接指向不存在的文件 './02_IoT_Schema/Communication_Schema/README.md'",
+        "themes\\GLOSSARY.md: 链接指向不存在的文件 './02_IoT_Schema/Communication_Schema/README.md'",
+        "themes\\GLOSSARY.md: 链接指向不存在的文件 './05_DSL_Theory/Information_Theory/README.md'",
+        "themes\\GLOSSARY.md: 链接指向不存在的文件 './05_DSL_Theory/Information_Theory/README.md'",
+        "themes\\GLOSSARY.md: 链接指向不存在的文件 './05_DSL_Theory/Information_Theory/README.md'",
+        "themes\\GLOSSARY.md: 链接指向不存在的文件 './05_DSL_Theory/Information_Theory/README.md'",
+        "themes\\GLOSSARY.md: 链接指向不存在的文件 './05_DSL_Theory/Formal_Language_Theory/README.md'",
+        "themes\\GLOSSARY.md: 链接指向不存在的文件 './05_DSL_Theory/Formal_Language_Theory/README.md'",
+        "themes\\GLOSSARY.md: 链接指向不存在的文件 './05_DSL_Theory/Formal_Language_Theory/README.md'"
+      ]
+    },
+    {
+      "check_type": "代码示例",
+      "status": "warning",
+      "message": "1581/1621 个Python代码块语法正确",
+      "details": [
+        "view\\ai_prompt.md: Python语法错误 - unexpected indent",
+        "view\\ai_prompt.md: Python语法错误 - unexpected indent",
+        "view\\ai_prompt.md: Python语法错误 - unexpected indent",
+        "view\\program.md: Python语法错误 - unexpected indent",
+        "view\\analysis\\06_Comprehensive_Integration_Analysis.md: Python语法错误 - unterminated triple-quoted f-string literal (detected at line 22)",
+        "view\\analysis\\06_Comprehensive_Integration_Analysis.md: Python语法错误 - unterminated string literal (detected at line 64)",
+        "view\\diagrams\\multi_dimensional_comparison_matrix.md: Python语法错误 - unexpected indent",
+        "view\\diagrams\\multi_dimensional_comparison_matrix.md: Python语法错误 - unexpected indent",
+        "view\\diagrams\\multi_dimensional_comparison_matrix.md: Python语法错误 - unexpected indent",
+        "view\\diagrams\\multi_dimensional_comparison_matrix.md: Python语法错误 - unexpected indent"
+      ]
+    },
+    {
+      "check_type": "思维导图",
+      "status": "warning",
+      "message": "119/121 个Overview文档缺少思维导图",
+      "details": [
+        "themes\\01_Industrial_Automation\\CAN_Schema\\01_Overview.md",
+        "themes\\01_Industrial_Automation\\PLC_Schema\\01_Overview.md",
+        "themes\\02_IoT_Schema\\Communication_Schema\\01_Overview.md",
+        "themes\\02_IoT_Schema\\Control_Schema\\01_Overview.md",
+        "themes\\02_IoT_Schema\\Message_Queue_Schema\\01_Overview.md",
+        "themes\\02_IoT_Schema\\Observability_Schema\\01_Overview.md",
+        "themes\\02_IoT_Schema\\Security_Schema\\01_Overview.md",
+        "themes\\02_IoT_Schema\\Sensor_Schema\\01_Overview.md",
+        "themes\\03_Physical_Device\\CAD_Schema\\01_Overview.md",
+        "themes\\03_Physical_Device\\Electrical_Schema\\01_Overview.md",
+        "themes\\03_Physical_Device\\Mechanical_Schema\\01_Overview.md",
+        "themes\\03_Physical_Device\\Safety_Schema\\01_Overview.md",
+        "themes\\03_Physical_Device\\Thermal_Schema\\01_Overview.md",
+        "themes\\04_Programming_Conversion\\Code_Generation\\01_Overview.md",
+        "themes\\04_Programming_Conversion\\Database_Schema\\01_Overview.md"
+      ]
+    }
+  ],
+  "summary": {
+    "passed": 0,
+    "warnings": 3,
+    "errors": 0
+  }
+}

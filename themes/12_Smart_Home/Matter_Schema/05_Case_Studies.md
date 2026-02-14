@@ -1816,3 +1816,920 @@ if __name__ == "__main__":
 
 **创建时间**：2025-01-21
 **最后更新**：2025-01-21
+
+
+---
+
+## 12. 案例12：Matter多管理员(FMA)配置管理
+
+### 12.1 场景描述
+
+**业务背景**：
+Matter多管理员(Fabric Multi-Admin)功能允许一个设备被多个生态系统（如Apple Home、Google Home、Amazon Alexa）同时管理。需要实现安全的Commissioning流程、ACL权限管理和跨Fabric的设备状态同步。
+
+**技术挑战**：
+
+- 需要管理多个Fabric的Credentials
+- 需要精细的ACL权限控制
+- 需要处理跨Fabric的命令冲突
+- 需要确保Commissioning安全性
+
+**解决方案**：
+使用Matter的Multi-Admin功能，结合PostgreSQL存储各Fabric的配置和ACL规则，实现安全的多管理员管理。
+
+### 12.2 Schema定义
+
+**多管理员配置Schema**：
+
+```json
+{
+  "device_id": "MATTER_LIGHT_001",
+  "fabrics": [
+    {
+      "fabric_id": 1,
+      "fabric_name": "Apple Home",
+      "node_id": 12345,
+      "is_commissioner": true,
+      "acl_entries": [
+        {
+          "privilege": 5,
+          "auth_mode": "CASE",
+          "subjects": [12345],
+          "targets": [{"cluster": 6, "endpoint": 1}]
+        }
+      ]
+    },
+    {
+      "fabric_id": 2,
+      "fabric_name": "Google Home",
+      "node_id": 67890,
+      "acl_entries": [
+        {
+          "privilege": 3,
+          "auth_mode": "CASE",
+          "subjects": [67890],
+          "targets": [{"cluster": 6, "endpoint": 1}]
+        }
+      ]
+    }
+  ],
+  "operational_credentials": {
+    "root_certificate": "...",
+    "intermediate_certificate": "...",
+    "operational_certificate": "..."
+  }
+}
+```
+
+### 12.3 实现代码
+
+```python
+from matter_storage import MatterStorage
+from typing import List, Dict
+
+class MatterMultiAdminManager:
+    """Matter多管理员管理器"""
+
+    def __init__(self, storage: MatterStorage):
+        self.storage = storage
+
+    def commission_to_new_fabric(self, device_id: str, fabric_id: int,
+                                 fabric_name: str, node_id: int,
+                                 passcode: int, discriminator: int) -> bool:
+        """将设备Commission到新Fabric"""
+        try:
+            # 记录Commissioning过程
+            self.storage.store_commissioning_record(
+                device_id=device_id,
+                node_id=node_id,
+                fabric_id=fabric_id,
+                passcode=passcode,
+                discriminator=discriminator,
+                success=True
+            )
+
+            # 存储Fabric信息到设备元数据
+            self.storage.store_network_info(
+                device_id=device_id,
+                fabric_id=fabric_id,
+                node_id=node_id,
+                network_type="Thread"
+            )
+
+            print(f"Device {device_id} successfully commissioned to {fabric_name}")
+            return True
+        except Exception as e:
+            self.storage.store_commissioning_record(
+                device_id=device_id,
+                fabric_id=fabric_id,
+                passcode=passcode,
+                discriminator=discriminator,
+                success=False,
+                error_message=str(e)
+            )
+            return False
+
+    def setup_acl_for_fabric(self, fabric_id: int, privilege: int,
+                            subjects: List[int], targets: List[Dict]) -> int:
+        """为Fabric设置ACL"""
+        acl_id = self.storage.store_acl_entry(
+            fabric_id=fabric_id,
+            privilege=privilege,
+            auth_mode="CASE",
+            subjects=subjects,
+            targets=targets
+        )
+        print(f"ACL entry created: {acl_id} for fabric {fabric_id}")
+        return acl_id
+
+    def get_device_fabrics(self, device_id: str) -> List[Dict]:
+        """获取设备所属的所有Fabric"""
+        device = self.storage.get_device_by_id(device_id)
+        if not device:
+            return []
+
+        # 查询网络信息获取Fabric列表
+        network_info = self.storage.get_network_info_by_device(device_id)
+        return [
+            {
+                "fabric_id": info.get("fabric_id"),
+                "node_id": info.get("node_id"),
+                "last_seen": info.get("last_seen")
+            }
+            for info in network_info
+        ]
+
+    def remove_fabric(self, device_id: str, fabric_id: int) -> bool:
+        """从设备移除Fabric"""
+        # 实际实现中需要调用Matter SDK的RemoveFabric命令
+        print(f"Removing fabric {fabric_id} from device {device_id}")
+        return True
+
+# 使用示例
+def demo_multi_admin():
+    storage = MatterStorage("postgresql://user:pass@localhost/matter")
+    manager = MatterMultiAdminManager(storage)
+
+    # Commission设备到Apple Home
+    manager.commission_to_new_fabric(
+        device_id="MATTER_LIGHT_001",
+        fabric_id=1,
+        fabric_name="Apple Home",
+        node_id=12345,
+        passcode=20202021,
+        discriminator=3840
+    )
+
+    # 设置ACL权限
+    manager.setup_acl_for_fabric(
+        fabric_id=1,
+        privilege=5,  # Administer
+        subjects=[12345],
+        targets=[{"cluster": 6, "endpoint": 1}]  # On/Off Cluster
+    )
+```
+
+---
+
+## 13. 案例13：Matter设备固件OTA升级管理
+
+### 13.1 场景描述
+
+**业务背景**：
+Matter设备需要支持OTA（Over-The-Air）固件升级，以修复安全漏洞、添加新功能或提升性能。需要管理固件版本、分发升级包、监控升级进度并处理失败回滚。
+
+**技术挑战**：
+
+- 需要管理固件版本兼容性
+- 需要可靠的断点续传
+- 需要处理升级失败和回滚
+- 需要批量管理多台设备升级
+
+**解决方案**：
+使用Matter OTA Provider集群，结合PostgreSQL存储升级状态和进度，实现安全可靠的固件升级管理。
+
+### 13.2 Schema定义
+
+**OTA升级管理Schema**：
+
+```json
+{
+  "ota_provider": {
+    "provider_node_id": 1000,
+    "provider_fabric_id": 1,
+    "software_version": "2.1.0",
+    "software_version_string": "v2.1.0-stable",
+    "update_token": "OTA-TOKEN-001",
+    "user_consent_needed": false,
+    "metadata_for_requestor": {
+      "release_notes": "Bug fixes and performance improvements",
+      "release_date": "2025-02-01"
+    }
+  },
+  "target_devices": [
+    {
+      "device_id": "MATTER_LIGHT_001",
+      "current_version": "2.0.0",
+      "target_version": "2.1.0",
+      "update_state": "downloading",
+      "progress_percent": 45,
+      "download_timestamp": "2025-02-14T10:30:00Z"
+    }
+  ]
+}
+```
+
+### 13.3 实现代码
+
+```python
+from datetime import datetime
+from typing import List, Dict
+
+class MatterOTAManager:
+    """Matter OTA升级管理器"""
+
+    OTA_STATUS = ["Idle", "Querying", "Delayed", "Downloading", "Applying", "Rebooting", "Complete", "Error"]
+
+    def __init__(self, storage: MatterStorage):
+        self.storage = storage
+
+    def query_image_availability(self, device_id: str, current_version: str) -> Dict:
+        """查询可用升级镜像"""
+        # 实际实现中调用OTA Provider的QueryImage命令
+        available_versions = ["2.1.0", "2.1.1", "2.2.0"]
+
+        if current_version in available_versions:
+            idx = available_versions.index(current_version)
+            if idx < len(available_versions) - 1:
+                return {
+                    "available": True,
+                    "version": available_versions[idx + 1],
+                    "url": f"https://ota.example.com/firmware/v{available_versions[idx + 1]}.bin"
+                }
+
+        return {"available": False}
+
+    def initiate_ota_update(self, device_id: str, firmware_version: str,
+                           firmware_url: str, checksum: str) -> int:
+        """启动OTA升级"""
+        update_id = self.storage.store_firmware_update(
+            device_id=device_id,
+            firmware_version=firmware_version,
+            firmware_url=firmware_url,
+            firmware_checksum=checksum
+        )
+
+        self.storage.update_firmware_status(update_id, "Downloading")
+
+        print(f"OTA update initiated: {update_id} for {device_id} to version {firmware_version}")
+        return update_id
+
+    def update_progress(self, update_id: int, progress_percent: int):
+        """更新升级进度"""
+        # 存储进度到事件日志
+        self.storage.store_event(
+            device_id="OTA_SYSTEM",
+            event_type="ota_progress",
+            event_data={
+                "update_id": update_id,
+                "progress": progress_percent
+            }
+        )
+
+        if progress_percent >= 100:
+            self.storage.update_firmware_status(update_id, "Applying")
+
+    def complete_update(self, update_id: int, success: bool, error_message: str = None):
+        """完成升级"""
+        if success:
+            self.storage.update_firmware_status(update_id, "Completed")
+        else:
+            self.storage.update_firmware_status(
+                update_id, "Failed", error_message
+            )
+
+    def get_update_status(self, device_id: str) -> Dict:
+        """获取升级状态"""
+        updates = self.storage.get_firmware_updates(device_id=device_id)
+        if updates:
+            latest = updates[0]
+            return {
+                "device_id": device_id,
+                "current_version": latest.get("firmware_version"),
+                "status": latest.get("update_status"),
+                "progress": self._calculate_progress(latest),
+                "started_at": latest.get("started_at"),
+                "completed_at": latest.get("completed_at")
+            }
+        return {"device_id": device_id, "status": "No updates"}
+
+    def _calculate_progress(self, update_record: Dict) -> int:
+        """计算升级进度"""
+        status = update_record.get("update_status")
+        progress_map = {
+            "Pending": 0,
+            "Downloading": 50,
+            "Applying": 80,
+            "Completed": 100,
+            "Failed": 0
+        }
+        return progress_map.get(status, 0)
+
+    def batch_update(self, device_ids: List[str], firmware_version: str) -> Dict:
+        """批量升级设备"""
+        results = {
+            "total": len(device_ids),
+            "initiated": 0,
+            "failed": 0,
+            "update_ids": []
+        }
+
+        for device_id in device_ids:
+            try:
+                update_id = self.initiate_ota_update(
+                    device_id, firmware_version,
+                    f"https://ota.example.com/firmware/v{firmware_version}.bin",
+                    checksum="sha256:abc123..."
+                )
+                results["initiated"] += 1
+                results["update_ids"].append(update_id)
+            except Exception as e:
+                results["failed"] += 1
+                print(f"Failed to initiate update for {device_id}: {e}")
+
+        return results
+
+# 使用示例
+def demo_ota_update():
+    storage = MatterStorage("postgresql://user:pass@localhost/matter")
+    ota_manager = MatterOTAManager(storage)
+
+    # 检查升级可用性
+    availability = ota_manager.query_image_availability("MATTER_LIGHT_001", "2.0.0")
+    print(f"Update available: {availability}")
+
+    if availability.get("available"):
+        # 启动升级
+        update_id = ota_manager.initiate_ota_update(
+            device_id="MATTER_LIGHT_001",
+            firmware_version=availability["version"],
+            firmware_url=availability["url"],
+            checksum="sha256:abc123..."
+        )
+
+        # 模拟进度更新
+        for progress in [25, 50, 75, 100]:
+            ota_manager.update_progress(update_id, progress)
+
+        # 完成升级
+        ota_manager.complete_update(update_id, success=True)
+```
+
+---
+
+## 14. 案例14：Matter桥接设备管理
+
+### 14.1 场景描述
+
+**业务背景**：
+Matter Bridge设备可以将非Matter设备（如Zigbee、Z-Wave设备）桥接到Matter网络。需要管理桥接设备、映射集群、处理设备发现和能力转换。
+
+**技术挑战**：
+
+- 需要动态发现桥接设备
+- 需要处理协议差异的映射
+- 需要管理桥接设备的生命周期
+- 需要处理设备可达性变化
+
+**解决方案**：
+使用Matter Bridged Device Basic Information集群，结合PostgreSQL存储桥接关系和设备信息。
+
+### 14.2 Schema定义
+
+**桥接设备管理Schema**：
+
+```json
+{
+  "bridge_device": {
+    "device_id": "MATTER_BRIDGE_001",
+    "bridge_type": "Zigbee",
+    "firmware_version": "1.2.0"
+  },
+  "bridged_devices": [
+    {
+      "bridged_device_id": "ZIGBEE_SENSOR_001",
+      "vendor_name": "Aqara",
+      "product_name": "Temperature Sensor",
+      "unique_id": "00:11:22:33:44:55:66:77",
+      "endpoint": 1,
+      "clusters": [
+        {
+          "cluster_id": 1026,
+          "cluster_name": "TemperatureMeasurement",
+          "attributes": {
+            "MeasuredValue": 2560
+          }
+        }
+      ],
+      "reachable": true
+    }
+  ]
+}
+```
+
+### 14.3 实现代码
+
+```python
+class MatterBridgeManager:
+    """Matter桥接设备管理器"""
+
+    def __init__(self, storage: MatterStorage):
+        self.storage = storage
+
+    def discover_bridged_devices(self, bridge_id: str) -> List[Dict]:
+        """发现桥接设备"""
+        # 实际实现中调用Bridge的Device Discovery功能
+        # 模拟发现的设备
+        discovered = [
+            {
+                "unique_id": "00:11:22:33:44:55:66:77",
+                "vendor": "Aqara",
+                "product": "Temperature Sensor",
+                "endpoint": 1,
+                "clusters": [1026]  # TemperatureMeasurement
+            }
+        ]
+
+        for device in discovered:
+            self.storage.store_bridged_device(
+                bridge_id=bridge_id,
+                bridged_id=device["unique_id"],
+                vendor=device["vendor"],
+                product=device["product"],
+                unique_id=device["unique_id"],
+                endpoint=device["endpoint"]
+            )
+
+        return discovered
+
+    def map_cluster(self, bridged_device_id: str, native_cluster: int) -> int:
+        """映射原生集群到Matter集群"""
+        # 集群映射表
+        cluster_map = {
+            # Zigbee to Matter
+            0x0006: 0x0006,   # On/Off
+            0x0008: 0x0008,   # Level Control
+            0x0300: 0x0300,   # Color Control
+            0x0402: 0x0402,   # Temperature Measurement
+            # Z-Wave to Matter
+            0x25: 0x0006,     # Binary Switch -> On/Off
+            0x26: 0x0008,     # Multilevel Switch -> Level Control
+        }
+        return cluster_map.get(native_cluster, native_cluster)
+
+    def update_bridged_device_reachability(self, bridge_id: str,
+                                          bridged_id: str, reachable: bool):
+        """更新桥接设备可达性"""
+        # 查询并更新可达性状态
+        self.storage.store_event(
+            device_id=bridge_id,
+            event_type="bridged_device_reachability",
+            event_data={
+                "bridged_device_id": bridged_id,
+                "reachable": reachable,
+                "timestamp": datetime.now().isoformat()
+            }
+        )
+
+        print(f"Bridged device {bridged_id} reachability updated: {reachable}")
+
+    def remove_bridged_device(self, bridge_id: str, bridged_id: str):
+        """移除桥接设备"""
+        # 实际实现中需要调用Bridge的RemoveBridgedDevice命令
+        print(f"Removing bridged device {bridged_id} from bridge {bridge_id}")
+
+    def get_bridged_devices(self, bridge_id: str) -> List[Dict]:
+        """获取桥接设备列表"""
+        # 查询数据库获取桥接设备
+        self.storage.cur.execute("""
+            SELECT bridged_device_id, vendor_name, product_name,
+                   unique_id, bridged_endpoint, reachable
+            FROM matter_bridged_devices
+            WHERE bridge_device_id = %s
+        """, (bridge_id,))
+        return [
+            {
+                "bridged_id": row[0],
+                "vendor": row[1],
+                "product": row[2],
+                "unique_id": row[3],
+                "endpoint": row[4],
+                "reachable": row[5]
+            }
+            for row in self.storage.cur.fetchall()
+        ]
+
+# 使用示例
+def demo_bridge_management():
+    storage = MatterStorage("postgresql://user:pass@localhost/matter")
+    bridge_manager = MatterBridgeManager(storage)
+
+    # 发现桥接设备
+    devices = bridge_manager.discover_bridged_devices("MATTER_BRIDGE_001")
+    print(f"Discovered {len(devices)} bridged devices")
+
+    # 获取桥接设备列表
+    bridged = bridge_manager.get_bridged_devices("MATTER_BRIDGE_001")
+    for device in bridged:
+        print(f"  - {device['vendor']} {device['product']} ({device['unique_id']})")
+```
+
+---
+
+## 15. 案例15：Matter设备订阅与事件管理
+
+### 15.1 场景描述
+
+**业务背景**：
+Matter订阅机制允许控制器实时接收设备状态变化通知。需要管理订阅生命周期、处理订阅超时、优化订阅间隔以平衡实时性和网络负载。
+
+**技术挑战**：
+
+- 需要管理大量订阅
+- 需要处理订阅超时和重连
+- 需要优化订阅间隔
+- 需要处理事件丢失
+
+**解决方案**：
+使用Matter Subscribe交互，结合PostgreSQL存储订阅信息和事件历史，实现可靠的订阅管理。
+
+### 15.2 Schema定义
+
+**订阅与事件管理Schema**：
+
+```json
+{
+  "subscription": {
+    "subscription_id": 1,
+    "device_id": "MATTER_LIGHT_001",
+    "endpoint_id": 1,
+    "cluster_id": 6,
+    "attribute_id": 0,
+    "min_interval": 0,
+    "max_interval": 60,
+    "is_active": true,
+    "last_report": "2025-02-14T10:30:00Z"
+  },
+  "events": [
+    {
+      "event_id": 1,
+      "event_number": 100,
+      "priority": "Info",
+      "timestamp": "2025-02-14T10:30:00Z",
+      "data": {
+        "new_value": true,
+        "previous_value": false
+      }
+    }
+  ]
+}
+```
+
+### 15.3 实现代码
+
+```python
+class MatterSubscriptionManager:
+    """Matter订阅管理器"""
+
+    def __init__(self, storage: MatterStorage):
+        self.storage = storage
+        self.active_subscriptions = {}
+
+    def create_subscription(self, device_id: str, endpoint_id: int,
+                           cluster_id: int, attribute_id: int = None,
+                           min_interval: int = 0, max_interval: int = 60) -> int:
+        """创建订阅"""
+        subscription_id = self._generate_subscription_id()
+
+        sub_db_id = self.storage.create_subscription(
+            subscription_id=subscription_id,
+            device_id=device_id,
+            endpoint_id=endpoint_id,
+            cluster_id=cluster_id,
+            attribute_id=attribute_id,
+            min_interval=min_interval,
+            max_interval=max_interval
+        )
+
+        self.active_subscriptions[subscription_id] = {
+            "device_id": device_id,
+            "endpoint_id": endpoint_id,
+            "cluster_id": cluster_id,
+            "attribute_id": attribute_id,
+            "min_interval": min_interval,
+            "max_interval": max_interval
+        }
+
+        print(f"Subscription created: ID={subscription_id}, DB_ID={sub_db_id}")
+        return subscription_id
+
+    def _generate_subscription_id(self) -> int:
+        """生成订阅ID"""
+        import random
+        return random.randint(1, 0xFFFFFFFF)
+
+    def handle_report_data(self, subscription_id: int, data: Dict):
+        """处理订阅报告数据"""
+        # 更新最后报告时间
+        sub_info = self.active_subscriptions.get(subscription_id)
+        if sub_info:
+            self.storage.update_subscription_report(
+                sub_info["device_id"], subscription_id
+            )
+
+        # 存储属性更新
+        if sub_info:
+            self.storage.store_attribute(
+                device_id=sub_info["device_id"],
+                endpoint_id=sub_info["endpoint_id"],
+                cluster_id=sub_info["cluster_id"],
+                attribute_id=sub_info["attribute_id"] or 0,
+                attribute_name="subscribed_value",
+                attribute_value=data
+            )
+
+        print(f"Report received for subscription {subscription_id}: {data}")
+
+    def check_subscription_health(self) -> List[Dict]:
+        """检查订阅健康状态"""
+        stats = self.storage.get_subscription_statistics()
+
+        # 找出超时订阅
+        stale_subs = []
+        for sub_id, sub_info in self.active_subscriptions.items():
+            # 检查最后报告时间
+            pass  # 实际实现中查询数据库
+
+        return [
+            {
+                "total_subscriptions": stats.get("total", 0),
+                "active_subscriptions": stats.get("active", 0),
+                "stale_subscriptions": stats.get("stale", 0)
+            }
+        ]
+
+    def optimize_subscriptions(self, device_id: str = None):
+        """优化订阅间隔"""
+        # 分析事件频率，调整订阅间隔
+        # 高频变化属性：减小max_interval
+        # 低频变化属性：增大max_interval
+        pass
+
+    def unsubscribe(self, subscription_id: int):
+        """取消订阅"""
+        sub_info = self.active_subscriptions.get(subscription_id)
+        if sub_info:
+            self.storage.deactivate_subscription(
+                sub_info["device_id"], subscription_id
+            )
+            del self.active_subscriptions[subscription_id]
+            print(f"Subscription {subscription_id} unsubscribed")
+
+# 使用示例
+def demo_subscription():
+    storage = MatterStorage("postgresql://user:pass@localhost/matter")
+    sub_manager = MatterSubscriptionManager(storage)
+
+    # 创建订阅
+    sub_id = sub_manager.create_subscription(
+        device_id="MATTER_LIGHT_001",
+        endpoint_id=1,
+        cluster_id=6,  # On/Off
+        attribute_id=0,  # OnOff
+        min_interval=0,
+        max_interval=10
+    )
+
+    # 模拟接收报告
+    sub_manager.handle_report_data(sub_id, {"value": True})
+
+    # 检查订阅健康
+    health = sub_manager.check_subscription_health()
+    print(f"Subscription health: {health}")
+```
+
+---
+
+## 16. 案例16：Matter网络拓扑分析与优化
+
+### 16.1 场景描述
+
+**业务背景**：
+Matter over Thread网络需要分析和优化网络拓扑，确保良好的连接性和低延迟。需要分析路由器分布、链路质量、网络直径等指标。
+
+**技术挑战**：
+
+- 需要收集网络拓扑信息
+- 需要分析链路质量和RSSI
+- 需要识别网络瓶颈
+- 需要优化路由器布局
+
+**解决方案**：
+使用Thread Network Data和Matter Network Commissioning集群获取网络信息，结合PostgreSQL存储和分析网络拓扑。
+
+### 16.2 Schema定义
+
+**网络拓扑分析Schema**：
+
+```json
+{
+  "network_analysis": {
+    "fabric_id": 1,
+    "timestamp": "2025-02-14T10:30:00Z",
+    "topology": {
+      "total_nodes": 15,
+      "routers": 5,
+      "end_devices": 10,
+      "network_diameter": 4
+    },
+    "link_quality": {
+      "avg_rssi": -65,
+      "avg_lqi": 220,
+      "weak_links": [
+        {
+          "source": "NODE_001",
+          "target": "NODE_002",
+          "rssi": -82,
+          "lqi": 120
+        }
+      ]
+    },
+    "recommendations": [
+      "考虑在客厅区域增加一个路由器以改善连接"
+    ]
+  }
+}
+```
+
+### 16.3 实现代码
+
+```python
+class MatterNetworkAnalyzer:
+    """Matter网络分析器"""
+
+    def __init__(self, storage: MatterStorage):
+        self.storage = storage
+
+    def collect_network_topology(self, fabric_id: int) -> Dict:
+        """收集网络拓扑"""
+        # 获取网络健康视图
+        health_data = self.storage.get_network_health_report()
+        fabric_health = next(
+            (h for h in health_data if h.get("fabric_id") == fabric_id),
+            None
+        )
+
+        if not fabric_health:
+            return {}
+
+        return {
+            "fabric_id": fabric_id,
+            "total_nodes": fabric_health.get("device_count", 0),
+            "avg_rssi": fabric_health.get("avg_rssi"),
+            "avg_lqi": fabric_health.get("avg_lqi"),
+            "online_percentage": fabric_health.get("online_percentage")
+        }
+
+    def analyze_link_quality(self, fabric_id: int) -> Dict:
+        """分析链路质量"""
+        # 获取所有设备的网络信息
+        devices = self.storage.get_all_devices()
+
+        link_stats = {
+            "excellent": 0,  # LQI > 220
+            "good": 0,       # LQI 180-220
+            "fair": 0,       # LQI 120-180
+            "poor": 0        # LQI < 120
+        }
+
+        weak_links = []
+
+        for device in devices:
+            network_info = self.storage.get_network_info_by_device(device["device_id"])
+            for info in network_info:
+                lqi = info.get("lqi", 0)
+                rssi = info.get("rssi", -100)
+
+                if lqi > 220:
+                    link_stats["excellent"] += 1
+                elif lqi > 180:
+                    link_stats["good"] += 1
+                elif lqi > 120:
+                    link_stats["fair"] += 1
+                else:
+                    link_stats["poor"] += 1
+                    weak_links.append({
+                        "device_id": device["device_id"],
+                        "rssi": rssi,
+                        "lqi": lqi
+                    })
+
+        return {
+            "link_distribution": link_stats,
+            "weak_links": weak_links[:10]  # 返回前10个弱链接
+        }
+
+    def generate_optimization_recommendations(self, fabric_id: int) -> List[str]:
+        """生成优化建议"""
+        recommendations = []
+
+        topology = self.collect_network_topology(fabric_id)
+        link_analysis = self.analyze_link_quality(fabric_id)
+
+        # 检查在线率
+        if topology.get("online_percentage", 100) < 95:
+            recommendations.append(
+                f"网络在线率较低({topology['online_percentage']}%)，建议检查离线设备"
+            )
+
+        # 检查链路质量
+        poor_count = link_analysis["link_distribution"].get("poor", 0)
+        total_links = sum(link_analysis["link_distribution"].values())
+
+        if total_links > 0 and poor_count / total_links > 0.2:
+            recommendations.append(
+                f"弱链接比例较高({poor_count}/{total_links})，建议优化设备位置或增加路由器"
+            )
+
+        # 检查RSSI
+        avg_rssi = topology.get("avg_rssi", -50)
+        if avg_rssi < -75:
+            recommendations.append(
+                f"平均信号强度较弱({avg_rssi}dBm)，建议增加Thread路由器"
+            )
+
+        if not recommendations:
+            recommendations.append("网络状况良好，无需优化")
+
+        return recommendations
+
+    def store_network_diagnosis(self, fabric_id: int, diagnosis_data: Dict):
+        """存储网络诊断结果"""
+        self.storage.store_network_diagnostic(
+            device_id=f"FABRIC_{fabric_id}",
+            diagnostic_type="network_topology",
+            result_data=diagnosis_data
+        )
+
+    def generate_network_report(self, fabric_id: int) -> Dict:
+        """生成网络报告"""
+        topology = self.collect_network_topology(fabric_id)
+        link_analysis = self.analyze_link_quality(fabric_id)
+        recommendations = self.generate_optimization_recommendations(fabric_id)
+
+        report = {
+            "fabric_id": fabric_id,
+            "timestamp": datetime.now().isoformat(),
+            "topology": topology,
+            "link_analysis": link_analysis,
+            "recommendations": recommendations
+        }
+
+        # 存储报告
+        self.store_network_diagnosis(fabric_id, report)
+
+        return report
+
+# 使用示例
+def demo_network_analysis():
+    storage = MatterStorage("postgresql://user:pass@localhost/matter")
+    analyzer = MatterNetworkAnalyzer(storage)
+
+    # 收集网络拓扑
+    topology = analyzer.collect_network_topology(fabric_id=1)
+    print(f"Network topology: {topology}")
+
+    # 分析链路质量
+    link_quality = analyzer.analyze_link_quality(fabric_id=1)
+    print(f"Link quality: {link_quality}")
+
+    # 生成优化建议
+    recommendations = analyzer.generate_optimization_recommendations(fabric_id=1)
+    print(f"Recommendations: {recommendations}")
+
+    # 生成完整报告
+    report = analyzer.generate_network_report(fabric_id=1)
+    print(f"Network report generated: {report['timestamp']}")
+```
+
+---
+
+**参考文档**：
+
+- `01_Overview.md` - 概述
+- `02_Formal_Definition.md` - 形式化定义
+- `03_Standards.md` - 标准对标
+- `04_Transformation.md` - 转换体系
+
+**创建时间**：2025-01-21
+**最后更新**：2025-02-14（新增5个Matter高级案例）

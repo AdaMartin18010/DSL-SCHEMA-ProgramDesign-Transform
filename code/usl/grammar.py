@@ -7,55 +7,84 @@ USL语法定义
 USL_GRAMMAR = """
 start: schema
 
-schema: "schema" identifier "{" schema_body "}"
+schema: "schema" IDENTIFIER "{" schema_body "}"
 
-schema_body: (type_definition | field_definition | constraint_definition | relation_definition | metadata_definition)*
+schema_body: (schema_element)*
 
-type_definition: "type" identifier ":" type_specifier constraint_clause?
+schema_element: type_definition
+             | field_definition
+             | constraint_definition
+             | relation_definition
+             | metadata_definition
 
-type_specifier: primitive_type | composite_type | reference_type
+type_definition: "type" IDENTIFIER ":" type_specifier type_constraints?
 
-primitive_type: "String" | "Integer" | "Float" | "Boolean" | "Date" | "DateTime" | "Decimal"
+type_specifier: primitive_type
+             | array_type
+             | map_type
+             | IDENTIFIER
 
-composite_type: "Array" "<" type_specifier ">" 
-              | "Map" "<" type_specifier "," type_specifier ">" 
-              | "Object" "{" field_definition* "}"
+primitive_type: "String" -> string_type
+             | "Integer" -> integer_type
+             | "Float" -> float_type
+             | "Boolean" -> boolean_type
+             | "Date" -> date_type
+             | "DateTime" -> datetime_type
+             | "Decimal" -> decimal_type
 
-reference_type: identifier
+array_type: "Array" "<" type_specifier ">"
 
-field_definition: "field" identifier ":" type_specifier constraint_clause? default_clause?
+map_type: "Map" "<" type_specifier "," type_specifier ">"
 
-constraint_clause: "{" constraint* "}"
+field_definition: "field" IDENTIFIER ":" type_specifier field_constraints?
 
-constraint: "required" ":" boolean
-          | "min" ":" number
-          | "max" ":" number
-          | "pattern" ":" string
-          | "enum" ":" "[" value ("," value)* "]"
-          | "format" ":" string
-          | "minLength" ":" number
-          | "maxLength" ":" number
-          | "precision" ":" number
+type_constraints: "{" type_constraint* "}"
 
-default_clause: "default" ":" value
+type_constraint: "constraint" ":" STRING
+               | "format" ":" STRING
+               | "enum" ":" "[" value ("," value)* "]"
 
-relation_definition: "relation" identifier ":" relation_type "(" identifier "," identifier ")"
+field_constraints: "{" field_constraint* "}"
 
-relation_type: "one_to_one" | "one_to_many" | "many_to_many"
+field_constraint: "required" ":" BOOLEAN
+               | "default" ":" value
+               | "min" ":" NUMBER
+               | "max" ":" NUMBER
+               | "pattern" ":" STRING
+               | "enum" ":" "[" value ("," value)* "]"
+               | "format" ":" STRING
+               | "minLength" ":" NUMBER
+               | "maxLength" ":" NUMBER
+               | "precision" ":" NUMBER
+
+constraint_definition: "constraint" IDENTIFIER "{" constraint_body "}"
+
+constraint_body: constraint_item ("," constraint_item)*
+
+constraint_item: IDENTIFIER ":" value
+
+relation_definition: "relation" IDENTIFIER ":" relation_type "(" IDENTIFIER "," IDENTIFIER ")"
+
+relation_type: "one_to_one" -> one_to_one
+             | "one_to_many" -> one_to_many
+             | "many_to_many" -> many_to_many
 
 metadata_definition: "metadata" "{" metadata_item* "}"
 
-metadata_item: identifier ":" value
+metadata_item: IDENTIFIER ":" value
 
-identifier: /[a-zA-Z_][a-zA-Z0-9_]*/
+value: STRING | NUMBER | BOOLEAN | NULL
 
-boolean: "true" | "false"
+// 词法规则
+IDENTIFIER: /[a-zA-Z_][a-zA-Z0-9_]*/
 
-number: /-?\d+(\.\d+)?/
+BOOLEAN.2: "true" | "false"
 
-string: /"[^"]*"/
+NULL.2: "null"
 
-value: string | number | boolean | "null"
+NUMBER: /-?\d+(\.\d+)?/
+
+STRING: /"[^"]*"/
 
 %import common.WS
 %ignore WS

@@ -18,7 +18,7 @@ if str(project_root) not in sys.path:
 import os
 os.chdir(project_root)
 
-from code.schema_deepening.cache import SimpleCache, cached, get_global_cache
+from schema_deepening.cache import SimpleCache, cached, get_global_cache
 
 
 class TestSimpleCache(unittest.TestCase):

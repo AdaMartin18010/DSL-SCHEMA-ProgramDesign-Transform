@@ -2668,3 +2668,571 @@ class SmartHomeStorage:
 
 **创建时间**：2025-01-21
 **最后更新**：2025-01-21
+
+
+---
+
+## 8. 高级PostgreSQL存储功能
+
+### 8.1 物化视图与性能优化
+
+**智慧家居物化视图实现**（新增400+行PostgreSQL代码）：
+
+```python
+class SmartHomeStorageAdvanced(SmartHomeStorage):
+    """智慧家居高级存储功能 - 物化视图、分区表、存储过程"""
+
+    def __init__(self, connection_string: str):
+        super().__init__(connection_string)
+        self._create_advanced_tables()
+        self._create_materialized_views()
+        self._create_partition_tables()
+        self._create_stored_procedures()
+
+    def _create_advanced_tables(self):
+        """创建高级功能表"""
+        # 设备类型定义表
+        self.cur.execute("""
+            CREATE TABLE IF NOT EXISTS device_type_definitions (
+                id BIGSERIAL PRIMARY KEY,
+                device_type VARCHAR(50) UNIQUE NOT NULL,
+                type_name VARCHAR(100) NOT NULL,
+                type_description TEXT,
+                supported_clusters JSONB,
+                default_attributes JSONB,
+                icon_url VARCHAR(255),
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+
+        # 用户偏好设置表
+        self.cur.execute("""
+            CREATE TABLE IF NOT EXISTS user_preferences (
+                id BIGSERIAL PRIMARY KEY,
+                user_id VARCHAR(50) NOT NULL,
+                preference_key VARCHAR(100) NOT NULL,
+                preference_value JSONB NOT NULL,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(user_id, preference_key)
+            )
+        """)
+
+        # 设备联动规则历史表
+        self.cur.execute("""
+            CREATE TABLE IF NOT EXISTS automation_rule_history (
+                id BIGSERIAL PRIMARY KEY,
+                rule_id VARCHAR(20) NOT NULL,
+                trigger_device_id VARCHAR(20) NOT NULL,
+                trigger_value JSONB,
+                executed_actions JSONB,
+                execution_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                execution_duration_ms INTEGER,
+                success BOOLEAN DEFAULT TRUE
+            )
+        """)
+
+        # 能耗预测表
+        self.cur.execute("""
+            CREATE TABLE IF NOT EXISTS energy_predictions (
+                id BIGSERIAL PRIMARY KEY,
+                device_id VARCHAR(20) NOT NULL,
+                prediction_date DATE NOT NULL,
+                predicted_consumption DECIMAL(10,2),
+                confidence_lower DECIMAL(10,2),
+                confidence_upper DECIMAL(10,2),
+                model_version VARCHAR(20),
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (device_id) REFERENCES devices(device_id),
+                UNIQUE(device_id, prediction_date)
+            )
+        """)
+
+        # 异常事件表
+        self.cur.execute("""
+            CREATE TABLE IF NOT EXISTS anomaly_events (
+                id BIGSERIAL PRIMARY KEY,
+                device_id VARCHAR(20) NOT NULL,
+                anomaly_type VARCHAR(50) NOT NULL,
+                anomaly_score DECIMAL(5,4),
+                detected_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                resolved_at TIMESTAMP,
+                details JSONB,
+                FOREIGN KEY (device_id) REFERENCES devices(device_id)
+            )
+        """)
+
+        self.conn.commit()
+
+    def _create_materialized_views(self):
+        """创建物化视图"""
+        # 设备每日统计物化视图
+        self.cur.execute("""
+            CREATE MATERIALIZED VIEW IF NOT EXISTS mv_device_daily_stats AS
+            SELECT 
+                device_id,
+                DATE(recorded_at) as stat_date,
+                COUNT(*) as state_change_count,
+                AVG((state_data->>'brightness')::numeric) as avg_brightness,
+                AVG((state_data->>'temperature')::numeric) as avg_temperature,
+                MAX((state_data->>'power')::text) as last_power_state
+            FROM device_states
+            WHERE recorded_at >= CURRENT_DATE - INTERVAL '30 days'
+            GROUP BY device_id, DATE(recorded_at)
+        """)
+
+        # 创建索引
+        self.cur.execute("""
+            CREATE INDEX IF NOT EXISTS idx_mv_device_daily_stats_device_date
+            ON mv_device_daily_stats(device_id, stat_date)
+        """)
+
+        # 场景执行统计物化视图
+        self.cur.execute("""
+            CREATE MATERIALIZED VIEW IF NOT EXISTS mv_scene_execution_stats AS
+            SELECT 
+                scene_id,
+                DATE(execution_time) as execution_date,
+                execution_type,
+                COUNT(*) as execution_count,
+                COUNT(CASE WHEN execution_result = 'Success' THEN 1 END) as success_count,
+                AVG(EXTRACT(EPOCH FROM execution_time)) as avg_execution_timestamp
+            FROM scene_executions
+            WHERE execution_time >= CURRENT_DATE - INTERVAL '90 days'
+            GROUP BY scene_id, DATE(execution_time), execution_type
+        """)
+
+        self.cur.execute("""
+            CREATE INDEX IF NOT EXISTS idx_mv_scene_stats_scene_date
+            ON mv_scene_execution_stats(scene_id, execution_date)
+        """)
+
+        # 房间能耗统计物化视图
+        self.cur.execute("""
+            CREATE MATERIALIZED VIEW IF NOT EXISTS mv_room_energy_stats AS
+            SELECT 
+                d.location_room,
+                DATE(ec.recorded_at) as energy_date,
+                SUM(ec.power_consumption) as total_consumption,
+                AVG(ec.power_consumption) as avg_consumption,
+                MAX(ec.power_consumption) as peak_consumption,
+                COUNT(DISTINCT ec.device_id) as active_devices
+            FROM energy_consumption ec
+            JOIN devices d ON ec.device_id = d.device_id
+            WHERE ec.recorded_at >= CURRENT_DATE - INTERVAL '30 days'
+            GROUP BY d.location_room, DATE(ec.recorded_at)
+        """)
+
+        self.cur.execute("""
+            CREATE INDEX IF NOT EXISTS idx_mv_room_energy_stats
+            ON mv_room_energy_stats(location_room, energy_date)
+        """)
+
+        self.conn.commit()
+
+    def refresh_materialized_views(self):
+        """刷新所有物化视图"""
+        self.cur.execute("REFRESH MATERIALIZED VIEW CONCURRENTLY mv_device_daily_stats")
+        self.cur.execute("REFRESH MATERIALIZED VIEW CONCURRENTLY mv_scene_execution_stats")
+        self.cur.execute("REFRESH MATERIALIZED VIEW CONCURRENTLY mv_room_energy_stats")
+        self.conn.commit()
+        logger.info("Materialized views refreshed")
+
+    def _create_partition_tables(self):
+        """创建分区表"""
+        # 设备状态历史分区表（按月分区）
+        self.cur.execute("""
+            CREATE TABLE IF NOT EXISTS device_states_partitioned (
+                id BIGSERIAL,
+                device_id VARCHAR(20) NOT NULL,
+                state_data JSONB NOT NULL,
+                recorded_at TIMESTAMP NOT NULL
+            ) PARTITION BY RANGE (recorded_at)
+        """)
+
+        # 创建未来12个月的分区
+        for i in range(-3, 12):
+            partition_date = datetime.now().replace(day=1) + timedelta(days=30*i)
+            next_month = partition_date + timedelta(days=32)
+            partition_name = f"device_states_{partition_date.strftime('%Y_%m')}"
+            
+            self.cur.execute(f"""
+                CREATE TABLE IF NOT EXISTS {partition_name}
+                PARTITION OF device_states_partitioned
+                FOR VALUES FROM (%s) TO (%s)
+            """, (partition_date.replace(day=1), next_month.replace(day=1)))
+
+        # 传感器数据分区表（按周分区）
+        self.cur.execute("""
+            CREATE TABLE IF NOT EXISTS sensor_data_partitioned (
+                id BIGSERIAL,
+                device_id VARCHAR(20) NOT NULL,
+                sensor_type VARCHAR(50) NOT NULL,
+                sensor_value DECIMAL(10,2) NOT NULL,
+                unit VARCHAR(20),
+                recorded_at TIMESTAMP NOT NULL
+            ) PARTITION BY RANGE (recorded_at)
+        """)
+
+        self.conn.commit()
+
+    def _create_stored_procedures(self):
+        """创建存储过程"""
+        # 批量插入设备状态存储过程
+        self.cur.execute("""
+            CREATE OR REPLACE FUNCTION batch_insert_device_states(
+                p_device_id VARCHAR(20),
+                p_states JSONB[]
+            ) RETURNS INTEGER AS $$
+            DECLARE
+                v_count INTEGER := 0;
+                v_state JSONB;
+            BEGIN
+                FOREACH v_state IN ARRAY p_states
+                LOOP
+                    INSERT INTO device_states (device_id, state_data, recorded_at)
+                    VALUES (p_device_id, v_state, CURRENT_TIMESTAMP);
+                    v_count := v_count + 1;
+                END LOOP;
+                RETURN v_count;
+            END;
+            $$ LANGUAGE plpgsql;
+        """)
+
+        # 计算能耗存储过程
+        self.cur.execute("""
+            CREATE OR REPLACE FUNCTION calculate_energy_consumption(
+                p_device_id VARCHAR(20),
+                p_start_time TIMESTAMP,
+                p_end_time TIMESTAMP
+            ) RETURNS TABLE (
+                total_consumption DECIMAL,
+                avg_consumption DECIMAL,
+                peak_consumption DECIMAL,
+                data_points BIGINT
+            ) AS $$
+            BEGIN
+                RETURN QUERY
+                SELECT 
+                    SUM(power_consumption) as total_consumption,
+                    AVG(power_consumption) as avg_consumption,
+                    MAX(power_consumption) as peak_consumption,
+                    COUNT(*) as data_points
+                FROM energy_consumption
+                WHERE device_id = p_device_id
+                AND recorded_at BETWEEN p_start_time AND p_end_time;
+            END;
+            $$ LANGUAGE plpgsql;
+        """)
+
+        # 场景执行统计存储过程
+        self.cur.execute("""
+            CREATE OR REPLACE FUNCTION get_scene_execution_summary(
+                p_scene_id VARCHAR(20),
+                p_days INTEGER DEFAULT 30
+            ) RETURNS TABLE (
+                total_executions BIGINT,
+                success_rate DECIMAL,
+                avg_executions_per_day DECIMAL,
+                last_execution TIMESTAMP
+            ) AS $$
+            BEGIN
+                RETURN QUERY
+                SELECT 
+                    COUNT(*) as total_executions,
+                    ROUND(
+                        COUNT(CASE WHEN execution_result = 'Success' THEN 1 END)::DECIMAL / 
+                        NULLIF(COUNT(*), 0) * 100, 2
+                    ) as success_rate,
+                    ROUND(COUNT(*)::DECIMAL / NULLIF(p_days, 0), 2) as avg_executions_per_day,
+                    MAX(execution_time) as last_execution
+                FROM scene_executions
+                WHERE scene_id = p_scene_id
+                AND execution_time >= CURRENT_TIMESTAMP - (p_days || ' days')::INTERVAL;
+            END;
+            $$ LANGUAGE plpgsql;
+        """)
+
+        # 设备健康检查存储过程
+        self.cur.execute("""
+            CREATE OR REPLACE FUNCTION check_device_health(
+                p_device_id VARCHAR(20),
+                p_hours INTEGER DEFAULT 24
+            ) RETURNS TABLE (
+                health_status VARCHAR(20),
+                last_seen TIMESTAMP,
+                state_changes BIGINT,
+                anomaly_count BIGINT,
+                recommendation TEXT
+            ) AS $$
+            DECLARE
+                v_last_seen TIMESTAMP;
+                v_state_changes BIGINT;
+                v_anomaly_count BIGINT;
+                v_health_status VARCHAR(20);
+                v_recommendation TEXT;
+            BEGIN
+                -- 获取最后状态时间
+                SELECT MAX(recorded_at) INTO v_last_seen
+                FROM device_states
+                WHERE device_id = p_device_id;
+
+                -- 获取状态变化次数
+                SELECT COUNT(*) INTO v_state_changes
+                FROM device_states
+                WHERE device_id = p_device_id
+                AND recorded_at >= CURRENT_TIMESTAMP - (p_hours || ' hours')::INTERVAL;
+
+                -- 获取异常事件数
+                SELECT COUNT(*) INTO v_anomaly_count
+                FROM anomaly_events
+                WHERE device_id = p_device_id
+                AND detected_at >= CURRENT_TIMESTAMP - (p_hours || ' hours')::INTERVAL
+                AND resolved_at IS NULL;
+
+                -- 确定健康状态
+                IF v_last_seen < CURRENT_TIMESTAMP - (p_hours || ' hours')::INTERVAL THEN
+                    v_health_status := 'Offline';
+                    v_recommendation := 'Device has not reported status for a while. Check connectivity.';
+                ELSIF v_anomaly_count > 0 THEN
+                    v_health_status := 'Warning';
+                    v_recommendation := 'Device has unresolved anomalies. Please investigate.';
+                ELSIF v_state_changes = 0 THEN
+                    v_health_status := 'Idle';
+                    v_recommendation := 'Device is online but no state changes detected.';
+                ELSE
+                    v_health_status := 'Healthy';
+                    v_recommendation := 'Device is operating normally.';
+                END IF;
+
+                RETURN QUERY
+                SELECT v_health_status, v_last_seen, v_state_changes, v_anomaly_count, v_recommendation;
+            END;
+            $$ LANGUAGE plpgsql;
+        """)
+
+        self.conn.commit()
+
+    def store_user_preference(self, user_id: str, key: str, value: Dict) -> int:
+        """存储用户偏好设置"""
+        self.cur.execute("""
+            INSERT INTO user_preferences (user_id, preference_key, preference_value)
+            VALUES (%s, %s, %s::jsonb)
+            ON CONFLICT (user_id, preference_key) DO UPDATE SET
+                preference_value = EXCLUDED.preference_value,
+                updated_at = CURRENT_TIMESTAMP
+            RETURNING id
+        """, (user_id, key, json.dumps(value)))
+        pref_id = self.cur.fetchone()[0]
+        self.conn.commit()
+        return pref_id
+
+    def get_user_preferences(self, user_id: str) -> Dict[str, Dict]:
+        """获取用户所有偏好设置"""
+        self.cur.execute("""
+            SELECT preference_key, preference_value
+            FROM user_preferences
+            WHERE user_id = %s
+        """, (user_id,))
+        return {row[0]: json.loads(row[1]) for row in self.cur.fetchall()}
+
+    def store_energy_prediction(self, device_id: str, prediction_date: datetime,
+                                predicted_consumption: float,
+                                confidence_lower: float = None,
+                                confidence_upper: float = None,
+                                model_version: str = None) -> int:
+        """存储能耗预测"""
+        self.cur.execute("""
+            INSERT INTO energy_predictions 
+            (device_id, prediction_date, predicted_consumption, 
+             confidence_lower, confidence_upper, model_version)
+            VALUES (%s, %s, %s, %s, %s, %s)
+            ON CONFLICT (device_id, prediction_date) DO UPDATE SET
+                predicted_consumption = EXCLUDED.predicted_consumption,
+                confidence_lower = EXCLUDED.confidence_lower,
+                confidence_upper = EXCLUDED.confidence_upper,
+                model_version = EXCLUDED.model_version,
+                created_at = CURRENT_TIMESTAMP
+            RETURNING id
+        """, (device_id, prediction_date.date(), predicted_consumption,
+              confidence_lower, confidence_upper, model_version))
+        pred_id = self.cur.fetchone()[0]
+        self.conn.commit()
+        return pred_id
+
+    def store_anomaly_event(self, device_id: str, anomaly_type: str,
+                           anomaly_score: float, details: Dict = None) -> int:
+        """存储异常事件"""
+        self.cur.execute("""
+            INSERT INTO anomaly_events (device_id, anomaly_type, anomaly_score, details)
+            VALUES (%s, %s, %s, %s::jsonb)
+            RETURNING id
+        """, (device_id, anomaly_type, anomaly_score, json.dumps(details or {})))
+        anomaly_id = self.cur.fetchone()[0]
+        self.conn.commit()
+        return anomaly_id
+
+    def resolve_anomaly_event(self, anomaly_id: int):
+        """解决异常事件"""
+        self.cur.execute("""
+            UPDATE anomaly_events
+            SET resolved_at = CURRENT_TIMESTAMP
+            WHERE id = %s
+        """, (anomaly_id,))
+        self.conn.commit()
+
+    def call_calculate_energy_consumption(self, device_id: str,
+                                         start_time: datetime,
+                                         end_time: datetime) -> Dict:
+        """调用存储过程计算能耗"""
+        self.cur.execute("""
+            SELECT * FROM calculate_energy_consumption(%s, %s, %s)
+        """, (device_id, start_time, end_time))
+        row = self.cur.fetchone()
+        return {
+            "total_consumption": float(row[0]) if row[0] else 0,
+            "avg_consumption": float(row[1]) if row[1] else 0,
+            "peak_consumption": float(row[2]) if row[2] else 0,
+            "data_points": row[3]
+        }
+
+    def call_check_device_health(self, device_id: str, hours: int = 24) -> Dict:
+        """调用存储过程检查设备健康"""
+        self.cur.execute("""
+            SELECT * FROM check_device_health(%s, %s)
+        """, (device_id, hours))
+        row = self.cur.fetchone()
+        return {
+            "health_status": row[0],
+            "last_seen": row[1],
+            "state_changes": row[2],
+            "anomaly_count": row[3],
+            "recommendation": row[4]
+        }
+
+    def get_materialized_view_stats(self, view_name: str) -> Dict:
+        """获取物化视图统计"""
+        self.cur.execute("""
+            SELECT 
+                relname as view_name,
+                pg_size_pretty(pg_total_relation_size(oid)) as total_size,
+                pg_total_relation_size(oid) as size_bytes
+            FROM pg_class
+            WHERE relname = %s
+        """, (view_name,))
+        row = self.cur.fetchone()
+        if row:
+            return {
+                "view_name": row[0],
+                "total_size": row[1],
+                "size_bytes": row[2]
+            }
+        return {}
+
+    def get_partition_table_stats(self, table_name: str) -> List[Dict]:
+        """获取分区表统计"""
+        self.cur.execute("""
+            SELECT 
+                schemaname,
+                tablename,
+                pg_size_pretty(pg_total_relation_size(schemaname||'.'||tablename)) as size
+            FROM pg_tables
+            WHERE tablename LIKE %s
+            ORDER BY tablename
+        """, (f"{table_name}%",))
+        return [
+            {
+                "schema": row[0],
+                "table": row[1],
+                "size": row[2]
+            }
+            for row in self.cur.fetchall()
+        ]
+```
+
+### 8.2 高级查询示例
+
+```python
+    def get_predicted_vs_actual_energy(self, device_id: str, days: int = 7):
+        """对比预测能耗与实际能耗"""
+        self.cur.execute("""
+            SELECT 
+                p.prediction_date,
+                p.predicted_consumption,
+                COALESCE(SUM(ec.power_consumption), 0) as actual_consumption,
+                ABS(p.predicted_consumption - COALESCE(SUM(ec.power_consumption), 0)) as prediction_error
+            FROM energy_predictions p
+            LEFT JOIN energy_consumption ec ON p.device_id = ec.device_id
+                AND DATE(ec.recorded_at) = p.prediction_date
+            WHERE p.device_id = %s
+            AND p.prediction_date >= CURRENT_DATE - INTERVAL '%s days'
+            GROUP BY p.prediction_date, p.predicted_consumption
+            ORDER BY p.prediction_date
+        """, (device_id, days))
+        return [
+            {
+                "date": row[0],
+                "predicted": float(row[1]) if row[1] else 0,
+                "actual": float(row[2]) if row[2] else 0,
+                "error": float(row[3]) if row[3] else 0
+            }
+            for row in self.cur.fetchall()
+        ]
+
+    def get_anomaly_summary(self, days: int = 7):
+        """获取异常事件汇总"""
+        self.cur.execute("""
+            SELECT 
+                anomaly_type,
+                COUNT(*) as event_count,
+                COUNT(CASE WHEN resolved_at IS NULL THEN 1 END) as unresolved_count,
+                AVG(anomaly_score) as avg_score,
+                MAX(detected_at) as last_detected
+            FROM anomaly_events
+            WHERE detected_at >= CURRENT_TIMESTAMP - INTERVAL '%s days'
+            GROUP BY anomaly_type
+            ORDER BY event_count DESC
+        """, (days,))
+        return [
+            {
+                "anomaly_type": row[0],
+                "event_count": row[1],
+                "unresolved_count": row[2],
+                "avg_score": float(row[3]) if row[3] else 0,
+                "last_detected": row[4]
+            }
+            for row in self.cur.fetchall()
+        ]
+
+    def get_materialized_view_data(self, view_name: str, filters: Dict = None, limit: int = 1000):
+        """从物化视图获取数据"""
+        valid_views = ['mv_device_daily_stats', 'mv_scene_execution_stats', 'mv_room_energy_stats']
+        if view_name not in valid_views:
+            raise ValueError(f"Invalid view name: {view_name}")
+
+        query = f"SELECT * FROM {view_name} WHERE 1=1"
+        params = []
+
+        if filters:
+            for key, value in filters.items():
+                query += f" AND {key} = %s"
+                params.append(value)
+
+        query += f" ORDER BY 1 DESC LIMIT %s"
+        params.append(limit)
+
+        self.cur.execute(query, params)
+        columns = [desc[0] for desc in self.cur.description]
+        return [dict(zip(columns, row)) for row in self.cur.fetchall()]
+```
+
+---
+
+**参考文档**：
+
+- `01_Overview.md` - 概述
+- `02_Formal_Definition.md` - 形式化定义
+- `03_Standards.md` - 标准对标
+- `05_Case_Studies.md` - 实践案例
+
+**创建时间**：2025-01-21
+**最后更新**：2025-02-14（新增高级PostgreSQL存储功能400+行）

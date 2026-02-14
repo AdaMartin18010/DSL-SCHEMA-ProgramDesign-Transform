@@ -4,7 +4,7 @@
 检查Schema版本间的兼容性
 """
 
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 from .storage import SchemaVersioningStorage
 from .version_control import SchemaVersionControl
 

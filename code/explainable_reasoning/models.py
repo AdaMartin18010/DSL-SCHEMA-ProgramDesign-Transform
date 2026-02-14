@@ -24,7 +24,7 @@ class ReasoningRule(Base):
     conclusion = Column(JSON)  # 结论
     confidence = Column(Integer)  # 0-100
     priority = Column(Integer)  # 优先级
-    metadata = Column(JSON)
+    meta_data = Column(JSON)  # 使用meta_data避免与SQLAlchemy保留字冲突
     created_at = Column(DateTime, default=datetime.now)
 
 

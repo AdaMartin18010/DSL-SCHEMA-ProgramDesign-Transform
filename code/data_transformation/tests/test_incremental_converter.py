@@ -5,7 +5,7 @@
 """
 
 import unittest
-from code.data_transformation.incremental_converter import (
+from data_transformation.incremental_converter import (
     IncrementalConverter,
     SchemaChange,
     ChangeType

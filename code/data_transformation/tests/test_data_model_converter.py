@@ -5,7 +5,7 @@
 """
 
 import unittest
-from code.data_transformation.data_model_converter import (
+from data_transformation.data_model_converter import (
     DataModelConverter,
     DataModelType,
     DataModelValidator

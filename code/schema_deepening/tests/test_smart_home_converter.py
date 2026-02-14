@@ -13,12 +13,12 @@ project_root = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(project_root))
 
 from unittest.mock import Mock, patch
-from code.schema_deepening import (
+from schema_deepening import (
     SmartHomeConverter,
     DeviceProtocol,
     DeviceType
 )
-from code.schema_deepening.exceptions import (
+from schema_deepening.exceptions import (
     ConversionError,
     DeviceNotFoundError,
     SceneNotFoundError,

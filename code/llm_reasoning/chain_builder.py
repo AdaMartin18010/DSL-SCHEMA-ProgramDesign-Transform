@@ -5,8 +5,19 @@
 """
 
 from typing import List, Dict, Any, Optional
+from dataclasses import dataclass
 from .llm_interface import LLMInterface, ReasoningResult
 from .embedding import KGEmbedding
+
+
+@dataclass
+class ReasoningStep:
+    """推理步骤"""
+    step_number: int
+    action: str
+    input: str
+    output: str
+    confidence: float
 
 
 class ReasoningChainBuilder:
@@ -77,7 +88,7 @@ class ReasoningChainBuilder:
             chain.append({
                 'step': step + 1,
                 'type': 'llm_reasoning',
-                'result': reasoning_result.dict(),
+                'result': reasoning_result.model_dump(),
                 'context': current_context.copy()
             })
             
@@ -143,3 +154,52 @@ class ReasoningChainBuilder:
             return False
         
         return True
+    
+    def execute_step(self, step: ReasoningStep) -> ReasoningStep:
+        """
+        执行单个推理步骤
+        
+        Args:
+            step: 推理步骤
+            
+        Returns:
+            执行后的步骤（包含输出和置信度）
+        """
+        if step.action == "search":
+            # 执行搜索
+            entities = self.kg_processor.search_entities(step.input)
+            step.output = f"Found {len(entities)} entities"
+            step.confidence = 0.8 if entities else 0.3
+            
+        elif step.action == "expand":
+            # 扩展实体
+            related = self.kg_processor.get_related_entities(step.input)
+            step.output = f"Found {len(related)} related entities"
+            step.confidence = 0.75 if related else 0.4
+            
+        elif step.action == "analyze":
+            # 分析
+            step.output = "Analysis completed"
+            step.confidence = 0.7
+            
+        else:
+            step.output = "Unknown action"
+            step.confidence = 0.0
+        
+        return step
+    
+    def execute_chain(self, chain: List[ReasoningStep]) -> List[ReasoningStep]:
+        """
+        执行推理链
+        
+        Args:
+            chain: 推理步骤列表
+            
+        Returns:
+            执行后的步骤列表
+        """
+        results = []
+        for step in chain:
+            executed_step = self.execute_step(step)
+            results.append(executed_step)
+        return results

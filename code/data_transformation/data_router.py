@@ -181,7 +181,7 @@ class DataRouter:
         else:
             return route.targets[0]
     
-    def _round_robin_index: Dict[str, int] = {}  # 类变量，用于轮询索引
+    _round_robin_index: Dict[str, int] = {}  # 类变量，用于轮询索引
     
     def broadcast(self, route_id: str, data: Any) -> List[RoutingResult]:
         """

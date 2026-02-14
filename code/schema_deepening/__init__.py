@@ -9,6 +9,7 @@ from .smart_home_converter import (
     DeviceProtocol,
     DeviceType
 )
+from .smart_home_storage import SmartHomeStorage
 from .oa_converter import (
     OAConverter,
     DocumentFormat,
@@ -74,6 +75,7 @@ from .utils import (
 __all__ = [
     # Smart Home转换器
     'SmartHomeConverter',
+    'SmartHomeStorage',
     'DeviceProtocol',
     'DeviceType',
     # OA转换器

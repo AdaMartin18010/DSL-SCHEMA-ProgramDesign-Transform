@@ -124,3 +124,121 @@ class KGEmbedding:
         parts.append(f"关系: {'; '.join(relation_descriptions)}")
         
         return "\n".join(parts)
+
+
+class EmbeddingStore:
+    """
+    嵌入存储类
+    
+    用于存储和搜索嵌入向量
+    """
+    
+    def __init__(self, dimension: int = 1536):
+        """
+        初始化嵌入存储
+        
+        Args:
+            dimension: 嵌入向量维度
+        """
+        self.dimension = dimension
+        self.embeddings: Dict[str, np.ndarray] = {}
+        self.metadata: Dict[str, Dict[str, Any]] = {}
+    
+    def add(self, key: str, embedding: List[float], metadata: Dict[str, Any] = None):
+        """
+        添加嵌入向量
+        
+        Args:
+            key: 唯一标识符
+            embedding: 嵌入向量
+            metadata: 关联的元数据
+        """
+        self.embeddings[key] = np.array(embedding)
+        self.metadata[key] = metadata or {}
+    
+    def get(self, key: str) -> Optional[np.ndarray]:
+        """
+        获取嵌入向量
+        
+        Args:
+            key: 唯一标识符
+            
+        Returns:
+            嵌入向量或None
+        """
+        return self.embeddings.get(key)
+    
+    def search(self, query_embedding: List[float], top_k: int = 5) -> List[tuple]:
+        """
+        搜索最相似的嵌入向量
+        
+        Args:
+            query_embedding: 查询嵌入向量
+            top_k: 返回结果数量
+            
+        Returns:
+            列表，每个元素为 (key, similarity)
+        """
+        if not self.embeddings:
+            return []
+        
+        query = np.array(query_embedding)
+        similarities = []
+        
+        for key, embedding in self.embeddings.items():
+            # 计算余弦相似度
+            similarity = self._cosine_similarity(query, embedding)
+            similarities.append((key, similarity))
+        
+        # 按相似度排序并返回top_k
+        similarities.sort(key=lambda x: x[1], reverse=True)
+        return similarities[:top_k]
+    
+    def _cosine_similarity(self, a: np.ndarray, b: np.ndarray) -> float:
+        """
+        计算余弦相似度
+        
+        Args:
+            a: 向量a
+            b: 向量b
+            
+        Returns:
+            余弦相似度 (-1 到 1)
+        """
+        norm_a = np.linalg.norm(a)
+        norm_b = np.linalg.norm(b)
+        
+        if norm_a == 0 or norm_b == 0:
+            return 0.0
+        
+        return float(np.dot(a, b) / (norm_a * norm_b))
+    
+    def remove(self, key: str):
+        """
+        删除嵌入向量
+        
+        Args:
+            key: 唯一标识符
+        """
+        if key in self.embeddings:
+            del self.embeddings[key]
+        if key in self.metadata:
+            del self.metadata[key]
+    
+    def clear(self):
+        """清空所有嵌入向量"""
+        self.embeddings.clear()
+        self.metadata.clear()
+    
+    def keys(self) -> List[str]:
+        """
+        获取所有键
+        
+        Returns:
+            键列表
+        """
+        return list(self.embeddings.keys())
+    
+    def __len__(self) -> int:
+        """返回存储的嵌入数量"""
+        return len(self.embeddings)

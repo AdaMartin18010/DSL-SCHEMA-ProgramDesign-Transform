@@ -6,7 +6,14 @@
 
 import numpy as np
 from typing import List, Optional
-from sklearn.decomposition import PCA
+
+# 条件导入sklearn
+try:
+    from sklearn.decomposition import PCA
+    SKLEARN_AVAILABLE = True
+except ImportError:
+    SKLEARN_AVAILABLE = False
+    PCA = None
 
 
 class MultimodalFusion:

@@ -4,7 +4,7 @@
 记录推理过程中的所有步骤
 """
 
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from datetime import datetime
 import uuid
 from .storage import ExplainableReasoningStorage

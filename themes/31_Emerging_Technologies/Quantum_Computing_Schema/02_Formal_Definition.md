@@ -492,9 +492,275 @@ P(output = expected_output) ≥ threshold
 2. 证明对于任意输入态输出相同
 3. 证明电路功能等价
 
+## 9. 噪声模型形式化定义
+
+### 9.1 噪声类型定义
+
+**定义9（噪声模型Schema）**：
+
+量子噪声模型Schema描述量子计算中的各种噪声源：
+
+```text
+Noise_Model_Schema = (Type, Targets, Parameters, Probability)
+```
+
+其中：
+
+- `Type`：噪声类型（退极化、阻尼、翻转等）
+- `Targets`：受影响的量子比特
+- `Parameters`：噪声参数（如T1、T2时间）
+- `Probability`：噪声发生概率
+
+**形式化DSL定义**：
+
+```dsl
+schema Noise_Model {
+  type: Noise_Type @enum(
+    Depolarizing,      // 退极化噪声
+    Amplitude_Damping, // 幅度阻尼
+    Phase_Damping,     // 相位阻尼
+    Bit_Flip,          // 比特翻转
+    Phase_Flip,        // 相位翻转
+    Bit_Phase_Flip,    // 比特相位翻转
+    Thermal_Relaxation,// 热弛豫
+    Readout_Error      // 读出误差
+  )
+  target_qubits: Integer[]
+  probability: Float @range(0, 1)
+  parameters: Map[String, Float]  // 类型特定参数
+}
+```
+
+### 9.2 退极化噪声
+
+**定义10（退极化噪声）**：
+
+退极化噪声将量子态以概率 $p$ 变为完全混合态：
+
+```text
+ε(ρ) = (1 - p)ρ + p·I/2^n
+```
+
+**单量子比特情况**：
+
+```text
+ε(ρ) = (1 - p)ρ + p/3 (XρX + YρY + ZρZ)
+```
+
+**形式化定义**：
+
+```dsl
+noise Depolarizing {
+  type: Depolarizing
+  target_qubits: [i]
+  probability: p
+  
+  kraus_operators: [
+    √(1-p) · I,
+    √(p/3) · X,
+    √(p/3) · Y,
+    √(p/3) · Z
+  ]
+}
+```
+
+### 9.3 幅度阻尼噪声
+
+**定义11（幅度阻尼噪声）**：
+
+幅度阻尼描述能量耗散过程（如自发辐射）：
+
+```text
+ε(ρ) = E₀ρE₀† + E₁ρE₁†
+```
+
+其中Kraus算子：
+
+```text
+E₀ = [1, 0; 0, √(1-γ)]
+E₁ = [0, √γ; 0, 0]
+```
+
+**形式化定义**：
+
+```dsl
+noise Amplitude_Damping {
+  type: Amplitude_Damping
+  target_qubits: [i]
+  probability: γ  // 阻尼系数
+  
+  kraus_operators: [
+    [[1, 0], [0, √(1-γ)]],
+    [[0, √γ], [0, 0]]
+  ]
+}
+```
+
+### 9.4 相位阻尼噪声
+
+**定义12（相位阻尼噪声）**：
+
+相位阻尼描述量子信息的损失而不损失能量：
+
+```text
+E₀ = [1, 0; 0, √(1-λ)]
+E₁ = [0, 0; 0, √λ]
+```
+
+**形式化定义**：
+
+```dsl
+noise Phase_Damping {
+  type: Phase_Damping
+  target_qubits: [i]
+  probability: λ  // 相位阻尼率
+  
+  kraus_operators: [
+    [[1, 0], [0, √(1-λ)]],
+    [[0, 0], [0, √λ]]
+  ]
+}
+```
+
+### 9.5 热弛豫噪声
+
+**定义13（热弛豫噪声）**：
+
+热弛豫噪声综合了T1和T2弛豫过程：
+
+```text
+T1: 能量弛豫时间（|1⟩ → |0⟩）
+T2: 相位弛豫时间（T2 ≤ 2·T1）
+```
+
+**形式化定义**：
+
+```dsl
+noise Thermal_Relaxation {
+  type: Thermal_Relaxation
+  target_qubits: [i]
+  parameters: {
+    T1: Float  // 能量弛豫时间
+    T2: Float  // 相位弛豫时间
+    gate_time: Float  // 门操作时间
+    temperature: Float  // 环境温度
+  }
+  
+  // 计算等效概率
+  p1 = 1 - exp(-gate_time/T1)
+  p2 = 1 - exp(-gate_time/T2)
+  p_reset = p1 / 2  // 热平衡近似
+}
+```
+
+### 9.6 读出误差
+
+**定义14（读出误差）**：
+
+读出误差描述测量过程中的经典错误：
+
+```text
+P(0|1) = p0given1  // 实际为1，读为0的概率
+P(1|0) = p1given0  // 实际为0，读为1的概率
+```
+
+**读出误差矩阵**：
+
+```text
+M = [[1-p1given0, p0given1],
+     [p1given0,   1-p0given1]]
+```
+
+**形式化定义**：
+
+```dsl
+noise Readout_Error {
+  type: Readout_Error
+  target_qubits: [i]
+  parameters: {
+    p0given1: Float  // P(measured=0 | actual=1)
+    p1given0: Float  // P(measured=1 | actual=0)
+  }
+  
+  confusion_matrix: [
+    [1-p1given0, p0given1],
+    [p1given0,   1-p0given1]
+  ]
+}
+```
+
+### 9.7 噪声信道组合
+
+**定义15（噪声信道组合）**：
+
+多个噪声信道的组合遵循以下规则：
+
+```text
+Sequential: ε₂∘ε₁(ρ) = ε₂(ε₁(ρ))
+Parallel:   ε₁⊗ε₂(ρ₁⊗ρ₂) = ε₁(ρ₁) ⊗ ε₂(ρ₂)
+```
+
+**形式化定义**：
+
+```dsl
+noise_composition Sequential {
+  type: Sequential
+  noises: [ε₁, ε₂, ..., εₙ]
+  
+  result: εₙ∘...∘ε₂∘ε₁
+}
+
+noise_composition Parallel {
+  type: Parallel
+  noises: [ε₁, ε₂, ..., εₙ]
+  target_sets: [Q₁, Q₂, ..., Qₙ]
+  
+  result: ε₁⊗ε₂⊗...⊗εₙ
+}
+```
+
+### 9.8 噪声模型约束
+
+**约束1（物理可实现性）**：
+
+噪声信道必须是完全正定保迹（CPTP）映射：
+
+```dsl
+constraint cptp(noise: Noise_Model): Boolean {
+  // 1. 完全正定性
+  require: all_eigenvalues_positive(choi_matrix(noise))
+  
+  // 2. 保迹性
+  require: sum(Eᵢ†·Eᵢ for Eᵢ in noise.kraus_operators) == I
+  
+  return true
+}
+```
+
+**约束2（概率归一化）**：
+
+```dsl
+constraint probability_bounds(noise: Noise_Model): Boolean {
+  require: 0 ≤ noise.probability ≤ 1
+  return true
+}
+```
+
+**约束3（T1-T2关系）**：
+
+```dsl
+constraint relaxation_times(noise: Noise_Model): Boolean {
+  if noise.type == Thermal_Relaxation {
+    require: 2·noise.T1 ≥ noise.T2 ≥ 0
+    require: noise.T1 > 0
+  }
+  return true
+}
+```
+
 ---
 
 **创建时间**：2025-01-21
-**最后更新**：2025-01-21
-**文档版本**：v1.0
+**最后更新**：2025-02-14
+**文档版本**：v2.0
 **维护者**：DSL Schema研究团队

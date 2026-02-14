@@ -1,0 +1,50 @@
+{
+  "generated_at": "2026-02-14T15:18:41.641357",
+  "code_statistics": {
+    "python_files": 204,
+    "typescript_files": 21,
+    "test_files": 21,
+    "total_lines": 68926
+  },
+  "documentation_statistics": {
+    "total_themes": 35,
+    "total_schemas": 123,
+    "total_docs": 615,
+    "standard_docs": 612
+  },
+  "test_statistics": {
+    "llm_tests": 0,
+    "usl_tests": 18,
+    "total_tests": 18,
+    "passed": 18,
+    "failed": 0
+  },
+  "progress": {
+    "overall": 42.9,
+    "by_priority": {
+      "P0": {
+        "completed": 2,
+        "total": 2,
+        "percentage": 100.0
+      },
+      "P1": {
+        "completed": 7,
+        "total": 8,
+        "percentage": 87.5
+      },
+      "P2": {
+        "completed": 0,
+        "total": 11,
+        "percentage": 0.0
+      }
+    }
+  },
+  "summary": {
+    "total_code_lines": 68926,
+    "total_schemas": 123,
+    "total_docs": 615,
+    "total_tests": 18,
+    "tests_passed": 18,
+    "overall_progress": 42.9
+  }
+}

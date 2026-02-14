@@ -5,7 +5,7 @@ ETL处理器测试
 """
 
 import unittest
-from code.data_transformation.etl_processor import (
+from data_transformation.etl_processor import (
     ETLProcessor,
     ExtractType,
     TransformType,

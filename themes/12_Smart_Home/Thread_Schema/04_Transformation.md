@@ -2396,3 +2396,747 @@ class ThreadStorage:
 
 **创建时间**：2025-01-21
 **最后更新**：2025-01-21
+
+
+---
+
+## 8. Thread高级网络管理与分析
+
+### 8.1 高级Thread数据表与分析
+
+**扩展Thread数据存储方案**（新增400+行PostgreSQL代码）：
+
+```python
+class ThreadStorageAdvanced:
+    """Thread高级数据存储 - 扩展网络分析、性能监控、预测模型"""
+
+    def __init__(self, connection_string: str):
+        self.conn = psycopg2.connect(connection_string)
+        self.cur = self.conn.cursor()
+        self._create_advanced_tables()
+        self._create_analytics_functions()
+        self._create_monitoring_tables()
+        self._create_optimization_tables()
+
+    def _create_advanced_tables(self):
+        """创建高级数据表"""
+        # Thread Leader选举历史表
+        self.cur.execute("""
+            CREATE TABLE IF NOT EXISTS thread_leader_history (
+                id BIGSERIAL PRIMARY KEY,
+                network_name VARCHAR(16) NOT NULL,
+                leader_node_id VARCHAR(16) NOT NULL,
+                partition_id INTEGER NOT NULL,
+                weighting INTEGER,
+                start_time TIMESTAMP NOT NULL,
+                end_time TIMESTAMP,
+                reason VARCHAR(100),
+                FOREIGN KEY (network_name) REFERENCES thread_networks(network_name),
+                FOREIGN KEY (leader_node_id) REFERENCES thread_nodes(node_id)
+            )
+        """)
+
+        # Thread CoAP消息表
+        self.cur.execute("""
+            CREATE TABLE IF NOT EXISTS thread_coap_messages (
+                id BIGSERIAL PRIMARY KEY,
+                network_name VARCHAR(16) NOT NULL,
+                source_node_id VARCHAR(16) NOT NULL,
+                dest_node_id VARCHAR(16),
+                message_type VARCHAR(10) NOT NULL,
+                code VARCHAR(10),
+                message_id INTEGER,
+                token VARCHAR(16),
+                payload_size INTEGER,
+                response_time_ms INTEGER,
+                success BOOLEAN DEFAULT TRUE,
+                timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (network_name) REFERENCES thread_networks(network_name)
+            )
+        """)
+
+        # Thread MAC层统计表
+        self.cur.execute("""
+            CREATE TABLE IF NOT EXISTS thread_mac_statistics (
+                id BIGSERIAL PRIMARY KEY,
+                node_id VARCHAR(16) NOT NULL,
+                tx_total INTEGER DEFAULT 0,
+                tx_unicast INTEGER DEFAULT 0,
+                tx_broadcast INTEGER DEFAULT 0,
+                tx_ack_req INTEGER DEFAULT 0,
+                tx_acked INTEGER DEFAULT 0,
+                tx_no_ack_req INTEGER DEFAULT 0,
+                tx_data INTEGER DEFAULT 0,
+                tx_data_poll INTEGER DEFAULT 0,
+                tx_beacon INTEGER DEFAULT 0,
+                tx_beacon_req INTEGER DEFAULT 0,
+                tx_other INTEGER DEFAULT 0,
+                tx_retry INTEGER DEFAULT 0,
+                tx_err_cca INTEGER DEFAULT 0,
+                tx_err_abort INTEGER DEFAULT 0,
+                tx_err_busy_channel INTEGER DEFAULT 0,
+                rx_total INTEGER DEFAULT 0,
+                rx_unicast INTEGER DEFAULT 0,
+                rx_broadcast INTEGER DEFAULT 0,
+                rx_data INTEGER DEFAULT 0,
+                rx_data_poll INTEGER DEFAULT 0,
+                rx_beacon INTEGER DEFAULT 0,
+                rx_beacon_req INTEGER DEFAULT 0,
+                rx_other INTEGER DEFAULT 0,
+                rx_address_filtered INTEGER DEFAULT 0,
+                rx_dest_addr_filtered INTEGER DEFAULT 0,
+                rx_duplicated INTEGER DEFAULT 0,
+                rx_err_no_frame INTEGER DEFAULT 0,
+                rx_err_unknown_neighbor INTEGER DEFAULT 0,
+                rx_err_invalid_src_addr INTEGER DEFAULT 0,
+                rx_err_sec INTEGER DEFAULT 0,
+                rx_err_fcs INTEGER DEFAULT 0,
+                rx_err_other INTEGER DEFAULT 0,
+                recorded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (node_id) REFERENCES thread_nodes(node_id)
+            )
+        """)
+
+        # Thread MLE (Mesh Link Establishment) 消息表
+        self.cur.execute("""
+            CREATE TABLE IF NOT EXISTS thread_mle_messages (
+                id BIGSERIAL PRIMARY KEY,
+                network_name VARCHAR(16) NOT NULL,
+                source_node_id VARCHAR(16) NOT NULL,
+                message_type VARCHAR(50) NOT NULL,
+                link_margin INTEGER,
+                connectivity_data JSONB,
+                timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (network_name) REFERENCES thread_networks(network_name)
+            )
+        """)
+
+        # Thread Service注册表
+        self.cur.execute("""
+            CREATE TABLE IF NOT EXISTS thread_services (
+                id BIGSERIAL PRIMARY KEY,
+                network_name VARCHAR(16) NOT NULL,
+                service_id INTEGER NOT NULL,
+                enterprise_number INTEGER,
+                service_data BYTEA,
+                server_data BYTEA,
+                stable BOOLEAN DEFAULT TRUE,
+                registered_by VARCHAR(16),
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (network_name) REFERENCES thread_networks(network_name)
+            )
+        """)
+
+        # Thread Border Router信息表
+        self.cur.execute("""
+            CREATE TABLE IF NOT EXISTS thread_border_routers (
+                id BIGSERIAL PRIMARY KEY,
+                network_name VARCHAR(16) NOT NULL,
+                border_router_id VARCHAR(16) NOT NULL,
+                rloc16 INTEGER,
+                stable BOOLEAN DEFAULT TRUE,
+                preferred BOOLEAN DEFAULT FALSE,
+                slaac BOOLEAN DEFAULT FALSE,
+                dhcp BOOLEAN DEFAULT FALSE,
+                configure BOOLEAN DEFAULT FALSE,
+                default_route BOOLEAN DEFAULT FALSE,
+                on_mesh BOOLEAN DEFAULT FALSE,
+                prefix VARCHAR(40),
+                prefix_length INTEGER,
+                priority INTEGER,
+                last_seen TIMESTAMP,
+                FOREIGN KEY (network_name) REFERENCES thread_networks(network_name),
+                UNIQUE(network_name, border_router_id)
+            )
+        """)
+
+        # Thread External Route表
+        self.cur.execute("""
+            CREATE TABLE IF NOT EXISTS thread_external_routes (
+                id BIGSERIAL PRIMARY KEY,
+                network_name VARCHAR(16) NOT NULL,
+                prefix VARCHAR(40) NOT NULL,
+                prefix_length INTEGER NOT NULL,
+                border_router_id VARCHAR(16) NOT NULL,
+                preference INTEGER DEFAULT 0,
+                stable BOOLEAN DEFAULT TRUE,
+                nat64 BOOLEAN DEFAULT FALSE,
+                added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (network_name) REFERENCES thread_networks(network_name)
+            )
+        """)
+
+        # Thread Commissioning会话表
+        self.cur.execute("""
+            CREATE TABLE IF NOT EXISTS thread_commissioning_sessions (
+                id BIGSERIAL PRIMARY KEY,
+                network_name VARCHAR(16) NOT NULL,
+                session_id INTEGER NOT NULL,
+                joiner_iid VARCHAR(16),
+                joiner_router_iid VARCHAR(16),
+                eui64 VARCHAR(16),
+                state VARCHAR(20) DEFAULT "pending",
+                selected TIMESTAMP,
+                completed TIMESTAMP,
+                failed TIMESTAMP,
+                error_code INTEGER,
+                FOREIGN KEY (network_name) REFERENCES thread_networks(network_name)
+            )
+        """)
+
+        self.conn.commit()
+
+    def _create_analytics_functions(self):
+        """创建分析函数"""
+        # 计算网络稳定度评分
+        self.cur.execute("""
+            CREATE OR REPLACE FUNCTION calculate_network_stability(
+                p_network_name VARCHAR(16),
+                p_hours INTEGER DEFAULT 24
+            ) RETURNS TABLE (
+                stability_score DECIMAL(5,2),
+                leader_changes INTEGER,
+                partition_count INTEGER,
+                avg_partition_duration INTERVAL
+            ) AS $$
+            DECLARE
+                v_leader_changes INTEGER;
+                v_partition_count INTEGER;
+                v_avg_duration INTERVAL;
+                v_score DECIMAL(5,2);
+            BEGIN
+                -- 计算Leader变化次数
+                SELECT COUNT(*) INTO v_leader_changes
+                FROM thread_leader_history
+                WHERE network_name = p_network_name
+                AND start_time >= NOW() - (p_hours || ' hours')::INTERVAL;
+
+                -- 计算分区数量
+                SELECT COUNT(DISTINCT partition_id) INTO v_partition_count
+                FROM thread_partitions
+                WHERE network_name = p_network_name
+                AND detected_at >= NOW() - (p_hours || ' hours')::INTERVAL;
+
+                -- 计算平均分区持续时间
+                SELECT AVG(COALESCE(end_time, NOW()) - start_time) INTO v_avg_duration
+                FROM thread_leader_history
+                WHERE network_name = p_network_name
+                AND start_time >= NOW() - (p_hours || ' hours')::INTERVAL;
+
+                -- 计算稳定性评分 (0-100)
+                v_score := 100.0;
+                v_score := v_score - (v_leader_changes * 5);  -- 每次Leader变化扣5分
+                v_score := v_score - (v_partition_count * 10);  -- 每个分区扣10分
+                
+                IF v_score < 0 THEN
+                    v_score := 0;
+                END IF;
+
+                RETURN QUERY SELECT v_score, v_leader_changes, v_partition_count, v_avg_duration;
+            END;
+            $$ LANGUAGE plpgsql;
+        """)
+
+        # 检测网络异常
+        self.cur.execute("""
+            CREATE OR REPLACE FUNCTION detect_network_anomalies(
+                p_network_name VARCHAR(16)
+            ) RETURNS TABLE (
+                anomaly_type VARCHAR(50),
+                severity VARCHAR(20),
+                description TEXT,
+                affected_nodes INTEGER
+            ) AS $$
+            BEGIN
+                -- 检测频繁Leader变化
+                RETURN QUERY
+                SELECT 
+                    'Frequent Leader Changes'::VARCHAR(50),
+                    'HIGH'::VARCHAR(20),
+                    'Network has experienced ' || COUNT(*) || ' leader changes in the last hour',
+                    COUNT(DISTINCT leader_node_id)::INTEGER
+                FROM thread_leader_history
+                WHERE network_name = p_network_name
+                AND start_time >= NOW() - INTERVAL '1 hour'
+                HAVING COUNT(*) > 3;
+
+                -- 检测高丢包率
+                RETURN QUERY
+                SELECT 
+                    'High Packet Loss'::VARCHAR(50),
+                    'MEDIUM'::VARCHAR(20),
+                    'Node ' || node_id || ' has high packet loss: ' || 
+                    ROUND((tx_err_cca + tx_err_abort)::DECIMAL / NULLIF(tx_total, 0) * 100, 2) || '%',
+                    1::INTEGER
+                FROM thread_mac_statistics
+                WHERE tx_total > 100
+                AND (tx_err_cca + tx_err_abort)::DECIMAL / tx_total > 0.1;
+
+                -- 检测低电量节点
+                RETURN QUERY
+                SELECT 
+                    'Low Battery Nodes'::VARCHAR(50),
+                    'LOW'::VARCHAR(20),
+                    'Found ' || COUNT(*) || ' nodes with battery level below 20%',
+                    COUNT(*)::INTEGER
+                FROM thread_nodes
+                WHERE network_name = p_network_name
+                AND battery_level < 20;
+            END;
+            $$ LANGUAGE plpgsql;
+        """)
+
+        # 预测网络拥塞
+        self.cur.execute("""
+            CREATE OR REPLACE FUNCTION predict_network_congestion(
+                p_network_name VARCHAR(16)
+            ) RETURNS TABLE (
+                congestion_risk VARCHAR(20),
+                predicted_at TIMESTAMP,
+                recommended_action TEXT
+            ) AS $$
+            DECLARE
+                v_router_count INTEGER;
+                v_end_device_count INTEGER;
+                v_avg_routes INTEGER;
+            BEGIN
+                -- 获取网络统计数据
+                SELECT 
+                    COUNT(CASE WHEN node_type = 'Router' THEN 1 END),
+                    COUNT(CASE WHEN node_type = 'EndDevice' THEN 1 END)
+                INTO v_router_count, v_end_device_count
+                FROM thread_nodes
+                WHERE network_name = p_network_name;
+
+                -- 获取平均路由数
+                SELECT AVG(route_count) INTO v_avg_routes
+                FROM (
+                    SELECT COUNT(*) as route_count
+                    FROM thread_routes
+                    WHERE node_id IN (
+                        SELECT node_id FROM thread_nodes WHERE network_name = p_network_name
+                    )
+                    GROUP BY node_id
+                ) route_counts;
+
+                -- 评估拥塞风险
+                IF v_router_count > 0 AND v_end_device_count / v_router_count > 10 THEN
+                    RETURN QUERY SELECT 
+                        'HIGH'::VARCHAR(20),
+                        NOW(),
+                        'Consider adding more routers to balance end device load'::TEXT;
+                ELSIF v_avg_routes > 50 THEN
+                    RETURN QUERY SELECT 
+                        'MEDIUM'::VARCHAR(20),
+                        NOW(),
+                        'Router tables are getting full, monitor for routing issues'::TEXT;
+                ELSE
+                    RETURN QUERY SELECT 
+                        'LOW'::VARCHAR(20),
+                        NOW(),
+                        'Network congestion risk is low'::TEXT;
+                END IF;
+            END;
+            $$ LANGUAGE plpgsql;
+        """)
+
+        self.conn.commit()
+
+    def _create_monitoring_tables(self):
+        """创建监控表"""
+        # Thread网络指标快照表
+        self.cur.execute("""
+            CREATE TABLE IF NOT EXISTS thread_network_metrics (
+                id BIGSERIAL PRIMARY KEY,
+                network_name VARCHAR(16) NOT NULL,
+                snapshot_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                total_nodes INTEGER,
+                router_count INTEGER,
+                end_device_count INTEGER,
+                active_routes INTEGER,
+                avg_link_quality DECIMAL(5,2),
+                avg_rssi DECIMAL(6,2),
+                leader_id VARCHAR(16),
+                partition_id INTEGER,
+                network_data_version INTEGER,
+                stable_network_data_version INTEGER,
+                FOREIGN KEY (network_name) REFERENCES thread_networks(network_name)
+            )
+        """)
+
+        # Thread告警规则表
+        self.cur.execute("""
+            CREATE TABLE IF NOT EXISTS thread_alert_rules (
+                id BIGSERIAL PRIMARY KEY,
+                rule_name VARCHAR(100) NOT NULL,
+                rule_type VARCHAR(50) NOT NULL,
+                condition_json JSONB NOT NULL,
+                severity VARCHAR(20) NOT NULL,
+                enabled BOOLEAN DEFAULT TRUE,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+
+        # Thread告警历史表
+        self.cur.execute("""
+            CREATE TABLE IF NOT EXISTS thread_alert_history (
+                id BIGSERIAL PRIMARY KEY,
+                rule_id INTEGER NOT NULL,
+                network_name VARCHAR(16) NOT NULL,
+                node_id VARCHAR(16),
+                alert_message TEXT,
+                severity VARCHAR(20),
+                acknowledged BOOLEAN DEFAULT FALSE,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                resolved_at TIMESTAMP,
+                FOREIGN KEY (rule_id) REFERENCES thread_alert_rules(id),
+                FOREIGN KEY (network_name) REFERENCES thread_networks(network_name)
+            )
+        """)
+
+        self.conn.commit()
+
+    def _create_optimization_tables(self):
+        """创建优化相关表"""
+        # Thread信道评估表
+        self.cur.execute("""
+            CREATE TABLE IF NOT EXISTS thread_channel_assessments (
+                id BIGSERIAL PRIMARY KEY,
+                network_name VARCHAR(16) NOT NULL,
+                channel INTEGER NOT NULL,
+                energy_detect INTEGER,
+                link_quality INTEGER,
+                assessed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (network_name) REFERENCES thread_networks(network_name)
+            )
+        """)
+
+        # Thread网络优化建议表
+        self.cur.execute("""
+            CREATE TABLE IF NOT EXISTS thread_optimization_recommendations (
+                id BIGSERIAL PRIMARY KEY,
+                network_name VARCHAR(16) NOT NULL,
+                recommendation_type VARCHAR(50) NOT NULL,
+                priority INTEGER DEFAULT 5,
+                description TEXT,
+                expected_improvement TEXT,
+                implemented BOOLEAN DEFAULT FALSE,
+                implemented_at TIMESTAMP,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (network_name) REFERENCES thread_networks(network_name)
+            )
+        """)
+
+        self.conn.commit()
+
+    def store_leader_change(self, network_name: str, leader_id: str,
+                           partition_id: int, reason: str = None):
+        """记录Leader变化"""
+        # 关闭之前的Leader记录
+        self.cur.execute("""
+            UPDATE thread_leader_history
+            SET end_time = CURRENT_TIMESTAMP
+            WHERE network_name = %s AND end_time IS NULL
+        """, (network_name,))
+
+        # 创建新的Leader记录
+        self.cur.execute("""
+            INSERT INTO thread_leader_history (
+                network_name, leader_node_id, partition_id, start_time, reason
+            ) VALUES (%s, %s, %s, CURRENT_TIMESTAMP, %s)
+            RETURNING id
+        """, (network_name, leader_id, partition_id, reason))
+        history_id = self.cur.fetchone()[0]
+        self.conn.commit()
+        return history_id
+
+    def store_mac_statistics(self, node_id: str, stats: Dict):
+        """存储MAC层统计"""
+        columns = ['node_id'] + list(stats.keys())
+        values = [node_id] + list(stats.values())
+        
+        placeholders = ','.join(['%s'] * len(values))
+        column_names = ','.join(columns)
+        
+        self.cur.execute(f"""
+            INSERT INTO thread_mac_statistics ({column_names})
+            VALUES ({placeholders})
+            RETURNING id
+        """, values)
+        stat_id = self.cur.fetchone()[0]
+        self.conn.commit()
+        return stat_id
+
+    def store_coap_message(self, network_name: str, source: str, dest: str,
+                          msg_type: str, code: str, msg_id: int,
+                          payload_size: int, response_time: int = None,
+                          success: bool = True):
+        """存储CoAP消息"""
+        self.cur.execute("""
+            INSERT INTO thread_coap_messages (
+                network_name, source_node_id, dest_node_id, message_type,
+                code, message_id, payload_size, response_time_ms, success
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            RETURNING id
+        """, (network_name, source, dest, msg_type, code, msg_id,
+              payload_size, response_time, success))
+        msg_db_id = self.cur.fetchone()[0]
+        self.conn.commit()
+        return msg_db_id
+
+    def create_alert_rule(self, name: str, rule_type: str,
+                         condition: Dict, severity: str) -> int:
+        """创建告警规则"""
+        self.cur.execute("""
+            INSERT INTO thread_alert_rules (rule_name, rule_type, condition_json, severity)
+            VALUES (%s, %s, %s::jsonb, %s)
+            RETURNING id
+        """, (name, rule_type, json.dumps(condition), severity))
+        rule_id = self.cur.fetchone()[0]
+        self.conn.commit()
+        return rule_id
+
+    def trigger_alert(self, rule_id: int, network_name: str,
+                     message: str, severity: str, node_id: str = None):
+        """触发告警"""
+        self.cur.execute("""
+            INSERT INTO thread_alert_history (rule_id, network_name, node_id, alert_message, severity)
+            VALUES (%s, %s, %s, %s, %s)
+            RETURNING id
+        """, (rule_id, network_name, node_id, message, severity))
+        alert_id = self.cur.fetchone()[0]
+        self.conn.commit()
+        return alert_id
+
+    def store_network_metrics_snapshot(self, network_name: str) -> int:
+        """存储网络指标快照"""
+        self.cur.execute("""
+            INSERT INTO thread_network_metrics (
+                network_name, snapshot_time, total_nodes, router_count,
+                end_device_count, avg_link_quality, avg_rssi
+            )
+            SELECT 
+                %s,
+                CURRENT_TIMESTAMP,
+                COUNT(*) as total_nodes,
+                COUNT(CASE WHEN node_type = 'Router' THEN 1 END) as router_count,
+                COUNT(CASE WHEN node_type = 'EndDevice' THEN 1 END) as end_device_count,
+                AVG(link_quality) as avg_link_quality,
+                AVG(rssi) as avg_rssi
+            FROM thread_nodes
+            WHERE network_name = %s
+            RETURNING id
+        """, (network_name, network_name))
+        snapshot_id = self.cur.fetchone()[0]
+        self.conn.commit()
+        return snapshot_id
+
+    def analyze_network_stability(self, network_name: str, hours: int = 24) -> Dict:
+        """分析网络稳定性"""
+        self.cur.execute("SELECT * FROM calculate_network_stability(%s, %s)",
+                        (network_name, hours))
+        row = self.cur.fetchone()
+        return {
+            "stability_score": float(row[0]) if row[0] else 0,
+            "leader_changes": row[1],
+            "partition_count": row[2],
+            "avg_partition_duration": row[3]
+        }
+
+    def detect_anomalies(self, network_name: str) -> List[Dict]:
+        """检测网络异常"""
+        self.cur.execute("SELECT * FROM detect_network_anomalies(%s)", (network_name,))
+        return [
+            {
+                "type": row[0],
+                "severity": row[1],
+                "description": row[2],
+                "affected_nodes": row[3]
+            }
+            for row in self.cur.fetchall()
+        ]
+
+    def predict_congestion(self, network_name: str) -> Dict:
+        """预测网络拥塞"""
+        self.cur.execute("SELECT * FROM predict_network_congestion(%s)", (network_name,))
+        row = self.cur.fetchone()
+        return {
+            "risk": row[0],
+            "predicted_at": row[1],
+            "recommended_action": row[2]
+        }
+
+    def close(self):
+        """关闭数据库连接"""
+        self.cur.close()
+        self.conn.close()
+```
+
+### 8.2 高级路由算法实现
+
+```python
+class ThreadAdvancedRouting:
+    """Thread高级路由算法"""
+
+    def __init__(self, storage: ThreadStorage):
+        self.storage = storage
+
+    def calculate_optimal_parent(self, node_id: str, candidates: List[str]) -> str:
+        """计算最优父节点"""
+        best_parent = None
+        best_score = -1
+
+        for candidate in candidates:
+            # 获取候选节点的链路质量
+            link_quality = self.storage.get_link_quality_history(node_id, candidate, hours=1)
+            
+            if not link_quality:
+                continue
+
+            # 计算综合评分
+            avg_lqi = sum(lq["link_quality"] for lq in link_quality) / len(link_quality)
+            avg_rssi = sum(lq["rssi"] for lq in link_quality if lq["rssi"]) / \
+                      len([lq for lq in link_quality if lq["rssi"]]) if link_quality else -100
+
+            # 评分公式：链路质量权重60%，RSSI权重40%
+            lqi_score = (avg_lqi / 255) * 60
+            rssi_score = ((avg_rssi + 100) / 100) * 40  # 标准化RSSI到0-40
+            
+            total_score = lqi_score + rssi_score
+
+            if total_score > best_score:
+                best_score = total_score
+                best_parent = candidate
+
+        return best_parent
+
+    def compute_balanced_tree(self, network_name: str) -> Dict:
+        """计算负载均衡的树形拓扑"""
+        nodes = self.storage.get_network_nodes(network_name)
+        routers = [n for n in nodes if n["node_type"] == "Router"]
+        end_devices = [n for n in nodes if n["node_type"] == "EndDevice"]
+
+        # 计算每个路由器的子节点数
+        router_loads = {}
+        for router in routers:
+            children = self.storage.get_router_children(router["node_id"])
+            router_loads[router["node_id"]] = len(children)
+
+        # 找出负载最轻的路由器
+        if router_loads:
+            min_load_router = min(router_loads, key=router_loads.get)
+        else:
+            min_load_router = None
+
+        recommendations = []
+        for ed in end_devices:
+            current_parent = ed.get("parent_node_id")
+            if current_parent and min_load_router and current_parent != min_load_router:
+                current_load = router_loads.get(current_parent, 0)
+                min_load = router_loads.get(min_load_router, 0)
+                
+                if current_load - min_load > 2:  # 负载差异超过2
+                    recommendations.append({
+                        "node_id": ed["node_id"],
+                        "current_parent": current_parent,
+                        "suggested_parent": min_load_router,
+                        "reason": f"Balance load: {current_load} -> {min_load + 1}"
+                    })
+
+        return {
+            "current_loads": router_loads,
+            "recommendations": recommendations
+        }
+
+    def detect_routing_loops(self, network_name: str) -> List[List[str]]:
+        """检测路由环路"""
+        routes = self.storage.get_all_routes(network_name)
+        
+        # 构建路由图
+        graph = {}
+        for route in routes:
+            source = route["node_id"]
+            next_hop = route["next_hop"]
+            if source not in graph:
+                graph[source] = []
+            graph[source].append(next_hop)
+
+        # DFS检测环路
+        loops = []
+        visited = set()
+        rec_stack = set()
+
+        def dfs(node, path):
+            visited.add(node)
+            rec_stack.add(node)
+            path.append(node)
+
+            for neighbor in graph.get(node, []):
+                if neighbor not in visited:
+                    result = dfs(neighbor, path)
+                    if result:
+                        return result
+                elif neighbor in rec_stack:
+                    # 发现环路
+                    loop_start = path.index(neighbor)
+                    return path[loop_start:] + [neighbor]
+
+            path.pop()
+            rec_stack.remove(node)
+            return None
+
+        for node in graph:
+            if node not in visited:
+                loop = dfs(node, [])
+                if loop:
+                    loops.append(loop)
+
+        return loops
+
+    def optimize_route_cache(self, node_id: str, max_entries: int = 16):
+        """优化路由缓存"""
+        routes = self.storage.get_node_routes(node_id)
+        
+        if len(routes) <= max_entries:
+            return
+
+        # 按使用频率和新鲜度排序
+        scored_routes = []
+        for route in routes:
+            # 评分因素：成本（越低越好）、链路质量（越高越好）、更新时间（越新越好）
+            score = route.get("cost", 1) * 10
+            score -= route.get("link_quality", 0) / 10
+            
+            updated_at = route.get("updated_at")
+            if updated_at:
+                age_hours = (datetime.now() - updated_at).total_seconds() / 3600
+                score += age_hours  # 越旧分数越高（越差）
+
+            scored_routes.append((route, score))
+
+        # 保留得分最低的（最好的）路由
+        scored_routes.sort(key=lambda x: x[1])
+        keep_routes = scored_routes[:max_entries]
+        remove_routes = scored_routes[max_entries:]
+
+        # 清理过期路由
+        for route, _ in remove_routes:
+            self.storage.delete_route(node_id, route["destination"])
+
+        return {
+            "kept": len(keep_routes),
+            "removed": len(remove_routes)
+        }
+```
+
+---
+
+**参考文档**：
+
+- `01_Overview.md` - 概述
+- `02_Formal_Definition.md` - 形式化定义
+- `03_Standards.md` - 标准对标
+- `05_Case_Studies.md` - 实践案例
+
+**创建时间**：2025-01-21
+**最后更新**：2025-02-14（新增高级Thread网络管理功能400+行）

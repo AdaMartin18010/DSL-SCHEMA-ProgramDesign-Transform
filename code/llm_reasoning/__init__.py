@@ -10,9 +10,9 @@ from .llm_interface import (
     AnthropicLLM,
     ReasoningResult
 )
-from .embedding import KGEmbedding
-from .chain_builder import ReasoningChainBuilder
-from .validator import ResultValidator
+from .embedding import KGEmbedding, EmbeddingStore
+from .chain_builder import ReasoningChainBuilder, ReasoningStep
+from .validator import ResultValidator, ValidationResult
 
 __all__ = [
     'LLMInterface',
@@ -20,6 +20,9 @@ __all__ = [
     'AnthropicLLM',
     'ReasoningResult',
     'KGEmbedding',
+    'EmbeddingStore',
     'ReasoningChainBuilder',
+    'ReasoningStep',
     'ResultValidator',
+    'ValidationResult',
 ]

@@ -214,6 +214,25 @@ class ComprehensiveAnalyzer:
             "total_recommendations": len(integration_result.recommendations)
         }
     
+    def _convert_to_json_serializable(self, obj):
+        """将对象转换为JSON可序列化的格式"""
+        if isinstance(obj, dict):
+            # 处理tuple作为key的情况
+            result = {}
+            for key, value in obj.items():
+                if isinstance(key, tuple):
+                    key = "_".join(str(k) for k in key)
+                result[key] = self._convert_to_json_serializable(value)
+            return result
+        elif isinstance(obj, list):
+            return [self._convert_to_json_serializable(item) for item in obj]
+        elif isinstance(obj, tuple):
+            return [self._convert_to_json_serializable(item) for item in obj]
+        elif hasattr(obj, 'value'):
+            return obj.value
+        else:
+            return obj
+    
     def generate_report(
         self,
         report: ComprehensiveReport,
@@ -229,9 +248,9 @@ class ComprehensiveAnalyzer:
                 "overall_score": report.integration_result.overall_score,
                 "integration_level": report.integration_result.integration_level.value,
                 "dimensions": [d.value for d in report.integration_result.dimensions],
-                "results": report.integration_result.results,
-                "industry_analysis": report.industry_analysis,
-                "ai_analysis": report.ai_analysis,
+                "results": self._convert_to_json_serializable(report.integration_result.results),
+                "industry_analysis": self._convert_to_json_serializable(report.industry_analysis),
+                "ai_analysis": self._convert_to_json_serializable(report.ai_analysis),
                 "recommendations": report.recommendations,
                 "summary": report.summary
             }, indent=2, ensure_ascii=False)

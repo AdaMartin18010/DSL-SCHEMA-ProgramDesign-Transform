@@ -2723,3 +2723,623 @@ class MatterStorage:
 
 **创建时间**：2025-01-21
 **最后更新**：2025-01-21
+
+
+---
+
+## 8. Matter高级数据存储与分析
+
+### 8.1 高级Matter数据表结构
+
+**扩展Matter数据存储方案**（新增400+行PostgreSQL代码）：
+
+```python
+class MatterStorageAdvanced:
+    """Matter高级数据存储 - 扩展表结构、分析视图、时序数据"""
+
+    def __init__(self, connection_string: str):
+        self.conn = psycopg2.connect(connection_string)
+        self.cur = self.conn.cursor()
+        self._create_advanced_tables()
+        self._create_timescale_tables()
+        self._create_analysis_views()
+        self._create_triggers()
+
+    def _create_advanced_tables(self):
+        """创建高级数据表"""
+        # Matter Commissioning记录表
+        self.cur.execute("""
+            CREATE TABLE IF NOT EXISTS matter_commissioning_records (
+                id BIGSERIAL PRIMARY KEY,
+                device_id VARCHAR(64) NOT NULL,
+                node_id INTEGER,
+                fabric_id BIGINT,
+                commissioning_timestamp TIMESTAMP NOT NULL,
+                commissioner_node_id INTEGER,
+                passcode_used INTEGER,
+                discriminator INTEGER,
+                csr_data TEXT,
+                operational_credentials JSONB,
+                commission_success BOOLEAN DEFAULT TRUE,
+                error_code INTEGER,
+                error_message TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (device_id) REFERENCES matter_devices(device_id)
+            )
+        """)
+
+        # Matter Interaction记录表
+        self.cur.execute("""
+            CREATE TABLE IF NOT EXISTS matter_interactions (
+                id BIGSERIAL PRIMARY KEY,
+                device_id VARCHAR(64) NOT NULL,
+                interaction_type VARCHAR(20) NOT NULL,
+                endpoint_id INTEGER,
+                cluster_id INTEGER,
+                action_type VARCHAR(50),
+                data_version INTEGER,
+                interaction_data JSONB,
+                response_status INTEGER,
+                latency_ms INTEGER,
+                timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (device_id) REFERENCES matter_devices(device_id)
+            )
+        """)
+
+        # Matter Subscription管理表
+        self.cur.execute("""
+            CREATE TABLE IF NOT EXISTS matter_subscriptions (
+                id BIGSERIAL PRIMARY KEY,
+                subscription_id INTEGER NOT NULL,
+                device_id VARCHAR(64) NOT NULL,
+                endpoint_id INTEGER NOT NULL,
+                cluster_id INTEGER NOT NULL,
+                attribute_id INTEGER,
+                min_interval INTEGER,
+                max_interval INTEGER,
+                is_active BOOLEAN DEFAULT TRUE,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                last_report TIMESTAMP,
+                FOREIGN KEY (device_id) REFERENCES matter_devices(device_id),
+                UNIQUE(subscription_id, device_id, endpoint_id, cluster_id, attribute_id)
+            )
+        """)
+
+        # Matter ACL (Access Control List) 表
+        self.cur.execute("""
+            CREATE TABLE IF NOT EXISTS matter_acl_entries (
+                id BIGSERIAL PRIMARY KEY,
+                fabric_id BIGINT NOT NULL,
+                privilege_level INTEGER NOT NULL,
+                auth_mode VARCHAR(20) NOT NULL,
+                subjects JSONB,
+                targets JSONB,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+
+        # Matter Device Capability表
+        self.cur.execute("""
+            CREATE TABLE IF NOT EXISTS matter_device_capabilities (
+                id BIGSERIAL PRIMARY KEY,
+                device_id VARCHAR(64) NOT NULL,
+                capability_type VARCHAR(50) NOT NULL,
+                capability_data JSONB,
+                discovered_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (device_id) REFERENCES matter_devices(device_id),
+                UNIQUE(device_id, capability_type)
+            )
+        """)
+
+        # Matter Network Diagnostics表
+        self.cur.execute("""
+            CREATE TABLE IF NOT EXISTS matter_network_diagnostics (
+                id BIGSERIAL PRIMARY KEY,
+                device_id VARCHAR(64) NOT NULL,
+                diagnostic_type VARCHAR(50) NOT NULL,
+                result_data JSONB,
+                timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (device_id) REFERENCES matter_devices(device_id)
+            )
+        """)
+
+        # Matter User Label表
+        self.cur.execute("""
+            CREATE TABLE IF NOT EXISTS matter_user_labels (
+                id BIGSERIAL PRIMARY KEY,
+                device_id VARCHAR(64) NOT NULL,
+                label VARCHAR(64) NOT NULL,
+                value VARCHAR(256),
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (device_id) REFERENCES matter_devices(device_id),
+                UNIQUE(device_id, label)
+            )
+        """)
+
+        # Matter Bridged Device信息表
+        self.cur.execute("""
+            CREATE TABLE IF NOT EXISTS matter_bridged_devices (
+                id BIGSERIAL PRIMARY KEY,
+                bridge_device_id VARCHAR(64) NOT NULL,
+                bridged_device_id VARCHAR(64) NOT NULL,
+                vendor_name VARCHAR(100),
+                product_name VARCHAR(100),
+                unique_id VARCHAR(64),
+                bridged_endpoint INTEGER,
+                reachable BOOLEAN DEFAULT TRUE,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (bridge_device_id) REFERENCES matter_devices(device_id),
+                UNIQUE(bridge_device_id, bridged_device_id)
+            )
+        """)
+
+        self.conn.commit()
+
+    def _create_timescale_tables(self):
+        """创建时序数据表（用于高频数据）"""
+        # 属性值时序表
+        self.cur.execute("""
+            CREATE TABLE IF NOT EXISTS matter_attribute_timeseries (
+                time TIMESTAMPTZ NOT NULL,
+                device_id VARCHAR(64) NOT NULL,
+                endpoint_id INTEGER NOT NULL,
+                cluster_id INTEGER NOT NULL,
+                attribute_id INTEGER NOT NULL,
+                attribute_value JSONB,
+                data_version INTEGER
+            )
+        """)
+
+        # 转换为Hypertable（如果TimescaleDB可用）
+        try:
+            self.cur.execute("""
+                SELECT create_hypertable('matter_attribute_timeseries', 'time',
+                    if_not_exists => TRUE,
+                    chunk_time_interval => INTERVAL '1 day'
+                )
+            """)
+        except psycopg2.Error:
+            # TimescaleDB不可用，使用普通表
+            pass
+
+        # 命令执行时序表
+        self.cur.execute("""
+            CREATE TABLE IF NOT EXISTS matter_command_timeseries (
+                time TIMESTAMPTZ NOT NULL,
+                device_id VARCHAR(64) NOT NULL,
+                endpoint_id INTEGER NOT NULL,
+                cluster_id INTEGER NOT NULL,
+                command_id INTEGER NOT NULL,
+                parameters JSONB,
+                response_status INTEGER,
+                latency_ms INTEGER
+            )
+        """)
+
+        try:
+            self.cur.execute("""
+                SELECT create_hypertable('matter_command_timeseries', 'time',
+                    if_not_exists => TRUE,
+                    chunk_time_interval => INTERVAL '1 day'
+                )
+            """)
+        except psycopg2.Error:
+            pass
+
+        self.conn.commit()
+
+    def _create_analysis_views(self):
+        """创建分析视图"""
+        # 设备活跃度视图
+        self.cur.execute("""
+            CREATE OR REPLACE VIEW vw_matter_device_activity AS
+            SELECT 
+                d.device_id,
+                d.device_name,
+                d.device_type,
+                COUNT(DISTINCT i.id) as interaction_count_24h,
+                MAX(i.timestamp) as last_interaction,
+                COUNT(DISTINCT s.id) FILTER (WHERE s.is_active) as active_subscriptions,
+                CASE 
+                    WHEN MAX(i.timestamp) > NOW() - INTERVAL '1 hour' THEN 'Active'
+                    WHEN MAX(i.timestamp) > NOW() - INTERVAL '24 hours' THEN 'Recent'
+                    ELSE 'Inactive'
+                END as activity_status
+            FROM matter_devices d
+            LEFT JOIN matter_interactions i ON d.device_id = i.device_id
+                AND i.timestamp > NOW() - INTERVAL '24 hours'
+            LEFT JOIN matter_subscriptions s ON d.device_id = s.device_id
+            GROUP BY d.device_id, d.device_name, d.device_type
+        """)
+
+        # 集群使用统计视图
+        self.cur.execute("""
+            CREATE OR REPLACE VIEW vw_matter_cluster_statistics AS
+            SELECT 
+                cluster_id,
+                cluster_name,
+                COUNT(DISTINCT device_id) as device_count,
+                COUNT(*) as total_interactions_7d,
+                AVG(latency_ms) as avg_latency_ms
+            FROM matter_clusters c
+            LEFT JOIN matter_interactions i ON c.cluster_id = i.cluster_id
+                AND i.timestamp > NOW() - INTERVAL '7 days'
+            GROUP BY cluster_id, cluster_name
+        """)
+
+        # 网络健康视图
+        self.cur.execute("""
+            CREATE OR REPLACE VIEW vw_matter_network_health AS
+            SELECT 
+                n.fabric_id,
+                COUNT(DISTINCT n.device_id) as device_count,
+                AVG(n.rssi) as avg_rssi,
+                AVG(n.lqi) as avg_lqi,
+                COUNT(CASE WHEN n.last_seen < NOW() - INTERVAL '1 hour' THEN 1 END) as offline_count,
+                ROUND(
+                    COUNT(CASE WHEN n.last_seen > NOW() - INTERVAL '1 hour' THEN 1 END) * 100.0 / 
+                    NULLIF(COUNT(*), 0), 2
+                ) as online_percentage
+            FROM matter_network_info n
+            GROUP BY n.fabric_id
+        """)
+
+        # 固件版本分布视图
+        self.cur.execute("""
+            CREATE OR REPLACE VIEW vw_matter_firmware_distribution AS
+            SELECT 
+                firmware_version,
+                device_type,
+                COUNT(*) as device_count,
+                MAX(updated_at) as last_seen
+            FROM matter_devices
+            WHERE firmware_version IS NOT NULL
+            GROUP BY firmware_version, device_type
+            ORDER BY firmware_version DESC
+        """)
+
+        self.conn.commit()
+
+    def _create_triggers(self):
+        """创建数据库触发器"""
+        # 设备状态变更触发器函数
+        self.cur.execute("""
+            CREATE OR REPLACE FUNCTION fn_matter_attribute_change()
+            RETURNS TRIGGER AS $$
+            BEGIN
+                -- 如果值发生变化，记录到历史表
+                IF OLD.attribute_value IS DISTINCT FROM NEW.attribute_value THEN
+                    INSERT INTO matter_device_state_history (
+                        device_id, endpoint_id, cluster_id, attribute_id,
+                        attribute_value, recorded_at
+                    ) VALUES (
+                        NEW.device_id, NEW.endpoint_id, NEW.cluster_id, NEW.attribute_id,
+                        NEW.attribute_value, NEW.updated_at
+                    );
+                END IF;
+                RETURN NEW;
+            END;
+            $$ LANGUAGE plpgsql;
+        """)
+
+        # 创建触发器
+        self.cur.execute("""
+            DROP TRIGGER IF EXISTS trg_matter_attribute_change ON matter_attributes;
+            CREATE TRIGGER trg_matter_attribute_change
+                AFTER UPDATE ON matter_attributes
+                FOR EACH ROW
+                EXECUTE FUNCTION fn_matter_attribute_change();
+        """)
+
+        # 自动更新时间戳触发器
+        self.cur.execute("""
+            CREATE OR REPLACE FUNCTION fn_update_timestamp()
+            RETURNS TRIGGER AS $$
+            BEGIN
+                NEW.updated_at = CURRENT_TIMESTAMP;
+                RETURN NEW;
+            END;
+            $$ LANGUAGE plpgsql;
+        """)
+
+        # 为需要自动更新时间的表添加触发器
+        for table in ['matter_devices', 'matter_acl_entries']:
+            self.cur.execute(f"""
+                DROP TRIGGER IF EXISTS trg_update_timestamp_{table} ON {table};
+                CREATE TRIGGER trg_update_timestamp_{table}
+                    BEFORE UPDATE ON {table}
+                    FOR EACH ROW
+                    EXECUTE FUNCTION fn_update_timestamp();
+            """)
+
+        self.conn.commit()
+
+    def store_commissioning_record(self, device_id: str, node_id: int,
+                                   fabric_id: int, passcode: int,
+                                   discriminator: int, success: bool = True,
+                                   error_code: int = None, error_message: str = None) -> int:
+        """存储Commissioning记录"""
+        self.cur.execute("""
+            INSERT INTO matter_commissioning_records (
+                device_id, node_id, fabric_id, commissioning_timestamp,
+                passcode_used, discriminator, commission_success,
+                error_code, error_message
+            ) VALUES (%s, %s, %s, CURRENT_TIMESTAMP, %s, %s, %s, %s, %s)
+            RETURNING id
+        """, (device_id, node_id, fabric_id, passcode, discriminator,
+              success, error_code, error_message))
+        record_id = self.cur.fetchone()[0]
+        self.conn.commit()
+        return record_id
+
+    def store_interaction(self, device_id: str, interaction_type: str,
+                         endpoint_id: int, cluster_id: int, action_type: str,
+                         data: Dict, response_status: int = None,
+                         latency_ms: int = None) -> int:
+        """存储Matter交互记录"""
+        self.cur.execute("""
+            INSERT INTO matter_interactions (
+                device_id, interaction_type, endpoint_id, cluster_id,
+                action_type, interaction_data, response_status, latency_ms
+            ) VALUES (%s, %s, %s, %s, %s, %s::jsonb, %s, %s)
+            RETURNING id
+        """, (device_id, interaction_type, endpoint_id, cluster_id,
+              action_type, json.dumps(data), response_status, latency_ms))
+        
+        interaction_id = self.cur.fetchone()[0]
+        self.conn.commit()
+        return interaction_id
+
+    def create_subscription(self, subscription_id: int, device_id: str,
+                           endpoint_id: int, cluster_id: int,
+                           attribute_id: int = None,
+                           min_interval: int = 0, max_interval: int = 60) -> int:
+        """创建订阅记录"""
+        self.cur.execute("""
+            INSERT INTO matter_subscriptions (
+                subscription_id, device_id, endpoint_id, cluster_id,
+                attribute_id, min_interval, max_interval, is_active
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, TRUE)
+            ON CONFLICT (subscription_id, device_id, endpoint_id, cluster_id, attribute_id)
+            DO UPDATE SET
+                min_interval = EXCLUDED.min_interval,
+                max_interval = EXCLUDED.max_interval,
+                is_active = TRUE,
+                created_at = CURRENT_TIMESTAMP
+            RETURNING id
+        """, (subscription_id, device_id, endpoint_id, cluster_id,
+              attribute_id, min_interval, max_interval))
+        sub_id = self.cur.fetchone()[0]
+        self.conn.commit()
+        return sub_id
+
+    def update_subscription_report(self, device_id: str, subscription_id: int):
+        """更新订阅报告时间"""
+        self.cur.execute("""
+            UPDATE matter_subscriptions
+            SET last_report = CURRENT_TIMESTAMP
+            WHERE device_id = %s AND subscription_id = %s
+        """, (device_id, subscription_id))
+        self.conn.commit()
+
+    def deactivate_subscription(self, device_id: str, subscription_id: int):
+        """停用订阅"""
+        self.cur.execute("""
+            UPDATE matter_subscriptions
+            SET is_active = FALSE
+            WHERE device_id = %s AND subscription_id = %s
+        """, (device_id, subscription_id))
+        self.conn.commit()
+
+    def store_acl_entry(self, fabric_id: int, privilege: int, auth_mode: str,
+                       subjects: List[int] = None, targets: List[Dict] = None) -> int:
+        """存储ACL条目"""
+        self.cur.execute("""
+            INSERT INTO matter_acl_entries (
+                fabric_id, privilege_level, auth_mode, subjects, targets
+            ) VALUES (%s, %s, %s, %s::jsonb, %s::jsonb)
+            RETURNING id
+        """, (fabric_id, privilege, auth_mode,
+              json.dumps(subjects or []), json.dumps(targets or [])))
+        acl_id = self.cur.fetchone()[0]
+        self.conn.commit()
+        return acl_id
+
+    def store_device_capability(self, device_id: str, capability_type: str,
+                               capability_data: Dict) -> int:
+        """存储设备能力"""
+        self.cur.execute("""
+            INSERT INTO matter_device_capabilities (
+                device_id, capability_type, capability_data
+            ) VALUES (%s, %s, %s::jsonb)
+            ON CONFLICT (device_id, capability_type) DO UPDATE SET
+                capability_data = EXCLUDED.capability_data,
+                discovered_at = CURRENT_TIMESTAMP
+            RETURNING id
+        """, (device_id, capability_type, json.dumps(capability_data)))
+        cap_id = self.cur.fetchone()[0]
+        self.conn.commit()
+        return cap_id
+
+    def store_network_diagnostic(self, device_id: str, diagnostic_type: str,
+                                result_data: Dict) -> int:
+        """存储网络诊断结果"""
+        self.cur.execute("""
+            INSERT INTO matter_network_diagnostics (
+                device_id, diagnostic_type, result_data
+            ) VALUES (%s, %s, %s::jsonb)
+            RETURNING id
+        """, (device_id, diagnostic_type, json.dumps(result_data)))
+        diag_id = self.cur.fetchone()[0]
+        self.conn.commit()
+        return diag_id
+
+    def store_user_label(self, device_id: str, label: str, value: str) -> int:
+        """存储用户标签"""
+        self.cur.execute("""
+            INSERT INTO matter_user_labels (device_id, label, value)
+            VALUES (%s, %s, %s)
+            ON CONFLICT (device_id, label) DO UPDATE SET
+                value = EXCLUDED.value
+            RETURNING id
+        """, (device_id, label, value))
+        label_id = self.cur.fetchone()[0]
+        self.conn.commit()
+        return label_id
+
+    def store_bridged_device(self, bridge_id: str, bridged_id: str,
+                            vendor: str = None, product: str = None,
+                            unique_id: str = None, endpoint: int = None) -> int:
+        """存储桥接设备信息"""
+        self.cur.execute("""
+            INSERT INTO matter_bridged_devices (
+                bridge_device_id, bridged_device_id, vendor_name,
+                product_name, unique_id, bridged_endpoint
+            ) VALUES (%s, %s, %s, %s, %s, %s)
+            ON CONFLICT (bridge_device_id, bridged_device_id) DO UPDATE SET
+                vendor_name = EXCLUDED.vendor_name,
+                product_name = EXCLUDED.product_name,
+                unique_id = EXCLUDED.unique_id,
+                bridged_endpoint = EXCLUDED.bridged_endpoint
+            RETURNING id
+        """, (bridge_id, bridged_id, vendor, product, unique_id, endpoint))
+        bd_id = self.cur.fetchone()[0]
+        self.conn.commit()
+        return bd_id
+
+    def get_device_interactions(self, device_id: str, hours: int = 24) -> List[Dict]:
+        """获取设备交互历史"""
+        self.cur.execute("""
+            SELECT interaction_type, endpoint_id, cluster_id, action_type,
+                   response_status, latency_ms, timestamp
+            FROM matter_interactions
+            WHERE device_id = %s
+            AND timestamp >= NOW() - INTERVAL '%s hours'
+            ORDER BY timestamp DESC
+        """, (device_id, hours))
+        return [
+            {
+                "type": row[0],
+                "endpoint": row[1],
+                "cluster": row[2],
+                "action": row[3],
+                "status": row[4],
+                "latency_ms": row[5],
+                "timestamp": row[6]
+            }
+            for row in self.cur.fetchall()
+        ]
+
+    def get_subscription_statistics(self, fabric_id: int = None) -> Dict:
+        """获取订阅统计"""
+        query = """
+            SELECT 
+                COUNT(*) as total_subscriptions,
+                COUNT(CASE WHEN is_active THEN 1 END) as active_subscriptions,
+                COUNT(CASE WHEN last_report < NOW() - INTERVAL '5 minutes' THEN 1 END) as stale_subscriptions,
+                AVG(max_interval) as avg_max_interval
+            FROM matter_subscriptions
+        """
+        if fabric_id:
+            query += " WHERE device_id IN (SELECT device_id FROM matter_devices WHERE fabric_id = %s)"
+            self.cur.execute(query, (fabric_id,))
+        else:
+            self.cur.execute(query)
+        
+        row = self.cur.fetchone()
+        return {
+            "total": row[0],
+            "active": row[1],
+            "stale": row[2],
+            "avg_max_interval": float(row[3]) if row[3] else 0
+        }
+
+    def get_network_health_report(self) -> List[Dict]:
+        """获取网络健康报告"""
+        self.cur.execute("SELECT * FROM vw_matter_network_health")
+        columns = [desc[0] for desc in self.cur.description]
+        return [dict(zip(columns, row)) for row in self.cur.fetchall()]
+
+    def close(self):
+        """关闭数据库连接"""
+        self.cur.close()
+        self.conn.close()
+```
+
+### 8.2 时序数据分析
+
+```python
+    def query_attribute_timeseries(self, device_id: str, endpoint_id: int,
+                                  cluster_id: int, attribute_id: int,
+                                  start_time: datetime, end_time: datetime,
+                                  interval: str = '1 hour') -> List[Dict]:
+        """查询属性时序数据"""
+        self.cur.execute("""
+            SELECT 
+                time_bucket(%s, time) as bucket,
+                AVG((attribute_value->>'value')::numeric) as avg_value,
+                MIN((attribute_value->>'value')::numeric) as min_value,
+                MAX((attribute_value->>'value')::numeric) as max_value,
+                COUNT(*) as sample_count
+            FROM matter_attribute_timeseries
+            WHERE device_id = %s
+            AND endpoint_id = %s
+            AND cluster_id = %s
+            AND attribute_id = %s
+            AND time BETWEEN %s AND %s
+            GROUP BY bucket
+            ORDER BY bucket
+        """, (interval, device_id, endpoint_id, cluster_id, attribute_id,
+              start_time, end_time))
+        return [
+            {
+                "time": row[0],
+                "avg": float(row[1]) if row[1] else None,
+                "min": float(row[2]) if row[2] else None,
+                "max": float(row[3]) if row[3] else None,
+                "count": row[4]
+            }
+            for row in self.cur.fetchall()
+        ]
+
+    def get_latency_statistics(self, hours: int = 24) -> Dict:
+        """获取延迟统计"""
+        self.cur.execute("""
+            SELECT 
+                cluster_id,
+                COUNT(*) as interaction_count,
+                AVG(latency_ms) as avg_latency,
+                PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY latency_ms) as p95_latency,
+                PERCENTILE_CONT(0.99) WITHIN GROUP (ORDER BY latency_ms) as p99_latency,
+                MAX(latency_ms) as max_latency
+            FROM matter_interactions
+            WHERE timestamp >= NOW() - INTERVAL '%s hours'
+            AND latency_ms IS NOT NULL
+            GROUP BY cluster_id
+            ORDER BY avg_latency DESC
+        """, (hours,))
+        return [
+            {
+                "cluster_id": row[0],
+                "count": row[1],
+                "avg_latency_ms": float(row[2]) if row[2] else 0,
+                "p95_latency_ms": float(row[3]) if row[3] else 0,
+                "p99_latency_ms": float(row[4]) if row[4] else 0,
+                "max_latency_ms": row[5]
+            }
+            for row in self.cur.fetchall()
+        ]
+```
+
+---
+
+**参考文档**：
+
+- `01_Overview.md` - 概述
+- `02_Formal_Definition.md` - 形式化定义
+- `03_Standards.md` - 标准对标
+- `05_Case_Studies.md` - 实践案例
+
+**创建时间**：2025-01-21
+**最后更新**：2025-02-14（新增高级Matter数据存储功能400+行）

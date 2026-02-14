@@ -117,7 +117,7 @@ class DataNormalizer:
         
         # 计算需要的位数
         j = len(str(int(abs(max_val))))
-        return value / (10 ** j))
+        return value / (10 ** j)
     
     def normalize_field(self, field: str, data: List[Dict[str, Any]],
                        normalization_type: NormalizationType) -> List[Dict[str, Any]]:
