@@ -14,19 +14,104 @@ from hierarchical_kg import HierarchicalKGStorage
 from knowledge_chain import KnowledgeChainBuilder
 
 
+# 数据库配置
+DB_CONFIGS = {
+    'multimodal': 'postgresql://test:test@localhost:5432/test_multimodal_kg',
+    'temporal': 'postgresql://test:test@localhost:5432/test_temporal_kg',
+    'hierarchical': 'postgresql://test:test@localhost:5432/test_hierarchical_kg',
+    'knowledge': 'postgresql://test:test@localhost:5432/test_knowledge_chain',
+}
+
+
+def check_database_available(database_url):
+    """检查数据库是否可用"""
+    try:
+        import psycopg2
+        # 解析数据库URL获取连接参数
+        # postgresql://user:password@host:port/dbname
+        url = database_url.replace('postgresql://', '')
+        if '@' in url:
+            auth, host_part = url.split('@')
+            user, password = auth.split(':')
+        else:
+            user, password = 'test', 'test'
+            host_part = url
+        
+        if '/' in host_part:
+            host_port, dbname = host_part.split('/')
+        else:
+            host_port, dbname = host_part, 'test'
+        
+        if ':' in host_port:
+            host, port = host_port.split(':')
+            port = int(port)
+        else:
+            host, port = host_port, 5432
+        
+        conn = psycopg2.connect(
+            host=host,
+            port=port,
+            user=user,
+            password=password,
+            dbname=dbname,
+            connect_timeout=2
+        )
+        conn.close()
+        return True
+    except Exception:
+        return False
+
+
+# 数据库可用性缓存字典
+DB_AVAILABLE = {}
+
+
+def is_db_available(db_name):
+    """检查指定数据库是否可用（带缓存）"""
+    if db_name not in DB_AVAILABLE:
+        DB_AVAILABLE[db_name] = check_database_available(DB_CONFIGS[db_name])
+    return DB_AVAILABLE[db_name]
+
+
+def skip_if_db_unavailable(db_name):
+    """如果数据库不可用则跳过测试"""
+    if not is_db_available(db_name):
+        pytest.skip(f"数据库 {db_name} 不可用，跳过测试")
+
+
 @pytest.fixture
 def multimodal_storage():
     """创建多模态知识图谱存储实例"""
+    skip_if_db_unavailable('multimodal')
     return MultimodalKGStorage(
-        database_url='postgresql://test:test@localhost:5432/test_multimodal_kg'
+        database_url=DB_CONFIGS['multimodal']
     )
 
 
 @pytest.fixture
 def temporal_storage():
     """创建时序知识图谱存储实例"""
+    skip_if_db_unavailable('temporal')
     return TemporalKGStorage(
-        database_url='postgresql://test:test@localhost:5432/test_temporal_kg'
+        database_url=DB_CONFIGS['temporal']
+    )
+
+
+@pytest.fixture
+def hierarchical_storage():
+    """创建层次化知识图谱存储实例"""
+    skip_if_db_unavailable('hierarchical')
+    return HierarchicalKGStorage(
+        database_url=DB_CONFIGS['hierarchical']
+    )
+
+
+@pytest.fixture
+def knowledge_storage():
+    """创建知识链存储实例"""
+    skip_if_db_unavailable('knowledge')
+    return KnowledgeChainBuilder(
+        database_url=DB_CONFIGS['knowledge']
     )
 
 
@@ -110,12 +195,8 @@ def test_usl_parsing_performance():
     assert throughput > 200.0, "吞吐量不达标"
 
 
-def test_hierarchical_abstraction_performance():
+def test_hierarchical_abstraction_performance(hierarchical_storage):
     """测试层次化抽象性能"""
-    storage = HierarchicalKGStorage(
-        database_url='postgresql://test:test@localhost:5432/test_hierarchical_kg'
-    )
-    
     # 创建测试数据
     instances = []
     for i in range(50):
@@ -129,7 +210,7 @@ def test_hierarchical_abstraction_performance():
     # 测试抽象性能
     start_time = time.time()
     for instance in instances:
-        storage.add_entity(**instance)
+        hierarchical_storage.add_entity(**instance)
     end_time = time.time()
     
     elapsed = end_time - start_time
@@ -143,12 +224,8 @@ def test_hierarchical_abstraction_performance():
     assert throughput > 10.0, "吞吐量不达标"
 
 
-def test_knowledge_chain_building_performance():
+def test_knowledge_chain_building_performance(knowledge_storage):
     """测试知识链构建性能"""
-    builder = KnowledgeChainBuilder(
-        database_url='postgresql://test:test@localhost:5432/test_knowledge_chain'
-    )
-    
     schema_doc = {
         "entities": [{"id": i, "name": f"Entity{i}"} for i in range(20)],
         "relations": [{"from": i, "to": i+1, "type": "related"} for i in range(19)]
@@ -157,7 +234,7 @@ def test_knowledge_chain_building_performance():
     # 测试构建性能
     start_time = time.time()
     for _ in range(10):
-        builder.build_chain(schema_doc, "Test Chain")
+        knowledge_storage.build_chain(schema_doc, "Test Chain")
     end_time = time.time()
     
     elapsed = end_time - start_time
@@ -174,8 +251,9 @@ def test_knowledge_chain_building_performance():
 @pytest.mark.asyncio
 async def test_concurrent_operations():
     """测试并发操作性能"""
+    skip_if_db_unavailable('multimodal')
     storage = MultimodalKGStorage(
-        database_url='postgresql://test:test@localhost:5432/test_multimodal_kg'
+        database_url=DB_CONFIGS['multimodal']
     )
     text_processor = TextModalityProcessor(storage=storage)
     

@@ -335,6 +335,9 @@ class SmartHomeConverter:
                 results.append(result)
                 if not result.get('success', False):
                     logger.warning(f"动作执行失败: {action.get('type')}")
+            except (DeviceNotFoundError, SceneNotFoundError):
+                # 重新抛出特定异常，让调用者处理
+                raise
             except Exception as e:
                 logger.error(f"动作执行异常: {str(e)}", exc_info=True)
                 results.append({

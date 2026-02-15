@@ -11,9 +11,30 @@ from llm_reasoning import OpenAILLM
 from usl import USLParser, USLValidator
 
 
+def check_database_available():
+    """检查数据库是否可用"""
+    try:
+        # 尝试连接多模态KG数据库
+        storage = MultimodalKGStorage(
+            database_url='postgresql://test:test@localhost:5432/test_multimodal_kg'
+        )
+        # 尝试连接时序KG数据库
+        temporal = TemporalKGStorage(
+            database_url='postgresql://test:test@localhost:5432/test_temporal_kg'
+        )
+        return True
+    except Exception:
+        return False
+
+
+DB_AVAILABLE = check_database_available()
+
+
 @pytest.fixture
 def multimodal_storage():
     """创建多模态知识图谱存储实例"""
+    if not DB_AVAILABLE:
+        pytest.skip("数据库不可用，跳过测试")
     return MultimodalKGStorage(
         database_url='postgresql://test:test@localhost:5432/test_multimodal_kg'
     )
@@ -22,6 +43,8 @@ def multimodal_storage():
 @pytest.fixture
 def temporal_storage():
     """创建时序知识图谱存储实例"""
+    if not DB_AVAILABLE:
+        pytest.skip("数据库不可用，跳过测试")
     return TemporalKGStorage(
         database_url='postgresql://test:test@localhost:5432/test_temporal_kg'
     )

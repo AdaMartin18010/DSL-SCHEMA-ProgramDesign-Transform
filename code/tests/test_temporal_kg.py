@@ -9,11 +9,34 @@ from temporal_kg import (
     TemporalEvolutionTracker,
     TemporalReasoning
 )
+import psycopg2
+
+
+def check_database_available():
+    """检查数据库是否可用"""
+    try:
+        conn = psycopg2.connect(
+            host='localhost',
+            port=5432,
+            database='test_temporal_kg',
+            user='test',
+            password='test',
+            connect_timeout=2
+        )
+        conn.close()
+        return True
+    except Exception:
+        return False
+
+
+DB_AVAILABLE = check_database_available()
 
 
 @pytest.fixture
 def storage():
     """创建测试存储实例"""
+    if not DB_AVAILABLE:
+        pytest.skip("数据库不可用，跳过测试")
     return TemporalKGStorage(
         database_url='postgresql://test:test@localhost:5432/test_temporal_kg'
     )

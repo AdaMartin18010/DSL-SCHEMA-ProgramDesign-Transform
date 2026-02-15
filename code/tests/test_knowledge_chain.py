@@ -10,11 +10,32 @@ from knowledge_chain import (
 )
 
 
+# 数据库连接URL
+TEST_DATABASE_URL = 'postgresql://test:test@localhost:5432/test_knowledge_chain'
+
+
+def check_database_available():
+    """检查数据库是否可用"""
+    try:
+        import psycopg2
+        conn = psycopg2.connect(TEST_DATABASE_URL)
+        conn.close()
+        return True
+    except Exception:
+        return False
+
+
+# 数据库可用性标志
+DB_AVAILABLE = check_database_available()
+
+
 @pytest.fixture
 def storage():
     """创建测试存储实例"""
+    if not DB_AVAILABLE:
+        pytest.skip("数据库不可用，跳过测试")
     return KnowledgeChainStorage(
-        database_url='postgresql://test:test@localhost:5432/test_knowledge_chain'
+        database_url=TEST_DATABASE_URL
     )
 
 

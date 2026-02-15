@@ -12,11 +12,33 @@ from multimodal_kg import (
 )
 
 
+# 数据库连接配置
+DATABASE_URL = 'postgresql://test:test@localhost:5432/test_multimodal_kg'
+
+
+def check_database_available():
+    """检查数据库是否可用"""
+    try:
+        # 尝试连接数据库
+        storage = MultimodalKGStorage(database_url=DATABASE_URL)
+        # 尝试执行简单操作来验证连接
+        storage._check_connection()
+        return True
+    except Exception:
+        return False
+
+
+# 数据库可用性常量
+DB_AVAILABLE = check_database_available()
+
+
 @pytest.fixture
 def storage():
     """创建测试存储实例"""
+    if not DB_AVAILABLE:
+        pytest.skip("Database is not available")
     return MultimodalKGStorage(
-        database_url='postgresql://test:test@localhost:5432/test_multimodal_kg'
+        database_url=DATABASE_URL
     )
 
 

@@ -254,6 +254,54 @@ class OAConverter:
                 'error': str(e)
             }
     
+    def register_document(self, document_config: Dict[str, Any]) -> Document:
+        """
+        注册文档
+        
+        Args:
+            document_config: 文档配置
+            
+        Returns:
+            文档对象
+            
+        Raises:
+            ValidationError: 当配置无效时
+        """
+        # 验证必需字段
+        document_id = document_config.get('document_id')
+        if not document_id:
+            raise ValidationError("文档ID不能为空")
+        
+        # 解析文档类型
+        doc_type_str = document_config.get('document_type', 'text')
+        try:
+            document_type = DocumentType(doc_type_str.lower())
+        except ValueError:
+            raise ValidationError(f"无效的文档类型: {doc_type_str}")
+        
+        # 解析文档格式
+        format_str = document_config.get('format', 'odf')
+        try:
+            document_format = DocumentFormat(format_str.lower())
+        except ValueError:
+            raise ValidationError(f"无效的文档格式: {format_str}")
+        
+        # 创建文档对象
+        document = Document(
+            document_id=document_id,
+            name=document_config.get('name', ''),
+            document_type=document_type,
+            format=document_format,
+            content=document_config.get('content', {}),
+            metadata=document_config.get('metadata', {})
+        )
+        
+        # 保存文档
+        self.documents[document_id] = document
+        logger.info(f"文档注册成功: {document_id}")
+        
+        return document
+    
     def _get_document_type_from_mimetype(self, mimetype: str) -> DocumentType:
         """从MIME类型获取文档类型"""
         if 'text' in mimetype:

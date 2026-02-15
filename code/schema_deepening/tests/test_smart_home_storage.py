@@ -20,7 +20,7 @@ from schema_deepening.exceptions import StorageError, ValidationError
 class TestSmartHomeStorage(unittest.TestCase):
     """智慧家居存储测试类"""
     
-    @patch('code.schema_deepening.smart_home_storage.psycopg2')
+    @patch('schema_deepening.smart_home_storage.psycopg2')
     def setUp(self, mock_psycopg2):
         """测试前准备"""
         # 模拟数据库连接
@@ -102,10 +102,14 @@ class TestSmartHomeStorage(unittest.TestCase):
         with self.assertRaises(ValidationError):
             self.storage.query_device_state_history('')
     
-    @patch('code.schema_deepening.smart_home_storage.psycopg2')
+    @patch('schema_deepening.smart_home_storage.psycopg2')
     def test_storage_connection_error(self, mock_psycopg2):
         """测试数据库连接错误"""
-        mock_psycopg2.connect.side_effect = Exception("Connection failed")
+        # 创建一个模拟的 psycopg2.Error 类
+        class MockPsycopg2Error(Exception):
+            pass
+        mock_psycopg2.Error = MockPsycopg2Error
+        mock_psycopg2.connect.side_effect = MockPsycopg2Error("Connection failed")
         
         with self.assertRaises(StorageError):
             SmartHomeStorage("postgresql://localhost/test_db")

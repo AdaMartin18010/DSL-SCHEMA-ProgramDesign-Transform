@@ -14,14 +14,8 @@ from xml.etree.ElementTree import Element, SubElement, tostring
 from .logger import logger
 from .exceptions import ConversionError, ValidationError, ParseError
 
-
-class EDIFACTMessageType(Enum):
-    """EDIFACT消息类型"""
-    ORDERS = "ORDERS"  # 订单
-    DESADV = "DESADV"  # 发货通知
-    INVOIC = "INVOIC"  # 发票
-    IFTMIN = "IFTMIN"  # 运输指令
-    IFTMCS = "IFTMCS"  # 运输状态
+# 从edifact_parser导入以避免重复定义
+from .edifact_parser import EDIFACTMessageType
 
 
 class AISMessageType(Enum):
@@ -204,20 +198,33 @@ class MaritimeConverter:
     def _determine_message_type(self, segments: List[Dict[str, Any]]) -> EDIFACTMessageType:
         """确定消息类型"""
         for segment in segments:
-            if segment['tag'] == 'UNH':
+            if segment.get('tag') == 'UNH':
                 # 从UNH段获取消息类型
-                if segment['elements'] and len(segment['elements']) > 1:
-                    message_type_code = segment['elements'][1][0] if segment['elements'][1] else ''
+                elements = segment.get('elements', [])
+                if elements and len(elements) > 1:
+                    element_1 = elements[1]
+                    message_type_code = None
                     
-                    type_mapping = {
-                        'ORDERS': EDIFACTMessageType.ORDERS,
-                        'DESADV': EDIFACTMessageType.DESADV,
-                        'INVOIC': EDIFACTMessageType.INVOIC,
-                        'IFTMIN': EDIFACTMessageType.IFTMIN,
-                        'IFTMCS': EDIFACTMessageType.IFTMCS
-                    }
+                    if isinstance(element_1, list) and len(element_1) > 0:
+                        # 处理列表格式
+                        message_type_full = element_1[0]
+                        if isinstance(message_type_full, str):
+                            # 可能是 'ORDERS:D:96A:UN' 格式
+                            message_type_code = message_type_full.split(':')[0] if ':' in message_type_full else message_type_full
+                    elif isinstance(element_1, str):
+                        # 处理字符串格式（来自测试）
+                        message_type_code = element_1.split(':')[0] if ':' in element_1 else element_1
                     
-                    return type_mapping.get(message_type_code, EDIFACTMessageType.ORDERS)
+                    if message_type_code:
+                        type_mapping = {
+                            'ORDERS': EDIFACTMessageType.ORDERS,
+                            'DESADV': EDIFACTMessageType.DESADV,
+                            'INVOIC': EDIFACTMessageType.INVOIC,
+                            'IFTMIN': EDIFACTMessageType.IFTMIN,
+                            'IFTMCS': EDIFACTMessageType.IFTMCS
+                        }
+                        
+                        return type_mapping.get(message_type_code, EDIFACTMessageType.ORDERS)
         
         return EDIFACTMessageType.ORDERS
     

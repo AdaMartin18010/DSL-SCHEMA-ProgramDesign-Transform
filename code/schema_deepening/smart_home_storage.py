@@ -308,6 +308,7 @@ class SmartHomeStorage:
             
         Raises:
             StorageError: 查询失败时抛出
+            ValidationError: 设备ID为空时抛出
         """
         try:
             if not device_id:

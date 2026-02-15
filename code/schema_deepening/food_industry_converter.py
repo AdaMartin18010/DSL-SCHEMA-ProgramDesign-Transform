@@ -269,7 +269,16 @@ class FoodIndustryConverter:
             
         Returns:
             追溯链对象
+            
+        Raises:
+            ValidationError: 当epc为空或max_depth无效时
         """
+        if not epc:
+            raise ValidationError("EPC代码不能为空")
+        
+        if max_depth <= 0:
+            raise ValidationError("最大深度必须大于0")
+        
         chain_id = f"chain_{epc}_{datetime.utcnow().timestamp()}"
         events = []
         visited = set()
@@ -342,6 +351,18 @@ class FoodIndustryConverter:
         self.quality_rules[rule_id] = rule
         return rule
     
+    def register_quality_rule(self, rule_config: Dict[str, Any]) -> QualityRule:
+        """
+        注册质量规则（别名方法，用于兼容测试）
+        
+        Args:
+            rule_config: 规则配置
+            
+        Returns:
+            质量规则对象
+        """
+        return self.add_quality_rule(rule_config)
+    
     def check_quality(self, food_data: Dict[str, Any], rule_ids: Optional[List[str]] = None) -> Dict[str, Any]:
         """
         质量检查
@@ -352,7 +373,13 @@ class FoodIndustryConverter:
             
         Returns:
             质量检查结果
+            
+        Raises:
+            ValidationError: 当food_data为空时
         """
+        if not food_data:
+            raise ValidationError("食品数据不能为空")
+        
         rules_to_check = rule_ids if rule_ids else list(self.quality_rules.keys())
         
         passed = 0

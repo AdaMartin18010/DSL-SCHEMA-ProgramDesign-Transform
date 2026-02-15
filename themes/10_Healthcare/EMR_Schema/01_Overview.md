@@ -192,7 +192,7 @@ schema OutpatientEMR {
     attendingDoctor: Practitioner @required
     visitTime: DateTime @required
   }
-  
+
   body: EMRBody {
     chiefComplaint: Text @maxLength(1000)
     presentIllness: Text @maxLength(5000)
@@ -202,7 +202,7 @@ schema OutpatientEMR {
     diagnosis: List<Diagnosis> @required
     treatmentPlan: TreatmentPlan
   }
-  
+
   footer: EMRFooter {
     signatures: List<Signature> @required
     createTime: DateTime @required
@@ -252,26 +252,26 @@ schema OutpatientEMR {
   <realmCode code="CN"/>
   <typeId root="2.16.840.1.113883.1.3" extension="POCD_HD000040"/>
   <templateId root="2.16.156.10011.2.1.1.1"/>
-  
+
   <!-- 文档唯一标识 -->
   <id root="2.16.156.10011.1.1" extension="DOC001"/>
-  
+
   <!-- 文档代码 -->
-  <code code="11506-3" codeSystem="2.16.840.1.113883.6.1" 
+  <code code="11506-3" codeSystem="2.16.840.1.113883.6.1"
         displayName="Progress note"/>
-  
+
   <!-- 文档标题 -->
   <title>病程记录</title>
-  
+
   <!-- 文档创建时间 -->
   <effectiveTime value="20250115143000"/>
-  
+
   <!-- 机密性 -->
   <confidentialityCode code="N" codeSystem="2.16.840.1.113883.5.25"/>
-  
+
   <!-- 文档语言和编码 -->
   <languageCode code="zh-CN"/>
-  
+
   <!-- 患者信息 -->
   <recordTarget>
     <patientRole>
@@ -283,7 +283,7 @@ schema OutpatientEMR {
       </patient>
     </patientRole>
   </recordTarget>
-  
+
   <!-- 文档作者 -->
   <author>
     <assignedAuthor>
@@ -293,7 +293,7 @@ schema OutpatientEMR {
       </assignedPerson>
     </assignedAuthor>
   </author>
-  
+
   <!-- 文档内容 -->
   <component>
     <structuredBody>

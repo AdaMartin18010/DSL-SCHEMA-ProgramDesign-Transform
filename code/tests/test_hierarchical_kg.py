@@ -10,9 +10,25 @@ from hierarchical_kg import (
 )
 
 
+def check_database_available():
+    """检查数据库是否可用"""
+    try:
+        storage = HierarchicalKGStorage(
+            database_url='postgresql://test:test@localhost:5432/test_hierarchical_kg'
+        )
+        return True
+    except Exception:
+        return False
+
+
+DB_AVAILABLE = check_database_available()
+
+
 @pytest.fixture
 def storage():
     """创建测试存储实例"""
+    if not DB_AVAILABLE:
+        pytest.skip("数据库不可用，跳过测试")
     return HierarchicalKGStorage(
         database_url='postgresql://test:test@localhost:5432/test_hierarchical_kg'
     )
