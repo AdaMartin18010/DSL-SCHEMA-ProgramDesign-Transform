@@ -83,13 +83,9 @@
 ### 2.2 技术挑战
 
 1. **数据格式转换复杂性**：不同CAD系统的内核（CATIA的CGM、SolidWorks的Parasolid、NX的Siemens PLM）数据结构差异巨大，需要深度解析和映射
-
 2. **几何精度保持**：NURBS曲面、B-Rep边界表示法的精度保持是关键挑战，特别是在处理复杂曲面（如汽车A级曲面）时
-
 3. **元数据完整性**：除几何数据外，还需保留材料属性、公差标注、PMI（产品制造信息）等非几何数据
-
 4. **大规模装配体处理**：整车装配体包含数万个零部件，需要高效的内存管理和并行处理策略
-
 5. **标准兼容性**：ISO 10303 STEP标准包含多个应用协议（AP203、AP214、AP242），需要支持多版本兼容
 
 ### 2.3 解决方案
@@ -97,6 +93,7 @@
 **在不同CAD系统之间交换3D模型数据，使用ISO 10303 STEP标准格式**：
 
 采用分层架构设计：
+
 - **解析层**：使用OpenCASCADE几何内核解析CAD文件
 - **转换层**：实现几何数据标准化转换
 - **验证层**：自动检测几何完整性和精度
@@ -206,11 +203,11 @@ class Point3D:
     x: float
     y: float
     z: float
-    
+
     def distance_to(self, other: 'Point3D') -> float:
         """计算到另一点的距离"""
         return ((self.x - other.x)**2 + (self.y - other.y)**2 + (self.z - other.z)**2)**0.5
-    
+
     def to_dict(self) -> Dict:
         return {"x": self.x, "y": self.y, "z": self.z}
 
@@ -221,10 +218,10 @@ class Vector3D:
     x: float
     y: float
     z: float
-    
+
     def magnitude(self) -> float:
         return (self.x**2 + self.y**2 + self.z**2)**0.5
-    
+
     def normalize(self) -> 'Vector3D':
         mag = self.magnitude()
         if mag == 0:
@@ -237,15 +234,15 @@ class BoundingBox:
     """包围盒，用于快速几何检测"""
     min_point: Point3D
     max_point: Point3D
-    
+
     def contains(self, point: Point3D) -> bool:
         return (self.min_point.x <= point.x <= self.max_point.x and
                 self.min_point.y <= point.y <= self.max_point.y and
                 self.min_point.z <= point.z <= self.max_point.z)
-    
+
     def volume(self) -> float:
-        return ((self.max_point.x - self.min_point.x) * 
-                (self.max_point.y - self.min_point.y) * 
+        return ((self.max_point.x - self.min_point.x) *
+                (self.max_point.y - self.min_point.y) *
                 (self.max_point.z - self.min_point.z))
 
 
@@ -283,7 +280,7 @@ class GeometryModel:
     pmi_annotations: List[PMI] = field(default_factory=list)
     units: str = "mm"
     source_system: Optional[CADSystem] = None
-    
+
     def compute_hash(self) -> str:
         """计算模型哈希值，用于版本控制"""
         data = json.dumps({
@@ -291,28 +288,28 @@ class GeometryModel:
             "faces": self.faces
         }, sort_keys=True)
         return hashlib.sha256(data.encode()).hexdigest()[:16]
-    
+
     def validate_geometry(self) -> Tuple[bool, List[str]]:
         """验证几何完整性"""
         errors = []
-        
+
         # 检查顶点索引有效性
         max_vertex_idx = len(self.vertices) - 1
         for face_idx, face in enumerate(self.faces):
             for v_idx in face:
                 if v_idx < 0 or v_idx > max_vertex_idx:
                     errors.append(f"面{face_idx}包含无效顶点索引{v_idx}")
-        
+
         # 检查边的有效性
         for edge_idx, (v1, v2) in enumerate(self.edges):
             if v1 < 0 or v1 > max_vertex_idx or v2 < 0 or v2 > max_vertex_idx:
                 errors.append(f"边{edge_idx}包含无效顶点索引")
-        
+
         # 检查退化面
         for face_idx, face in enumerate(self.faces):
             if len(face) < 3:
                 errors.append(f"面{face_idx}是退化面（顶点数<3）")
-        
+
         return len(errors) == 0, errors
 
 
@@ -336,7 +333,7 @@ class STEPFile:
     data: Dict[str, Any] = field(default_factory=dict)
     geometry: Optional[GeometryModel] = None
     version_history: List[VersionInfo] = field(default_factory=list)
-    
+
     def add_version(self, author: str, description: str):
         """添加新版本记录"""
         parent = self.version_history[-1].version_id if self.version_history else None
@@ -353,31 +350,31 @@ class STEPFile:
 
 class CADStorage:
     """CAD数据存储管理器"""
-    
+
     def __init__(self):
         self.models: Dict[str, GeometryModel] = {}
         self.step_files: Dict[str, STEPFile] = {}
         self._lock = threading.Lock()
-    
+
     def store_model(self, model: GeometryModel):
         """存储模型"""
         with self._lock:
             self.models[model.model_id] = model
             logger.info(f"存储模型: {model.model_id}")
-    
+
     def get_model(self, model_id: str) -> Optional[GeometryModel]:
         """获取模型"""
         return self.models.get(model_id)
-    
+
     def store_step_file(self, step_file: STEPFile):
         """存储STEP文件"""
         with self._lock:
             self.step_files[step_file.file_name] = step_file
-    
+
     def get_step_file(self, file_name: str) -> Optional[STEPFile]:
         """获取STEP文件"""
         return self.step_files.get(file_name)
-    
+
     def get_statistics(self) -> Dict:
         """获取存储统计信息"""
         return {
@@ -386,13 +383,13 @@ class CADStorage:
             "by_geometry_type": self._count_by_geometry_type(),
             "by_source_system": self._count_by_source_system()
         }
-    
+
     def _count_by_geometry_type(self) -> Dict:
         counts = {}
         for model in self.models.values():
             counts[model.geometry_type.value] = counts.get(model.geometry_type.value, 0) + 1
         return counts
-    
+
     def _count_by_source_system(self) -> Dict:
         counts = {}
         for model in self.models.values():
@@ -403,7 +400,7 @@ class CADStorage:
 
 class STEPConverter:
     """STEP转换器 - 核心转换引擎"""
-    
+
     def __init__(self, max_workers: int = 4):
         self.storage = CADStorage()
         self.max_workers = max_workers
@@ -412,15 +409,15 @@ class STEPConverter:
             "errors": 0,
             "avg_conversion_time": 0.0
         }
-    
+
     def read_step_file(self, file_path: str, source_system: CADSystem = None) -> STEPFile:
         """读取STEP文件"""
         start_time = datetime.now()
-        
+
         # 实际实现中应使用steputils或OpenCASCADE
         # from steputils import step
         # step_file = step.readfile(file_path)
-        
+
         # 模拟读取复杂STEP文件
         step_file = STEPFile(
             file_name=Path(file_path).name,
@@ -446,18 +443,18 @@ class STEPConverter:
                 "assembly_structure": []
             }
         )
-        
+
         self.storage.store_step_file(step_file)
-        
+
         elapsed = (datetime.now() - start_time).total_seconds()
         logger.info(f"读取STEP文件完成: {file_path}, 耗时: {elapsed:.3f}s")
-        
+
         return step_file
-    
+
     def extract_geometry(self, step_file: STEPFile) -> GeometryModel:
         """提取几何数据"""
         # 模拟从STEP文件提取复杂几何数据
-        
+
         model = GeometryModel(
             model_id=f"MODEL-{step_file.file_name}",
             model_name=step_file.file_name,
@@ -497,17 +494,17 @@ class STEPConverter:
             units="mm",
             source_system=CADSystem(step_file.header.get("file_name", {}).get("originating_system", "Unknown"))
         )
-        
+
         # 验证几何完整性
         is_valid, errors = model.validate_geometry()
         if not is_valid:
             logger.warning(f"几何验证警告: {errors}")
-        
+
         step_file.geometry = model
         self.storage.store_model(model)
-        
+
         return model
-    
+
     def convert_to_catia_format(self, geometry: GeometryModel) -> Dict:
         """转换为CATIA格式"""
         return {
@@ -526,7 +523,7 @@ class STEPConverter:
             "pmi": [asdict(pmi) for pmi in geometry.pmi_annotations],
             "units": geometry.units
         }
-    
+
     def convert_to_solidworks_format(self, geometry: GeometryModel) -> Dict:
         """转换为SolidWorks格式"""
         return {
@@ -548,17 +545,17 @@ class STEPConverter:
             },
             "units": geometry.units
         }
-    
+
     def batch_convert(self, file_paths: List[str], target_system: CADSystem) -> List[Dict]:
         """批量转换"""
         results = []
-        
+
         with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
             future_to_file = {
-                executor.submit(self._convert_single, fp, target_system): fp 
+                executor.submit(self._convert_single, fp, target_system): fp
                 for fp in file_paths
             }
-            
+
             for future in as_completed(future_to_file):
                 file_path = future_to_file[future]
                 try:
@@ -569,21 +566,21 @@ class STEPConverter:
                     logger.error(f"转换失败 {file_path}: {e}")
                     results.append({"file": file_path, "error": str(e)})
                     self._conversion_stats["errors"] += 1
-        
+
         return results
-    
+
     def _convert_single(self, file_path: str, target_system: CADSystem) -> Dict:
         """单个文件转换"""
         step_file = self.read_step_file(file_path)
         geometry = self.extract_geometry(step_file)
-        
+
         if target_system == CADSystem.CATIA:
             return self.convert_to_catia_format(geometry)
         elif target_system == CADSystem.SOLIDWORKS:
             return self.convert_to_solidworks_format(geometry)
         else:
             return {"error": f"不支持的目标系统: {target_system}"}
-    
+
     def get_statistics(self) -> Dict:
         """获取转换统计信息"""
         return {
@@ -596,40 +593,40 @@ class STEPConverter:
 if __name__ == '__main__':
     # 创建转换器
     converter = STEPConverter(max_workers=4)
-    
+
     # 示例1：读取并转换单个文件
     print("="*60)
     print("示例1：单个文件转换")
     print("="*60)
-    
+
     step_file = converter.read_step_file("chassis_part.step", CADSystem.CATIA)
     print(f"读取STEP文件: {step_file.file_name}")
-    
+
     geometry = converter.extract_geometry(step_file)
     print(f"提取几何数据: {geometry.model_id}")
     print(f"几何哈希: {geometry.compute_hash()}")
     print(f"包围盒体积: {geometry.bounding_box.volume():.2f} mm³")
-    
+
     # 验证几何
     is_valid, errors = geometry.validate_geometry()
     print(f"几何验证: {'通过' if is_valid else '失败'} {errors if errors else ''}")
-    
+
     # 转换为不同格式
     catia_format = converter.convert_to_catia_format(geometry)
     print(f"转换为CATIA格式: {catia_format['model_id']}")
-    
+
     solidworks_format = converter.convert_to_solidworks_format(geometry)
     print(f"转换为SolidWorks格式: {solidworks_format['model_id']}")
-    
+
     # 示例2：批量转换
     print("\n" + "="*60)
     print("示例2：批量转换")
     print("="*60)
-    
+
     file_list = [f"part_{i}.step" for i in range(1, 6)]
     results = converter.batch_convert(file_list, CADSystem.SOLIDWORKS)
     print(f"批量转换完成: {len(results)} 个文件")
-    
+
     # 打印统计信息
     print("\n" + "="*60)
     print("转换统计")
@@ -642,29 +639,30 @@ if __name__ == '__main__':
 
 **性能指标**：
 
-| 指标 | 改进前 | 改进后 | 提升幅度 |
-|------|--------|--------|----------|
-| 数据交换成功率 | 70% | 96.5% | +26.5% |
-| 几何精度保持率 | 85% | 98.7% | +13.7% |
-| 单文件转换时间 | 120s | 18s | -85% |
-| 批量处理吞吐量 | 30文件/小时 | 200文件/小时 | +567% |
-| 版本管理准确率 | 75% | 99.2% | +24.2% |
-| 数据完整性验证通过率 | 60% | 97% | +37% |
+| 指标                 | 改进前      | 改进后       | 提升幅度 |
+| -------------------- | ----------- | ------------ | -------- |
+| 数据交换成功率       | 70%         | 96.5%        | +26.5%   |
+| 几何精度保持率       | 85%         | 98.7%        | +13.7%   |
+| 单文件转换时间       | 120s        | 18s          | -85%     |
+| 批量处理吞吐量       | 30文件/小时 | 200文件/小时 | +567%    |
+| 版本管理准确率       | 75%         | 99.2%        | +24.2%   |
+| 数据完整性验证通过率 | 60%         | 97%          | +37%     |
 
 **业务价值**：
 
 1. **ROI分析**：
+
    - 系统投资：80万元（开发+部署）
    - 年节约人力成本：150万元（减少人工转换和数据修复工作）
    - 设计周期缩短：平均每个项目缩短5天
    - 投资回收期：6.4个月
-
 2. **效率提升**：
+
    - 跨部门协作效率提升40%
    - 设计变更响应时间从3天缩短至4小时
    - 供应商数据对接效率提升60%
-
 3. **质量改善**：
+
    - 因数据转换错误导致的返工减少85%
    - 首次设计正确率从72%提升至91%
    - 产品上市时间平均提前2周
@@ -711,13 +709,9 @@ if __name__ == '__main__':
 ### 3.2 技术挑战
 
 1. **几何清理自动化**：需要识别并自动处理CAD模型中的几何特征（小孔、倒角、薄面等），同时保持关键结构特征
-
 2. **中面提取**：薄壁结构需要提取中面进行壳单元分析，中面提取算法需要处理复杂分支和交叉
-
 3. **网格自适应**：根据应力梯度自动调整网格密度，在计算精度和效率之间取得平衡
-
 4. **多物理场耦合**：涡轮叶片同时承受结构、热、流体载荷，需要多物理场耦合分析
-
 5. **结果后处理**：将分析结果映射回CAD模型，支持设计优化迭代
 
 ### 3.3 解决方案
@@ -725,6 +719,7 @@ if __name__ == '__main__':
 **将CAD结构设计数据转换为有限元分析模型**：
 
 采用自动化预处理流程：
+
 - **几何清理**：基于规则的特征识别和抑制
 - **中面提取**：使用距离场方法提取薄壁中面
 - **网格生成**：自适应网格划分算法
@@ -771,7 +766,7 @@ schema StructuralDesignToFEA {
       heat_flux: Float64 @unit("W/m²")
     }
   }
-  
+
   boundary_conditions: List[BoundaryCondition] {
     type: Enum { Fixed, Pinned, Roller, Symmetry, Cyclic }
     geometry_selection: String
@@ -867,7 +862,7 @@ class Material:
     thermal_expansion: float  # 1/K
     yield_strength: float  # MPa
     ultimate_strength: float  # MPa
-    
+
     def get_lame_constants(self) -> Tuple[float, float]:
         """获取拉梅常数"""
         E = self.young_modulus * 1e9  # 转换为Pa
@@ -883,10 +878,10 @@ class Point3D:
     x: float
     y: float
     z: float
-    
+
     def to_array(self) -> np.ndarray:
         return np.array([self.x, self.y, self.z])
-    
+
     def distance_to(self, other: 'Point3D') -> float:
         return np.linalg.norm(self.to_array() - other.to_array())
 
@@ -910,11 +905,11 @@ class CADGeometry:
     features: List[GeometricFeature] = field(default_factory=list)
     is_shell: bool = False
     thickness: Optional[float] = None  # mm，壳体厚度
-    
+
     def detect_features(self) -> List[GeometricFeature]:
         """自动检测几何特征"""
         detected = []
-        
+
         # 检测小孔（简化实现）
         for face in self.faces:
             if len(face) > 8:  # 圆柱面通常有多边形近似
@@ -930,10 +925,10 @@ class CADGeometry:
                         significance_score=0.3
                     )
                     detected.append(feature)
-        
+
         self.features = detected
         return detected
-    
+
     def _calculate_face_center(self, face: List[int]) -> Point3D:
         """计算面的中心点"""
         vertices = [self.vertices[i] for i in face]
@@ -941,7 +936,7 @@ class CADGeometry:
         y = sum(v.y for v in vertices) / len(vertices)
         z = sum(v.z for v in vertices) / len(vertices)
         return Point3D(x, y, z)
-    
+
     def _estimate_feature_size(self, face: List[int]) -> float:
         """估算特征尺寸"""
         vertices = [self.vertices[i] for i in face]
@@ -954,13 +949,13 @@ class CADGeometry:
                 dist = vertices[i].distance_to(vertices[j])
                 max_dist = max(max_dist, dist)
         return max_dist
-    
+
     def extract_mid_surface(self) -> 'CADGeometry':
         """提取中面（薄壁结构）"""
         if not self.is_shell:
             logger.warning("非壳体结构，无法提取中面")
             return self
-        
+
         # 简化实现：复制几何并标记为中面
         mid_surface = CADGeometry(
             model_id=f"{self.model_id}_midsurface",
@@ -971,19 +966,19 @@ class CADGeometry:
             thickness=self.thickness
         )
         return mid_surface
-    
+
     def clean_geometry(self, feature_threshold: float = 0.5) -> 'CADGeometry':
         """清理几何模型"""
         # 检测特征
         features = self.detect_features()
-        
+
         # 过滤掉不重要的特征
         important_features = [f for f in features if f.significance_score >= feature_threshold]
         removed_features = [f for f in features if f.significance_score < feature_threshold]
-        
+
         logger.info(f"几何清理: 保留{len(important_features)}个重要特征, "
                    f"移除{len(removed_features)}个次要特征")
-        
+
         # 返回清理后的几何（简化实现）
         cleaned = CADGeometry(
             model_id=f"{self.model_id}_cleaned",
@@ -1002,7 +997,7 @@ class MeshNode:
     """网格节点"""
     node_id: int
     coordinates: Point3D
-    
+
     def to_array(self) -> np.ndarray:
         return np.array([self.coordinates.x, self.coordinates.y, self.coordinates.z])
 
@@ -1014,22 +1009,22 @@ class MeshElement:
     element_type: ElementType
     node_ids: List[int]
     material_id: Optional[str] = None
-    
+
     def calculate_jacobian(self, nodes: Dict[int, MeshNode]) -> float:
         """计算雅可比行列式（单元质量指标）"""
         if self.element_type != ElementType.TETRAHEDRON or len(self.node_ids) != 4:
             return 1.0
-        
+
         n0 = nodes[self.node_ids[0]].to_array()
         n1 = nodes[self.node_ids[1]].to_array()
         n2 = nodes[self.node_ids[2]].to_array()
         n3 = nodes[self.node_ids[3]].to_array()
-        
+
         # 计算边向量
         v1 = n1 - n0
         v2 = n2 - n0
         v3 = n3 - n0
-        
+
         # 计算雅可比行列式
         jacobian = np.abs(np.dot(v1, np.cross(v2, v3))) / 6.0
         return jacobian
@@ -1042,16 +1037,16 @@ class FEAMesh:
     nodes: Dict[int, MeshNode] = field(default_factory=dict)
     elements: Dict[int, MeshElement] = field(default_factory=dict)
     element_type: ElementType = ElementType.TETRAHEDRON
-    
+
     def generate_mesh(self, geometry: CADGeometry, element_size: float) -> 'FEAMesh':
         """生成网格（简化实现）"""
         logger.info(f"开始生成网格，目标单元尺寸: {element_size}mm")
-        
+
         # 基于几何顶点创建节点
         for i, vertex in enumerate(geometry.vertices):
             node = MeshNode(node_id=i+1, coordinates=vertex)
             self.nodes[node.node_id] = node
-        
+
         # 基于几何面创建单元
         elem_id = 1
         for face in geometry.faces:
@@ -1071,7 +1066,7 @@ class FEAMesh:
                 )
                 self.elements[elem1.element_id] = elem1
                 elem_id += 1
-                
+
                 elem2 = MeshElement(
                     element_id=elem_id,
                     element_type=ElementType.TETRAHEDRON,
@@ -1079,26 +1074,26 @@ class FEAMesh:
                 )
                 self.elements[elem2.element_id] = elem2
                 elem_id += 1
-        
+
         logger.info(f"网格生成完成: {len(self.nodes)} 节点, {len(self.elements)} 单元")
         return self
-    
+
     def check_quality(self) -> Dict[str, Any]:
         """检查网格质量"""
         jacobians = []
         for elem in self.elements.values():
             jac = elem.calculate_jacobian(self.nodes)
             jacobians.append(jac)
-        
+
         if not jacobians:
             return {"passed": False, "error": "无网格单元"}
-        
+
         min_jacobian = min(jacobians)
         avg_jacobian = sum(jacobians) / len(jacobians)
-        
+
         # 质量评判标准
         passed = min_jacobian > 0.01  # 雅可比大于0.01视为可接受
-        
+
         return {
             "passed": passed,
             "min_jacobian": min_jacobian,
@@ -1117,15 +1112,15 @@ class Load:
     direction: Optional[Point3D] = None
     target_nodes: List[int] = field(default_factory=list)
     distribution: str = "uniform"
-    
+
     def apply_to_mesh(self, mesh: FEAMesh) -> np.ndarray:
         """将载荷应用到网格，返回节点力向量"""
         num_nodes = len(mesh.nodes)
         force_vector = np.zeros(num_nodes * 3)  # 每个节点3个自由度
-        
+
         if not self.target_nodes:
             return force_vector
-        
+
         # 均匀分布载荷
         if self.distribution == "uniform":
             force_per_node = self.magnitude / len(self.target_nodes)
@@ -1135,7 +1130,7 @@ class Load:
                     force_vector[idx] = force_per_node * self.direction.x
                     force_vector[idx+1] = force_per_node * self.direction.y
                     force_vector[idx+2] = force_per_node * self.direction.z
-        
+
         return force_vector
 
 
@@ -1157,7 +1152,7 @@ class FEAResult:
     min_safety_factor: float
     stress_distribution: Dict[int, float] = field(default_factory=dict)
     displacement_distribution: Dict[int, Point3D] = field(default_factory=dict)
-    
+
     def calculate_safety_factor(self, material: Material) -> float:
         """计算安全系数"""
         if self.max_stress == 0:
@@ -1167,14 +1162,14 @@ class FEAResult:
 
 class FEAAnalysisSystem:
     """有限元分析系统"""
-    
+
     def __init__(self):
         self.materials: Dict[str, Material] = {}
         self.cad_geometries: Dict[str, CADGeometry] = {}
         self.meshes: Dict[str, FEAMesh] = {}
         self.results: Dict[str, FEAResult] = {}
         self._initialize_default_materials()
-    
+
     def _initialize_default_materials(self):
         """初始化默认材料库"""
         default_materials = [
@@ -1215,90 +1210,90 @@ class FEAAnalysisSystem:
                 ultimate_strength=950
             )
         ]
-        
+
         for mat in default_materials:
             self.materials[mat.name] = mat
-    
+
     def import_cad_model(self, geometry: CADGeometry) -> str:
         """导入CAD模型"""
         self.cad_geometries[geometry.model_id] = geometry
         logger.info(f"导入CAD模型: {geometry.model_id}")
         return geometry.model_id
-    
+
     def prepare_geometry(self, model_id: str, extract_midsurface: bool = False) -> CADGeometry:
         """准备几何模型（清理和特征抑制）"""
         geometry = self.cad_geometries.get(model_id)
         if not geometry:
             raise ValueError(f"未找到模型: {model_id}")
-        
+
         # 几何清理
         cleaned = geometry.clean_geometry(feature_threshold=0.5)
-        
+
         # 中面提取（薄壁结构）
         if extract_midsurface and geometry.is_shell:
             cleaned = cleaned.extract_mid_surface()
-        
+
         self.cad_geometries[cleaned.model_id] = cleaned
         return cleaned
-    
-    def create_mesh(self, model_id: str, element_size: float, 
+
+    def create_mesh(self, model_id: str, element_size: float,
                     element_type: ElementType = ElementType.TETRAHEDRON) -> FEAMesh:
         """创建网格"""
         geometry = self.cad_geometries.get(model_id)
         if not geometry:
             raise ValueError(f"未找到模型: {model_id}")
-        
+
         mesh = FEAMesh(
             mesh_id=f"mesh_{model_id}",
             element_type=element_type
         )
         mesh.generate_mesh(geometry, element_size)
-        
+
         # 质量检查
         quality = mesh.check_quality()
         logger.info(f"网格质量检查结果: {quality}")
-        
+
         self.meshes[mesh.mesh_id] = mesh
         return mesh
-    
-    def solve_static(self, mesh_id: str, material: Material, 
+
+    def solve_static(self, mesh_id: str, material: Material,
                      loads: List[Load], bcs: List[BoundaryCondition]) -> FEAResult:
         """求解静力分析（简化实现）"""
         mesh = self.meshes.get(mesh_id)
         if not mesh:
             raise ValueError(f"未找到网格: {mesh_id}")
-        
+
         logger.info(f"开始静力分析: {mesh_id}")
-        
+
         # 简化求解：基于材料属性和载荷估算结果
         total_force = sum(load.magnitude for load in loads)
-        
+
         # 估算应力（简化公式）
         estimated_stress = total_force * 10 / material.young_modulus
         estimated_displacement = total_force * 0.01 / (material.young_modulus * 1e9 / material.density)
-        
+
         safety_factor = material.yield_strength / max(estimated_stress, 0.1)
-        
+
         result = FEAResult(
             result_id=f"result_{mesh_id}_{datetime.now().strftime('%Y%m%d%H%M%S')}",
             max_stress=estimated_stress,
             max_displacement=estimated_displacement,
             min_safety_factor=safety_factor
         )
-        
+
         self.results[result.result_id] = result
-        
+
         logger.info(f"分析完成: 最大应力={estimated_stress:.2f}MPa, "
                    f"安全系数={safety_factor:.2f}")
-        
+
         return result
-    
+
     def generate_report(self, result_id: str) -> Dict:
         """生成分析报告"""
         result = self.results.get(result_id)
         if not result:
             raise ValueError(f"未找到结果: {result_id}")
-        
+
         return {
             "report_id": result_id,
             "timestamp": datetime.now().isoformat(),
@@ -1314,10 +1309,10 @@ if __name__ == '__main__':
     print("="*60)
     print("结构设计有限元分析系统示例")
     print("="*60)
-    
+
     # 创建分析系统
     fea = FEAAnalysisSystem()
-    
+
     # 创建示例CAD几何（简化叶片模型）
     blade_geometry = CADGeometry(
         model_id="turbine_blade_001",
@@ -1332,19 +1327,19 @@ if __name__ == '__main__':
         ],
         is_shell=False
     )
-    
+
     # 导入CAD模型
     model_id = fea.import_cad_model(blade_geometry)
     print(f"导入模型: {model_id}")
-    
+
     # 几何准备（清理）
     cleaned_geometry = fea.prepare_geometry(model_id)
     print(f"几何清理完成: {cleaned_geometry.model_id}")
-    
+
     # 创建网格
     mesh = fea.create_mesh(cleaned_geometry.model_id, element_size=5.0)
     print(f"网格创建完成: {mesh.mesh_id}")
-    
+
     # 定义载荷（离心力模拟）
     loads = [
         Load(
@@ -1355,7 +1350,7 @@ if __name__ == '__main__':
             target_nodes=list(mesh.nodes.keys())
         )
     ]
-    
+
     # 定义边界条件（根部固定）
     bcs = [
         BoundaryCondition(
@@ -1364,11 +1359,11 @@ if __name__ == '__main__':
             target_nodes=[1, 2, 3, 4]
         )
     ]
-    
+
     # 执行分析
     material = fea.materials["Titanium_Ti6Al4V"]
     result = fea.solve_static(mesh.mesh_id, material, loads, bcs)
-    
+
     # 生成报告
     report = fea.generate_report(result.result_id)
     print("\n" + "="*60)
@@ -1381,28 +1376,29 @@ if __name__ == '__main__':
 
 **性能指标**：
 
-| 指标 | 改进前 | 改进后 | 提升幅度 |
-|------|--------|--------|----------|
-| 模型准备时间 | 10小时 | 2.5小时 | -75% |
-| 材料属性匹配率 | 45% | 96% | +113% |
-| 网格一次合格率 | 65% | 92% | +41% |
-| 分析设置时间 | 4小时 | 0.5小时 | -87.5% |
-| 结果处理时间 | 2小时 | 0.3小时 | -85% |
-| 整体分析周期 | 3天 | 0.8天 | -73% |
+| 指标           | 改进前 | 改进后  | 提升幅度 |
+| -------------- | ------ | ------- | -------- |
+| 模型准备时间   | 10小时 | 2.5小时 | -75%     |
+| 材料属性匹配率 | 45%    | 96%     | +113%    |
+| 网格一次合格率 | 65%    | 92%     | +41%     |
+| 分析设置时间   | 4小时  | 0.5小时 | -87.5%   |
+| 结果处理时间   | 2小时  | 0.3小时 | -85%     |
+| 整体分析周期   | 3天    | 0.8天   | -73%     |
 
 **业务价值**：
 
 1. **效率提升**：
+
    - 设计-分析迭代周期从平均7天缩短至2天
    - 分析工程师生产力提升3倍
    - 新产品开发周期缩短30%
-
 2. **质量保证**：
+
    - 因分析设置错误导致的重分析减少90%
    - 早期发现设计缺陷，避免后期修改成本
    - 疲劳寿命预测准确率提升至92%
-
 3. **成本节约**：
+
    - 年度分析外包费用减少200万元
    - 原型测试次数减少40%
    - 因设计优化实现的材料成本节约15%
@@ -1442,13 +1438,9 @@ if __name__ == '__main__':
 ### 4.2 技术挑战
 
 1. **多体动力学建模**：复杂连杆机构（挖掘机臂架有7个运动部件）的动力学方程建立
-
 2. **约束处理**：转动副、移动副、球铰等多种约束的准确建模和处理
-
 3. **接触碰撞**：运动过程中可能出现的部件间接触和碰撞检测
-
 4. **液压系统耦合**：液压油缸的力-位移特性与机械运动的耦合
-
 5. **实时仿真**：支持交互式参数调整，实现准实时仿真反馈
 
 ### 4.3 解决方案
@@ -1456,6 +1448,7 @@ if __name__ == '__main__':
 **将CAD机构设计数据转换为运动仿真模型**：
 
 采用多体动力学仿真方法：
+
 - **机构提取**：从CAD装配体自动提取连杆、关节信息
 - **运动学分析**：基于Denavit-Hartenberg参数建立运动学模型
 - **动力学建模**：使用拉格朗日方法建立动力学方程
@@ -1499,7 +1492,7 @@ schema MechanismDesignToSimulation {
       acceleration_max: Float64
     }
   }
-  
+
   actuators: List[Actuator] {
     actuator_id: String
     type: Enum { Hydraulic, Electric, Pneumatic }
@@ -1573,10 +1566,10 @@ class Point3D:
     x: float
     y: float
     z: float
-    
+
     def to_array(self) -> np.ndarray:
         return np.array([self.x, self.y, self.z])
-    
+
     @staticmethod
     def from_array(arr: np.ndarray) -> 'Point3D':
         return Point3D(arr[0], arr[1], arr[2])
@@ -1588,10 +1581,10 @@ class Vector3D:
     x: float
     y: float
     z: float
-    
+
     def to_array(self) -> np.ndarray:
         return np.array([self.x, self.y, self.z])
-    
+
     def normalize(self) -> 'Vector3D':
         arr = self.to_array()
         norm = np.linalg.norm(arr)
@@ -1606,33 +1599,33 @@ class Transform:
     """齐次变换矩阵"""
     rotation: np.ndarray = field(default_factory=lambda: np.eye(3))
     translation: np.ndarray = field(default_factory=lambda: np.zeros(3))
-    
+
     def to_matrix(self) -> np.ndarray:
         """转换为4x4齐次变换矩阵"""
         T = np.eye(4)
         T[:3, :3] = self.rotation
         T[:3, 3] = self.translation
         return T
-    
+
     @staticmethod
     def from_matrix(matrix: np.ndarray) -> 'Transform':
         return Transform(
             rotation=matrix[:3, :3],
             translation=matrix[:3, 3]
         )
-    
+
     def inverse(self) -> 'Transform':
         """求逆变换"""
         R_inv = self.rotation.T
         t_inv = -R_inv @ self.translation
         return Transform(R_inv, t_inv)
-    
+
     def __mul__(self, other: 'Transform') -> 'Transform':
         """变换组合"""
         R = self.rotation @ other.rotation
         t = self.rotation @ other.translation + self.translation
         return Transform(R, t)
-    
+
     def transform_point(self, point: Point3D) -> Point3D:
         """变换点坐标"""
         p = self.rotation @ point.to_array() + self.translation
@@ -1649,7 +1642,7 @@ class Link:
     inertia_tensor: np.ndarray  # 3x3，kg·m²
     parent_joint: Optional[str] = None
     is_ground: bool = False
-    
+
     def get_mass_matrix(self) -> np.ndarray:
         """获取质量矩阵"""
         M = np.zeros((6, 6))
@@ -1672,11 +1665,11 @@ class Joint:
     upper_limit: float = np.pi
     current_position: float = 0.0
     current_velocity: float = 0.0
-    
+
     def get_transform(self, q: float) -> Transform:
         """根据关节变量计算变换矩阵"""
         axis = self.axis.normalize().to_array()
-        
+
         if self.joint_type == JointType.REVOLUTE:
             # 旋转矩阵（罗德里格斯公式）
             K = np.array([
@@ -1686,12 +1679,12 @@ class Joint:
             ])
             R = np.eye(3) + np.sin(q) * K + (1 - np.cos(q)) * (K @ K)
             return Transform(R, self.origin.to_array())
-        
+
         elif self.joint_type == JointType.PRISMATIC:
             # 平移
             translation = self.origin.to_array() + q * axis
             return Transform(np.eye(3), translation)
-        
+
         else:
             return Transform(np.eye(3), self.origin.to_array())
 
@@ -1706,7 +1699,7 @@ class Actuator:
     force_limit: float  # N
     stroke: float  # mm
     force_curve: List[Tuple[float, float]] = field(default_factory=list)  # (位移, 力)
-    
+
     def compute_force(self, displacement: float, velocity: float) -> float:
         """计算输出力"""
         if self.actuator_type == ActuatorType.HYDRAULIC:
@@ -1723,13 +1716,13 @@ class BoundingBox:
     min_point: Point3D
     max_point: Point3D
     link_id: str
-    
+
     def intersects(self, other: 'BoundingBox') -> bool:
         """检测两包围盒是否相交"""
         return (self.min_point.x <= other.max_point.x and self.max_point.x >= other.min_point.x and
                 self.min_point.y <= other.max_point.y and self.max_point.y >= other.min_point.y and
                 self.min_point.z <= other.max_point.z and self.max_point.z >= other.min_point.z)
-    
+
     def transform(self, T: Transform) -> 'BoundingBox':
         """变换包围盒"""
         corners = [
@@ -1742,12 +1735,12 @@ class BoundingBox:
             Point3D(self.min_point.x, self.max_point.y, self.max_point.z),
             Point3D(self.max_point.x, self.max_point.y, self.max_point.z),
         ]
-        
+
         transformed = [T.transform_point(c) for c in corners]
         xs = [p.x for p in transformed]
         ys = [p.y for p in transformed]
         zs = [p.z for p in transformed]
-        
+
         return BoundingBox(
             min_point=Point3D(min(xs), min(ys), min(zs)),
             max_point=Point3D(max(xs), max(ys), max(zs)),
@@ -1764,19 +1757,19 @@ class Mechanism:
     joints: Dict[str, Joint] = field(default_factory=dict)
     actuators: Dict[str, Actuator] = field(default_factory=dict)
     link_geometries: Dict[str, BoundingBox] = field(default_factory=dict)
-    
+
     def get_root_link(self) -> Optional[str]:
         """获取根连杆（与地面连接）"""
         for link_id, link in self.links.items():
             if link.is_ground:
                 return link_id
         return None
-    
+
     def get_joint_chain(self, from_link: str) -> List[str]:
         """获取从根到指定连杆的关节链"""
         chain = []
         current = from_link
-        
+
         while current:
             link = self.links.get(current)
             if not link or not link.parent_joint:
@@ -1787,39 +1780,39 @@ class Mechanism:
                 current = joint.parent_link
             else:
                 break
-        
+
         return list(reversed(chain))
-    
+
     def compute_forward_kinematics(self, joint_positions: Dict[str, float]) -> Dict[str, Transform]:
         """计算正运动学"""
         transforms = {}
         root = self.get_root_link()
-        
+
         if not root:
             return transforms
-        
+
         transforms[root] = Transform()  # 根连杆在世界坐标系
-        
+
         # 广度优先遍历
         processed = {root}
         queue = [root]
-        
+
         while queue:
             current = queue.pop(0)
             current_transform = transforms[current]
-            
+
             # 查找连接到当前连杆的子关节
             for joint_id, joint in self.joints.items():
                 if joint.parent_link == current and joint.child_link not in processed:
                     q = joint_positions.get(joint_id, 0.0)
                     joint_transform = joint.get_transform(q)
-                    
+
                     child_transform = current_transform * joint_transform
                     transforms[joint.child_link] = child_transform
-                    
+
                     processed.add(joint.child_link)
                     queue.append(joint.child_link)
-        
+
         return transforms
 
 
@@ -1831,7 +1824,7 @@ class SimulationState:
     joint_velocities: Dict[str, float]
     joint_accelerations: Dict[str, float]
     link_transforms: Dict[str, Transform]
-    
+
     def copy(self) -> 'SimulationState':
         return SimulationState(
             time=self.time,
@@ -1854,19 +1847,19 @@ class InterferenceEvent:
 
 class MechanismSimulator:
     """机构运动仿真器"""
-    
+
     def __init__(self, mechanism: Mechanism):
         self.mechanism = mechanism
         self.simulation_history: List[SimulationState] = []
         self.interference_events: List[InterferenceEvent] = []
         self.dt: float = 0.001  # 时间步长
         self.gravity = np.array([0, 0, -9.81])
-    
+
     def check_interference(self, state: SimulationState) -> List[InterferenceEvent]:
         """检测干涉"""
         events = []
         link_ids = list(self.mechanism.links.keys())
-        
+
         # 获取各连杆的包围盒
         bounding_boxes = {}
         for link_id in link_ids:
@@ -1875,17 +1868,17 @@ class MechanismSimulator:
                 transform = state.link_transforms.get(link_id)
                 if transform:
                     bounding_boxes[link_id] = bbox.transform(transform)
-        
+
         # 两两检测
         for i, link1 in enumerate(link_ids):
             for link2 in link_ids[i+1:]:
                 # 跳过父子连杆（相邻连杆允许接触）
                 if self._are_adjacent(link1, link2):
                     continue
-                
+
                 bbox1 = bounding_boxes.get(link1)
                 bbox2 = bounding_boxes.get(link2)
-                
+
                 if bbox1 and bbox2 and bbox1.intersects(bbox2):
                     event = InterferenceEvent(
                         time=state.time,
@@ -1895,9 +1888,9 @@ class MechanismSimulator:
                         penetration_depth=0.0  # 简化计算
                     )
                     events.append(event)
-        
+
         return events
-    
+
     def _are_adjacent(self, link1: str, link2: str) -> bool:
         """检查两连杆是否相邻（通过关节连接）"""
         for joint in self.mechanism.joints.values():
@@ -1905,12 +1898,12 @@ class MechanismSimulator:
                (joint.parent_link == link2 and joint.child_link == link1):
                 return True
         return False
-    
+
     def compute_dynamics(self, state: SimulationState, actuator_forces: Dict[str, float]) -> Dict[str, float]:
         """计算动力学（简化实现）"""
         # 返回关节加速度
         accelerations = {}
-        
+
         for joint_id, joint in self.mechanism.joints.items():
             if joint.joint_type == JointType.REVOLUTE:
                 # 简化的转动动力学
@@ -1922,31 +1915,31 @@ class MechanismSimulator:
                     accelerations[joint_id] = acc
             else:
                 accelerations[joint_id] = 0.0
-        
+
         return accelerations
-    
+
     def step(self, state: SimulationState, actuator_commands: Dict[str, float]) -> SimulationState:
         """仿真步进"""
         new_state = state.copy()
         new_state.time += self.dt
-        
+
         # 计算动力学
         accelerations = self.compute_dynamics(state, actuator_commands)
-        
+
         # 数值积分（欧拉法）
         for joint_id in self.mechanism.joints.keys():
             # 加速度
             new_state.joint_accelerations[joint_id] = accelerations.get(joint_id, 0.0)
-            
+
             # 速度
             new_state.joint_velocities[joint_id] += new_state.joint_accelerations[joint_id] * self.dt
-            
+
             # 阻尼
             new_state.joint_velocities[joint_id] *= 0.99
-            
+
             # 位置
             new_state.joint_positions[joint_id] += new_state.joint_velocities[joint_id] * self.dt
-            
+
             # 关节限位
             joint = self.mechanism.joints.get(joint_id)
             if joint:
@@ -1955,21 +1948,21 @@ class MechanismSimulator:
                     joint.lower_limit,
                     joint.upper_limit
                 )
-        
+
         # 更新正运动学
         new_state.link_transforms = self.mechanism.compute_forward_kinematics(new_state.joint_positions)
-        
+
         return new_state
-    
-    def run_simulation(self, duration: float, 
+
+    def run_simulation(self, duration: float,
                        actuator_trajectory: Callable[[float], Dict[str, float]]) -> List[SimulationState]:
         """运行仿真"""
         logger.info(f"开始仿真，时长: {duration}s")
-        
+
         # 初始化状态
         initial_positions = {joint_id: 0.0 for joint_id in self.mechanism.joints.keys()}
         initial_velocities = {joint_id: 0.0 for joint_id in self.mechanism.joints.keys()}
-        
+
         state = SimulationState(
             time=0.0,
             joint_positions=initial_positions,
@@ -1977,37 +1970,37 @@ class MechanismSimulator:
             joint_accelerations={joint_id: 0.0 for joint_id in self.mechanism.joints.keys()},
             link_transforms=self.mechanism.compute_forward_kinematics(initial_positions)
         )
-        
+
         self.simulation_history = [state]
         self.interference_events = []
-        
+
         steps = int(duration / self.dt)
-        
+
         for i in range(steps):
             # 获取当前时刻的驱动命令
             actuator_commands = actuator_trajectory(state.time)
-            
+
             # 步进
             state = self.step(state, actuator_commands)
-            
+
             # 干涉检测
             interferences = self.check_interference(state)
             self.interference_events.extend(interferences)
-            
+
             # 保存状态（每10步保存一次以减少内存占用）
             if i % 10 == 0:
                 self.simulation_history.append(state.copy())
-        
+
         logger.info(f"仿真完成: {len(self.simulation_history)} 个状态点, "
                    f"{len(self.interference_events)} 个干涉事件")
-        
+
         return self.simulation_history
-    
+
     def analyze_motion_range(self) -> Dict[str, Any]:
         """分析运动范围"""
         if not self.simulation_history:
             return {}
-        
+
         joint_ranges = {}
         for joint_id in self.mechanism.joints.keys():
             positions = [s.joint_positions[joint_id] for s in self.simulation_history]
@@ -2016,7 +2009,7 @@ class MechanismSimulator:
                 "max": max(positions),
                 "range": max(positions) - min(positions)
             }
-        
+
         return {
             "joint_ranges": joint_ranges,
             "interference_count": len(self.interference_events),
@@ -2026,7 +2019,7 @@ class MechanismSimulator:
 
 class CADMechanismExtractor:
     """CAD机构提取器"""
-    
+
     @staticmethod
     def extract_from_cad_assembly(assembly_data: Dict) -> Mechanism:
         """从CAD装配体提取机构信息"""
@@ -2034,7 +2027,7 @@ class CADMechanismExtractor:
             mechanism_id=assembly_data.get("id", "mechanism_001"),
             name=assembly_data.get("name", "Unknown Mechanism")
         )
-        
+
         # 提取连杆
         for component in assembly_data.get("components", []):
             link = Link(
@@ -2046,7 +2039,7 @@ class CADMechanismExtractor:
                 is_ground=component.get("is_ground", False)
             )
             mechanism.links[link.link_id] = link
-            
+
             # 提取几何包围盒
             if "bounding_box" in component:
                 bbox = BoundingBox(
@@ -2055,7 +2048,7 @@ class CADMechanismExtractor:
                     link_id=link.link_id
                 )
                 mechanism.link_geometries[link.link_id] = bbox
-        
+
         # 提取关节
         for constraint in assembly_data.get("constraints", []):
             joint = Joint(
@@ -2070,12 +2063,12 @@ class CADMechanismExtractor:
                 upper_limit=constraint.get("limits", [0, np.pi])[1]
             )
             mechanism.joints[joint.joint_id] = joint
-            
+
             # 更新连杆的父关节
             child_link = mechanism.links.get(joint.child_link)
             if child_link:
                 child_link.parent_joint = joint.joint_id
-        
+
         return mechanism
 
 
@@ -2084,7 +2077,7 @@ if __name__ == '__main__':
     print("="*60)
     print("机构设计运动仿真系统示例")
     print("="*60)
-    
+
     # 从CAD装配体提取机构
     cad_assembly = {
         "id": "excavator_arm",
@@ -2111,14 +2104,14 @@ if __name__ == '__main__':
              "origin": [200, 0, 0], "axis": [0, 1, 0], "limits": [-1.5, 1.5]}
         ]
     }
-    
+
     mechanism = CADMechanismExtractor.extract_from_cad_assembly(cad_assembly)
     print(f"提取机构: {mechanism.name}")
     print(f"连杆数: {len(mechanism.links)}, 关节数: {len(mechanism.joints)}")
-    
+
     # 创建仿真器
     simulator = MechanismSimulator(mechanism)
-    
+
     # 定义驱动轨迹
     def actuator_trajectory(t: float) -> Dict[str, float]:
         """正弦轨迹驱动"""
@@ -2127,17 +2120,17 @@ if __name__ == '__main__':
             "j2": 5000 * np.sin(0.5 * t + 1),   # 斗杆油缸力
             "j3": 2000 * np.sin(0.5 * t + 2)    # 铲斗油缸力
         }
-    
+
     # 运行仿真
     history = simulator.run_simulation(duration=5.0, actuator_trajectory=actuator_trajectory)
-    
+
     # 分析结果
     analysis = simulator.analyze_motion_range()
     print("\n" + "="*60)
     print("运动分析结果")
     print("="*60)
     print(json.dumps(analysis, indent=2, default=str))
-    
+
     # 干涉报告
     if simulator.interference_events:
         print("\n干涉检测结果:")
@@ -2151,28 +2144,29 @@ if __name__ == '__main__':
 
 **性能指标**：
 
-| 指标 | 改进前 | 改进后 | 提升幅度 |
-|------|--------|--------|----------|
-| 干涉发现率 | 45%（物理样机） | 98%（虚拟仿真） | +118% |
-| 运动范围预测准确度 | 75% | 96% | +28% |
-| 机构优化周期 | 14天 | 1.8天 | -87% |
-| 样机试制次数 | 平均4次 | 平均1.5次 | -62.5% |
-| 设计变更成本 | 50万元/次 | 5万元/次 | -90% |
-| 开发周期 | 18个月 | 12个月 | -33% |
+| 指标               | 改进前          | 改进后          | 提升幅度 |
+| ------------------ | --------------- | --------------- | -------- |
+| 干涉发现率         | 45%（物理样机） | 98%（虚拟仿真） | +118%    |
+| 运动范围预测准确度 | 75%             | 96%             | +28%     |
+| 机构优化周期       | 14天            | 1.8天           | -87%     |
+| 样机试制次数       | 平均4次         | 平均1.5次       | -62.5%   |
+| 设计变更成本       | 50万元/次       | 5万元/次        | -90%     |
+| 开发周期           | 18个月          | 12个月          | -33%     |
 
 **业务价值**：
 
 1. **成本控制**：
+
    - 减少物理样机试制次数，年度节约试制成本800万元
    - 设计变更成本降低90%，年度节约1500万元
    - 避免因干涉问题导致的售后服务成本
-
 2. **质量提升**：
+
    - 挖掘机工作范围达到设计目标的102%
    - 油缸布置优化后，能耗降低8%
    - 操作平顺性评分提升25%
-
 3. **协同效率**：
+
    - 机械-液压-控制三个团队的协同效率提升50%
    - 设计评审周期从1周缩短至1天
    - 客户定制化设计响应时间从1个月缩短至1周
@@ -2213,13 +2207,9 @@ if __name__ == '__main__':
 ### 5.2 技术挑战
 
 1. **海量数据存储**：10万+文件，平均每个50MB，总数据量5TB+，需要高效存储方案
-
 2. **多版本管理**：同一零件可能有数十个版本，需要高效的版本控制和差异分析
-
 3. **几何检索**：基于形状相似度的快速检索，支持部分匹配和近似匹配
-
 4. **元数据提取**：自动提取CAD文件的属性、特征、材料等信息
-
 5. **数据关联**：建立CAD文件与工艺文件、NC程序、质量报告之间的关联关系
 
 ### 5.3 解决方案
@@ -2227,6 +2217,7 @@ if __name__ == '__main__':
 **使用PostgreSQL + 专用几何数据库构建CAD数据存储与分析系统**：
 
 采用分层架构：
+
 - **存储层**：PostgreSQL存储元数据，对象存储保存文件本体
 - **索引层**：几何特征索引支持相似性搜索
 - **分析层**：数据挖掘和知识发现
@@ -2253,19 +2244,19 @@ schema CADDatabase {
     model_type: Enum { Part, Assembly, Drawing }
     source_system: Enum { SolidWorks, CATIA, NX, Inventor }
     file_reference: UUID -> file_storage
-    
+
     geometric_properties: {
       bounding_box: BoundingBox
       volume: Float64 @unit("mm³")
       surface_area: Float64 @unit("mm²")
       center_of_mass: Point3D
     }
-    
+
     feature_tree: List[Feature] {
       feature_type: Enum { Extrude, Revolve, Fillet, Hole, Pattern }
       parameters: Map<String, Value>
     }
-    
+
     material: Material
     mass_properties: {
       mass: Float64 @unit("kg")
@@ -2370,16 +2361,16 @@ class BoundingBox:
     max_x: float
     max_y: float
     max_z: float
-    
+
     def dimensions(self) -> Tuple[float, float, float]:
-        return (self.max_x - self.min_x, 
-                self.max_y - self.min_y, 
+        return (self.max_x - self.min_x,
+                self.max_y - self.min_y,
                 self.max_z - self.min_z)
-    
+
     def volume(self) -> float:
         dx, dy, dz = self.dimensions()
         return dx * dy * dz
-    
+
     def to_feature_vector(self) -> np.ndarray:
         """转换为特征向量"""
         dims = self.dimensions()
@@ -2417,34 +2408,34 @@ class CADModel:
     feature_vector: Optional[np.ndarray] = None
     created_at: datetime = field(default_factory=datetime.now)
     created_by: str = ""
-    
+
     def compute_hash(self) -> str:
         """计算内容哈希"""
         content = f"{self.model_name}{self.model_type}{self.volume}"
         return hashlib.sha256(content.encode()).hexdigest()[:16]
-    
+
     def compute_feature_vector(self) -> np.ndarray:
         """计算几何特征向量用于相似性比较"""
         features = []
-        
+
         # 包围盒特征
         if self.bounding_box:
             features.extend(self.bounding_box.to_feature_vector())
         else:
             features.extend([0] * 6)
-        
+
         # 体积特征（归一化）
         features.append(np.log10(max(self.volume, 1.0)))
-        
+
         # 特征数量统计
         feature_counts = {}
         for f in self.features:
             feature_counts[f.feature_type] = feature_counts.get(f.feature_type, 0) + 1
-        
+
         # 特征类型编码（常见特征类型）
         for ft in ["Extrude", "Revolve", "Fillet", "Hole", "Chamfer", "Pattern"]:
             features.append(feature_counts.get(ft, 0))
-        
+
         return np.array(features)
 
 
@@ -2474,16 +2465,16 @@ class Relationship:
 
 class CADDatabaseManager:
     """CAD数据库管理器"""
-    
+
     def __init__(self, db_path: str = "cad_database.db"):
         self.db_path = db_path
         self._init_database()
-    
+
     def _init_database(self):
         """初始化数据库"""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
-        
+
         # CAD模型表
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS cad_models (
@@ -2503,7 +2494,7 @@ class CADDatabaseManager:
                 created_by TEXT
             )
         ''')
-        
+
         # 版本控制表
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS versions (
@@ -2519,7 +2510,7 @@ class CADDatabaseManager:
                 FOREIGN KEY (model_id) REFERENCES cad_models(model_id)
             )
         ''')
-        
+
         # 关系表
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS relationships (
@@ -2530,7 +2521,7 @@ class CADDatabaseManager:
                 attributes TEXT
             )
         ''')
-        
+
         # 相似性索引表
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS similarity_index (
@@ -2540,20 +2531,20 @@ class CADDatabaseManager:
                 FOREIGN KEY (model_id) REFERENCES cad_models(model_id)
             )
         ''')
-        
+
         conn.commit()
         conn.close()
         logger.info("数据库初始化完成")
-    
+
     def add_model(self, model: CADModel) -> str:
         """添加CAD模型"""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
-        
+
         # 计算特征向量
         if model.feature_vector is None:
             model.feature_vector = model.compute_feature_vector()
-        
+
         cursor.execute('''
             INSERT OR REPLACE INTO cad_models VALUES (
                 ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
@@ -2571,48 +2562,48 @@ class CADDatabaseManager:
             json.dumps(model.feature_vector.tolist()),
             model.created_at.isoformat(), model.created_by
         ))
-        
+
         # 更新相似性索引
         signature = self._compute_signature(model.feature_vector)
         cursor.execute('''
             INSERT OR REPLACE INTO similarity_index VALUES (?, ?, ?)
         ''', (model.model_id, signature, json.dumps(model.feature_vector.tolist())))
-        
+
         conn.commit()
         conn.close()
-        
+
         logger.info(f"添加模型: {model.model_id}")
         return model.model_id
-    
+
     def _compute_signature(self, feature_vector: np.ndarray) -> str:
         """计算几何签名（用于快速筛选）"""
         # 量化特征向量
         quantized = np.round(feature_vector / 10).astype(int)
         return "_".join(map(str, quantized[:3]))  # 使用前3个维度作为签名
-    
+
     def get_model(self, model_id: str) -> Optional[CADModel]:
         """获取模型"""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
-        
+
         cursor.execute('SELECT * FROM cad_models WHERE model_id = ?', (model_id,))
         row = cursor.fetchone()
         conn.close()
-        
+
         if not row:
             return None
-        
+
         return self._row_to_model(row)
-    
+
     def _row_to_model(self, row) -> CADModel:
         """将数据库行转换为模型对象"""
         bbox = BoundingBox(
             min_x=row[6], min_y=row[7], min_z=row[8],
             max_x=row[9], max_y=row[10], max_z=row[11]
         )
-        
+
         feature_vector = np.array(json.loads(row[15])) if row[15] else None
-        
+
         return CADModel(
             model_id=row[0],
             model_name=row[1],
@@ -2628,12 +2619,12 @@ class CADDatabaseManager:
             created_at=datetime.fromisoformat(row[16]),
             created_by=row[17]
         )
-    
+
     def add_version(self, version: VersionInfo):
         """添加版本记录"""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
-        
+
         cursor.execute('''
             INSERT INTO versions VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', (
@@ -2642,23 +2633,23 @@ class CADDatabaseManager:
             version.author, version.timestamp.isoformat(),
             version.change_type.value, version.file_hash
         ))
-        
+
         conn.commit()
         conn.close()
         logger.info(f"添加版本: {version.version_number}")
-    
+
     def get_version_history(self, model_id: str) -> List[VersionInfo]:
         """获取版本历史"""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
-        
+
         cursor.execute('''
             SELECT * FROM versions WHERE model_id = ? ORDER BY timestamp
         ''', (model_id,))
-        
+
         rows = cursor.fetchall()
         conn.close()
-        
+
         versions = []
         for row in rows:
             versions.append(VersionInfo(
@@ -2672,62 +2663,62 @@ class CADDatabaseManager:
                 change_type=ChangeType(row[7]),
                 file_hash=row[8]
             ))
-        
+
         return versions
-    
+
     def find_similar_models(self, query_model: CADModel, top_k: int = 5) -> List[Tuple[CADModel, float]]:
         """查找相似模型"""
         if query_model.feature_vector is None:
             query_model.feature_vector = query_model.compute_feature_vector()
-        
+
         query_signature = self._compute_signature(query_model.feature_vector)
-        
+
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
-        
+
         # 先按签名快速筛选
         cursor.execute('''
             SELECT model_id, feature_vector FROM similarity_index
             WHERE signature LIKE ? AND model_id != ?
         ''', (query_signature.split('_')[0] + '%', query_model.model_id))
-        
+
         candidates = cursor.fetchall()
         conn.close()
-        
+
         # 计算余弦相似度
         similarities = []
         query_vec = query_model.feature_vector
         query_norm = np.linalg.norm(query_vec)
-        
+
         for model_id, feature_vector_json in candidates:
             try:
                 vec = np.array(json.loads(feature_vector_json))
                 if np.linalg.norm(vec) == 0:
                     continue
-                
+
                 # 余弦相似度
                 similarity = np.dot(query_vec, vec) / (query_norm * np.linalg.norm(vec))
                 similarities.append((model_id, similarity))
             except:
                 continue
-        
+
         # 排序并返回前K个
         similarities.sort(key=lambda x: x[1], reverse=True)
         top_similar = similarities[:top_k]
-        
+
         results = []
         for model_id, sim in top_similar:
             model = self.get_model(model_id)
             if model:
                 results.append((model, float(sim)))
-        
+
         return results
-    
+
     def add_relationship(self, relationship: Relationship):
         """添加模型关系"""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
-        
+
         cursor.execute('''
             INSERT INTO relationships VALUES (?, ?, ?, ?, ?)
         ''', (
@@ -2737,34 +2728,34 @@ class CADDatabaseManager:
             relationship.relation_type,
             json.dumps(relationship.attributes)
         ))
-        
+
         conn.commit()
         conn.close()
-    
+
     def get_statistics(self) -> Dict[str, Any]:
         """获取统计信息"""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
-        
+
         # 模型统计
         cursor.execute('SELECT COUNT(*) FROM cad_models')
         total_models = cursor.fetchone()[0]
-        
+
         cursor.execute('SELECT model_type, COUNT(*) FROM cad_models GROUP BY model_type')
         type_distribution = dict(cursor.fetchall())
-        
+
         cursor.execute('SELECT source_system, COUNT(*) FROM cad_models GROUP BY source_system')
         system_distribution = dict(cursor.fetchall())
-        
+
         # 版本统计
         cursor.execute('SELECT COUNT(*) FROM versions')
         total_versions = cursor.fetchone()[0]
-        
+
         # 计算平均版本数
         avg_versions = total_versions / max(total_models, 1)
-        
+
         conn.close()
-        
+
         return {
             "total_models": total_models,
             "total_versions": total_versions,
@@ -2776,15 +2767,15 @@ class CADDatabaseManager:
 
 class CADDataAnalyzer:
     """CAD数据分析器"""
-    
+
     def __init__(self, db_manager: CADDatabaseManager):
         self.db = db_manager
-    
+
     def analyze_design_patterns(self) -> Dict[str, Any]:
         """分析设计模式"""
         # 统计常见特征组合
         # 实际实现需要查询所有模型的特征数据
-        
+
         return {
             "common_feature_patterns": [
                 {"pattern": ["Extrude", "Fillet"], "frequency": 0.45},
@@ -2794,48 +2785,48 @@ class CADDataAnalyzer:
             "average_features_per_model": 12.5,
             "most_common_materials": ["Steel", "Aluminum", "Plastic"]
         }
-    
+
     def detect_duplicates(self, similarity_threshold: float = 0.95) -> List[Tuple[str, str, float]]:
         """检测重复设计"""
         # 遍历所有模型，找到相似度超过阈值的模型对
         duplicates = []
-        
+
         conn = sqlite3.connect(self.db.db_path)
         cursor = conn.cursor()
         cursor.execute('SELECT model_id FROM cad_models')
         model_ids = [row[0] for row in cursor.fetchall()]
         conn.close()
-        
+
         checked_pairs = set()
-        
+
         for i, model_id1 in enumerate(model_ids):
             model1 = self.db.get_model(model_id1)
             if not model1 or model1.feature_vector is None:
                 continue
-            
+
             for model_id2 in model_ids[i+1:]:
                 if (model_id1, model_id2) in checked_pairs:
                     continue
                 checked_pairs.add((model_id1, model_id2))
-                
+
                 model2 = self.db.get_model(model_id2)
                 if not model2 or model2.feature_vector is None:
                     continue
-                
+
                 # 计算相似度
                 vec1 = model1.feature_vector
                 vec2 = model2.feature_vector
                 similarity = np.dot(vec1, vec2) / (np.linalg.norm(vec1) * np.linalg.norm(vec2))
-                
+
                 if similarity > similarity_threshold:
                     duplicates.append((model_id1, model_id2, float(similarity)))
-        
+
         return duplicates
-    
+
     def generate_reuse_recommendations(self, new_model: CADModel) -> List[Dict]:
         """为新产品生成重用建议"""
         similar_models = self.db.find_similar_models(new_model, top_k=3)
-        
+
         recommendations = []
         for model, similarity in similar_models:
             if similarity > 0.8:
@@ -2845,7 +2836,7 @@ class CADDataAnalyzer:
                     "similarity": similarity,
                     "suggestion": f"考虑重用现有模型 {model.model_name}（相似度{similarity:.1%}）"
                 })
-        
+
         return recommendations
 
 
@@ -2854,10 +2845,10 @@ if __name__ == '__main__':
     print("="*60)
     print("CAD数据存储与分析系统示例")
     print("="*60)
-    
+
     # 创建数据库管理器
     db = CADDatabaseManager("demo_cad_database.db")
-    
+
     # 添加示例模型
     models = [
         CADModel(
@@ -2915,11 +2906,11 @@ if __name__ == '__main__':
             created_by="李四"
         )
     ]
-    
+
     # 添加模型到数据库
     for model in models:
         db.add_model(model)
-        
+
         # 添加版本记录
         version = VersionInfo(
             version_id=f"ver_{model.model_id}_001",
@@ -2933,19 +2924,19 @@ if __name__ == '__main__':
             file_hash=model.file_hash
         )
         db.add_version(version)
-    
+
     # 查询统计信息
     print("\n" + "="*60)
     print("数据库统计信息")
     print("="*60)
     stats = db.get_statistics()
     print(json.dumps(stats, indent=2, ensure_ascii=False))
-    
+
     # 相似性搜索
     print("\n" + "="*60)
     print("相似性搜索示例")
     print("="*60)
-    
+
     query_model = CADModel(
         model_id="query_001",
         model_name="新支架设计",
@@ -2962,23 +2953,23 @@ if __name__ == '__main__':
             GeometricFeature("Hole", {"diameter": 10})
         ]
     )
-    
+
     similar_models = db.find_similar_models(query_model, top_k=3)
     print(f"查询模型: {query_model.model_name}")
     print("相似模型:")
     for model, similarity in similar_models:
         print(f"  - {model.model_name}: 相似度 {similarity:.2%}")
-    
+
     # 数据分析
     print("\n" + "="*60)
     print("数据分析")
     print("="*60)
-    
+
     analyzer = CADDataAnalyzer(db)
     patterns = analyzer.analyze_design_patterns()
     print("设计模式分析:")
     print(json.dumps(patterns, indent=2, ensure_ascii=False))
-    
+
     # 重复检测
     duplicates = analyzer.detect_duplicates(similarity_threshold=0.85)
     if duplicates:
@@ -2987,14 +2978,14 @@ if __name__ == '__main__':
             print(f"  {m1} <-> {m2}: 相似度 {sim:.2%}")
     else:
         print("\n未检测到重复设计")
-    
+
     # 重用建议
     recommendations = analyzer.generate_reuse_recommendations(query_model)
     if recommendations:
         print("\n重用建议:")
         for rec in recommendations:
             print(f"  {rec['suggestion']}")
-    
+
     print("\n" + "="*60)
     print("示例完成")
     print("="*60)
@@ -3004,28 +2995,29 @@ if __name__ == '__main__':
 
 **性能指标**：
 
-| 指标 | 改进前 | 改进后 | 提升幅度 |
-|------|--------|--------|----------|
-| 文件检索时间 | 15分钟 | 5秒 | -99.4% |
-| 重复设计率 | 30% | 8% | -73% |
-| 设计数据查询效率 | 人工查找 | 即时查询 | 质变 |
-| 版本追溯完整度 | 60% | 100% | +67% |
-| 存储空间利用率 | 45%（重复存储） | 85% | +89% |
-| 数据检索准确率 | 70% | 95% | +36% |
+| 指标             | 改进前          | 改进后   | 提升幅度 |
+| ---------------- | --------------- | -------- | -------- |
+| 文件检索时间     | 15分钟          | 5秒      | -99.4%   |
+| 重复设计率       | 30%             | 8%       | -73%     |
+| 设计数据查询效率 | 人工查找        | 即时查询 | 质变     |
+| 版本追溯完整度   | 60%             | 100%     | +67%     |
+| 存储空间利用率   | 45%（重复存储） | 85%      | +89%     |
+| 数据检索准确率   | 70%             | 95%      | +36%     |
 
 **业务价值**：
 
 1. **效率提升**：
+
    - 设计师检索历史设计时间从平均15分钟缩短至5秒
    - 相似零件设计重用率从20%提升至65%
    - 新产品设计启动时间从1周缩短至1天
-
 2. **成本节约**：
+
    - 通过设计重用年度节约设计成本500万元
    - 减少重复存储，存储成本节约30万元/年
    - 避免因版本混乱导致的生产错误，减少损失200万元/年
-
 3. **质量管理**：
+
    - 设计变更追溯能力满足ISO 9001认证要求
    - 设计-工艺-生产数据贯通，数据一致性提升至99%
    - 知识积累沉淀，新员工培训周期缩短50%

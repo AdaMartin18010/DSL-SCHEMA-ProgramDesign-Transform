@@ -928,9 +928,9 @@ class IoTSecurityAnalyzer:
 
 ### 7.3 在线资源
 
-- **OWASP IoT Top 10**：<https://owasp.org/www-project-internet-of-things/>
-- **NIST Cybersecurity Framework**：<https://www.nist.gov/cyberframework>
-- **PostgreSQL官网**：<https://www.postgresql.org/>
+- **OWASP IoT Top 10**：[https://owasp.org/www-project-internet-of-things/](https://owasp.org/www-project-internet-of-things/)
+- **NIST Cybersecurity Framework**：[https://www.nist.gov/cyberframework](https://www.nist.gov/cyberframework)
+- **PostgreSQL官网**：[https://www.postgresql.org/](https://www.postgresql.org/)
 
 ---
 

@@ -81,7 +81,7 @@ Message_Queue_Schema = (Topic_Schema ⊕ Message_Schema
 
 **Schema特征**：
 
-- **主题结构**：分层主题（如`sensors/temperature/room1`）
+- **主题结构**：分层主题（如 `sensors/temperature/room1`）
 - **QoS等级**：0、1、2三个等级
 - **消息格式**：二进制或JSON
 - **保留消息**：支持消息保留

@@ -358,20 +358,20 @@ AWS IoT定义了设备定义Schema。
 
 ### 6.1 标准对比表
 
-| 标准类型 | 标准名称 | 物理层 | 通信层 | 参数层 | 控制层 | 安全层 | 应用领域 |
-|---------|---------|--------|--------|--------|--------|--------|----------|
-| **国际标准** | IEEE 1451 | ✅ | ✅ | ✅ | ✅ | ✅ | 工业传感器 |
-| **国际标准** | OneM2M | ❌ | ✅ | ✅ | ✅ | ✅ | 通用IoT |
-| **国际标准** | W3C WoT | ❌ | ✅ | ✅ | ✅ | ✅ | Web IoT |
-| **国家标准** | GB/T 34068-2017 | ✅ | ✅ | ✅ | ✅ | ✅ | 智能传感器 |
-| **国家标准** | YD/T 3334-2018 | ❌ | ✅ | ✅ | ❌ | ❌ | 通信行业 |
-| **行业标准** | IO-Link | ✅ | ✅ | ✅ | ✅ | ❌ | 工业自动化 |
-| **行业标准** | OPC UA | ❌ | ✅ | ✅ | ✅ | ✅ | 工业自动化 |
-| **行业标准** | MQTT | ❌ | ✅ | ✅ | ❌ | ✅ | 通用IoT |
-| **厂商标准** | 华为IoT | ❌ | ✅ | ✅ | ✅ | ✅ | 云平台 |
-| **厂商标准** | 阿里云IoT | ❌ | ✅ | ✅ | ✅ | ✅ | 云平台 |
-| **厂商标准** | AWS IoT | ❌ | ✅ | ✅ | ✅ | ✅ | 云平台 |
-| **厂商标准** | Azure IoT | ❌ | ✅ | ✅ | ✅ | ✅ | 云平台 |
+| 标准类型           | 标准名称        | 物理层 | 通信层 | 参数层 | 控制层 | 安全层 | 应用领域   |
+| ------------------ | --------------- | ------ | ------ | ------ | ------ | ------ | ---------- |
+| **国际标准** | IEEE 1451       | ✅     | ✅     | ✅     | ✅     | ✅     | 工业传感器 |
+| **国际标准** | OneM2M          | ❌     | ✅     | ✅     | ✅     | ✅     | 通用IoT    |
+| **国际标准** | W3C WoT         | ❌     | ✅     | ✅     | ✅     | ✅     | Web IoT    |
+| **国家标准** | GB/T 34068-2017 | ✅     | ✅     | ✅     | ✅     | ✅     | 智能传感器 |
+| **国家标准** | YD/T 3334-2018  | ❌     | ✅     | ✅     | ❌     | ❌     | 通信行业   |
+| **行业标准** | IO-Link         | ✅     | ✅     | ✅     | ✅     | ❌     | 工业自动化 |
+| **行业标准** | OPC UA          | ❌     | ✅     | ✅     | ✅     | ✅     | 工业自动化 |
+| **行业标准** | MQTT            | ❌     | ✅     | ✅     | ❌     | ✅     | 通用IoT    |
+| **厂商标准** | 华为IoT         | ❌     | ✅     | ✅     | ✅     | ✅     | 云平台     |
+| **厂商标准** | 阿里云IoT       | ❌     | ✅     | ✅     | ✅     | ✅     | 云平台     |
+| **厂商标准** | AWS IoT         | ❌     | ✅     | ✅     | ✅     | ✅     | 云平台     |
+| **厂商标准** | Azure IoT       | ❌     | ✅     | ✅     | ✅     | ✅     | 云平台     |
 
 **说明**：
 
@@ -381,23 +381,23 @@ AWS IoT定义了设备定义Schema。
 
 ### 6.2 Schema特性对比
 
-| 标准 | 设备模型 | 数据格式 | 元数据 | 配置管理 | 扩展性 |
-|------|---------|---------|--------|---------|--------|
-| **IEEE 1451** | ✅ TEDS | ✅ 二进制 | ✅ 完整 | ✅ 完整 | ⚠️ 有限 |
-| **OneM2M** | ✅ 资源模型 | ✅ JSON/XML | ✅ 完整 | ✅ 完整 | ✅ 强 |
-| **W3C WoT** | ✅ Thing模型 | ✅ JSON-LD | ✅ 完整 | ✅ 完整 | ✅ 强 |
-| **OPC UA** | ✅ 信息模型 | ✅ 二进制/XML | ✅ 完整 | ✅ 完整 | ✅ 强 |
-| **MQTT** | ⚠️ 主题模型 | ✅ JSON/二进制 | ⚠️ 部分 | ⚠️ 部分 | ✅ 强 |
+| 标准                | 设备模型      | 数据格式       | 元数据    | 配置管理  | 扩展性    |
+| ------------------- | ------------- | -------------- | --------- | --------- | --------- |
+| **IEEE 1451** | ✅ TEDS       | ✅ 二进制      | ✅ 完整   | ✅ 完整   | ⚠️ 有限 |
+| **OneM2M**    | ✅ 资源模型   | ✅ JSON/XML    | ✅ 完整   | ✅ 完整   | ✅ 强     |
+| **W3C WoT**   | ✅ Thing模型  | ✅ JSON-LD     | ✅ 完整   | ✅ 完整   | ✅ 强     |
+| **OPC UA**    | ✅ 信息模型   | ✅ 二进制/XML  | ✅ 完整   | ✅ 完整   | ✅ 强     |
+| **MQTT**      | ⚠️ 主题模型 | ✅ JSON/二进制 | ⚠️ 部分 | ⚠️ 部分 | ✅ 强     |
 
 ### 6.3 工具链支持对比
 
-| 工具 | IEEE 1451 | OneM2M | W3C WoT | OPC UA | 代码生成 |
-|------|-----------|--------|---------|--------|---------|
-| **Node-RED** | ⚠️ 部分 | ✅ 完整 | ✅ 完整 | ✅ 完整 | ⚠️ 部分 |
-| **Eclipse IoT** | ⚠️ 部分 | ✅ 完整 | ✅ 完整 | ⚠️ 部分 | ✅ 完整 |
-| **OPC UA SDK** | ❌ 无 | ⚠️ 部分 | ⚠️ 部分 | ✅ 完整 | ✅ 完整 |
-| **AWS IoT SDK** | ❌ 无 | ⚠️ 部分 | ⚠️ 部分 | ❌ 无 | ✅ 完整 |
-| **Azure IoT SDK** | ❌ 无 | ⚠️ 部分 | ⚠️ 部分 | ⚠️ 部分 | ✅ 完整 |
+| 工具                    | IEEE 1451 | OneM2M    | W3C WoT   | OPC UA    | 代码生成  |
+| ----------------------- | --------- | --------- | --------- | --------- | --------- |
+| **Node-RED**      | ⚠️ 部分 | ✅ 完整   | ✅ 完整   | ✅ 完整   | ⚠️ 部分 |
+| **Eclipse IoT**   | ⚠️ 部分 | ✅ 完整   | ✅ 完整   | ⚠️ 部分 | ✅ 完整   |
+| **OPC UA SDK**    | ❌ 无     | ⚠️ 部分 | ⚠️ 部分 | ✅ 完整   | ✅ 完整   |
+| **AWS IoT SDK**   | ❌ 无     | ⚠️ 部分 | ⚠️ 部分 | ❌ 无     | ✅ 完整   |
+| **Azure IoT SDK** | ❌ 无     | ⚠️ 部分 | ⚠️ 部分 | ⚠️ 部分 | ✅ 完整   |
 
 ---
 
@@ -473,21 +473,21 @@ AWS IoT定义了设备定义Schema。
 
 ### 8.3 在线资源
 
-- **GB/T标准查询**：<https://www.sac.gov.cn/>
-- **IEEE官网**：<https://standards.ieee.org/>
-- **OneM2M官网**：<https://www.onem2m.org/>
-- **W3C WoT官网**：<https://www.w3.org/WoT/>
-- **IO-Link官网**：<https://www.io-link.com/>
-- **OPC Foundation**：<https://opcfoundation.org/>
+- **GB/T标准查询**：[https://www.sac.gov.cn/](https://www.sac.gov.cn/)
+- **IEEE官网**：[https://standards.ieee.org/](https://standards.ieee.org/)
+- **OneM2M官网**：[https://www.onem2m.org/](https://www.onem2m.org/)
+- **W3C WoT官网**：[https://www.w3.org/WoT/](https://www.w3.org/WoT/)
+- **IO-Link官网**：[https://www.io-link.com/](https://www.io-link.com/)
+- **OPC Foundation**：[https://opcfoundation.org/](https://opcfoundation.org/)
 
 ### 8.4 技术社区
 
-- **Eclipse IoT**：<https://iot.eclipse.org/>
+- **Eclipse IoT**：[https://iot.eclipse.org/](https://iot.eclipse.org/)
 - **Linux Foundation Edge**：
-  <https://www.lfedge.org/>
+  [https://www.lfedge.org/](https://www.lfedge.org/)
 - **GitHub IoT工具**：
-  <https://github.com/eclipse/paho.mqtt>
-- **Node-RED**：<https://nodered.org/>
+  [https://github.com/eclipse/paho.mqtt](https://github.com/eclipse/paho.mqtt)
+- **Node-RED**：[https://nodered.org/](https://nodered.org/)
 
 ---
 

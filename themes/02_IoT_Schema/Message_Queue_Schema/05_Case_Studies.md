@@ -78,6 +78,7 @@
 ### 2.3 解决方案
 
 **架构设计**：
+
 - 采用Kafka集群部署，3个Broker节点，跨厂区部署
 - 分层Topic设计：raw-data（原始数据）、processed-data（清洗后）、alert-data（告警数据）
 - 智能分区策略：按设备ID哈希分区，确保同一设备数据有序
@@ -146,10 +147,10 @@ class SensorData:
     timestamp: int  # 毫秒时间戳
     location: Dict[str, float] = field(default_factory=dict)
     metadata: Dict[str, Any] = field(default_factory=dict)
-    
+
     def to_json(self) -> str:
         return json.dumps(asdict(self), default=lambda x: x.value if isinstance(x, Enum) else x)
-    
+
     @classmethod
     def from_json(cls, json_str: str) -> 'SensorData':
         data = json.loads(json_str)
@@ -170,7 +171,7 @@ class AlertEvent:
 
 class SensorDataValidator:
     """传感器数据验证器"""
-    
+
     THRESHOLDS = {
         SensorType.TEMPERATURE: {'min': -40, 'max': 200, 'critical': 150},
         SensorType.PRESSURE: {'min': 0, 'max': 1000, 'critical': 800},
@@ -179,20 +180,20 @@ class SensorDataValidator:
         SensorType.VOLTAGE: {'min': 180, 'max': 260, 'critical': 250},
         SensorType.HUMIDITY: {'min': 0, 'max': 100, 'critical': 95},
     }
-    
+
     @classmethod
     def validate(cls, data: SensorData) -> tuple[bool, Optional[AlertEvent]]:
         """验证传感器数据，返回(是否有效, 告警事件)"""
         thresholds = cls.THRESHOLDS.get(data.sensor_type)
         if not thresholds:
             return True, None
-        
+
         value = data.value
-        
+
         # 检查数值范围
         if value < thresholds['min'] or value > thresholds['max']:
             return False, None
-        
+
         # 检查告警级别
         if value > thresholds['critical']:
             alert = AlertEvent(
@@ -204,23 +205,23 @@ class SensorDataValidator:
                 sensor_data=data
             )
             return True, alert
-        
+
         return True, None
 
 
 class DataPersistence:
     """数据持久化层"""
-    
+
     def __init__(self, db_path: str = "sensor_data.db"):
         self.db_path = db_path
         self.local_queue: deque = deque(maxlen=10000)
         self._init_db()
-    
+
     def _init_db(self):
         """初始化数据库"""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
-        
+
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS sensor_data (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -233,7 +234,7 @@ class DataPersistence:
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         ''')
-        
+
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS alert_events (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -245,24 +246,24 @@ class DataPersistence:
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         ''')
-        
+
         cursor.execute('''
-            CREATE INDEX IF NOT EXISTS idx_sensor_device_time 
+            CREATE INDEX IF NOT EXISTS idx_sensor_device_time
             ON sensor_data(device_id, timestamp)
         ''')
-        
+
         conn.commit()
         conn.close()
-    
+
     def save_sensor_data(self, data: SensorData):
         """保存传感器数据"""
         self.local_queue.append(data)
-        
+
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
-        
+
         cursor.execute('''
-            INSERT INTO sensor_data 
+            INSERT INTO sensor_data
             (device_id, sensor_type, value, timestamp, location_lat, location_lon)
             VALUES (?, ?, ?, ?, ?, ?)
         ''', (
@@ -273,17 +274,17 @@ class DataPersistence:
             data.location.get('latitude'),
             data.location.get('longitude')
         ))
-        
+
         conn.commit()
         conn.close()
-    
+
     def save_alert(self, alert: AlertEvent):
         """保存告警事件"""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
-        
+
         cursor.execute('''
-            INSERT OR REPLACE INTO alert_events 
+            INSERT OR REPLACE INTO alert_events
             (alert_id, device_id, alert_level, message, timestamp)
             VALUES (?, ?, ?, ?, ?)
         ''', (
@@ -293,32 +294,32 @@ class DataPersistence:
             alert.message,
             alert.timestamp
         ))
-        
+
         conn.commit()
         conn.close()
-    
+
     def query_device_history(self, device_id: str, hours: int = 24) -> List[Dict]:
         """查询设备历史数据"""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
-        
+
         cursor.execute('''
-            SELECT * FROM sensor_data 
-            WHERE device_id = ? 
+            SELECT * FROM sensor_data
+            WHERE device_id = ?
             AND timestamp > ?
             ORDER BY timestamp DESC
         ''', (device_id, int(time.time() * 1000) - hours * 3600 * 1000))
-        
+
         columns = [desc[0] for desc in cursor.description]
         results = [dict(zip(columns, row)) for row in cursor.fetchall()]
-        
+
         conn.close()
         return results
 
 
 class MetricsCollector:
     """指标收集器"""
-    
+
     def __init__(self):
         self.message_count = 0
         self.error_count = 0
@@ -326,30 +327,30 @@ class MetricsCollector:
         self.alert_count = 0
         self._lock = threading.Lock()
         self._start_time = time.time()
-    
+
     def record_message(self, latency_ms: float):
         """记录消息处理"""
         with self._lock:
             self.message_count += 1
             self.latency_sum += latency_ms
-    
+
     def record_error(self):
         """记录错误"""
         with self._lock:
             self.error_count += 1
-    
+
     def record_alert(self):
         """记录告警"""
         with self._lock:
             self.alert_count += 1
-    
+
     def get_stats(self) -> Dict[str, Any]:
         """获取统计信息"""
         with self._lock:
             elapsed = time.time() - self._start_time
             avg_latency = self.latency_sum / self.message_count if self.message_count > 0 else 0
             throughput = self.message_count / elapsed if elapsed > 0 else 0
-            
+
             return {
                 'total_messages': self.message_count,
                 'error_count': self.error_count,
@@ -363,7 +364,7 @@ class MetricsCollector:
 
 class SmartFactoryKafkaProcessor:
     """智能工厂Kafka处理器"""
-    
+
     def __init__(self, bootstrap_servers: str = "localhost:9092"):
         self.bootstrap_servers = bootstrap_servers
         self.producer = None
@@ -372,7 +373,7 @@ class SmartFactoryKafkaProcessor:
         self.metrics = MetricsCollector()
         self.running = False
         self.alert_handlers: List[Callable[[AlertEvent], None]] = []
-        
+
         if KAFKA_AVAILABLE:
             self.producer = Producer({
                 'bootstrap.servers': bootstrap_servers,
@@ -387,15 +388,15 @@ class SmartFactoryKafkaProcessor:
             logger.info("Kafka producer initialized")
         else:
             logger.warning("Running in mock mode without Kafka")
-    
+
     def add_alert_handler(self, handler: Callable[[AlertEvent], None]):
         """添加告警处理器"""
         self.alert_handlers.append(handler)
-    
+
     def produce_sensor_data(self, topic: str, sensor_data: SensorData) -> bool:
         """生产传感器数据"""
         start_time = time.time()
-        
+
         try:
             # 数据验证
             is_valid, alert = SensorDataValidator.validate(sensor_data)
@@ -403,7 +404,7 @@ class SmartFactoryKafkaProcessor:
                 logger.warning(f"Invalid sensor data from {sensor_data.device_id}")
                 self.metrics.record_error()
                 return False
-            
+
             # 保存告警
             if alert:
                 self.persistence.save_alert(alert)
@@ -413,10 +414,10 @@ class SmartFactoryKafkaProcessor:
                         handler(alert)
                     except Exception as e:
                         logger.error(f"Alert handler error: {e}")
-            
+
             # 持久化数据
             self.persistence.save_sensor_data(sensor_data)
-            
+
             # 发送到Kafka
             if KAFKA_AVAILABLE and self.producer:
                 message = sensor_data.to_json()
@@ -429,18 +430,18 @@ class SmartFactoryKafkaProcessor:
                 self.producer.poll(0)
             else:
                 logger.debug(f"Mock produce: {sensor_data.device_id} = {sensor_data.value}")
-            
+
             # 记录指标
             latency = (time.time() - start_time) * 1000
             self.metrics.record_message(latency)
-            
+
             return True
-            
+
         except Exception as e:
             logger.error(f"Error producing sensor data: {e}")
             self.metrics.record_error()
             return False
-    
+
     def _delivery_callback(self, err, msg):
         """消息传递回调"""
         if err:
@@ -448,13 +449,13 @@ class SmartFactoryKafkaProcessor:
             self.metrics.record_error()
         else:
             logger.debug(f'Message delivered to {msg.topic()} [partition:{msg.partition()} offset:{msg.offset()}]')
-    
+
     def start_consumer(self, topics: List[str], group_id: str = "smart-factory-group"):
         """启动消费者"""
         if not KAFKA_AVAILABLE:
             logger.warning("Cannot start consumer - Kafka not available")
             return
-        
+
         self.consumer = Consumer({
             'bootstrap.servers': self.bootstrap_servers,
             'group.id': group_id,
@@ -464,43 +465,43 @@ class SmartFactoryKafkaProcessor:
         })
         self.consumer.subscribe(topics)
         self.running = True
-        
+
         logger.info(f"Consumer started for topics: {topics}")
-        
+
         while self.running:
             try:
                 msg = self.consumer.poll(timeout=1.0)
-                
+
                 if msg is None:
                     continue
-                
+
                 if msg.error():
                     if msg.error().code() == KafkaError._PARTITION_EOF:
                         logger.debug(f'End of partition reached: {msg.topic()}')
                     else:
                         logger.error(f'Consumer error: {msg.error()}')
                     continue
-                
+
                 # 处理消息
                 try:
                     data = SensorData.from_json(msg.value().decode('utf-8'))
                     logger.debug(f"Consumed: {data.device_id} - {data.sensor_type.value} = {data.value}")
                 except Exception as e:
                     logger.error(f'Error parsing message: {e}')
-                    
+
             except Exception as e:
                 logger.error(f'Consumer loop error: {e}')
-        
+
         self.consumer.close()
         logger.info("Consumer stopped")
-    
+
     def stop(self):
         """停止处理器"""
         self.running = False
         if self.producer:
             self.producer.flush()
         logger.info("Processor stopped")
-    
+
     def get_metrics(self) -> Dict[str, Any]:
         """获取监控指标"""
         return self.metrics.get_stats()
@@ -517,52 +518,52 @@ def simulate_production():
     """模拟生产环境"""
     processor = SmartFactoryKafkaProcessor()
     processor.add_alert_handler(mock_alert_handler)
-    
+
     # 模拟100个设备，每个设备多个传感器
     device_count = 100
     sensors_per_device = 5
     total_messages = 0
-    
+
     print("=" * 60)
     print("智能工厂传感器数据流处理系统 - 模拟运行")
     print("=" * 60)
-    
+
     start_time = time.time()
-    
+
     # 模拟运行30秒
     while time.time() - start_time < 30:
         for device_id in range(device_count):
             for sensor_idx in range(sensors_per_device):
                 sensor_types = list(SensorType)
                 sensor_type = sensor_types[sensor_idx % len(sensor_types)]
-                
+
                 # 模拟传感器读数（偶尔产生告警值）
                 import random
                 if random.random() < 0.01:  # 1% 概率产生告警
                     base_value = 160 if sensor_type == SensorType.TEMPERATURE else 85
                 else:
                     base_value = 50 if sensor_type == SensorType.TEMPERATURE else 30
-                
+
                 value = base_value + random.uniform(-10, 10)
-                
+
                 sensor_data = SensorData(
                     device_id=f"DEV_{device_id:04d}",
                     sensor_type=sensor_type,
                     value=round(value, 2),
                     timestamp=int(time.time() * 1000),
-                    location={'latitude': 39.9 + random.uniform(-0.1, 0.1), 
+                    location={'latitude': 39.9 + random.uniform(-0.1, 0.1),
                              'longitude': 116.4 + random.uniform(-0.1, 0.1)},
                     metadata={'production_line': f'LINE_{device_id % 10}', 'shift': 'day'}
                 )
-                
+
                 success = processor.produce_sensor_data(
-                    "smart-factory-sensor-data", 
+                    "smart-factory-sensor-data",
                     sensor_data
                 )
-                
+
                 if success:
                     total_messages += 1
-        
+
         # 每批次后显示统计
         if total_messages % 1000 == 0:
             stats = processor.get_metrics()
@@ -571,18 +572,18 @@ def simulate_production():
                   f"平均延迟: {stats['avg_latency_ms']}ms | "
                   f"告警: {stats['alert_count']} | "
                   f"错误率: {stats['error_rate']}%", end='', flush=True)
-        
+
         time.sleep(0.01)  # 控制发送速率
-    
+
     print("\n" + "=" * 60)
     print("运行结束，最终统计:")
     print(json.dumps(processor.get_metrics(), indent=2))
-    
+
     # 查询示例设备的历史数据
     sample_device = "DEV_0001"
     history = processor.persistence.query_device_history(sample_device, hours=1)
     print(f"\n📈 设备 {sample_device} 最近数据点数: {len(history)}")
-    
+
     processor.stop()
 
 
@@ -594,28 +595,29 @@ if __name__ == '__main__':
 
 **性能指标对比**：
 
-| 指标 | 改造前 | 改造后 | 提升幅度 |
-|------|--------|--------|----------|
-| 峰值吞吐量 | 3万条/秒 | 22万条/秒 | **633%↑** |
-| 端到端延迟(P99) | 350ms | 45ms | **87%↓** |
-| 数据可靠性 | 97.5% | 99.97% | **2.47%↑** |
-| 故障发现时间 | 30分钟 | 实时(< 1秒) | **99.9%↓** |
-| 质量追溯时间 | 4小时 | 12秒 | **99.9%↓** |
-| 系统可用性 | 99.5% | 99.99% | **0.49%↑** |
+| 指标            | 改造前   | 改造后      | 提升幅度          |
+| --------------- | -------- | ----------- | ----------------- |
+| 峰值吞吐量      | 3万条/秒 | 22万条/秒   | **633%↑**  |
+| 端到端延迟(P99) | 350ms    | 45ms        | **87%↓**   |
+| 数据可靠性      | 97.5%    | 99.97%      | **2.47%↑** |
+| 故障发现时间    | 30分钟   | 实时(< 1秒) | **99.9%↓** |
+| 质量追溯时间    | 4小时    | 12秒        | **99.9%↓** |
+| 系统可用性      | 99.5%    | 99.99%      | **0.49%↑** |
 
 **业务价值**：
 
 1. **直接经济效益**：
+
    - 非计划停机减少65%，年节约维修成本520万元
    - 产品质量追溯效率提升99.5%，客户投诉处理时间从48小时缩短至2小时
    - 能耗优化带来年节约电费180万元
-
 2. **系统可用性提升**：
+
    - 7×24小时不间断运行，年度计划外停机< 1小时
    - 跨厂区数据同步延迟< 100ms，支持集中化生产调度
    - 灾备切换时间从小时级降至分钟级
-
 3. **ROI分析**：
+
    - 项目总投资：280万元（硬件+软件+实施）
    - 年度收益：700万元（成本节约+效率提升）
    - **投资回报率：250%，回收周期：4.8个月**
@@ -664,6 +666,7 @@ if __name__ == '__main__':
 ### 3.3 解决方案
 
 **架构设计**：
+
 - 分层架构：边缘网关（协议适配）→ 汇聚层（Kafka）→ 平台层（业务处理）
 - MQTT Broker集群：EMQX集群，3节点，单节点支持5万连接
 - Kafka集群：3 Broker + 3 Zookeeper，分区数按设备类型划分
@@ -773,7 +776,7 @@ class KafkaMessage:
 
 class DeviceRegistry:
     """设备注册中心"""
-    
+
     def __init__(self, db_path: str = "devices.db"):
         self.db_path = db_path
         self.devices: Dict[str, DeviceInfo] = {}
@@ -781,7 +784,7 @@ class DeviceRegistry:
         self._lock = threading.Lock()
         self._init_db()
         self._load_devices()
-    
+
     def _init_db(self):
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
@@ -801,7 +804,7 @@ class DeviceRegistry:
         ''')
         conn.commit()
         conn.close()
-    
+
     def _load_devices(self):
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
@@ -820,15 +823,15 @@ class DeviceRegistry:
             )
             self.devices[device.device_id] = device
         conn.close()
-    
+
     def register_device(self, device: DeviceInfo) -> bool:
         with self._lock:
             self.devices[device.device_id] = device
-            
+
             conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()
             cursor.execute('''
-                INSERT OR REPLACE INTO devices 
+                INSERT OR REPLACE INTO devices
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ''', (
                 device.device_id, device.device_type.value, device.protocol.value,
@@ -838,13 +841,13 @@ class DeviceRegistry:
             conn.commit()
             conn.close()
             return True
-    
+
     def update_status(self, device_id: str, status: str):
         with self._lock:
             if device_id in self.devices:
                 self.devices[device_id].status = status
                 self.devices[device_id].last_seen_at = int(time.time() * 1000)
-                
+
                 conn = sqlite3.connect(self.db_path)
                 cursor = conn.cursor()
                 cursor.execute('''
@@ -852,10 +855,10 @@ class DeviceRegistry:
                 ''', (status, self.devices[device_id].last_seen_at, device_id))
                 conn.commit()
                 conn.close()
-    
+
     def get_online_count(self) -> int:
         return sum(1 for d in self.devices.values() if d.status == "online")
-    
+
     def get_stats(self) -> Dict[str, int]:
         stats = defaultdict(int)
         for d in self.devices.values():
@@ -865,7 +868,7 @@ class DeviceRegistry:
 
 class ProtocolTransformer:
     """协议转换器"""
-    
+
     # Topic映射规则
     TOPIC_MAPPING = {
         "sensors/+/temperature": "env.temperature.raw",
@@ -874,13 +877,13 @@ class ProtocolTransformer:
         "parking/+/occupancy": "parking.occupancy.raw",
         "manhole/+/alarm": "infrastructure.manhole.alert",
     }
-    
+
     @classmethod
     def transform(cls, msg: ProtocolMessage) -> Optional[KafkaMessage]:
         """将协议消息转换为Kafka消息"""
         # 确定目标Topic
         kafka_topic = cls._map_topic(msg.topic, msg.device_id)
-        
+
         # 构建标准消息格式
         standard_payload = {
             "message_id": msg.message_id,
@@ -896,7 +899,7 @@ class ProtocolTransformer:
                 "gateway_node": "gateway-01"
             }
         }
-        
+
         # 添加数据类型特定字段
         if msg.topic.startswith("sensors/"):
             standard_payload["data_type"] = "environment"
@@ -904,13 +907,13 @@ class ProtocolTransformer:
             standard_payload["data_type"] = "lighting"
         elif msg.topic.startswith("parking/"):
             standard_payload["data_type"] = "parking"
-        
+
         headers = {
             "device_id": msg.device_id,
             "tenant_id": cls._get_tenant_id(msg.device_id),
             "priority": str(msg.priority.value)
         }
-        
+
         return KafkaMessage(
             key=msg.device_id,
             topic=kafka_topic,
@@ -918,7 +921,7 @@ class ProtocolTransformer:
             headers=headers,
             timestamp=msg.timestamp
         )
-    
+
     @classmethod
     def _map_topic(cls, mqtt_topic: str, device_id: str) -> str:
         """映射MQTT Topic到Kafka Topic"""
@@ -926,16 +929,16 @@ class ProtocolTransformer:
             if cls._match_topic_pattern(mqtt_topic, pattern):
                 return kafka_topic
         return f"iot.raw.{device_id.split('_')[0]}"
-    
+
     @classmethod
     def _match_topic_pattern(cls, topic: str, pattern: str) -> bool:
         """匹配MQTT通配符Topic"""
         pattern_parts = pattern.split('/')
         topic_parts = topic.split('/')
-        
+
         if len(pattern_parts) != len(topic_parts):
             return False
-        
+
         for p, t in zip(pattern_parts, topic_parts):
             if p == '+':
                 continue
@@ -944,7 +947,7 @@ class ProtocolTransformer:
             if p != t:
                 return False
         return True
-    
+
     @classmethod
     def _get_tenant_id(cls, device_id: str) -> str:
         """从设备ID获取租户ID"""
@@ -955,51 +958,51 @@ class ProtocolTransformer:
 
 class SmartCityGateway:
     """智慧城市MQTT到Kafka网关"""
-    
-    def __init__(self, 
+
+    def __init__(self,
                  mqtt_broker: str = "localhost",
                  mqtt_port: int = 1883,
                  kafka_brokers: str = "localhost:9092"):
         self.mqtt_broker = mqtt_broker
         self.mqtt_port = mqtt_port
         self.kafka_brokers = kafka_brokers
-        
+
         self.device_registry = DeviceRegistry()
         self.transformer = ProtocolTransformer()
-        
+
         self.mqtt_client = None
         self.kafka_producer = None
-        
+
         self.message_count = 0
         self.error_count = 0
         self.transform_time_ms = 0
         self._lock = threading.Lock()
         self._running = False
-        
+
         self._init_mqtt()
         self._init_kafka()
-    
+
     def _init_mqtt(self):
         """初始化MQTT客户端"""
         if not MQTT_AVAILABLE:
             logger.warning("paho-mqtt not available")
             return
-        
+
         self.mqtt_client = mqtt.Client(client_id=f"smartcity-gateway-{uuid.uuid4().hex[:8]}")
         self.mqtt_client.on_connect = self._on_mqtt_connect
         self.mqtt_client.on_message = self._on_mqtt_message
         self.mqtt_client.on_disconnect = self._on_mqtt_disconnect
-        
+
         # 配置认证（生产环境使用TLS）
         # self.mqtt_client.tls_set()
         # self.mqtt_client.username_pw_set("username", "password")
-    
+
     def _init_kafka(self):
         """初始化Kafka生产者"""
         if not KAFKA_AVAILABLE:
             logger.warning("confluent-kafka not available")
             return
-        
+
         self.kafka_producer = Producer({
             'bootstrap.servers': self.kafka_brokers,
             'acks': 'all',
@@ -1009,7 +1012,7 @@ class SmartCityGateway:
             'linger.ms': 10,
             'max.in.flight.requests.per.connection': 5
         })
-    
+
     def _on_mqtt_connect(self, client, userdata, flags, rc):
         """MQTT连接回调"""
         if rc == 0:
@@ -1023,29 +1026,29 @@ class SmartCityGateway:
             ])
         else:
             logger.error(f"MQTT connection failed with code {rc}")
-    
+
     def _on_mqtt_disconnect(self, client, userdata, rc):
         """MQTT断开回调"""
         logger.warning(f"MQTT disconnected with code {rc}")
-    
+
     def _on_mqtt_message(self, client, userdata, msg):
         """MQTT消息回调"""
         start_time = time.time()
-        
+
         try:
             # 解析设备ID从Topic
             topic_parts = msg.topic.split('/')
             device_id = topic_parts[1] if len(topic_parts) > 1 else "unknown"
-            
+
             # 更新设备状态
             self.device_registry.update_status(device_id, "online")
-            
+
             # 解析Payload
             try:
                 payload = json.loads(msg.payload.decode('utf-8'))
             except json.JSONDecodeError:
                 payload = {"raw_data": msg.payload.hex()}
-            
+
             # 构建协议消息
             protocol_msg = ProtocolMessage(
                 message_id=hashlib.md5(f"{device_id}_{time.time()}".encode()).hexdigest()[:16],
@@ -1057,22 +1060,22 @@ class SmartCityGateway:
                 qos=msg.qos,
                 priority=DataPriority.HIGH if msg.topic.endswith("alarm") else DataPriority.NORMAL
             )
-            
+
             # 协议转换
             kafka_msg = self.transformer.transform(protocol_msg)
             if kafka_msg:
                 self._send_to_kafka(kafka_msg)
-            
+
             # 更新统计
             with self._lock:
                 self.message_count += 1
                 self.transform_time_ms += (time.time() - start_time) * 1000
-                
+
         except Exception as e:
             logger.error(f"Error processing MQTT message: {e}")
             with self._lock:
                 self.error_count += 1
-    
+
     def _send_to_kafka(self, msg: KafkaMessage):
         """发送到Kafka"""
         if KAFKA_AVAILABLE and self.kafka_producer:
@@ -1088,41 +1091,41 @@ class SmartCityGateway:
             self.kafka_producer.poll(0)
         else:
             logger.debug(f"Mock Kafka send: {msg.topic}")
-    
+
     def _kafka_delivery_callback(self, err, msg):
         """Kafka投递回调"""
         if err:
             logger.error(f"Kafka delivery failed: {err}")
             with self._lock:
                 self.error_count += 1
-    
+
     def start(self):
         """启动网关"""
         self._running = True
-        
+
         if MQTT_AVAILABLE and self.mqtt_client:
             self.mqtt_client.connect(self.mqtt_broker, self.mqtt_port, 60)
             self.mqtt_client.loop_start()
-        
+
         logger.info("Smart City Gateway started")
-    
+
     def stop(self):
         """停止网关"""
         self._running = False
-        
+
         if self.mqtt_client:
             self.mqtt_client.loop_stop()
             self.mqtt_client.disconnect()
-        
+
         if self.kafka_producer:
             self.kafka_producer.flush()
-        
+
         logger.info("Smart City Gateway stopped")
-    
+
     def get_stats(self) -> Dict[str, Any]:
         """获取网关统计"""
         with self._lock:
-            avg_transform_time = (self.transform_time_ms / self.message_count 
+            avg_transform_time = (self.transform_time_ms / self.message_count
                                  if self.message_count > 0 else 0)
             return {
                 "total_messages": self.message_count,
@@ -1140,11 +1143,11 @@ def simulate_iot_devices(gateway: SmartCityGateway, duration: int = 30):
     if not MQTT_AVAILABLE:
         # 直接调用网关处理模拟消息
         device_types = list(DeviceType)
-        
+
         for i in range(duration * 10):
             for j in range(100):  # 100个设备
                 device_id = f"CITY_{device_types[j % 4].value}_{j:04d}"
-                
+
                 # 注册设备
                 if device_id not in gateway.device_registry.devices:
                     device = DeviceInfo(
@@ -1157,14 +1160,14 @@ def simulate_iot_devices(gateway: SmartCityGateway, duration: int = 30):
                         registered_at=int(time.time() * 1000)
                     )
                     gateway.device_registry.register_device(device)
-                
+
                 # 模拟消息
                 topics = [
                     f"sensors/{device_id}/temperature",
                     f"lights/{device_id}/status",
                     f"parking/{device_id}/occupancy"
                 ]
-                
+
                 for topic in topics[:1] if j % 4 != 0 else topics[:2]:
                     import random
                     payload = {
@@ -1172,25 +1175,25 @@ def simulate_iot_devices(gateway: SmartCityGateway, duration: int = 30):
                         "battery": random.randint(20, 100),
                         "timestamp": int(time.time() * 1000)
                     }
-                    
+
                     # 模拟调用消息处理
                     class MockMsg:
                         def __init__(self, topic, payload, qos):
                             self.topic = topic
                             self.payload = json.dumps(payload).encode()
                             self.qos = qos
-                    
+
                     gateway._on_mqtt_message(None, None, MockMsg(topic, payload, 1))
-            
+
             time.sleep(0.1)
-            
+
             if i % 10 == 0:
                 stats = gateway.get_stats()
                 print(f"\r📊 消息: {stats['total_messages']} | "
                       f"在线设备: {stats['online_devices']} | "
                       f"错误: {stats['error_count']} | "
                       f"平均转换时间: {stats['avg_transform_time_ms']}ms", end='', flush=True)
-        
+
         print("\n" + "=" * 60)
         print("最终统计:")
         print(json.dumps(gateway.get_stats(), indent=2))
@@ -1200,10 +1203,10 @@ if __name__ == '__main__':
     print("=" * 60)
     print("智慧城市MQTT到Kafka协议转换网关 - 模拟运行")
     print("=" * 60)
-    
+
     gateway = SmartCityGateway()
     gateway.start()
-    
+
     try:
         simulate_iot_devices(gateway, duration=30)
     except KeyboardInterrupt:
@@ -1216,32 +1219,33 @@ if __name__ == '__main__':
 
 **性能指标对比**：
 
-| 指标 | 改造前 | 改造后 | 提升幅度 |
-|------|--------|--------|----------|
-| 并发设备数 | 5万 | 12万 | **140%↑** |
-| 消息吞吐量 | 1万/秒 | 8万/秒 | **700%↑** |
-| 协议转换延迟 | 500ms | 35ms | **93%↓** |
-| 系统可用性 | 99.0% | 99.95% | **0.95%↑** |
-| 设备接入时间 | 2小时 | 15分钟 | **87.5%↓** |
+| 指标         | 改造前 | 改造后 | 提升幅度          |
+| ------------ | ------ | ------ | ----------------- |
+| 并发设备数   | 5万    | 12万   | **140%↑**  |
+| 消息吞吐量   | 1万/秒 | 8万/秒 | **700%↑**  |
+| 协议转换延迟 | 500ms  | 35ms   | **93%↓**   |
+| 系统可用性   | 99.0%  | 99.95% | **0.95%↑** |
+| 设备接入时间 | 2小时  | 15分钟 | **87.5%↓** |
 
 **业务价值**：
 
 1. **经济效益**：
+
    - 统一平台减少重复建设，节约IT投资1200万元
    - 运维人力成本从年300万降至120万，节约60%
    - 故障响应时间从平均2小时缩短至10分钟
-
 2. **城市治理提升**：
+
    - 路灯节能30%，年节约电费400万元
    - 环境监测数据实时共享，污染事件响应时间缩短80%
    - 智能停车系统提升车位周转率25%
-
 3. **安全合规**：
+
    - 实现全链路TLS加密，通过等保三级认证
    - 设备接入认证率100%，杜绝非法设备接入
    - 数据审计追溯完整，满足监管要求
-
 4. **ROI分析**：
+
    - 项目总投资：580万元
    - 年度节约+收益：820万元
    - **投资回报率：141%，回收周期：8.5个月**
@@ -1290,6 +1294,7 @@ if __name__ == '__main__':
 ### 4.3 解决方案
 
 **架构设计**：
+
 - 边缘计算：车机端数据预处理和压缩，减少传输量60%
 - 接入层：Kafka集群（10节点），分区数按车型划分
 - 实时处理：Flink流处理，窗口聚合、告警检测
@@ -1362,41 +1367,41 @@ class VehicleData:
     vin: str  # 车辆识别码
     timestamp: int
     status: VehicleStatus
-    
+
     # 位置信息
     latitude: float
     longitude: float
     altitude: float
     speed: float
     heading: float
-    
+
     # 电池信息
     battery_soc: float  # 电量百分比
     battery_temp: float
     battery_voltage: float
     estimated_range: float
-    
+
     # 驾驶信息
     odometer: float
     trip_distance: float
     accelerator_pedal: float
     brake_pedal: float
-    
+
     # 告警列表
     active_alerts: List[AlertType] = field(default_factory=list)
-    
+
     # 扩展字段
     metadata: Dict[str, Any] = field(default_factory=dict)
-    
+
     def to_bytes(self) -> bytes:
         """压缩序列化"""
         return gzip.compress(json.dumps(asdict(self)).encode())
-    
+
     @classmethod
     def from_bytes(cls, data: bytes) -> 'VehicleData':
         """解压反序列化"""
         return cls(**json.loads(gzip.decompress(data).decode()))
-    
+
     def get_data_tier(self) -> DataTier:
         """根据时间判断数据层级"""
         age_days = (time.time() * 1000 - self.timestamp) / (24 * 3600 * 1000)
@@ -1434,17 +1439,17 @@ class VehicleStats:
 
 class TimeSeriesStore:
     """时序数据存储"""
-    
+
     def __init__(self, db_path: str = "vehicle_data.db"):
         self.db_path = db_path
         self.hot_cache: Dict[str, deque] = defaultdict(lambda: deque(maxlen=1000))
         self._init_db()
-    
+
     def _init_db(self):
         """初始化数据库"""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
-        
+
         # 车辆数据表（按日期分区）
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS vehicle_data (
@@ -1462,7 +1467,7 @@ class TimeSeriesStore:
                 data_date TEXT GENERATED ALWAYS AS (date(timestamp/1000, 'unixepoch')) STORED
             )
         ''')
-        
+
         # 告警事件表
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS alert_events (
@@ -1478,7 +1483,7 @@ class TimeSeriesStore:
                 resolved BOOLEAN DEFAULT FALSE
             )
         ''')
-        
+
         # 车辆统计表
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS vehicle_stats (
@@ -1492,27 +1497,27 @@ class TimeSeriesStore:
                 updated_at INTEGER
             )
         ''')
-        
+
         # 索引
         cursor.execute('CREATE INDEX IF NOT EXISTS idx_vin_time ON vehicle_data(vin, timestamp)')
         cursor.execute('CREATE INDEX IF NOT EXISTS idx_alert_vin ON alert_events(vin, timestamp)')
         cursor.execute('CREATE INDEX IF NOT EXISTS idx_location ON vehicle_data(latitude, longitude)')
-        
+
         conn.commit()
         conn.close()
-    
+
     def store_vehicle_data(self, data: VehicleData):
         """存储车辆数据"""
         # 写入热缓存
         self.hot_cache[data.vin].append(data)
-        
+
         # 写入数据库
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
-        
+
         cursor.execute('''
-            INSERT INTO vehicle_data 
-            (vin, timestamp, status, latitude, longitude, speed, 
+            INSERT INTO vehicle_data
+            (vin, timestamp, status, latitude, longitude, speed,
              battery_soc, battery_temp, odometer, raw_data)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', (
@@ -1521,17 +1526,17 @@ class TimeSeriesStore:
             data.battery_soc, data.battery_temp, data.odometer,
             data.to_bytes()
         ))
-        
+
         conn.commit()
         conn.close()
-    
+
     def store_alert(self, alert: AlertEvent):
         """存储告警"""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
-        
+
         cursor.execute('''
-            INSERT OR REPLACE INTO alert_events 
+            INSERT OR REPLACE INTO alert_events
             (alert_id, vin, alert_type, severity, message, timestamp, latitude, longitude)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         ''', (
@@ -1539,26 +1544,26 @@ class TimeSeriesStore:
             alert.severity, alert.message, alert.timestamp,
             alert.location[0], alert.location[1]
         ))
-        
+
         conn.commit()
         conn.close()
-    
+
     def query_trajectory(self, vin: str, start_time: int, end_time: int) -> List[Dict]:
         """查询车辆轨迹"""
         # 优先查缓存
         cached = [d for d in self.hot_cache[vin] if start_time <= d.timestamp <= end_time]
         if len(cached) >= 10:
             return [asdict(d) for d in sorted(cached, key=lambda x: x.timestamp)]
-        
+
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
-        
+
         cursor.execute('''
-            SELECT * FROM vehicle_data 
+            SELECT * FROM vehicle_data
             WHERE vin = ? AND timestamp BETWEEN ? AND ?
             ORDER BY timestamp
         ''', (vin, start_time, end_time))
-        
+
         columns = [desc[0] for desc in cursor.description]
         results = []
         for row in cursor.fetchall():
@@ -1569,19 +1574,19 @@ class TimeSeriesStore:
                     results.append(asdict(full_data))
                 except:
                     results.append(data_dict)
-        
+
         conn.close()
         return results
-    
+
     def query_vehicle_stats(self, vin: str) -> Optional[VehicleStats]:
         """查询车辆统计"""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
-        
+
         cursor.execute('SELECT * FROM vehicle_stats WHERE vin = ?', (vin,))
         row = cursor.fetchone()
         conn.close()
-        
+
         if row:
             return VehicleStats(
                 vin=row[0], total_mileage=row[1], total_charging_times=row[2],
@@ -1589,14 +1594,14 @@ class TimeSeriesStore:
                 last_alert_time=row[5], driving_score=row[6]
             )
         return None
-    
+
     def update_vehicle_stats(self, stats: VehicleStats):
         """更新车辆统计"""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
-        
+
         cursor.execute('''
-            INSERT OR REPLACE INTO vehicle_stats 
+            INSERT OR REPLACE INTO vehicle_stats
             (vin, total_mileage, total_charging_times, total_charging_energy,
              average_consumption, last_alert_time, driving_score, updated_at)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
@@ -1605,47 +1610,47 @@ class TimeSeriesStore:
             stats.total_charging_energy, stats.average_consumption,
             stats.last_alert_time, stats.driving_score, int(time.time() * 1000)
         ))
-        
+
         conn.commit()
         conn.close()
 
 
 class AlertDetector:
     """告警检测器"""
-    
+
     THRESHOLDS = {
         'battery_temp_max': 55.0,
         'tire_pressure_min': 1.8,
         'speed_max': 180.0,
         'soc_min': 10.0,
     }
-    
+
     def __init__(self, alert_handler: Optional[callable] = None):
         self.alert_handler = alert_handler
         self.recent_data: Dict[str, deque] = defaultdict(lambda: deque(maxlen=10))
         self.alert_cooldown: Dict[str, int] = {}
-    
+
     def process(self, data: VehicleData) -> List[AlertEvent]:
         """处理车辆数据，检测告警"""
         alerts = []
-        
+
         # 保存近期数据用于趋势分析
         self.recent_data[data.vin].append(data)
-        
+
         # 检查电池过热
         if data.battery_temp > self.THRESHOLDS['battery_temp_max']:
-            alert = self._create_alert(data, AlertType.BATTERY_OVERHEAT, 
+            alert = self._create_alert(data, AlertType.BATTERY_OVERHEAT,
                                        f"电池温度过高: {data.battery_temp}°C", 5)
             if alert:
                 alerts.append(alert)
-        
+
         # 检查低电量
         if data.battery_soc < self.THRESHOLDS['soc_min']:
             alert = self._create_alert(data, AlertType.ABNORMAL_DRIVING,
                                        f"电量过低: {data.battery_soc}%", 3)
             if alert:
                 alerts.append(alert)
-        
+
         # 检查异常驾驶（急加速/急减速）
         if len(self.recent_data[data.vin]) >= 3:
             speeds = [d.speed for d in self.recent_data[data.vin]]
@@ -1654,22 +1659,22 @@ class AlertDetector:
                                           "检测到急加速/急减速", 2)
                 if alert:
                     alerts.append(alert)
-        
+
         return alerts
-    
-    def _create_alert(self, data: VehicleData, alert_type: AlertType, 
+
+    def _create_alert(self, data: VehicleData, alert_type: AlertType,
                       message: str, severity: int) -> Optional[AlertEvent]:
         """创建告警，带冷却机制"""
         cooldown_key = f"{data.vin}_{alert_type.value}"
         now = int(time.time() * 1000)
-        
+
         # 5分钟内不重复告警
         if cooldown_key in self.alert_cooldown:
             if now - self.alert_cooldown[cooldown_key] < 300000:
                 return None
-        
+
         self.alert_cooldown[cooldown_key] = now
-        
+
         alert = AlertEvent(
             alert_id=f"ALT_{data.vin}_{now}",
             vin=data.vin,
@@ -1679,35 +1684,35 @@ class AlertDetector:
             timestamp=now,
             location=(data.latitude, data.longitude)
         )
-        
+
         if self.alert_handler:
             self.alert_handler(alert)
-        
+
         return alert
 
 
 class RealTimeAnalyzer:
     """实时分析器"""
-    
+
     def __init__(self, store: TimeSeriesStore):
         self.store = store
         self.window_size = 60  # 60秒窗口
         self.windows: Dict[str, List[VehicleData]] = defaultdict(list)
         self._lock = threading.Lock()
-    
+
     def add_to_window(self, data: VehicleData):
         """添加到时间窗口"""
         with self._lock:
             window_key = f"{data.vin}_{data.timestamp // (self.window_size * 1000)}"
             self.windows[window_key].append(data)
-            
+
             # 清理过期窗口
             current_window = data.timestamp // (self.window_size * 1000)
-            expired_keys = [k for k in self.windows.keys() 
+            expired_keys = [k for k in self.windows.keys()
                           if int(k.split('_')[1]) < current_window - 10]
             for k in expired_keys:
                 del self.windows[k]
-    
+
     def compute_window_stats(self, vin: str) -> Dict[str, Any]:
         """计算窗口统计"""
         with self._lock:
@@ -1715,13 +1720,13 @@ class RealTimeAnalyzer:
             for key, data_list in self.windows.items():
                 if key.startswith(vin):
                     all_data.extend(data_list)
-            
+
             if not all_data:
                 return {}
-            
+
             speeds = [d.speed for d in all_data]
             battery_temps = [d.battery_temp for d in all_data]
-            
+
             return {
                 'vin': vin,
                 'sample_count': len(all_data),
@@ -1735,22 +1740,22 @@ class RealTimeAnalyzer:
 
 class VehicleDataPipeline:
     """车辆数据处理管道"""
-    
+
     def __init__(self, kafka_brokers: str = "localhost:9092"):
         self.kafka_brokers = kafka_brokers
         self.store = TimeSeriesStore()
         self.detector = AlertDetector(self._on_alert)
         self.analyzer = RealTimeAnalyzer(self.store)
-        
+
         self.producer = None
         self.consumer = None
         self.running = False
-        
+
         self.message_count = 0
         self.alert_count = 0
         self.processing_time_ms = 0
         self._lock = threading.Lock()
-        
+
         if KAFKA_AVAILABLE:
             self.producer = Producer({
                 'bootstrap.servers': kafka_brokers,
@@ -1760,11 +1765,11 @@ class VehicleDataPipeline:
                 'batch.size': 131072,
                 'linger.ms': 5
             })
-    
+
     def _on_alert(self, alert: AlertEvent):
         """告警回调"""
         self.store.store_alert(alert)
-        
+
         # 发送告警到Kafka
         if self.producer:
             self.producer.produce(
@@ -1772,29 +1777,29 @@ class VehicleDataPipeline:
                 key=alert.vin,
                 value=json.dumps(asdict(alert)).encode()
             )
-        
+
         with self._lock:
             self.alert_count += 1
-        
+
         logger.warning(f"🚨 ALERT: [{alert.alert_type.value}] VIN:{alert.vin} - {alert.message}")
-    
+
     def process_vehicle_data(self, data: VehicleData) -> bool:
         """处理车辆数据"""
         start_time = time.time()
-        
+
         try:
             # 1. 存储原始数据
             self.store.store_vehicle_data(data)
-            
+
             # 2. 告警检测
             alerts = self.detector.process(data)
-            
+
             # 3. 实时分析
             self.analyzer.add_to_window(data)
-            
+
             # 4. 更新统计
             self._update_stats(data)
-            
+
             # 5. 发送到下游
             if self.producer:
                 self.producer.produce(
@@ -1804,39 +1809,39 @@ class VehicleDataPipeline:
                     timestamp=data.timestamp
                 )
                 self.producer.poll(0)
-            
+
             # 记录指标
             with self._lock:
                 self.message_count += 1
                 self.processing_time_ms += (time.time() - start_time) * 1000
-            
+
             return True
-            
+
         except Exception as e:
             logger.error(f"Error processing vehicle data: {e}")
             return False
-    
+
     def _update_stats(self, data: VehicleData):
         """更新车辆统计"""
         stats = self.store.query_vehicle_stats(data.vin)
         if not stats:
             stats = VehicleStats(vin=data.vin)
-        
+
         stats.total_mileage = data.odometer
         if data.status == VehicleStatus.CHARGING:
             stats.total_charging_times += 1
-        
+
         # 计算能耗（简化）
         if data.trip_distance > 0:
             consumption = (100 - data.battery_soc) / data.trip_distance * 100
             stats.average_consumption = (stats.average_consumption + consumption) / 2
-        
+
         self.store.update_vehicle_stats(stats)
-    
+
     def get_stats(self) -> Dict[str, Any]:
         """获取统计信息"""
         with self._lock:
-            avg_time = (self.processing_time_ms / self.message_count 
+            avg_time = (self.processing_time_ms / self.message_count
                        if self.message_count > 0 else 0)
             return {
                 'total_messages': self.message_count,
@@ -1853,16 +1858,16 @@ def simulate_vehicle_fleet(pipeline: VehicleDataPipeline, duration: int = 30):
     vehicle_count = 1000
     start_time = time.time()
     pipeline._start_time = start_time
-    
+
     print("=" * 60)
     print("车联网消息队列数据存储与实时分析系统 - 模拟运行")
     print("=" * 60)
-    
+
     while time.time() - start_time < duration:
         for i in range(vehicle_count):
             # 模拟车辆数据
             vin = f"LSVNX{random.randint(100000, 999999)}"
-            
+
             data = VehicleData(
                 vin=vin,
                 timestamp=int(time.time() * 1000),
@@ -1882,29 +1887,29 @@ def simulate_vehicle_fleet(pipeline: VehicleDataPipeline, duration: int = 30):
                 brake_pedal=random.uniform(0, 100),
                 metadata={'firmware': 'v3.2.1', 'model': 'Model_X'}
             )
-            
+
             pipeline.process_vehicle_data(data)
-        
+
         # 显示统计
         stats = pipeline.get_stats()
         print(f"\r📊 消息: {stats['total_messages']} | "
               f"告警: {stats['alert_count']} | "
               f"处理延迟: {stats['avg_processing_time_ms']}ms | "
               f"吞吐量: {stats['throughput_per_sec']}/秒", end='', flush=True)
-        
+
         time.sleep(0.01)
-    
+
     print("\n" + "=" * 60)
     print("最终统计:")
     print(json.dumps(pipeline.get_stats(), indent=2))
-    
+
     # 演示轨迹查询
     sample_vin = pipeline.store.hot_cache.keys()[0] if pipeline.store.hot_cache else None
     if sample_vin:
         now = int(time.time() * 1000)
         trajectory = pipeline.store.query_trajectory(sample_vin, now - 60000, now)
         print(f"\n📍 车辆 {sample_vin} 轨迹点数: {len(trajectory)}")
-    
+
     # 演示实时分析
     if sample_vin:
         window_stats = pipeline.analyzer.compute_window_stats(sample_vin)
@@ -1921,33 +1926,34 @@ if __name__ == '__main__':
 
 **性能指标对比**：
 
-| 指标 | 改造前 | 改造后 | 提升幅度 |
-|------|--------|--------|----------|
-| 峰值写入TPS | 8万/秒 | 52万/秒 | **550%↑** |
-| 告警延迟 | 30秒 | 1.2秒 | **96%↓** |
-| 轨迹查询时间 | 15秒 | 0.8秒 | **95%↓** |
-| 存储成本/月 | 30万元 | 16万元 | **47%↓** |
-| 数据可靠性 | 99.9% | 99.999% | **0.099%↑** |
-| 系统可用性 | 99.5% | 99.99% | **0.49%↑** |
+| 指标         | 改造前 | 改造后  | 提升幅度           |
+| ------------ | ------ | ------- | ------------------ |
+| 峰值写入TPS  | 8万/秒 | 52万/秒 | **550%↑**   |
+| 告警延迟     | 30秒   | 1.2秒   | **96%↓**    |
+| 轨迹查询时间 | 15秒   | 0.8秒   | **95%↓**    |
+| 存储成本/月  | 30万元 | 16万元  | **47%↓**    |
+| 数据可靠性   | 99.9%  | 99.999% | **0.099%↑** |
+| 系统可用性   | 99.5%  | 99.99%  | **0.49%↑**  |
 
 **业务价值**：
 
 1. **直接经济效益**：
+
    - 存储成本优化年节约168万元
    - 远程诊断减少上门服务40%，年节约人力成本800万元
    - OTA升级成功率从85%提升至99.5%，减少召回成本
-
 2. **用户体验提升**：
+
    - 车辆故障提前预警，用户满意度提升25%
    - APP实时数据刷新延迟从10秒降至1秒内
    - 保险UBI业务精准定价，用户续保率提升15%
-
 3. **数据驱动创新**：
+
    - 用户驾驶行为画像支持精准营销，转化率提升30%
    - 电池健康度预测准确率达92%，二手车残值评估更精准
    - 自动驾驶数据回传支撑算法迭代，接管率降低40%
-
 4. **ROI分析**：
+
    - 项目总投资：1200万元
    - 年度收益：2100万元（成本节约+业务增收）
    - **投资回报率：175%，回收周期：6.9个月**

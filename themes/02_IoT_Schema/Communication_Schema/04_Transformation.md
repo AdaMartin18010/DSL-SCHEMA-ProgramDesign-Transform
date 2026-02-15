@@ -70,25 +70,25 @@ IoT通信Schema转换体系支持多种协议之间的
 
 ### 2.1 有线协议转换
 
-| 源协议 | 目标协议 | 转换复杂度 | 信息损失 |
-|--------|---------|-----------|---------|
-| Modbus RTU | Modbus TCP | 低 | 无 |
-| Modbus RTU | MQTT | 中 | 低 |
-| Modbus RTU | HTTP | 中 | 低 |
-| CAN | MQTT | 中 | 低 |
-| CAN | OPC UA | 高 | 无 |
-| Profibus | OPC UA | 高 | 无 |
+| 源协议     | 目标协议   | 转换复杂度 | 信息损失 |
+| ---------- | ---------- | ---------- | -------- |
+| Modbus RTU | Modbus TCP | 低         | 无       |
+| Modbus RTU | MQTT       | 中         | 低       |
+| Modbus RTU | HTTP       | 中         | 低       |
+| CAN        | MQTT       | 中         | 低       |
+| CAN        | OPC UA     | 高         | 无       |
+| Profibus   | OPC UA     | 高         | 无       |
 
 ### 2.2 无线协议转换
 
-| 源协议 | 目标协议 | 转换复杂度 | 信息损失 |
-|--------|---------|-----------|---------|
-| MQTT | CoAP | 低 | 无 |
-| MQTT | HTTP | 低 | 无 |
-| LoRaWAN | MQTT | 中 | 低 |
-| LoRaWAN | HTTP | 中 | 低 |
-| NB-IoT | MQTT | 中 | 低 |
-| Zigbee | MQTT | 高 | 中 |
+| 源协议  | 目标协议 | 转换复杂度 | 信息损失 |
+| ------- | -------- | ---------- | -------- |
+| MQTT    | CoAP     | 低         | 无       |
+| MQTT    | HTTP     | 低         | 无       |
+| LoRaWAN | MQTT     | 中         | 低       |
+| LoRaWAN | HTTP     | 中         | 低       |
+| NB-IoT  | MQTT     | 中         | 低       |
+| Zigbee  | MQTT     | 高         | 中       |
 
 ### 2.3 跨协议转换
 
@@ -106,32 +106,32 @@ IoT通信Schema转换体系支持多种协议之间的
 
 **JSON到其他格式**：
 
-| 源格式 | 目标格式 | 转换方法 |
-|--------|---------|---------|
-| JSON | XML | 结构化映射 |
-| JSON | Protobuf | Schema映射 |
-| JSON | Binary | 序列化 |
-| JSON | CSV | 扁平化 |
+| 源格式 | 目标格式 | 转换方法   |
+| ------ | -------- | ---------- |
+| JSON   | XML      | 结构化映射 |
+| JSON   | Protobuf | Schema映射 |
+| JSON   | Binary   | 序列化     |
+| JSON   | CSV      | 扁平化     |
 
 ### 3.2 XML转换
 
 **XML到其他格式**：
 
-| 源格式 | 目标格式 | 转换方法 |
-|--------|---------|---------|
-| XML | JSON | 结构化映射 |
-| XML | YAML | 结构化映射 |
-| XML | Protobuf | Schema映射 |
+| 源格式 | 目标格式 | 转换方法   |
+| ------ | -------- | ---------- |
+| XML    | JSON     | 结构化映射 |
+| XML    | YAML     | 结构化映射 |
+| XML    | Protobuf | Schema映射 |
 
 ### 3.3 Protobuf转换
 
 **Protobuf到其他格式**：
 
-| 源格式 | 目标格式 | 转换方法 |
-|--------|---------|---------|
-| Protobuf | JSON | 反序列化 |
-| Protobuf | XML | 反序列化+转换 |
-| Protobuf | Binary | 直接使用 |
+| 源格式   | 目标格式 | 转换方法      |
+| -------- | -------- | ------------- |
+| Protobuf | JSON     | 反序列化      |
+| Protobuf | XML      | 反序列化+转换 |
+| Protobuf | Binary   | 直接使用      |
 
 ---
 
@@ -1024,10 +1024,10 @@ class IoTCommunicationAnalyzer:
 
 ### 9.3 在线资源
 
-- **Node-RED官网**：<https://nodered.org/>
-- **Eclipse Kura官网**：<https://www.eclipse.org/kura/>
-- **ThingsBoard官网**：<https://thingsboard.io/>
-- **PostgreSQL官网**：<https://www.postgresql.org/>
+- **Node-RED官网**：[https://nodered.org/](https://nodered.org/)
+- **Eclipse Kura官网**：[https://www.eclipse.org/kura/](https://www.eclipse.org/kura/)
+- **ThingsBoard官网**：[https://thingsboard.io/](https://thingsboard.io/)
+- **PostgreSQL官网**：[https://www.postgresql.org/](https://www.postgresql.org/)
 
 ---
 

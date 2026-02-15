@@ -28,6 +28,8 @@
     - [5.2 最佳实践](#52-最佳实践)
     - [5.3 经验教训](#53-经验教训)
   - [6. 参考文献](#6-参考文献)
+    - [6.1 标准文档](#61-标准文档)
+    - [6.2 技术文档](#62-技术文档)
 
 ---
 
@@ -48,12 +50,14 @@
 ### 2.1 业务背景
 
 **企业背景**：
+
 - **公司名称**：华东智能制造科技有限公司
 - **行业领域**：汽车制造自动化生产线
 - **企业规模**：年产能50万台整车，拥有1200台工业机器人
 - **地理位置**：华东地区某汽车产业园
 
 **业务痛点**：
+
 1. **安全事故频发**：2023年发生3起机器人误操作导致的工伤事故，直接损失超过280万元
 2. **认证周期长**：新产线安全认证平均耗时6个月，严重影响产能扩张
 3. **合规成本高**：为满足ISO 13849和IEC 61508标准，每年投入合规成本超过500万元
@@ -61,6 +65,7 @@
 5. **数据孤岛**：安全数据分散在多个系统中，无法进行统一分析和预警
 
 **业务目标**：
+
 - 实现安全事故零发生，降低保险费用30%
 - 将安全认证周期从6个月缩短至3个月
 - 故障检测时间从15分钟降低至30秒以内
@@ -69,13 +74,13 @@
 
 ### 2.2 技术挑战
 
-| 挑战编号 | 挑战描述 | 技术难点 | 解决方案 |
-|---------|---------|---------|---------|
-| T1 | 多标准合规 | 需同时满足IEC 61508 (SIL 2)、ISO 13849 (PL d)、ISO 10218 (机器人安全) | 构建统一Schema映射多标准 |
-| T2 | 实时安全监控 | 200ms内完成急停响应，需处理12路安全输入信号 | 采用双通道冗余设计 |
-| T3 | FMEA分析自动化 | 传统FMEA手工分析耗时2周，需实现自动化 | 开发FMEA自动生成引擎 |
-| T4 | 故障预测 | 需要在故障发生前24小时预警 | 集成机器学习预测模型 |
-| T5 | 安全数据追溯 | 需满足10年数据追溯要求，数据量预计5TB | 设计时序数据库架构 |
+| 挑战编号 | 挑战描述       | 技术难点                                                              | 解决方案                 |
+| -------- | -------------- | --------------------------------------------------------------------- | ------------------------ |
+| T1       | 多标准合规     | 需同时满足IEC 61508 (SIL 2)、ISO 13849 (PL d)、ISO 10218 (机器人安全) | 构建统一Schema映射多标准 |
+| T2       | 实时安全监控   | 200ms内完成急停响应，需处理12路安全输入信号                           | 采用双通道冗余设计       |
+| T3       | FMEA分析自动化 | 传统FMEA手工分析耗时2周，需实现自动化                                 | 开发FMEA自动生成引擎     |
+| T4       | 故障预测       | 需要在故障发生前24小时预警                                            | 集成机器学习预测模型     |
+| T5       | 安全数据追溯   | 需满足10年数据追溯要求，数据量预计5TB                                 | 设计时序数据库架构       |
 
 ### 2.3 Schema定义
 
@@ -218,7 +223,7 @@ class SafetyIntegrity:
     pfh: float  # 每小时危险失效概率
     mtbf: float  # 平均故障间隔时间（小时）
     proof_test_interval: int  #  proof test间隔（小时）
-    
+
     def validate_sil(self, target_sil: SILLevel) -> bool:
         """验证是否满足目标SIL等级"""
         sil_limits = {
@@ -242,7 +247,7 @@ class FMEARow:
     detection: int  # 1-10
     rpn: int = field(init=False)  # Risk Priority Number
     recommended_action: str = ""
-    
+
     def __post_init__(self):
         self.rpn = self.severity * self.occurrence * self.detection
 
@@ -259,11 +264,11 @@ class FaultTreeNode:
 
 class FaultTreeAnalyzer:
     """故障树分析器 (FTA)"""
-    
+
     def __init__(self):
         self.root: Optional[FaultTreeNode] = None
         self.basic_events: Dict[str, float] = {}
-    
+
     def build_robot_safety_fta(self) -> FaultTreeNode:
         """构建机器人安全系统故障树"""
         # 顶层事件：机器人安全事故
@@ -272,7 +277,7 @@ class FaultTreeAnalyzer:
             node_type="or",
             description="机器人安全事故发生"
         )
-        
+
         # 中间事件：防护失效 OR 控制失效
         e1_protection_failure = FaultTreeNode(
             name="E1",
@@ -284,7 +289,7 @@ class FaultTreeAnalyzer:
             node_type="or",
             description="控制系统失效"
         )
-        
+
         # 基本事件：急停失效
         be1 = FaultTreeNode(
             name="BE1",
@@ -298,7 +303,7 @@ class FaultTreeAnalyzer:
             probability=5e-8,
             description="急停回路断开"
         )
-        
+
         # 基本事件：安全门失效
         be3 = FaultTreeNode(
             name="BE3",
@@ -312,7 +317,7 @@ class FaultTreeAnalyzer:
             probability=1e-7,
             description="安全门开关故障"
         )
-        
+
         # 基本事件：光幕失效
         be5 = FaultTreeNode(
             name="BE5",
@@ -326,7 +331,7 @@ class FaultTreeAnalyzer:
             probability=3e-7,
             description="光幕接收器故障"
         )
-        
+
         # 基本事件：控制器失效
         be7 = FaultTreeNode(
             name="BE7",
@@ -340,38 +345,38 @@ class FaultTreeAnalyzer:
             probability=5e-7,
             description="安全继电器故障"
         )
-        
+
         # 构建AND/OR关系
         e1_protection_failure.children = [
             FaultTreeNode("E1-1", "and", children=[be1, be2]),  # 双通道急停都失效
             FaultTreeNode("E1-2", "and", children=[be3, be4]),  # 双通道门锁都失效
             FaultTreeNode("E1-3", "and", children=[be5, be6]),  # 双通道光幕都失效
         ]
-        
+
         e2_control_failure.children = [be7, be8]
         top_event.children = [e1_protection_failure, e2_control_failure]
-        
+
         self.root = top_event
         self._collect_basic_events(top_event)
         return top_event
-    
+
     def _collect_basic_events(self, node: FaultTreeNode):
         """收集所有基本事件"""
         if node.node_type == "basic":
             self.basic_events[node.name] = node.probability
         for child in node.children:
             self._collect_basic_events(child)
-    
+
     def calculate_top_event_probability(self, node: Optional[FaultTreeNode] = None) -> float:
         """计算顶层事件概率"""
         if node is None:
             node = self.root
-        
+
         if node.node_type == "basic":
             return node.probability
-        
+
         child_probs = [self.calculate_top_event_probability(c) for c in node.children]
-        
+
         if node.node_type == "and":
             # P(A AND B) = P(A) * P(B)
             prob = 1.0
@@ -384,17 +389,17 @@ class FaultTreeAnalyzer:
             for p in child_probs:
                 prob *= (1 - p)
             return 1 - prob
-        
+
         return 0.0
-    
+
     def find_cut_sets(self, node: Optional[FaultTreeNode] = None) -> List[Set[str]]:
         """找出所有最小割集"""
         if node is None:
             node = self.root
-        
+
         if node.node_type == "basic":
             return [{node.name}]
-        
+
         if node.node_type == "and":
             # 与门：组合所有子节点的割集
             result = [{node.name}]
@@ -406,25 +411,25 @@ class FaultTreeAnalyzer:
                         new_result.append(r | cs)
                 result = new_result
             return result
-        
+
         elif node.node_type == "or":
             # 或门：并集所有子节点的割集
             result = []
             for child in node.children:
                 result.extend(self.find_cut_sets(child))
             return result
-        
+
         return []
 
 
 class FMEAAnalyzer:
     """FMEA分析引擎"""
-    
+
     def __init__(self, risk_threshold: int = 100):
         self.rows: List[FMEARow] = []
         self.risk_threshold = risk_threshold
         self.components_analyzed = 0
-    
+
     def add_component_fmea(self, component: str, functions: List[Dict]):
         """添加组件FMEA分析"""
         for func in functions:
@@ -440,7 +445,7 @@ class FMEAAnalyzer:
             )
             self.rows.append(row)
             self.components_analyzed += 1
-    
+
     def generate_robot_fmea(self):
         """生成机器人安全系统完整FMEA"""
         # 急停系统FMEA
@@ -460,7 +465,7 @@ class FMEAAnalyzer:
                 "action": "设置200ms响应时间监控"
             }
         ])
-        
+
         # 安全门系统FMEA
         self.add_component_fmea("安全门系统", [
             {
@@ -478,7 +483,7 @@ class FMEAAnalyzer:
                 "action": "双联锁开关冗余"
             }
         ])
-        
+
         # 光幕系统FMEA
         self.add_component_fmea("光幕系统", [
             {
@@ -496,7 +501,7 @@ class FMEAAnalyzer:
                 "action": "实时性能监控"
             }
         ])
-        
+
         # 安全PLC FMEA
         self.add_component_fmea("安全PLC", [
             {
@@ -514,17 +519,17 @@ class FMEAAnalyzer:
                 "action": "独立看门狗电路"
             }
         ])
-    
+
     def get_high_risk_items(self) -> List[FMEARow]:
         """获取高风险项目"""
         return [r for r in self.rows if r.rpn >= self.risk_threshold]
-    
+
     def generate_report(self) -> Dict:
         """生成FMEA分析报告"""
         total_rpn = sum(r.rpn for r in self.rows)
         avg_rpn = total_rpn / len(self.rows) if self.rows else 0
         high_risk = self.get_high_risk_items()
-        
+
         return {
             "total_components": self.components_analyzed,
             "total_failure_modes": len(self.rows),
@@ -551,7 +556,7 @@ class IndustrialRobotSafetySystem:
     工业机器人安全系统主类
     整合FMEA、FTA、风险评估功能
     """
-    
+
     def __init__(self):
         # 安全等级配置
         self.safety_level = {
@@ -564,7 +569,7 @@ class IndustrialRobotSafetySystem:
                 proof_test_interval=8760
             )
         }
-        
+
         # 安全功能状态
         self.safety_functions = {
             "emergency_stop": {"enabled": True, "response_time_ms": 200, "last_test": None},
@@ -572,11 +577,11 @@ class IndustrialRobotSafetySystem:
             "light_curtain": {"enabled": True, "obstructed": False, "response_time_ms": 20},
             "safety_plc": {"enabled": True, "scan_time_ms": 10, "dual_channel": True}
         }
-        
+
         # 初始化分析器
         self.fmea_analyzer = FMEAAnalyzer(risk_threshold=100)
         self.fta_analyzer = FaultTreeAnalyzer()
-        
+
         # 运行数据
         self.operation_stats = {
             "total_runtime_hours": 0,
@@ -585,15 +590,15 @@ class IndustrialRobotSafetySystem:
             "false_alarms": 0,
             "last_incident": None
         }
-    
+
     def initialize_safety_analysis(self):
         """初始化安全分析"""
         # 生成FMEA分析
         self.fmea_analyzer.generate_robot_fmea()
-        
+
         # 构建故障树
         self.fta_analyzer.build_robot_safety_fta()
-    
+
     def perform_safety_check(self) -> Tuple[bool, Dict]:
         """执行完整安全检查"""
         results = {
@@ -601,14 +606,14 @@ class IndustrialRobotSafetySystem:
             "checks": {},
             "overall_safe": True
         }
-        
+
         # 检查急停系统
         estop_ok = self._check_emergency_stop()
         results["checks"]["emergency_stop"] = {
             "passed": estop_ok,
             "response_time_ms": self.safety_functions["emergency_stop"]["response_time_ms"]
         }
-        
+
         # 检查安全门
         door_ok = self._check_safety_door()
         results["checks"]["safety_door"] = {
@@ -616,56 +621,56 @@ class IndustrialRobotSafetySystem:
             "locked": self.safety_functions["safety_door"]["locked"],
             "closed": self.safety_functions["safety_door"]["closed"]
         }
-        
+
         # 检查光幕
         curtain_ok = self._check_light_curtain()
         results["checks"]["light_curtain"] = {
             "passed": curtain_ok,
             "obstructed": self.safety_functions["light_curtain"]["obstructed"]
         }
-        
+
         # 检查安全PLC
         plc_ok = self._check_safety_plc()
         results["checks"]["safety_plc"] = {
             "passed": plc_ok,
             "scan_time_ms": self.safety_functions["safety_plc"]["scan_time_ms"]
         }
-        
+
         results["overall_safe"] = all(c["passed"] for c in results["checks"].values())
         return results["overall_safe"], results
-    
+
     def _check_emergency_stop(self) -> bool:
         """检查急停系统"""
         return self.safety_functions["emergency_stop"]["enabled"]
-    
+
     def _check_safety_door(self) -> bool:
         """检查安全门"""
         door = self.safety_functions["safety_door"]
         return door["enabled"] and door["locked"] and door["closed"]
-    
+
     def _check_light_curtain(self) -> bool:
         """检查光幕"""
-        return (self.safety_functions["light_curtain"]["enabled"] and 
+        return (self.safety_functions["light_curtain"]["enabled"] and
                 not self.safety_functions["light_curtain"]["obstructed"])
-    
+
     def _check_safety_plc(self) -> bool:
         """检查安全PLC"""
         plc = self.safety_functions["safety_plc"]
         return plc["enabled"] and plc["dual_channel"]
-    
+
     def calculate_risk_metrics(self) -> Dict:
         """计算风险指标"""
         # FTA顶层事件概率
         top_event_prob = self.fta_analyzer.calculate_top_event_probability()
-        
+
         # FMEA报告
         fmea_report = self.fmea_analyzer.generate_report()
-        
+
         # SIL验证
         sil_achieved = self.safety_level["integrity"].validate_sil(
             self.safety_level["sil_level"]
         )
-        
+
         return {
             "fta_top_event_probability": f"{top_event_prob:.2e}",
             "fta_sil_achieved": sil_achieved,
@@ -674,11 +679,11 @@ class IndustrialRobotSafetySystem:
             "safety_availability": 99.9999,  # 安全可用性
             "diagnostic_coverage": 99.0  # 诊断覆盖率
         }
-    
+
     def trigger_emergency_stop(self, reason: str) -> Dict:
         """触发紧急停止"""
         self.operation_stats["emergency_stops"] += 1
-        
+
         return {
             "triggered": True,
             "timestamp": datetime.now().isoformat(),
@@ -699,21 +704,21 @@ class IndustrialRobotSafetySystem:
 if __name__ == "__main__":
     # 创建安全系统
     safety_system = IndustrialRobotSafetySystem()
-    
+
     # 初始化分析
     safety_system.initialize_safety_analysis()
-    
+
     # 执行安全检查
     is_safe, check_results = safety_system.perform_safety_check()
     print(f"安全检查通过: {is_safe}")
-    
+
     # 计算风险指标
     metrics = safety_system.calculate_risk_metrics()
     print(f"\n风险指标:")
     print(f"  顶层事件概率: {metrics['fta_top_event_probability']}")
     print(f"  SIL达成: {metrics['fta_sil_achieved']}")
     print(f"  故障检测时间: {metrics['fault_detection_time_ms']}ms")
-    
+
     # 触发急停测试
     result = safety_system.trigger_emergency_stop("测试急停功能")
     print(f"\n急停触发: {result['triggered']}")
@@ -723,27 +728,27 @@ if __name__ == "__main__":
 
 **性能指标**：
 
-| 指标名称 | 目标值 | 实际达成 | 提升幅度 |
-|---------|--------|---------|---------|
-| FMEA分析覆盖率 | 95% | 98.5% | +3.5% |
-| SIL等级达成率 | 100% (SIL 2) | 100% | 达标 |
-| 故障检测时间 | <500ms | 50ms | 10倍提升 |
-| 急停响应时间 | <500ms | 200ms | 2.5倍提升 |
-| 顶层事件概率 | <1e-6 | 4.2e-7 | 58%降低 |
-| 平均故障间隔时间 | >10年 | 114年 | 14倍提升 |
-| 误报率 | <1% | 0.3% | 70%降低 |
-| 安全可用性 | 99.99% | 99.9999% | +0.0099% |
+| 指标名称         | 目标值       | 实际达成 | 提升幅度  |
+| ---------------- | ------------ | -------- | --------- |
+| FMEA分析覆盖率   | 95%          | 98.5%    | +3.5%     |
+| SIL等级达成率    | 100% (SIL 2) | 100%     | 达标      |
+| 故障检测时间     | <500ms       | 50ms     | 10倍提升  |
+| 急停响应时间     | <500ms       | 200ms    | 2.5倍提升 |
+| 顶层事件概率     | <1e-6        | 4.2e-7   | 58%降低   |
+| 平均故障间隔时间 | >10年        | 114年    | 14倍提升  |
+| 误报率           | <1%          | 0.3%     | 70%降低   |
+| 安全可用性       | 99.99%       | 99.9999% | +0.0099%  |
 
 **业务价值**：
 
-| 价值维度 | 具体成果 | 量化收益 |
-|---------|---------|---------|
-| **安全事故** | 24个月零安全事故 | 避免损失¥500万/年 |
-| **认证周期** | 从6个月缩短至2.5个月 | 产能提前释放¥1200万 |
-| **保险费用** | 商业保险费率降低35% | 年节省¥85万 |
-| **合规成本** | 自动化合规流程 | 年节省¥200万 |
-| **停机损失** | 故障检测时间缩短 | 减少停机损失¥350万/年 |
-| **ROI** | 投资回报 | 18个月回本，3年ROI 320% |
+| 价值维度           | 具体成果             | 量化收益                |
+| ------------------ | -------------------- | ----------------------- |
+| **安全事故** | 24个月零安全事故     | 避免损失¥500万/年      |
+| **认证周期** | 从6个月缩短至2.5个月 | 产能提前释放¥1200万    |
+| **保险费用** | 商业保险费率降低35%  | 年节省¥85万            |
+| **合规成本** | 自动化合规流程       | 年节省¥200万           |
+| **停机损失** | 故障检测时间缩短     | 减少停机损失¥350万/年  |
+| **ROI**      | 投资回报             | 18个月回本，3年ROI 320% |
 
 **经验教训**：
 
@@ -760,12 +765,14 @@ if __name__ == "__main__":
 ### 3.1 业务背景
 
 **企业背景**：
+
 - **公司名称**：智慧生活电器股份有限公司
 - **行业领域**：智能家居电器制造
 - **企业规模**：年产家电800万台，出口60个国家
 - **主要产品**：智能空调、洗衣机、热水器、厨房电器
 
 **业务痛点**：
+
 1. **认证标准复杂**：需同时满足IEC 60335、GB 4706、UL 60335等多个标准，标准间存在差异
 2. **认证周期长**：单一产品CE+CCC认证平均需要4个月，延误上市时机
 3. **多国认证难**：不同国家标准要求不同，重复测试成本高
@@ -773,6 +780,7 @@ if __name__ == "__main__":
 5. **召回风险**：2023年因安全隐患召回产品2批次，损失超过800万元
 
 **业务目标**：
+
 - 实现一站式多国认证，认证周期缩短至2个月
 - 认证通过率从75%提升至95%以上
 - 产品安全隐患在研发阶段100%发现
@@ -781,13 +789,13 @@ if __name__ == "__main__":
 
 ### 3.2 技术挑战
 
-| 挑战编号 | 挑战描述 | 技术难点 | 解决方案 |
-|---------|---------|---------|---------|
-| T1 | 多标准映射 | IEC 60335、GB 4706、UL标准条款差异 | 构建多标准Schema映射表 |
-| T2 | 安全风险评估 | 需要在设计阶段预测潜在风险 | 开发风险预测模型 |
-| T3 | 自动化测试 | 安规测试项目多（200+项），手工效率低 | 自动化测试序列生成 |
-| T4 | 追溯体系 | 需满足10年产品追溯要求 | 区块链+数据库双存储 |
-| T5 | 智能功能安全 | WiFi/蓝牙等智能模块引入新风险 | 网络安全+功能安全融合 |
+| 挑战编号 | 挑战描述     | 技术难点                             | 解决方案               |
+| -------- | ------------ | ------------------------------------ | ---------------------- |
+| T1       | 多标准映射   | IEC 60335、GB 4706、UL标准条款差异   | 构建多标准Schema映射表 |
+| T2       | 安全风险评估 | 需要在设计阶段预测潜在风险           | 开发风险预测模型       |
+| T3       | 自动化测试   | 安规测试项目多（200+项），手工效率低 | 自动化测试序列生成     |
+| T4       | 追溯体系     | 需满足10年产品追溯要求               | 区块链+数据库双存储    |
+| T5       | 智能功能安全 | WiFi/蓝牙等智能模块引入新风险        | 网络安全+功能安全融合  |
 
 ### 3.3 Schema定义
 
@@ -973,7 +981,7 @@ class RiskAssessment:
     risk_level: int = field(init=False)
     mitigation: str = ""
     residual_risk: int = field(init=False)
-    
+
     def __post_init__(self):
         self.risk_level = self.severity * self.probability
         self.residual_risk = self.risk_level  # 初始残余风险
@@ -984,7 +992,7 @@ class ApplianceSafetyCertifier:
     家用电器安全认证系统
     整合风险评估、测试执行、合规验证
     """
-    
+
     # IEC 60335-1 标准限值
     IEC_60335_LIMITS = {
         "insulation_resistance_MOhm": 2.0,
@@ -994,7 +1002,7 @@ class ApplianceSafetyCertifier:
         "winding_temp_rise_K": 80,
         "enclosure_temp_rise_K": 60
     }
-    
+
     # GB 4706.1 标准限值
     GB_4706_LIMITS = {
         "insulation_resistance_MOhm": 2.0,
@@ -1002,14 +1010,14 @@ class ApplianceSafetyCertifier:
         "ground_resistance_Ohm": 0.1,
         "power_input_deviation_percent": 20
     }
-    
+
     def __init__(self, product_info: Dict):
         self.product = product_info
         self.test_results: List[ElectricalTest] = []
         self.risk_assessments: List[RiskAssessment] = []
         self.compliance_status: Dict[str, bool] = {}
         self.certificates: List[Dict] = []
-        
+
         # 统计数据
         self.stats = {
             "total_tests": 0,
@@ -1019,7 +1027,7 @@ class ApplianceSafetyCertifier:
             "high_risks": 0,
             "test_duration_minutes": 0
         }
-    
+
     def perform_risk_assessment(self) -> Dict:
         """执行完整风险评估 (基于IEC 60335-1 Annex R)"""
         risks = [
@@ -1080,25 +1088,25 @@ class ApplianceSafetyCertifier:
                 mitigation="IP防护等级+绝缘监测"
             )
         ]
-        
+
         self.risk_assessments = risks
-        
+
         # 计算残余风险
         for risk in risks:
             if risk.mitigation:
                 # 有缓解措施，降低概率等级
                 risk.residual_risk = risk.severity * max(1, risk.probability - 1)
-        
+
         self.stats["total_risks"] = len(risks)
         self.stats["high_risks"] = sum(1 for r in risks if r.risk_level >= 9)
-        
+
         return self._generate_risk_report()
-    
+
     def _generate_risk_report(self) -> Dict:
         """生成风险评估报告"""
         initial_high = sum(1 for r in self.risk_assessments if r.risk_level >= 9)
         residual_high = sum(1 for r in self.risk_assessments if r.residual_risk >= 9)
-        
+
         return {
             "total_hazards": len(self.risk_assessments),
             "initial_high_risk_count": initial_high,
@@ -1116,7 +1124,7 @@ class ApplianceSafetyCertifier:
                 for r in sorted(self.risk_assessments, key=lambda x: -x.risk_level)
             ]
         }
-    
+
     def run_electrical_tests(self) -> Dict:
         """执行电气安全测试"""
         tests = [
@@ -1175,13 +1183,13 @@ class ApplianceSafetyCertifier:
                 passed=True
             )
         ]
-        
+
         self.test_results = tests
         self.stats["total_tests"] = len(tests)
         self.stats["passed_tests"] = sum(1 for t in tests if t.passed)
         self.stats["failed_tests"] = sum(1 for t in tests if not t.passed)
         self.stats["test_duration_minutes"] = sum(t.duration for t in tests) / 60
-        
+
         return {
             "all_passed": all(t.passed for t in tests),
             "total_tests": len(tests),
@@ -1199,7 +1207,7 @@ class ApplianceSafetyCertifier:
                 for t in tests
             ]
         }
-    
+
     def check_compliance(self) -> Dict:
         """多标准合规检查"""
         compliance = {
@@ -1208,17 +1216,17 @@ class ApplianceSafetyCertifier:
             "CE_Directive": self._check_ce_directives(),
             "CCC_Requirements": self._check_ccc_requirements()
         }
-        
+
         self.compliance_status = {k: v["compliant"] for k, v in compliance.items()}
-        
+
         all_compliant = all(v["compliant"] for v in compliance.values())
-        
+
         return {
             "all_compliant": all_compliant,
             "standards": compliance,
             "certificates_eligible": all_compliant
         }
-    
+
     def _check_iec_60335(self) -> Dict:
         """检查IEC 60335-1合规性"""
         requirements = [
@@ -1231,16 +1239,16 @@ class ApplianceSafetyCertifier:
             ("结构检查通过", True),
             ("非正常工作保护", True)
         ]
-        
+
         passed = sum(1 for _, p in requirements if p)
-        
+
         return {
             "compliant": all(p for _, p in requirements),
             "standard": "IEC 60335-1:2020",
             "requirements_met": f"{passed}/{len(requirements)}",
             "details": requirements
         }
-    
+
     def _check_gb_4706(self) -> Dict:
         """检查GB 4706.1合规性"""
         requirements = [
@@ -1255,16 +1263,16 @@ class ApplianceSafetyCertifier:
             ("稳定性和机械危险", True),
             ("机械强度", True)
         ]
-        
+
         passed = sum(1 for _, p in requirements if p)
-        
+
         return {
             "compliant": all(p for _, p in requirements),
             "standard": "GB 4706.1-2024",
             "requirements_met": f"{passed}/{len(requirements)}",
             "details": requirements
         }
-    
+
     def _check_ce_directives(self) -> Dict:
         """检查CE指令合规性"""
         directives = [
@@ -1273,12 +1281,12 @@ class ApplianceSafetyCertifier:
             ("生态设计指令 2009/125/EC", True),
             ("RoHS指令 2011/65/EU", True)
         ]
-        
+
         return {
             "compliant": all(p for _, p in directives),
             "directives": directives
         }
-    
+
     def _check_ccc_requirements(self) -> Dict:
         """检查CCC认证要求"""
         requirements = [
@@ -1287,12 +1295,12 @@ class ApplianceSafetyCertifier:
             ("工厂检查通过", True),
             ("认证标志使用", True)
         ]
-        
+
         return {
             "compliant": all(p for _, p in requirements),
             "requirements": requirements
         }
-    
+
     def generate_certificate(self, cert_type: str) -> Dict:
         """生成认证证书"""
         if cert_type == "CE":
@@ -1317,10 +1325,10 @@ class ApplianceSafetyCertifier:
             }
         else:
             cert = {"type": cert_type, "status": "NOT_SUPPORTED"}
-        
+
         self.certificates.append(cert)
         return cert
-    
+
     def generate_full_report(self) -> Dict:
         """生成完整认证报告"""
         return {
@@ -1357,22 +1365,22 @@ if __name__ == "__main__":
         "rated_power": "1200W",
         "appliance_class": "I"
     }
-    
+
     # 创建认证系统
     certifier = ApplianceSafetyCertifier(product)
-    
+
     # 执行风险评估
     risk_report = certifier.perform_risk_assessment()
     print(f"风险评估: {risk_report['total_hazards']}项危害，可接受: {risk_report['acceptable']}")
-    
+
     # 执行电气测试
     test_report = certifier.run_electrical_tests()
     print(f"电气测试: {test_report['passed']}/{test_report['total_tests']}通过，通过率{test_report['pass_rate']}")
-    
+
     # 合规检查
     compliance = certifier.check_compliance()
     print(f"合规检查: {'全部通过' if compliance['all_compliant'] else '存在不合规项'}")
-    
+
     # 生成证书
     ce_cert = certifier.generate_certificate("CE")
     ccc_cert = certifier.generate_certificate("CCC")
@@ -1384,27 +1392,27 @@ if __name__ == "__main__":
 
 **性能指标**：
 
-| 指标名称 | 目标值 | 实际达成 | 提升幅度 |
-|---------|--------|---------|---------|
-| 认证周期 | 4个月 | 2个月 | 50%缩短 |
-| 首次认证通过率 | 75% | 94% | +19% |
-| 风险识别率 | 95% | 99.2% | +4.2% |
-| 测试自动化率 | 30% | 78% | +48% |
-| 标准覆盖率 | IEC/GB/UL | 12个标准 | 全面覆盖 |
-| 产品追溯率 | 100% | 100% | 达标 |
-| 安全隐患检出 | 研发阶段 | 100% | 生产零缺陷 |
+| 指标名称       | 目标值    | 实际达成 | 提升幅度   |
+| -------------- | --------- | -------- | ---------- |
+| 认证周期       | 4个月     | 2个月    | 50%缩短    |
+| 首次认证通过率 | 75%       | 94%      | +19%       |
+| 风险识别率     | 95%       | 99.2%    | +4.2%      |
+| 测试自动化率   | 30%       | 78%      | +48%       |
+| 标准覆盖率     | IEC/GB/UL | 12个标准 | 全面覆盖   |
+| 产品追溯率     | 100%      | 100%     | 达标       |
+| 安全隐患检出   | 研发阶段  | 100%     | 生产零缺陷 |
 
 **业务价值**：
 
-| 价值维度 | 具体成果 | 量化收益 |
-|---------|---------|---------|
-| **上市时间** | 认证周期缩短50% | 提前收入¥3000万/年 |
-| **质量成本** | 年度质量成本降低 | 节省¥450万/年 |
-| **召回避免** | 连续两年零召回 | 避免损失¥800万 |
-| **人工成本** | 测试自动化率提升 | 节省¥180万/年 |
-| **多国认证** | 一次测试多国认可 | 节省¥320万/年 |
-| **客户满意** | 产品安全评分提升 | NPS +15分 |
-| **ROI** | 投资回报 | 12个月回本，3年ROI 380% |
+| 价值维度           | 具体成果         | 量化收益                |
+| ------------------ | ---------------- | ----------------------- |
+| **上市时间** | 认证周期缩短50%  | 提前收入¥3000万/年     |
+| **质量成本** | 年度质量成本降低 | 节省¥450万/年          |
+| **召回避免** | 连续两年零召回   | 避免损失¥800万         |
+| **人工成本** | 测试自动化率提升 | 节省¥180万/年          |
+| **多国认证** | 一次测试多国认可 | 节省¥320万/年          |
+| **客户满意** | 产品安全评分提升 | NPS +15分               |
+| **ROI**      | 投资回报         | 12个月回本，3年ROI 380% |
 
 **经验教训**：
 
@@ -1421,12 +1429,14 @@ if __name__ == "__main__":
 ### 4.1 业务背景
 
 **企业背景**：
+
 - **公司名称**：生命守护医疗器械有限公司
 - **行业领域**：重症监护医疗设备
 - **企业规模**：服务全国800+医院，设备装机量5000+台
 - **主要产品**：ICU呼吸机、多参数监护仪、输液泵、除颤仪
 
 **业务痛点**：
+
 1. **合规要求严苛**：需同时满足IEC 60601-1（医用电气设备）、IEC 62304（医疗器械软件）、FDA 21 CFR Part 820（质量体系）
 2. **故障零容忍**：设备故障可能直接导致患者死亡，需要极高的安全完整性
 3. **软件复杂性**：现代医疗设备软件代码量超过100万行，软件缺陷风险高
@@ -1434,6 +1444,7 @@ if __name__ == "__main__":
 5. **不良事件报告**：需要建立完善的不良事件监测和报告体系
 
 **业务目标**：
+
 - 达到IEC 60601-1 Edition 3.2合规，通过CE认证
 - 软件安全完整性达到Class C（最高等级）
 - 设备MTBF（平均故障间隔时间）> 50,000小时
@@ -1442,13 +1453,13 @@ if __name__ == "__main__":
 
 ### 4.2 技术挑战
 
-| 挑战编号 | 挑战描述 | 技术难点 | 解决方案 |
-|---------|---------|---------|---------|
-| T1 | 多维度合规 | 电气安全+软件安全+质量管理体系三重合规 | 整合合规Schema框架 |
-| T2 | SIL/SIL等级 | 生命支持设备需达到最高安全等级 | 冗余架构+故障安全设计 |
-| T3 | 软件验证 | 100万行代码需要完整验证 | 基于模型的测试生成 |
-| T4 | 追溯矩阵 | 需求-设计-代码-测试全链路追溯 | 自动化追溯工具链 |
-| T5 | 网络安全 | 联网医疗设备面临网络攻击风险 | 安全开发生命周期(SDLC) |
+| 挑战编号 | 挑战描述    | 技术难点                               | 解决方案               |
+| -------- | ----------- | -------------------------------------- | ---------------------- |
+| T1       | 多维度合规  | 电气安全+软件安全+质量管理体系三重合规 | 整合合规Schema框架     |
+| T2       | SIL/SIL等级 | 生命支持设备需达到最高安全等级         | 冗余架构+故障安全设计  |
+| T3       | 软件验证    | 100万行代码需要完整验证                | 基于模型的测试生成     |
+| T4       | 追溯矩阵    | 需求-设计-代码-测试全链路追溯          | 自动化追溯工具链       |
+| T5       | 网络安全    | 联网医疗设备面临网络攻击风险           | 安全开发生命周期(SDLC) |
 
 ### 4.3 Schema定义
 
@@ -1641,19 +1652,19 @@ class Hazard:
     risk_control: str = ""
     residual_severity: int = field(init=False)
     residual_probability: int = field(init=False)
-    
+
     def __post_init__(self):
         self.residual_severity = self.severity
         self.residual_probability = self.probability
-    
+
     @property
     def initial_risk(self) -> int:
         return self.severity * self.probability
-    
+
     @property
     def residual_risk(self) -> int:
         return self.residual_severity * self.residual_probability
-    
+
     def apply_control(self, control_severity: int, control_probability: int):
         """应用风险控制措施"""
         self.residual_severity = max(1, self.severity - control_severity)
@@ -1678,7 +1689,7 @@ class MedicalDeviceSafetyManager:
     医疗设备安全管理器
     整合风险管理、软件验证、合规追踪
     """
-    
+
     # IEC 60601-1 电气安全限值
     ELECTRICAL_LIMITS = {
         "leakage_current_normal_uA": 100,
@@ -1686,25 +1697,25 @@ class MedicalDeviceSafetyManager:
         "ground_resistance_mOhm": 200,
         "insulation_resistance_MOhm": 50
     }
-    
+
     # IEC 62304 软件生命周期要求
     SOFTWARE_ACTIVITIES = {
         "Class_A": ["软件策划", "需求分析", "架构设计", "详细设计", "单元实现", "集成测试", "系统测试"],
         "Class_B": ["软件策划", "需求分析", "架构设计", "详细设计", "单元实现", "集成和集成测试", "系统测试", "发布"],
         "Class_C": ["软件策划", "需求分析", "架构设计", "详细设计", "单元实现和验证", "集成和集成测试", "系统测试", "发布"]
     }
-    
+
     def __init__(self, device_info: Dict):
         self.device = device_info
         self.software_class = SoftwareSafetyClass.CLASS_C
         self.sil_level = SILLevel.SIL_3
-        
+
         # 存储结构
         self.hazards: List[Hazard] = []
         self.requirements: List[Requirement] = []
         self.test_results: List[Dict] = []
         self.traceability_matrix: Dict[str, List[str]] = defaultdict(list)
-        
+
         # 统计
         self.stats = {
             "total_hazards": 0,
@@ -1715,7 +1726,7 @@ class MedicalDeviceSafetyManager:
             "test_coverage": 0.0,
             "code_coverage": 0.0
         }
-    
+
     def perform_risk_analysis_iso14971(self) -> Dict:
         """执行ISO 14971风险管理分析"""
         # 呼吸机专用危害分析
@@ -1801,7 +1812,7 @@ class MedicalDeviceSafetyManager:
                 "control": "安全启动+加密通信+访问控制+漏洞扫描"
             }
         ]
-        
+
         self.hazards = []
         for h in hazards_data:
             hazard = Hazard(
@@ -1815,20 +1826,20 @@ class MedicalDeviceSafetyManager:
             # 应用风险控制（假设控制降低1级严重度和2级概率）
             hazard.apply_control(1, 2)
             self.hazards.append(hazard)
-        
+
         self.stats["total_hazards"] = len(self.hazards)
-        
+
         return self._generate_risk_report()
-    
+
     def _generate_risk_report(self) -> Dict:
         """生成风险管理报告"""
         acceptable = sum(1 for h in self.hazards if h.residual_risk <= 6)  # ALARP线以下
         unacceptable = sum(1 for h in self.hazards if h.residual_risk > 12)  # 不可接受
         alarp = len(self.hazards) - acceptable - unacceptable
-        
+
         self.stats["acceptable_risks"] = acceptable
         self.stats["unacceptable_risks"] = unacceptable
-        
+
         return {
             "total_hazards": len(self.hazards),
             "acceptable_risks": acceptable,
@@ -1847,7 +1858,7 @@ class MedicalDeviceSafetyManager:
                 for h in sorted(self.hazards, key=lambda x: -x.residual_risk)[:5]
             ]
         }
-    
+
     def establish_requirements_traceability(self) -> Dict:
         """建立需求追溯矩阵"""
         # 用户需求 -> 系统需求 -> 软件需求 -> 测试用例
@@ -1864,10 +1875,10 @@ class MedicalDeviceSafetyManager:
             Requirement("SR-004", "患者漏电流<100μA", "UR-003", "高", "测试"),
             Requirement("SW-004", "自检程序验证安全电路", "SR-004", "高", "测试"),
         ]
-        
+
         self.requirements = requirements
         self.stats["total_requirements"] = len(requirements)
-        
+
         # 建立追溯关系
         self.traceability_matrix = {
             "UR-001": ["SR-001", "SR-002"],
@@ -1878,14 +1889,14 @@ class MedicalDeviceSafetyManager:
             "UR-003": ["SR-004"],
             "SR-004": ["SW-004"]
         }
-        
+
         # 模拟验证结果
         for req in self.requirements:
             req.implemented = True
             req.verified = True  # 模拟全部验证通过
-        
+
         self.stats["verified_requirements"] = sum(1 for r in self.requirements if r.verified)
-        
+
         return {
             "total_requirements": len(self.requirements),
             "implemented": sum(1 for r in self.requirements if r.implemented),
@@ -1894,11 +1905,11 @@ class MedicalDeviceSafetyManager:
             "traceability_coverage": "100%",
             "bidirectional_traceable": True
         }
-    
+
     def perform_software_verification(self) -> Dict:
         """执行软件验证（IEC 62304）"""
         class_c_activities = self.SOFTWARE_ACTIVITIES["Class_C"]
-        
+
         verification_results = {
             "static_analysis": {
                 "tool": "MISRA C:2012 + Custom Rules",
@@ -1946,11 +1957,11 @@ class MedicalDeviceSafetyManager:
                 "mitigations_verified": 67
             }
         }
-        
+
         self.stats["code_coverage"] = verification_results["unit_testing"]["coverage"]["statement"]
-        self.stats["test_coverage"] = (verification_results["system_testing"]["passed"] / 
+        self.stats["test_coverage"] = (verification_results["system_testing"]["passed"] /
                                         verification_results["system_testing"]["test_cases"] * 100)
-        
+
         return {
             "software_class": "Class C",
             "verification_activities": class_c_activities,
@@ -1967,7 +1978,7 @@ class MedicalDeviceSafetyManager:
                 "defects_outstanding": 0
             }
         }
-    
+
     def perform_electrical_safety_tests(self) -> Dict:
         """执行IEC 60601-1电气安全测试"""
         tests = [
@@ -2010,9 +2021,9 @@ class MedicalDeviceSafetyManager:
                 "passed": True
             }
         ]
-        
+
         self.test_results.extend(tests)
-        
+
         return {
             "standard": "IEC 60601-1:2020 + AMD1:2022",
             "applied_part": "Type BF",
@@ -2020,7 +2031,7 @@ class MedicalDeviceSafetyManager:
             "all_passed": all(t["passed"] for t in tests),
             "pass_rate": f"{(sum(1 for t in tests if t['passed']) / len(tests) * 100):.1f}%"
         }
-    
+
     def generate_regulatory_submission(self) -> Dict:
         """生成监管提交文档清单"""
         return {
@@ -2063,7 +2074,7 @@ class MedicalDeviceSafetyManager:
             },
             "submission_readiness": True
         }
-    
+
     def generate_full_report(self) -> Dict:
         """生成完整合规报告"""
         return {
@@ -2094,26 +2105,26 @@ if __name__ == "__main__":
         "software_class": "Class C",
         "manufacturer": "生命守护医疗器械有限公司"
     }
-    
+
     # 创建安全管理系统
     safety_manager = MedicalDeviceSafetyManager(device)
-    
+
     # 执行风险分析
     risk_report = safety_manager.perform_risk_analysis_iso14971()
     print(f"风险分析: {risk_report['total_hazards']}项危害，可接受率{risk_report['risk_acceptance_rate']}")
-    
+
     # 建立需求追溯
     traceability = safety_manager.establish_requirements_traceability()
     print(f"需求追溯: {traceability['verified']}/{traceability['total_requirements']}已验证")
-    
+
     # 软件验证
     sw_verification = safety_manager.perform_software_verification()
     print(f"软件验证: MC/DC覆盖率{sw_verification['results']['unit_testing']['coverage']['mc_dc']}%")
-    
+
     # 电气安全测试
     elec_tests = safety_manager.perform_electrical_safety_tests()
     print(f"电气安全: {elec_tests['pass_rate']}通过")
-    
+
     # 监管提交准备
     submission = safety_manager.generate_regulatory_submission()
     print(f"提交准备: {'就绪' if submission['submission_readiness'] else '未完成'}")
@@ -2123,29 +2134,29 @@ if __name__ == "__main__":
 
 **性能指标**：
 
-| 指标名称 | 目标值 | 实际达成 | 提升幅度 |
-|---------|--------|---------|---------|
-| 软件代码覆盖率 | 100% (MC/DC) | 100% | 达标 |
-| 风险可接受率 | 100% | 100% | 达标 |
-| 电气安全测试通过率 | 100% | 100% | 达标 |
-| 需求追溯覆盖率 | 100% | 100% | 达标 |
-| 渗透测试漏洞 | 0高危 | 0 | 达标 |
-| MTBF | >50,000h | 68,000h | +36% |
-| 不良事件响应时间 | <24h | 8h | 3倍提升 |
-| 监管审计通过率 | 100% | 100% | 连续4次通过 |
-| 软件缺陷率 | <0.1/KLOC | 0.05/KLOC | 50%降低 |
+| 指标名称           | 目标值       | 实际达成  | 提升幅度    |
+| ------------------ | ------------ | --------- | ----------- |
+| 软件代码覆盖率     | 100% (MC/DC) | 100%      | 达标        |
+| 风险可接受率       | 100%         | 100%      | 达标        |
+| 电气安全测试通过率 | 100%         | 100%      | 达标        |
+| 需求追溯覆盖率     | 100%         | 100%      | 达标        |
+| 渗透测试漏洞       | 0高危        | 0         | 达标        |
+| MTBF               | >50,000h     | 68,000h   | +36%        |
+| 不良事件响应时间   | <24h         | 8h        | 3倍提升     |
+| 监管审计通过率     | 100%         | 100%      | 连续4次通过 |
+| 软件缺陷率         | <0.1/KLOC    | 0.05/KLOC | 50%降低     |
 
 **业务价值**：
 
-| 价值维度 | 具体成果 | 量化收益 |
-|---------|---------|---------|
-| **监管审批** | FDA 510(k) 60天获批（平均90天） | 提前上市收益¥2000万 |
-| **质量成本** | 预防成本占比提升 | 总质量成本降低35% |
-| **不良事件** | 连续两年零严重不良事件 | 避免诉讼/召回损失¥1500万 |
-| **审计成本** | 审计准备时间减少 | 节省¥180万/年 |
-| **软件维护** | 缺陷率降低50% | 节省维护成本¥300万/年 |
-| **市场份额** | 高端ICU市场占有率提升至28% | 新增收入¥5000万 |
-| **ROI** | 投资回报 | 24个月回本，5年ROI 450% |
+| 价值维度           | 具体成果                        | 量化收益                  |
+| ------------------ | ------------------------------- | ------------------------- |
+| **监管审批** | FDA 510(k) 60天获批（平均90天） | 提前上市收益¥2000万      |
+| **质量成本** | 预防成本占比提升                | 总质量成本降低35%         |
+| **不良事件** | 连续两年零严重不良事件          | 避免诉讼/召回损失¥1500万 |
+| **审计成本** | 审计准备时间减少                | 节省¥180万/年            |
+| **软件维护** | 缺陷率降低50%                   | 节省维护成本¥300万/年    |
+| **市场份额** | 高端ICU市场占有率提升至28%      | 新增收入¥5000万          |
+| **ROI**      | 投资回报                        | 24个月回本，5年ROI 450%   |
 
 **经验教训**：
 
@@ -2163,34 +2174,35 @@ if __name__ == "__main__":
 
 **关键成功因素**：
 
-| 因素 | 工业机器人案例 | 家用电器案例 | 医疗设备案例 |
-|------|--------------|-------------|-------------|
-| 标准化Schema | ✓ SIL/PL等级清晰定义 | ✓ 多标准统一映射 | ✓ 全流程合规框架 |
-| 自动化分析 | ✓ FMEA/FTA自动化 | ✓ 测试自动化78% | ✓ 追溯工具链 |
-| 风险前置 | ✓ 设计阶段风险评估 | ✓ 研发阶段隐患100%检出 | ✓ ISO 14971全生命周期 |
-| 数据驱动 | ✓ 实时监控与预测 | ✓ 10年追溯体系 | ✓ 不良事件监测 |
-| 人员培训 | ✓ 安全意识培训 | ✓ 标准理解培训 | ✓ 临床使用培训 |
+| 因素         | 工业机器人案例        | 家用电器案例            | 医疗设备案例           |
+| ------------ | --------------------- | ----------------------- | ---------------------- |
+| 标准化Schema | ✓ SIL/PL等级清晰定义 | ✓ 多标准统一映射       | ✓ 全流程合规框架      |
+| 自动化分析   | ✓ FMEA/FTA自动化     | ✓ 测试自动化78%        | ✓ 追溯工具链          |
+| 风险前置     | ✓ 设计阶段风险评估   | ✓ 研发阶段隐患100%检出 | ✓ ISO 14971全生命周期 |
+| 数据驱动     | ✓ 实时监控与预测     | ✓ 10年追溯体系         | ✓ 不良事件监测        |
+| 人员培训     | ✓ 安全意识培训       | ✓ 标准理解培训         | ✓ 临床使用培训        |
 
 ### 5.2 最佳实践
 
 **实践建议**：
 
 1. **Schema优先原则**
+
    - 产品开发前完成安全Schema定义
    - 建立标准与Schema的映射关系
    - 使用DSL表达安全需求
-
 2. **风险分级管理**
+
    - 高风险功能优先设计验证
    - 残余风险必须可接受
    - 建立风险监控闭环
-
 3. **自动化验证**
+
    - 测试用例自动生成
    - 覆盖率实时监控
    - 追溯矩阵自动维护
-
 4. **持续改进**
+
    - 建立安全数据分析体系
    - 定期回顾安全事件
    - 更新Schema与标准
@@ -2199,14 +2211,14 @@ if __name__ == "__main__":
 
 **跨案例共性经验**：
 
-| 经验教训 | 工业机器人 | 家用电器 | 医疗设备 | 优先级 |
-|---------|-----------|---------|---------|--------|
-| 标准理解深度 | 中等 | 高 | 极高 | P0 |
-| 自动化工具投入 | 高 | 极高 | 高 | P0 |
-| 跨部门协作 | 重要 | 重要 | 关键 | P0 |
-| 供应商管理 | 重要 | 中等 | 关键 | P1 |
-| 变更管理 | 重要 | 中等 | 关键 | P1 |
-| 文档完整性 | 中等 | 高 | 极高 | P0 |
+| 经验教训       | 工业机器人 | 家用电器 | 医疗设备 | 优先级 |
+| -------------- | ---------- | -------- | -------- | ------ |
+| 标准理解深度   | 中等       | 高       | 极高     | P0     |
+| 自动化工具投入 | 高         | 极高     | 高       | P0     |
+| 跨部门协作     | 重要       | 重要     | 关键     | P0     |
+| 供应商管理     | 重要       | 中等     | 关键     | P1     |
+| 变更管理       | 重要       | 中等     | 关键     | P1     |
+| 文档完整性     | 中等       | 高       | 极高     | P0     |
 
 **避免常见陷阱**：
 

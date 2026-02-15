@@ -8,23 +8,26 @@
   - [2. ASN.1标准](#2-asn1标准)
     - [2.1 ISO/IEC 8824-1:2021](#21-isoiec-8824-12021)
     - [2.2 ISO/IEC 8825-1:2021](#22-isoiec-8825-12021)
-  - [3. Protocol Buffers标准](#3-protocol-buffers标准)
+  - [3. XML Schema标准](#3-xml-schema标准)
+    - [3.1 XML Schema 1.1 Part 1: Structures](#31-xml-schema-11-part-1-structures)
+    - [3.2 XML Schema 1.1 Part 2: Datatypes](#32-xml-schema-11-part-2-datatypes)
+  - [4. Protocol Buffers标准](#4-protocol-buffers标准)
     - [3.1 Protocol Buffers Edition 2024](#31-protocol-buffers-edition-2024)
-    - [3.2 架构变更](#32-架构变更)
-    - [3.3 主要新特性](#33-主要新特性)
-    - [3.4 移除特性](#34-移除特性)
-  - [4. JSON Schema标准](#4-json-schema标准)
-    - [4.1 Draft 2020-12](#41-draft-2020-12)
-  - [5. OpenAPI标准](#5-openapi标准)
-    - [5.1 OpenAPI 3.1.1](#51-openapi-311)
-  - [6. 其他序列化标准](#6-其他序列化标准)
-    - [6.1 Apache Avro](#61-apache-avro)
-    - [6.2 MessagePack](#62-messagepack)
-    - [6.3 CBOR](#63-cbor)
-  - [7. 标准对比矩阵](#7-标准对比矩阵)
-  - [8. 标准发展趋势](#8-标准发展趋势)
-    - [8.1 2024-2025年趋势](#81-2024-2025年趋势)
-    - [8.2 2025-2026年展望](#82-2025-2026年展望)
+    - [4.2 架构变更](#42-架构变更)
+    - [4.3 主要新特性](#43-主要新特性)
+    - [4.4 移除特性](#44-移除特性)
+  - [5. JSON Schema标准](#5-json-schema标准)
+    - [5.1 Draft 2020-12](#51-draft-2020-12)
+  - [6. OpenAPI标准](#6-openapi标准)
+    - [6.1 OpenAPI 3.1.1](#61-openapi-311)
+  - [7. 其他序列化标准](#7-其他序列化标准)
+    - [7.1 Apache Avro](#71-apache-avro)
+    - [7.2 MessagePack](#72-messagepack)
+    - [7.3 CBOR](#73-cbor)
+  - [8. 标准对比矩阵](#8-标准对比矩阵)
+  - [9. 标准发展趋势](#9-标准发展趋势)
+    - [9.1 2024-2025年趋势](#91-2024-2025年趋势)
+    - [9.2 2025-2026年展望](#92-2025-2026年展望)
 
 ---
 
@@ -32,7 +35,7 @@
 
 序列化Schema标准体系分为三个层次：
 
-1. **国际标准**：ISO/IEC ASN.1标准
+1. **国际标准**：ISO/IEC ASN.1标准、W3C XML Schema标准
 2. **行业标准**：Protocol Buffers、JSON Schema、OpenAPI、Avro等
 3. **社区标准**：MessagePack、CBOR等
 
@@ -75,7 +78,110 @@
 
 ---
 
-## 3. Protocol Buffers标准
+## 3. XML Schema标准
+
+### 3.1 XML Schema 1.1 Part 1: Structures
+
+**标准名称**：W3C XML Schema Definition Language (XSD) 1.1 Part 1: Structures
+
+**发布日期**：2012年4月5日
+
+**官方链接**：<https://www.w3.org/TR/xmlschema11-1/>
+
+**核心内容**：
+
+- **元素声明**：定义XML文档中的元素，支持全局和局部声明
+- **属性声明**：定义元素属性，包括必需和可选属性
+- **复杂类型**：支持复杂内容模型，包括序列、选择和全部
+- **简单类型**：基于内置类型的派生和约束
+- **模型组**：sequence、choice、all组合器
+- **属性组**：可复用的属性集合
+
+**1.1版本新增特性**：
+
+| 特性 | 描述 |
+|------|------|
+| **条件类型赋值 (CTA)** | 基于属性值选择类型，使用 `xs:alternative` |
+| **断言 (Assertions)** | 使用XPath 2.0表达式定义约束，`xs:assert` |
+| **开放内容 (Open Content)** | 允许在类型定义中插入通配符内容 |
+| **版本控制 (Version Control)** | 支持版本声明和条件包含 |
+
+**断言示例**：
+
+```xml
+<xs:element name="person">
+  <xs:complexType>
+    <xs:sequence>
+      <xs:element name="birthDate" type="xs:date"/>
+      <xs:element name="deathDate" type="xs:date" minOccurs="0"/>
+    </xs:sequence>
+    <xs:assert test="not(deathDate) or deathDate >= birthDate"
+               xpathDefaultNamespace="##local"/>
+  </xs:complexType>
+</xs:element>
+```
+
+**条件类型赋值示例**：
+
+```xml
+<xs:element name="item" type="xs:anyType">
+  <xs:alternative test="@kind='book'" type="bookType"/>
+  <xs:alternative test="@kind='cd'" type="cdType"/>
+  <xs:alternative type="genericType"/>
+</xs:element>
+```
+
+**Schema支持**：完整支持
+
+**状态**：W3C推荐标准
+
+### 3.2 XML Schema 1.1 Part 2: Datatypes
+
+**标准名称**：W3C XML Schema Definition Language (XSD) 1.1 Part 2: Datatypes
+
+**发布日期**：2012年4月5日
+
+**官方链接**：<https://www.w3.org/TR/xmlschema11-2/>
+
+**核心内容**：
+
+- **内置类型**：50+内置数据类型
+  - 基本类型：string、boolean、decimal、float、double
+  - 时间类型：date、time、dateTime、duration、gYear、gMonth等
+  - 二进制类型：hexBinary、base64Binary
+  - URI类型：anyURI、QName、NOTATION
+- **派生类型**：通过限制、列表和联合派生新类型
+- **约束面 (Facets)**：长度、范围、模式、枚举等约束
+
+**1.1版本新增特性**：
+
+| 特性 | 描述 |
+|------|------|
+| **显式时区约束** | `explicitTimezone` facet控制时区要求 |
+| **精度小数** | `precisionDecimal` 类型支持精确十进制运算 |
+| **否定形式** | 支持否定字符类和属性 |
+| **类型替代** | 增强的类型替代机制 |
+
+**数据类型层次结构**：
+
+```
+anyType
+├── anySimpleType
+│   ├── atomic types (string, boolean, decimal, ...)
+│   ├── list types (NMTOKENS, IDREFS, ENTITIES)
+│   └── union types
+└── complex types
+    ├── complexContent
+    └── simpleContent
+```
+
+**Schema支持**：完整支持
+
+**状态**：W3C推荐标准
+
+---
+
+## 4. Protocol Buffers标准
 
 ### 3.1 Protocol Buffers Edition 2024
 
@@ -94,7 +200,7 @@
 
 **状态**：Google标准（重大架构更新）
 
-### 3.2 架构变更
+### 4.2 架构变更
 
 Protocol Buffers Edition 2024 取代了传统的 proto2/proto3 二元选择模式：
 
@@ -116,7 +222,7 @@ message User {
 - 采用 `edition = "2024"` 语法声明版本
 - 提供更细粒度的特性控制
 
-### 3.3 主要新特性
+### 4.3 主要新特性
 
 | 特性 | 描述 | 影响 |
 |------|------|------|
@@ -139,7 +245,7 @@ message Data {
 }
 ```
 
-### 3.4 移除特性
+### 4.4 移除特性
 
 以下特性在 Edition 2024 中已被移除：
 
@@ -151,9 +257,9 @@ message Data {
 
 ---
 
-## 4. JSON Schema标准
+## 5. JSON Schema标准
 
-### 4.1 Draft 2020-12
+### 5.1 Draft 2020-12
 
 **标准名称**：JSON Schema Draft 2020-12
 
@@ -213,9 +319,9 @@ message Data {
 
 ---
 
-## 5. OpenAPI标准
+## 6. OpenAPI标准
 
-### 5.1 OpenAPI 3.1.1
+### 6.1 OpenAPI 3.1.1
 
 **标准名称**：OpenAPI Specification 3.1.1
 
@@ -243,9 +349,9 @@ message Data {
 
 ---
 
-## 6. 其他序列化标准
+## 7. 其他序列化标准
 
-### 6.1 Apache Avro
+### 7.1 Apache Avro
 
 **标准名称**：Apache Avro
 
@@ -259,7 +365,7 @@ message Data {
 
 **状态**：Apache基金会标准
 
-### 6.2 MessagePack
+### 7.2 MessagePack
 
 **标准名称**：MessagePack
 
@@ -272,7 +378,7 @@ message Data {
 
 **状态**：社区标准
 
-### 6.3 CBOR
+### 7.3 CBOR
 
 **标准名称**：RFC 8949 - Concise Binary Object Representation
 
@@ -287,11 +393,12 @@ message Data {
 
 ---
 
-## 7. 标准对比矩阵
+## 8. 标准对比矩阵
 
 | 标准 | 组织 | 最新版本 | Schema支持 | 状态 | 应用场景 |
 |------|------|----------|-----------|------|----------|
 | **ASN.1** | ISO/IEC | 8824/8825-1:2021 | ⭐⭐⭐⭐⭐ | 标准 | 网络协议、电信 |
+| **XML Schema** | W3C | 1.1 (2012) | ⭐⭐⭐⭐⭐ | 标准 | 企业集成、文档验证 |
 | **Protocol Buffers** | Google | Edition 2024 (32.x) | ⭐⭐⭐⭐⭐ | 标准 | RPC、数据交换 |
 | **JSON Schema** | IETF | Draft 2020-12 | ⭐⭐⭐⭐⭐ | 标准 | API验证、配置 |
 | **OpenAPI** | OpenAPI Initiative | 3.1.1 (2024-10) | ⭐⭐⭐⭐⭐ | 标准 | REST API设计 |
@@ -301,9 +408,9 @@ message Data {
 
 ---
 
-## 8. 标准发展趋势
+## 9. 标准发展趋势
 
-### 8.1 2024-2025年趋势
+### 9.1 2024-2025年趋势
 
 **序列化标准发展趋势**：
 
@@ -323,17 +430,22 @@ message Data {
    - 修复3.1.0问题
    - 与JSON Schema 2020-12完全对齐
 
-4. **Avro Schema Registry成熟**
+4. **XML Schema 1.1持续使用**
+   - 企业级应用中的稳定地位
+   - 断言和条件类型赋值提供更强验证能力
+   - Web服务和SOA架构中的核心标准
+
+5. **Avro Schema Registry成熟**
    - Schema演进管理
    - 兼容性检查
    - 版本控制
 
-5. **CBOR标准应用增加**
+6. **CBOR标准应用增加**
    - IoT应用增加
    - Web标准支持
    - 性能优势
 
-### 8.2 2025-2026年展望
+### 9.2 2025-2026年展望
 
 **未来发展方向**：
 
@@ -366,5 +478,13 @@ message Data {
 - `04_Transformation.md` - 转换体系
 - `05_Case_Studies.md` - 实践案例
 
+**参考资料链接**：
+
+- ASN.1 ITU-T X.680：<https://www.itu.int/rec/T-REC-X.680>
+- XML Schema 1.1：<https://www.w3.org/TR/xmlschema11-1/>
+- Protocol Buffers Editions：<https://protobuf.dev/programming-guides/editions-overview/>
+- JSON Schema 2020-12：<https://json-schema.org/draft/2020-12>
+- OpenAPI 3.1.1：<https://spec.openapis.org/oas/v3.1.1.html>
+
 **创建时间**：2025-01-21
-**最后更新**：2026-02-15
+**最后更新**：2026-02-15（本次更新：添加XML Schema 1.1详细规范）

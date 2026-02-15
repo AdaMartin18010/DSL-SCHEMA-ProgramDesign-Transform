@@ -21,10 +21,18 @@
     - [4.1 理论基础](#41-理论基础)
   - [5. 标准对标](#5-标准对标)
     - [5.1 相关标准](#51-相关标准)
+      - [序列化标准](#序列化标准)
+      - [API规范标准](#api规范标准)
+      - [数据库标准](#数据库标准)
+      - [代码生成标准](#代码生成标准)
   - [6. 实践应用](#6-实践应用)
     - [6.1 典型应用场景](#61-典型应用场景)
   - [7. 参考文献](#7-参考文献)
     - [7.1 标准文档](#71-标准文档)
+      - [序列化标准](#序列化标准-1)
+      - [API规范标准](#api规范标准-1)
+      - [数据库标准](#数据库标准-1)
+      - [代码生成标准](#代码生成标准-1)
 
 ---
 
@@ -134,13 +142,36 @@
 
 ### 5.1 相关标准
 
-- **Protocol Buffers Edition 2024** (protobuf 32.x, 2025-Q3)：序列化标准
-- **JSON Schema Draft 2020-12** (2021年发布)：JSON Schema标准
-- **OpenAPI Specification 3.1.1** (2024-10-24)：API规范标准
-- **ASN.1** ISO/IEC 8824/8825-1:2021：抽象语法标记标准
-- **SQL:2023** (ISO/IEC 9075:2023)：SQL语言标准
-- **PostgreSQL 17** (2024-09-26)：PostgreSQL数据库标准
-- **SQLite 3.47.0** (2024-10-21)：SQLite数据库标准
+#### 序列化标准
+
+| 标准 | 版本 | 发布日期 | 组织 | 说明 |
+|------|------|----------|------|------|
+| **Protocol Buffers** | Edition 2024 (protobuf 32.x) | 2025-Q3 | Google | 重大架构更新，引入 `edition` 语法，C++默认使用 `string_view` |
+| **JSON Schema** | Draft 2020-12 | 2021年 | IETF | `items`/`prefixItems` 重构，动态引用支持 |
+| **ASN.1** | ISO/IEC 8824/8825-1:2021 | 2021年 | ISO/IEC/ITU-T | 抽象语法标记标准，包含BER/DER/PER/XER编码规则 |
+| **XML Schema** | 1.1 | 2012年 | W3C | XML结构定义语言，支持复杂类型和约束 |
+
+#### API规范标准
+
+| 标准 | 版本 | 发布日期 | 组织 | 说明 |
+|------|------|----------|------|------|
+| **OpenAPI** | 3.1.1 | 2024-10-24 | OpenAPI Initiative | 完全兼容 JSON Schema Draft 2020-12，修复3.1.0问题 |
+
+#### 数据库标准
+
+| 标准 | 版本 | 发布日期 | 组织 | 说明 |
+|------|------|----------|------|------|
+| **SQL** | SQL:2023 (ISO/IEC 9075:2023) | 2023-06 | ISO/IEC | 新增GQL图形查询语言支持，新增字符串函数 |
+| **PostgreSQL** | 17 | 2024-09-26 | PostgreSQL社区 | 全新内存管理系统，SQL/JSON增强，逻辑复制改进 |
+| **SQLite** | 3.47.0 | 2024-10-21 | SQLite团队 | FTS5增强，触发器改进，性能优化 |
+
+#### 代码生成标准
+
+| 标准 | 组织 | 说明 |
+|------|------|------|
+| **Model Driven Architecture (MDA)** | OMG | 模型驱动架构，分离业务逻辑与底层平台 |
+| **Protocol Buffers** | Google | 多语言代码生成，支持10+语言 |
+| **OpenAPI Generator** | OpenAPI Initiative | 支持50+语言的客户端/服务端代码生成 |
 
 ---
 
@@ -159,14 +190,57 @@
 
 ### 7.1 标准文档
 
-- Protocol Buffers Edition 2024 Specification
-- JSON Schema Draft 2020-12
-- OpenAPI Specification 3.1.1
-- ISO/IEC 8824-1:2021 (ASN.1)
-- ISO/IEC 8825-1:2021 (ASN.1编码规则)
-- ISO/IEC 9075:2023 SQL:2023
+#### 序列化标准
+
+- **Protocol Buffers Edition 2024 Specification**
+  - 官方文档：<https://protobuf.dev/programming-guides/editions-overview/>
+  - GitHub发布：<https://github.com/protocolbuffers/protobuf/releases>
+
+- **JSON Schema Draft 2020-12**
+  - 官方规范：<https://json-schema.org/draft/2020-12>
+  - IETF草案：<https://datatracker.ietf.org/doc/draft-handrews-json-schema/>
+
+- **ASN.1 ISO/IEC 8824/8825-1:2021**
+  - ITU-T X.680 (2021)：<https://www.itu.int/rec/T-REC-X.680>
+  - ITU-T X.690 (2021)：<https://www.itu.int/rec/T-REC-X.690>
+
+- **XML Schema 1.1**
+  - W3C Part 1: Structures：<https://www.w3.org/TR/xmlschema11-1/>
+  - W3C Part 2: Datatypes：<https://www.w3.org/TR/xmlschema11-2/>
+
+#### API规范标准
+
+- **OpenAPI Specification 3.1.1**
+  - 官方规范：<https://spec.openapis.org/oas/v3.1.1.html>
+  - 发布说明：<https://www.openapis.org/blog/2024/10/25/announcing-openapi-specification-patch-releases>
+  - GitHub仓库：<https://github.com/OAI/OpenAPI-Specification>
+
+#### 数据库标准
+
+- **SQL:2023 (ISO/IEC 9075:2023)**
+  - ISO/IEC官方：<https://www.iso.org/standard/76583.html>
+  - Oracle博客解读：<https://blogs.oracle.com/sql/general-availability-of-the-sql2023-standard>
+  - Wikipedia：<https://en.wikipedia.org/wiki/SQL:2023>
+
+- **PostgreSQL 17**
+  - 官方发布说明：<https://www.postgresql.org/docs/release/17.0/>
+  - 发布公告：<https://www.postgresql.org/about/news/postgresql-17-released-2936/>
+
+- **SQLite 3.47.0**
+  - 发布日志：<https://sqlite.org/releaselog/3_47_0.html>
+  - 官方文档：<https://sqlite.org/docs.html>
+
+#### 代码生成标准
+
+- **Model Driven Architecture (MDA)**
+  - OMG官方：<https://www.omg.org/mda/>
+  - MDA规范：<https://www.omg.org/mda/specs.htm>
+
+- **OpenAPI Generator**
+  - 官方文档：<https://openapi-generator.tech/>
+  - GitHub仓库：<https://github.com/OpenAPITools/openapi-generator>
 
 ---
 
 **创建时间**：2025-01-21
-**最后更新**：2026-02-15
+**最后更新**：2026-02-15（本次更新：添加最新标准详细信息）

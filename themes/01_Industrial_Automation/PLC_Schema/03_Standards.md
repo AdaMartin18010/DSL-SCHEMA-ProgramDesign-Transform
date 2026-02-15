@@ -117,13 +117,110 @@ IEC 61131-3明确定义了程序结构、数据类型、变量声明等Schema要
 
 **与第三版(2013)的主要差异**：
 
-| 特性 | 第三版(2013) | 第四版(2025) |
-|------|-------------|-------------|
-| 编程语言 | 5种（含IL） | 4种（IL已移除） |
-| UTF-8支持 | 无 | 新增USTRING/UCHAR |
-| 并发同步 | 无 | 新增Mutex/Semaphore |
-| 面向对象 | 有限 | 增强Property支持 |
-| 字符串转换 | 显式 | 部分隐式 |
+| 特性 | 第三版(2013) | 第四版(2025) | Schema影响 |
+|------|-------------|-------------|-----------|
+| 编程语言 | 5种（含IL） | 4种（IL已移除） | 需移除IL相关Schema定义 |
+| UTF-8支持 | 无 | 新增USTRING/UCHAR | 需扩展字符串类型Schema |
+| 并发同步 | 无 | 新增Mutex/Semaphore | 需新增同步原语Schema |
+| 面向对象 | 有限 | 增强Property支持 | **需新增Property Schema** |
+| 字符串转换 | 显式 | 部分隐式 | 需更新类型转换规则 |
+| 字符表示 | 单字节 | Unicode支持 | 需更新字符编码Schema |
+
+#### 2.1.1 IEC 61131-3:2025 详细Schema映射
+
+**新增Property定义Schema**（第四版核心新增）：
+
+```dsl
+schema Property_Definition {
+  name: Identifier
+  type: DataType
+  
+  getter: FunctionBlock {
+    inputs: []
+    outputs: [{ name: "VALUE", type: Property.type }]
+    implementation: ST_Code
+  }
+  
+  setter: Optional[FunctionBlock] {
+    inputs: [{ name: "VALUE", type: Property.type }]
+    outputs: []
+    implementation: ST_Code
+    validation: Optional[Validation_Logic]
+  }
+  
+  access_level: Enum { public, protected, private }
+  
+  metadata: {
+    description: Optional[String]
+    unit: Optional[String]
+    range: Optional[Range]
+  }
+} @applies_to { class, function_block, interface }
+```
+
+**并发同步机制Schema**（第6.9章）：
+
+```dsl
+schema Synchronization_Primitives {
+  mutexes: List[Mutex] {
+    mutex: {
+      name: Identifier
+      priority_ceiling: Optional[UInt8]
+      owner: Optional[Task_ID]
+      state: Enum { unlocked, locked }
+    }
+  }
+  
+  semaphores: List[Semaphore] {
+    semaphore: {
+      name: Identifier
+      initial_count: UInt8
+      max_count: UInt8
+      current_count: UInt8
+      waiting_queue: List[Task_ID]
+    }
+  }
+} @standard("IEC_61131-3_2025_Section_6.9")
+```
+
+**USTRING/UCHAR类型Schema**：
+
+```dsl
+schema Unicode_String_Types {
+  ustring: {
+    encoding: "UTF-8"
+    max_code_units: UInt32
+    characters: List[Unicode_Character]
+    byte_length: UInt32
+  }
+  
+  uchar: {
+    encoding: "UTF-8"
+    code_point: UInt32  // Unicode码点
+    code_units: UInt8   // UTF-8编码单元数(1-4)
+  }
+} @conversion_rules {
+  implicit: ["CHAR_TO_WCHAR", "STRING_TO_WSTRING"],
+  explicit: ["WSTRING_TO_STRING", "UCHAR_TO_CHAR"]
+}
+```
+
+#### 2.1.2 厂商适配状态追踪
+
+| 厂商 | 工具 | IEC 61131-3:2025适配状态 | 预计完成时间 | 主要限制 |
+|------|------|------------------------|-------------|---------|
+| **Siemens** | TIA Portal V19 | ⚠️ 适配中 | 2025-Q3 | USTRING部分支持 |
+| **Siemens** | TIA Portal V20 | ✅ 计划完整支持 | 2025-Q4 | - |
+| **CODESYS** | V3.5 SP20 | ⚠️ 适配中 | 2025-Q2 | Mutex/Semaphore实验性 |
+| **Beckhoff** | TwinCAT 3.1.4026 | ⚠️ 适配中 | 2025-Q2 | Property支持有限 |
+| **Schneider** | EcoStruxure | ⚠️ 评估中 | 2026 | - |
+| **Mitsubishi** | GX Works3 | ⚠️ 评估中 | 2026 | - |
+
+**Schema迁移建议**：
+1. 新开发项目建议使用第四版Schema
+2. 现有项目迁移需评估工具支持度
+3. 避免使用已删除的IL语言
+4. 利用Property机制封装复杂数据访问
 
 **参考链接**：
 

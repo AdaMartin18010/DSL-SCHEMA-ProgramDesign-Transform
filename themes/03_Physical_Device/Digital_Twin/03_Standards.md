@@ -175,11 +175,11 @@ GB/T 43441系列标准定义了中国数字孪生Schema的完整体系。
 
 **⚠️ 注意：以下标准不属于数字孪生标准**
 
-| 标准号 | 实际名称 | 适用范围 |
-|--------|----------|----------|
+| 标准号                    | 实际名称                          | 适用范围     |
+| ------------------------- | --------------------------------- | ------------ |
 | **GB/T 41479-2022** | 信息安全技术 网络数据处理安全要求 | 网络数据安全 |
-| **GB/T 41480-2022** | 信息安全技术 重要数据识别指南 | 数据安全识别 |
-| **GB/T 41481-2022** | 信息安全技术 数据分类分级规则 | 数据安全分类 |
+| **GB/T 41480-2022** | 信息安全技术 重要数据识别指南     | 数据安全识别 |
+| **GB/T 41481-2022** | 信息安全技术 数据分类分级规则     | 数据安全分类 |
 
 **说明**：
 
@@ -251,16 +251,16 @@ Digital Twin Consortium定义了数字孪生的Schema。
 
 ### 5.1 标准对比表
 
-| 标准 | 范围 | 架构 | 数据模型 | 互操作性 | 状态 |
-|------|------|------|----------|----------|------|
-| **ISO/IEC 23247** | 通用 | 参考架构 | 基础模型 | ✅ 高 | ✅ 已发布 |
-| **IEC 63278-1** | 工业 | 系统架构 | 工业模型 | ⚠️ 中 | ✅ 已发布 |
-| **GB/T 43441.1** | 通用 | 参考架构 | 基础模型 | ⚠️ 中 | ✅ 已发布 |
-| **IIC Digital Twin** | 工业 | 架构框架 | 工业模型 | ✅ 高 | 🔄 发展中 |
-| **OPC UA for DT** | 工业 | 信息模型 | OPC UA模型 | ✅ 高 | ✅ 已发布 |
-| **DT Consortium** | 通用 | 参考架构 | 通用模型 | ✅ 高 | 🔄 发展中 |
-| **AWS IoT TwinMaker** | 云平台 | 云架构 | 云模型 | ✅ 高 | ✅ 已发布 |
-| **Azure Digital Twins** | 云平台 | 云架构 | 云模型 | ✅ 高 | ✅ 已发布 |
+| 标准                          | 范围   | 架构     | 数据模型   | 互操作性 | 状态      |
+| ----------------------------- | ------ | -------- | ---------- | -------- | --------- |
+| **ISO/IEC 23247**       | 通用   | 参考架构 | 基础模型   | ✅ 高    | ✅ 已发布 |
+| **IEC 63278-1**         | 工业   | 系统架构 | 工业模型   | ⚠️ 中  | ✅ 已发布 |
+| **GB/T 43441.1**        | 通用   | 参考架构 | 基础模型   | ⚠️ 中  | ✅ 已发布 |
+| **IIC Digital Twin**    | 工业   | 架构框架 | 工业模型   | ✅ 高    | 🔄 发展中 |
+| **OPC UA for DT**       | 工业   | 信息模型 | OPC UA模型 | ✅ 高    | ✅ 已发布 |
+| **DT Consortium**       | 通用   | 参考架构 | 通用模型   | ✅ 高    | 🔄 发展中 |
+| **AWS IoT TwinMaker**   | 云平台 | 云架构   | 云模型     | ✅ 高    | ✅ 已发布 |
+| **Azure Digital Twins** | 云平台 | 云架构   | 云模型     | ✅ 高    | ✅ 已发布 |
 
 **说明**：
 
@@ -270,25 +270,25 @@ Digital Twin Consortium定义了数字孪生的Schema。
 
 ### 5.2 Schema特性对比
 
-| 标准 | 物理实体模型 | 数字实体模型 | 数据同步 | 模型管理 | 扩展性 |
-|------|------------|------------|---------|---------|--------|
-| **ISO/IEC 23247** | ✅ 完整 | ✅ 完整 | ✅ 完整 | ✅ 完整 | ✅ 强 |
-| **IEC 63278-1** | ✅ 完整 | ✅ 完整 | ✅ 完整 | ✅ 完整 | ✅ 强 |
-| **GB/T 43441.1** | ✅ 完整 | ✅ 完整 | ⚠️ 部分 | ✅ 完整 | ✅ 强 |
-| **OPC UA for DT** | ✅ 完整 | ✅ 完整 | ✅ 完整 | ✅ 完整 | ✅ 强 |
-| **AWS IoT TwinMaker** | ✅ 完整 | ✅ 完整 | ✅ 完整 | ✅ 完整 | ✅ 强 |
-| **Azure Digital Twins** | ✅ 完整 | ✅ 完整 | ✅ 完整 | ✅ 完整 | ✅ 强 |
-| **DT Consortium** | ✅ 完整 | ✅ 完整 | ⚠️ 部分 | ✅ 完整 | ✅ 强 |
+| 标准                          | 物理实体模型 | 数字实体模型 | 数据同步  | 模型管理 | 扩展性 |
+| ----------------------------- | ------------ | ------------ | --------- | -------- | ------ |
+| **ISO/IEC 23247**       | ✅ 完整      | ✅ 完整      | ✅ 完整   | ✅ 完整  | ✅ 强  |
+| **IEC 63278-1**         | ✅ 完整      | ✅ 完整      | ✅ 完整   | ✅ 完整  | ✅ 强  |
+| **GB/T 43441.1**        | ✅ 完整      | ✅ 完整      | ⚠️ 部分 | ✅ 完整  | ✅ 强  |
+| **OPC UA for DT**       | ✅ 完整      | ✅ 完整      | ✅ 完整   | ✅ 完整  | ✅ 强  |
+| **AWS IoT TwinMaker**   | ✅ 完整      | ✅ 完整      | ✅ 完整   | ✅ 完整  | ✅ 强  |
+| **Azure Digital Twins** | ✅ 完整      | ✅ 完整      | ✅ 完整   | ✅ 完整  | ✅ 强  |
+| **DT Consortium**       | ✅ 完整      | ✅ 完整      | ⚠️ 部分 | ✅ 完整  | ✅ 强  |
 
 ### 5.3 工具链支持对比
 
-| 工具 | ISO/IEC 23247 | IEC 63278-1 | OPC UA | AWS | Azure | 代码生成 |
-|------|---------------|-------------|--------|-----|-------|---------|
-| **AWS IoT TwinMaker** | ⚠️ 部分 | ⚠️ 部分 | ⚠️ 部分 | ✅ 完整 | ❌ 无 | ✅ 完整 |
-| **Azure Digital Twins** | ⚠️ 部分 | ⚠️ 部分 | ✅ 完整 | ❌ 无 | ✅ 完整 | ✅ 完整 |
-| **OPC UA SDK** | ⚠️ 部分 | ⚠️ 部分 | ✅ 完整 | ❌ 无 | ❌ 无 | ✅ 完整 |
-| **Digital Twin Platform** | ✅ 完整 | ✅ 完整 | ✅ 完整 | ⚠️ 部分 | ⚠️ 部分 | ✅ 完整 |
-| **OpenDT** | ⚠️ 部分 | ⚠️ 部分 | ⚠️ 部分 | ❌ 无 | ❌ 无 | ⚠️ 部分 |
+| 工具                            | ISO/IEC 23247 | IEC 63278-1 | OPC UA    | AWS       | Azure     | 代码生成  |
+| ------------------------------- | ------------- | ----------- | --------- | --------- | --------- | --------- |
+| **AWS IoT TwinMaker**     | ⚠️ 部分     | ⚠️ 部分   | ⚠️ 部分 | ✅ 完整   | ❌ 无     | ✅ 完整   |
+| **Azure Digital Twins**   | ⚠️ 部分     | ⚠️ 部分   | ✅ 完整   | ❌ 无     | ✅ 完整   | ✅ 完整   |
+| **OPC UA SDK**            | ⚠️ 部分     | ⚠️ 部分   | ✅ 完整   | ❌ 无     | ❌ 无     | ✅ 完整   |
+| **Digital Twin Platform** | ✅ 完整       | ✅ 完整     | ✅ 完整   | ⚠️ 部分 | ⚠️ 部分 | ✅ 完整   |
+| **OpenDT**                | ⚠️ 部分     | ⚠️ 部分   | ⚠️ 部分 | ❌ 无     | ❌ 无     | ⚠️ 部分 |
 
 ---
 
@@ -387,22 +387,22 @@ Digital Twin Consortium定义了数字孪生的Schema。
 
 ### 7.3 在线资源
 
-- **ISO官网**：<https://www.iso.org/>
-- **IEC官网**：<https://webstore.iec.ch/>
-- **IIC官网**：<https://www.iiconsortium.org/>
-- **OPC Foundation**：<https://opcfoundation.org/>
+- **ISO官网**：[https://www.iso.org/](https://www.iso.org/)
+- **IEC官网**：[https://webstore.iec.ch/](https://webstore.iec.ch/)
+- **IIC官网**：[https://www.iiconsortium.org/](https://www.iiconsortium.org/)
+- **OPC Foundation**：[https://opcfoundation.org/](https://opcfoundation.org/)
 - **Digital Twin Consortium**：
-  <https://www.digitaltwinconsortium.org/>
+  [https://www.digitaltwinconsortium.org/](https://www.digitaltwinconsortium.org/)
 
 ### 7.4 技术社区
 
 - **AWS IoT TwinMaker**：
-  <https://aws.amazon.com/iot-twinmaker/>
+  [https://aws.amazon.com/iot-twinmaker/](https://aws.amazon.com/iot-twinmaker/)
 - **Azure Digital Twins**：
-  <https://azure.microsoft.com/services/digital-twins/>
-- **OpenDT**：<https://www.opendt.org/>
+  [https://azure.microsoft.com/services/digital-twins/](https://azure.microsoft.com/services/digital-twins/)
+- **OpenDT**：[https://www.opendt.org/](https://www.opendt.org/)
 - **GitHub数字孪生工具**：
-  <https://github.com/Azure/azure-digital-twins>
+  [https://github.com/Azure/azure-digital-twins](https://github.com/Azure/azure-digital-twins)
 
 ---
 

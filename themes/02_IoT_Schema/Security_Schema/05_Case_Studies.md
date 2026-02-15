@@ -91,6 +91,7 @@
 ### 2.3 解决方案
 
 **核心架构**：
+
 - 云端安全策略中心：统一管理和分发安全策略
 - 边缘安全网关：本地安全决策和离线场景支持
 - 设备端安全SDK：轻量级安全能力嵌入
@@ -280,14 +281,14 @@ class AuditLogEntry:
 
 class SecurityPolicyManager:
     """安全策略管理器"""
-    
+
     ROLE_PERMISSIONS = {
         Role.OWNER: {Permission.READ, Permission.WRITE, Permission.EXECUTE, Permission.DELETE, Permission.ADMIN},
         Role.FAMILY: {Permission.READ, Permission.WRITE, Permission.EXECUTE},
         Role.GUEST: {Permission.READ},
         Role.SERVICE: {Permission.READ, Permission.EXECUTE}
     }
-    
+
     DEVICE_SENSITIVITY = {
         DeviceType.LOCK: "high",
         DeviceType.CAMERA: "high",
@@ -296,13 +297,13 @@ class SecurityPolicyManager:
         DeviceType.LIGHT: "low",
         DeviceType.SPEAKER: "low"
     }
-    
+
     def __init__(self):
         self.password_policy = PasswordPolicy()
         self.session_timeout = timedelta(minutes=30)
         self.mfa_required_for_sensitive = True
         self._lock = threading.RLock()
-    
+
     def get_required_auth_level(self, device_type: DeviceType, action: Permission) -> int:
         """获取操作所需的安全级别（0-3）"""
         sensitivity = self.DEVICE_SENSITIVITY.get(device_type, "low")
@@ -314,76 +315,76 @@ class SecurityPolicyManager:
             ("medium", Permission.EXECUTE): 1, # 强密码
         }
         return levels.get((sensitivity, action), 1)
-    
+
     def check_permission(self, role: Role, permission: Permission) -> bool:
         """检查角色是否拥有指定权限"""
         return permission in self.ROLE_PERMISSIONS.get(role, set())
-    
+
     def validate_password(self, password: str, history: List[str] = None) -> Tuple[bool, str]:
         """验证密码是否符合策略"""
         policy = self.password_policy
-        
+
         if len(password) < policy.min_length:
             return False, f"密码长度至少{policy.min_length}位"
-        
+
         if policy.require_uppercase and not any(c.isupper() for c in password):
             return False, "密码必须包含大写字母"
-        
+
         if policy.require_lowercase and not any(c.islower() for c in password):
             return False, "密码必须包含小写字母"
-        
+
         if policy.require_digits and not any(c.isdigit() for c in password):
             return False, "密码必须包含数字"
-        
+
         if policy.require_special and not any(c in "!@#$%^&*()_+-=[]{}|;:,.<>?" for c in password):
             return False, "密码必须包含特殊字符"
-        
+
         # 检查历史密码
         if history:
             for old_hash in history[-policy.prevent_reuse:]:
                 if bcrypt.checkpw(password.encode(), old_hash.encode()):
                     return False, "不能使用最近使用过的密码"
-        
+
         return True, "密码符合要求"
 
 
 class EncryptionManager:
     """加密管理器 - 支持对称和非对称加密"""
-    
+
     def __init__(self):
         self._keys: Dict[str, bytes] = {}
         self._key_rotation_interval = timedelta(days=90)
         self._key_creation_time: Dict[str, datetime] = {}
-    
+
     def generate_aes_key(self, key_id: str) -> bytes:
         """生成AES-256密钥"""
         key = os.urandom(32)
         self._keys[key_id] = key
         self._key_creation_time[key_id] = datetime.now()
         return key
-    
+
     def encrypt_aes_gcm(self, data: bytes, key_id: str) -> Tuple[bytes, bytes, bytes]:
         """AES-256-GCM加密"""
         key = self._keys.get(key_id)
         if not key:
             raise ValueError(f"密钥不存在: {key_id}")
-        
+
         iv = os.urandom(12)
         cipher = Cipher(algorithms.AES(key), modes.GCM(iv), backend=default_backend())
         encryptor = cipher.encryptor()
         ciphertext = encryptor.update(data) + encryptor.finalize()
         return iv, ciphertext, encryptor.tag
-    
+
     def decrypt_aes_gcm(self, iv: bytes, ciphertext: bytes, tag: bytes, key_id: str) -> bytes:
         """AES-256-GCM解密"""
         key = self._keys.get(key_id)
         if not key:
             raise ValueError(f"密钥不存在: {key_id}")
-        
+
         cipher = Cipher(algorithms.AES(key), modes.GCM(iv, tag), backend=default_backend())
         decryptor = cipher.decryptor()
         return decryptor.update(ciphertext) + decryptor.finalize()
-    
+
     def generate_rsa_keypair(self) -> Tuple[rsa.RSAPrivateKey, rsa.RSAPublicKey]:
         """生成RSA密钥对"""
         private_key = rsa.generate_private_key(
@@ -392,7 +393,7 @@ class EncryptionManager:
             backend=default_backend()
         )
         return private_key, private_key.public_key()
-    
+
     def rsa_encrypt(self, data: bytes, public_key: rsa.RSAPublicKey) -> bytes:
         """RSA加密"""
         return public_key.encrypt(
@@ -403,7 +404,7 @@ class EncryptionManager:
                 label=None
             )
         )
-    
+
     def rsa_decrypt(self, data: bytes, private_key: rsa.RSAPrivateKey) -> bytes:
         """RSA解密"""
         return private_key.decrypt(
@@ -414,13 +415,13 @@ class EncryptionManager:
                 label=None
             )
         )
-    
+
     def rotate_key_if_needed(self, key_id: str) -> bool:
         """检查并执行密钥轮换"""
         created = self._key_creation_time.get(key_id)
         if not created:
             return False
-        
+
         if datetime.now() - created > self._key_rotation_interval:
             self.generate_aes_key(key_id)
             return True
@@ -429,29 +430,29 @@ class EncryptionManager:
 
 class AuditLogger:
     """审计日志管理器"""
-    
+
     def __init__(self, log_dir: str = "./logs"):
         self.log_dir = log_dir
         os.makedirs(log_dir, exist_ok=True)
-        
+
         # 配置日志
         self.logger = logging.getLogger("security_audit")
         self.logger.setLevel(logging.INFO)
-        
+
         handler = logging.FileHandler(f"{log_dir}/security_audit.log")
         handler.setFormatter(logging.Formatter(
             '%(asctime)s - %(levelname)s - %(message)s'
         ))
         self.logger.addHandler(handler)
-        
+
         self._entries: List[AuditLogEntry] = []
         self._lock = threading.RLock()
-    
+
     def log(self, entry: AuditLogEntry):
         """记录安全事件"""
         with self._lock:
             self._entries.append(entry)
-            
+
             # 写入文件日志
             log_msg = (
                 f"[SECURITY] type={entry.event_type} user={entry.user_id} "
@@ -462,7 +463,7 @@ class AuditLogger:
                 self.logger.info(log_msg)
             else:
                 self.logger.warning(log_msg)
-    
+
     def query_logs(self, user_id: Optional[str] = None,
                    device_id: Optional[str] = None,
                    event_type: Optional[str] = None,
@@ -470,7 +471,7 @@ class AuditLogger:
                    end_time: Optional[datetime] = None) -> List[AuditLogEntry]:
         """查询审计日志"""
         results = self._entries
-        
+
         if user_id:
             results = [e for e in results if e.user_id == user_id]
         if device_id:
@@ -481,17 +482,17 @@ class AuditLogger:
             results = [e for e in results if e.timestamp >= start_time]
         if end_time:
             results = [e for e in results if e.timestamp <= end_time]
-        
+
         return results
-    
+
     def get_failed_login_stats(self, hours: int = 24) -> Dict:
         """获取登录失败统计"""
         cutoff = datetime.now() - timedelta(hours=hours)
-        failed = [e for e in self._entries 
-                  if e.event_type == "authentication" 
+        failed = [e for e in self._entries
+                  if e.event_type == "authentication"
                   and e.result == "failure"
                   and e.timestamp >= cutoff]
-        
+
         return {
             "total_failed": len(failed),
             "unique_users": len(set(e.user_id for e in failed)),
@@ -501,44 +502,44 @@ class AuditLogger:
 
 class SmartHomeSecurityManager:
     """智能家居安全管理器 - 主类"""
-    
+
     def __init__(self, secret_key: Optional[str] = None):
         self.secret_key = secret_key or os.urandom(32).hex()
         self.policy_manager = SecurityPolicyManager()
         self.encryption_manager = EncryptionManager()
         self.audit_logger = AuditLogger()
-        
+
         # 存储
         self._users: Dict[str, User] = {}
         self._devices: Dict[str, Device] = {}
         self._sessions: Dict[str, Dict] = {}
-        
+
         self._lock = threading.RLock()
-    
+
     # ========== 用户管理 ==========
-    
+
     def register_user(self, username: str, password: str, role: Role = Role.FAMILY) -> str:
         """注册新用户"""
         user_id = str(uuid.uuid4())
-        
+
         # 验证密码策略
         valid, msg = self.policy_manager.validate_password(password)
         if not valid:
             raise ValueError(f"密码不符合要求: {msg}")
-        
+
         # 哈希密码
         password_hash = bcrypt.hashpw(password.encode(), bcrypt.gensalt(rounds=12)).decode()
-        
+
         user = User(
             user_id=user_id,
             username=username,
             password_hash=password_hash,
             role=role
         )
-        
+
         with self._lock:
             self._users[user_id] = user
-        
+
         # 记录审计日志
         self.audit_logger.log(AuditLogEntry(
             event_type="user_registration",
@@ -548,10 +549,10 @@ class SmartHomeSecurityManager:
             result="success",
             details={"role": role.value}
         ))
-        
+
         return user_id
-    
-    def authenticate(self, username: str, password: str, 
+
+    def authenticate(self, username: str, password: str,
                      mfa_code: Optional[str] = None,
                      ip_address: Optional[str] = None) -> Optional[str]:
         """用户身份认证"""
@@ -561,7 +562,7 @@ class SmartHomeSecurityManager:
             if u.username == username:
                 user = u
                 break
-        
+
         if not user:
             self.audit_logger.log(AuditLogEntry(
                 event_type="authentication",
@@ -572,7 +573,7 @@ class SmartHomeSecurityManager:
                 details={"reason": "user_not_found"}
             ))
             return None
-        
+
         # 检查账户锁定
         if user.locked_until and datetime.now() < user.locked_until:
             self.audit_logger.log(AuditLogEntry(
@@ -585,16 +586,16 @@ class SmartHomeSecurityManager:
                 details={"reason": "account_locked"}
             ))
             return None
-        
+
         # 验证密码
         if not bcrypt.checkpw(password.encode(), user.password_hash.encode()):
             user.login_attempts += 1
-            
+
             # 5次失败后锁定30分钟
             if user.login_attempts >= 5:
                 user.locked_until = datetime.now() + timedelta(minutes=30)
                 user.login_attempts = 0
-            
+
             self.audit_logger.log(AuditLogEntry(
                 event_type="authentication",
                 user_id=user.user_id,
@@ -605,7 +606,7 @@ class SmartHomeSecurityManager:
                 details={"reason": "invalid_password", "attempts": user.login_attempts}
             ))
             return None
-        
+
         # 检查MFA
         if user.mfa_enabled:
             if not mfa_code:
@@ -629,11 +630,11 @@ class SmartHomeSecurityManager:
                     ip_address=ip_address
                 ))
                 return None
-        
+
         # 认证成功
         user.login_attempts = 0
         user.last_login = datetime.now()
-        
+
         # 生成JWT令牌
         token = jwt.encode({
             "user_id": user.user_id,
@@ -642,7 +643,7 @@ class SmartHomeSecurityManager:
             "exp": datetime.utcnow() + timedelta(minutes=30),
             "iat": datetime.utcnow()
         }, self.secret_key, algorithm="HS256")
-        
+
         # 存储会话
         with self._lock:
             self._sessions[token] = {
@@ -650,7 +651,7 @@ class SmartHomeSecurityManager:
                 "created_at": datetime.now(),
                 "ip_address": ip_address
             }
-        
+
         self.audit_logger.log(AuditLogEntry(
             event_type="authentication",
             user_id=user.user_id,
@@ -659,27 +660,27 @@ class SmartHomeSecurityManager:
             result="success",
             ip_address=ip_address
         ))
-        
+
         return token
-    
+
     def _verify_mfa(self, secret: Optional[str], code: str) -> bool:
         """验证MFA代码（简化实现）"""
         # 实际应使用pyotp等库实现TOTP
         return True
-    
+
     # ========== 设备管理 ==========
-    
-    def register_device(self, device_name: str, device_type: DeviceType, 
+
+    def register_device(self, device_name: str, device_type: DeviceType,
                         owner_id: str) -> Device:
         """注册IoT设备"""
         if owner_id not in self._users:
             raise ValueError("用户不存在")
-        
+
         device_id = f"{device_type.value}_{uuid.uuid4().hex[:12]}"
-        
+
         # 生成设备加密密钥
         encryption_key = self.encryption_manager.generate_aes_key(device_id)
-        
+
         device = Device(
             device_id=device_id,
             device_name=device_name,
@@ -688,10 +689,10 @@ class SmartHomeSecurityManager:
             encryption_key=encryption_key,
             trusted=True
         )
-        
+
         with self._lock:
             self._devices[device_id] = device
-        
+
         self.audit_logger.log(AuditLogEntry(
             event_type="device_registration",
             user_id=owner_id,
@@ -701,12 +702,12 @@ class SmartHomeSecurityManager:
             result="success",
             details={"device_type": device_type.value}
         ))
-        
+
         return device
-    
+
     # ========== 访问控制 ==========
-    
-    def check_access(self, token: str, device_id: str, 
+
+    def check_access(self, token: str, device_id: str,
                      action: Permission) -> Tuple[bool, str]:
         """检查访问权限"""
         # 验证令牌
@@ -716,15 +717,15 @@ class SmartHomeSecurityManager:
             return False, "令牌已过期"
         except jwt.InvalidTokenError:
             return False, "无效令牌"
-        
+
         user_id = payload.get("user_id")
         role = Role(payload.get("role"))
-        
+
         # 获取设备
         device = self._devices.get(device_id)
         if not device:
             return False, "设备不存在"
-        
+
         # 检查权限
         if not self.policy_manager.check_permission(role, action):
             self.audit_logger.log(AuditLogEntry(
@@ -737,12 +738,12 @@ class SmartHomeSecurityManager:
                 details={"reason": "insufficient_role_permissions"}
             ))
             return False, "角色权限不足"
-        
+
         # 检查安全级别要求
         required_level = self.policy_manager.get_required_auth_level(
             device.device_type, action
         )
-        
+
         # 访客有时间限制
         if role == Role.GUEST:
             session = self._sessions.get(token)
@@ -750,7 +751,7 @@ class SmartHomeSecurityManager:
                 session_age = datetime.now() - session["created_at"]
                 if session_age > timedelta(hours=24):
                     return False, "访客会话已过期"
-        
+
         self.audit_logger.log(AuditLogEntry(
             event_type="access_control",
             user_id=user_id,
@@ -759,38 +760,38 @@ class SmartHomeSecurityManager:
             resource="device",
             result="success"
         ))
-        
+
         return True, "访问授权"
-    
+
     # ========== 安全通信 ==========
-    
+
     def secure_device_message(self, device_id: str, message: bytes) -> Dict:
         """加密设备消息"""
         device = self._devices.get(device_id)
         if not device:
             raise ValueError("设备不存在")
-        
+
         iv, ciphertext, tag = self.encryption_manager.encrypt_aes_gcm(
             message, device_id
         )
-        
+
         return {
             "device_id": device_id,
             "iv": base64.b64encode(iv).decode(),
             "ciphertext": base64.b64encode(ciphertext).decode(),
             "tag": base64.b64encode(tag).decode()
         }
-    
+
     def decrypt_device_message(self, device_id: str, encrypted_msg: Dict) -> bytes:
         """解密设备消息"""
         device = self._devices.get(device_id)
         if not device:
             raise ValueError("设备不存在")
-        
+
         iv = base64.b64decode(encrypted_msg["iv"])
         ciphertext = base64.b64decode(encrypted_msg["ciphertext"])
         tag = base64.b64decode(encrypted_msg["tag"])
-        
+
         return self.encryption_manager.decrypt_aes_gcm(iv, ciphertext, tag, device_id)
 
 
@@ -799,11 +800,11 @@ class SmartHomeSecurityManager:
 if __name__ == "__main__":
     # 初始化安全系统
     security = SmartHomeSecurityManager()
-    
+
     print("=" * 60)
     print("智能家居安全系统演示")
     print("=" * 60)
-    
+
     # 1. 注册用户
     print("\n[1] 用户注册")
     owner_id = security.register_user("homeowner", "SecurePass123!", Role.OWNER)
@@ -812,7 +813,7 @@ if __name__ == "__main__":
     print(f"  房主用户: {owner_id[:8]}...")
     print(f"  家庭成员: {family_id[:8]}...")
     print(f"  访客用户: {guest_id[:8]}...")
-    
+
     # 2. 设备注册
     print("\n[2] 设备注册")
     smart_lock = security.register_device("前门智能锁", DeviceType.LOCK, owner_id)
@@ -821,48 +822,48 @@ if __name__ == "__main__":
     print(f"  智能锁: {smart_lock.device_id}")
     print(f"  摄像头: {camera.device_id}")
     print(f"  温控器: {thermostat.device_id}")
-    
+
     # 3. 身份认证
     print("\n[3] 身份认证")
     token = security.authenticate("homeowner", "SecurePass123!", ip_address="192.168.1.100")
     print(f"  房主登录成功，Token: {token[:30]}...")
-    
+
     # 4. 访问控制测试
     print("\n[4] 访问控制测试")
-    
+
     # 房主尝试控制智能锁（高安全级别）
     allowed, msg = security.check_access(token, smart_lock.device_id, Permission.EXECUTE)
     print(f"  房主开锁: {'✓ 允许' if allowed else '✗ 拒绝'} - {msg}")
-    
+
     # 模拟访客登录
     guest_token = security.authenticate("guest_user", "GuestPass789!", ip_address="192.168.1.200")
-    
+
     # 访客尝试控制智能锁
     allowed, msg = security.check_access(guest_token, smart_lock.device_id, Permission.EXECUTE)
     print(f"  访客开锁: {'✓ 允许' if allowed else '✗ 拒绝'} - {msg}")
-    
+
     # 访客查看温控器（只读权限）
     allowed, msg = security.check_access(guest_token, thermostat.device_id, Permission.READ)
     print(f"  访客查看温控器: {'✓ 允许' if allowed else '✗ 拒绝'} - {msg}")
-    
+
     # 5. 数据加密测试
     print("\n[5] 数据加密通信")
     message = b'{"command": "unlock", "timestamp": "2024-01-15T10:30:00Z"}'
     encrypted = security.secure_device_message(smart_lock.device_id, message)
     print(f"  原始消息: {message.decode()}")
     print(f"  加密消息长度: {len(encrypted['ciphertext'])} bytes")
-    
+
     decrypted = security.decrypt_device_message(smart_lock.device_id, encrypted)
     print(f"  解密消息: {decrypted.decode()}")
-    
+
     # 6. 审计日志
     print("\n[6] 审计日志")
     stats = security.audit_logger.get_failed_login_stats(hours=24)
     print(f"  24小时内登录失败统计: {stats}")
-    
+
     recent_logs = security.audit_logger.query_logs(event_type="access_control")
     print(f"  最近访问控制事件: {len(recent_logs)} 条")
-    
+
     print("\n" + "=" * 60)
     print("演示完成")
     print("=" * 60)
@@ -872,16 +873,16 @@ if __name__ == "__main__":
 
 **性能指标**：
 
-| 指标 | 改进前 | 改进后 | 提升 |
-|------|--------|--------|------|
-| 安全事件检测率 | 65% | 99.2% | +52.6% |
-| 平均响应时间 | 45分钟 | 3.2分钟 | -92.9% |
-| 误报率 | 23% | 4.5% | -80.4% |
-| 密码策略合规率 | 58% | 99.7% | +71.9% |
-| 数据加密覆盖率 | 42% | 100% | +138% |
-| 身份认证成功率 | 87% | 99.5% | +14.4% |
-| API安全延迟开销 | - | <15ms | 可接受 |
-| 系统可用性 | 99.5% | 99.99% | +0.49% |
+| 指标            | 改进前 | 改进后  | 提升   |
+| --------------- | ------ | ------- | ------ |
+| 安全事件检测率  | 65%    | 99.2%   | +52.6% |
+| 平均响应时间    | 45分钟 | 3.2分钟 | -92.9% |
+| 误报率          | 23%    | 4.5%    | -80.4% |
+| 密码策略合规率  | 58%    | 99.7%   | +71.9% |
+| 数据加密覆盖率  | 42%    | 100%    | +138%  |
+| 身份认证成功率  | 87%    | 99.5%   | +14.4% |
+| API安全延迟开销 | -      | <15ms   | 可接受 |
+| 系统可用性      | 99.5%  | 99.99%  | +0.49% |
 
 **业务价值**：
 
@@ -967,17 +968,17 @@ schema IndustrialIoTSecurity {
   access_control: {
     policy_model: Enum { RBAC }
     device_roles: [
-      { 
+      {
         name: "production_controller"
         permissions: [read, write, execute, config]
         safety_level: "high"
       },
-      { 
+      {
         name: "sensor_node"
         permissions: [read, write]
         allowed_topics: ["telemetry", "alarms"]
       },
-      { 
+      {
         name: "actuator"
         permissions: [read, execute]
         command_whitelist: ["start", "stop", "reset"]
@@ -1117,31 +1118,31 @@ class IndustrialSecurityEvent:
 
 class CertificateAuthority:
     """证书颁发机构 - 简化版PKI"""
-    
+
     def __init__(self, ca_cert_path: Optional[str] = None, ca_key_path: Optional[str] = None):
         self._private_key: Optional[rsa.RSAPrivateKey] = None
         self._certificate: Optional[x509.Certificate] = None
         self._issued_certs: Dict[str, x509.Certificate] = {}
         self._crl: List[str] = []
-        
+
         if ca_cert_path and ca_key_path and os.path.exists(ca_cert_path):
             self._load_ca(ca_cert_path, ca_key_path)
         else:
             self._generate_ca()
-    
+
     def _generate_ca(self):
         """生成根CA证书"""
         self._private_key = rsa.generate_private_key(
             public_exponent=65537,
             key_size=4096
         )
-        
+
         subject = issuer = x509.Name([
             x509.NameAttribute(NameOID.COUNTRY_NAME, "CN"),
             x509.NameAttribute(NameOID.ORGANIZATION_NAME, "Industrial IoT Root CA"),
             x509.NameAttribute(NameOID.COMMON_NAME, "IIoT Root CA"),
         ])
-        
+
         self._certificate = x509.CertificateBuilder().subject_name(
             subject
         ).issuer_name(
@@ -1171,14 +1172,14 @@ class CertificateAuthority:
             ),
             critical=True
         ).sign(self._private_key, hashes.SHA256())
-    
+
     def _load_ca(self, cert_path: str, key_path: str):
         """加载CA证书和私钥"""
         with open(cert_path, "rb") as f:
             self._certificate = x509.load_pem_x509_certificate(f.read())
         with open(key_path, "rb") as f:
             self._private_key = serialization.load_pem_private_key(f.read(), password=None)
-    
+
     def issue_device_certificate(self, device_id: str, identity: DeviceIdentity,
                                   config: CertificateConfig) -> Tuple[str, str]:
         """为设备签发证书"""
@@ -1186,7 +1187,7 @@ class CertificateAuthority:
             public_exponent=65537,
             key_size=config.key_size
         )
-        
+
         subject = x509.Name([
             x509.NameAttribute(NameOID.COUNTRY_NAME, config.country),
             x509.NameAttribute(NameOID.ORGANIZATION_NAME, config.organization),
@@ -1194,7 +1195,7 @@ class CertificateAuthority:
             x509.NameAttribute(NameOID.COMMON_NAME, device_id),
             x509.NameAttribute(NameOID.SERIAL_NUMBER, identity.serial_number),
         ])
-        
+
         cert = x509.CertificateBuilder().subject_name(
             subject
         ).issuer_name(
@@ -1230,23 +1231,23 @@ class CertificateAuthority:
             ]),
             critical=False
         ).sign(self._private_key, hashes.SHA256())
-        
+
         cert_pem = cert.public_bytes(serialization.Encoding.PEM).decode()
         key_pem = device_key.private_bytes(
             encoding=serialization.Encoding.PEM,
             format=serialization.PrivateFormat.PKCS8,
             encryption_algorithm=serialization.NoEncryption()
         ).decode()
-        
+
         self._issued_certs[device_id] = cert
         return cert_pem, key_pem
-    
+
     def revoke_certificate(self, device_id: str):
         """撤销设备证书"""
         if device_id in self._issued_certs:
             self._crl.append(device_id)
             del self._issued_certs[device_id]
-    
+
     def verify_certificate(self, cert_pem: str) -> bool:
         """验证证书是否由本CA签发且未被撤销"""
         try:
@@ -1257,7 +1258,7 @@ class CertificateAuthority:
             return True
         except Exception:
             return False
-    
+
     def get_ca_certificate(self) -> str:
         """获取CA证书PEM"""
         return self._certificate.public_bytes(serialization.Encoding.PEM).decode()
@@ -1267,19 +1268,19 @@ class CertificateAuthority:
 
 class IndustrialIoTSecurityPlatform:
     """工业物联网安全平台 - 主类"""
-    
+
     def __init__(self):
         self.ca = CertificateAuthority()
         self._devices: Dict[str, DeviceIdentity] = {}
         self._zone_policies: Dict[str, Set[str]] = {}
         self._lock = threading.RLock()
-    
+
     def register_device(self, manufacturer: str, model: str, serial_number: str,
                         role: DeviceRole, zone: str,
                         security_level: SecurityLevel = SecurityLevel.MEDIUM) -> DeviceIdentity:
         """注册工业设备"""
         device_id = f"{manufacturer.lower()}_{model.lower()}_{serial_number}"
-        
+
         identity = DeviceIdentity(
             device_id=device_id,
             manufacturer=manufacturer,
@@ -1290,45 +1291,45 @@ class IndustrialIoTSecurityPlatform:
             zone=zone,
             security_level=security_level
         )
-        
+
         config = CertificateConfig()
         cert_pem, key_pem = self.ca.issue_device_certificate(device_id, identity, config)
-        
+
         identity.certificate_pem = cert_pem
         identity.private_key_pem = key_pem
         identity.ca_certificate = self.ca.get_ca_certificate()
-        
+
         with self._lock:
             self._devices[device_id] = identity
-        
+
         print(f"[REGISTER] Device {device_id} registered with role {role.value}")
         return identity
-    
+
     def check_cross_zone_access(self, source_device: str, target_device: str) -> bool:
         """检查跨区域访问权限"""
         source = self._devices.get(source_device)
         target = self._devices.get(target_device)
-        
+
         if not source or not target:
             return False
-        
+
         if source.zone == target.zone:
             return True
-        
+
         if target.security_level in (SecurityLevel.HIGH, SecurityLevel.CRITICAL):
             return False
-        
+
         allowed_zones = self._zone_policies.get(source.zone, set())
         return target.zone in allowed_zones
-    
+
     def revoke_device(self, device_id: str):
         """撤销设备访问权限"""
         self.ca.revoke_certificate(device_id)
-        
+
         with self._lock:
             if device_id in self._devices:
                 del self._devices[device_id]
-        
+
         print(f"[REVOKE] Device {device_id} access revoked")
 
 
@@ -1338,11 +1339,11 @@ if __name__ == "__main__":
     print("=" * 70)
     print("工业物联网安全通信系统演示")
     print("=" * 70)
-    
+
     platform = IndustrialIoTSecurityPlatform()
-    
+
     print("\n[1] 设备注册与证书颁发")
-    
+
     plc_controller = platform.register_device(
         manufacturer="Siemens",
         model="S7-1500",
@@ -1352,7 +1353,7 @@ if __name__ == "__main__":
         security_level=SecurityLevel.HIGH
     )
     print(f"  PLC控制器: {plc_controller.device_id}")
-    
+
     temperature_sensor = platform.register_device(
         manufacturer="Bosch",
         model="TempSensor-X1",
@@ -1362,7 +1363,7 @@ if __name__ == "__main__":
         security_level=SecurityLevel.MEDIUM
     )
     print(f"  温度传感器: {temperature_sensor.device_id}")
-    
+
     robot_arm = platform.register_device(
         manufacturer="ABB",
         model="IRB-1200",
@@ -1372,24 +1373,24 @@ if __name__ == "__main__":
         security_level=SecurityLevel.HIGH
     )
     print(f"  机械臂: {robot_arm.device_id}")
-    
+
     print("\n[2] 证书验证")
     is_valid = platform.ca.verify_certificate(plc_controller.certificate_pem)
     print(f"  PLC证书有效性: {'✓ 有效' if is_valid else '✗ 无效'}")
-    
+
     print("\n[3] 跨区域访问控制")
     can_access = platform.check_cross_zone_access(
         temperature_sensor.device_id,
         robot_arm.device_id
     )
     print(f"  传感器(zone_a) -> 机械臂(zone_b): {'✓ 允许' if can_access else '✗ 拒绝'}")
-    
+
     print("\n[4] 证书撤销")
     platform.revoke_device(robot_arm.device_id)
-    
+
     is_valid = platform.ca.verify_certificate(robot_arm.certificate_pem)
     print(f"  撤销后证书有效性: {'✓ 有效' if is_valid else '✗ 已撤销'}")
-    
+
     print("\n" + "=" * 70)
     print("演示完成")
     print("=" * 70)
@@ -1399,16 +1400,16 @@ if __name__ == "__main__":
 
 **性能指标**：
 
-| 指标 | 改进前 | 改进后 | 提升 |
-|------|--------|--------|------|
-| 通信加密覆盖率 | 12% | 100% | +733% |
-| 设备身份认证率 | 15% | 100% | +567% |
-| 中间人攻击阻断 | 0% | 100% | +100% |
-| 证书签发效率 | 手动/天 | 自动/<10s | 自动化 |
-| TLS握手延迟 | N/A | 4.2ms | 满足要求 |
-| 端到端延迟 | 8ms | 11.5ms | +43% (可接受) |
-| 证书轮换成功率 | N/A | 99.97% | 高可靠 |
-| 安全事件检出率 | 45% | 98.5% | +118% |
+| 指标           | 改进前  | 改进后    | 提升          |
+| -------------- | ------- | --------- | ------------- |
+| 通信加密覆盖率 | 12%     | 100%      | +733%         |
+| 设备身份认证率 | 15%     | 100%      | +567%         |
+| 中间人攻击阻断 | 0%      | 100%      | +100%         |
+| 证书签发效率   | 手动/天 | 自动/<10s | 自动化        |
+| TLS握手延迟    | N/A     | 4.2ms     | 满足要求      |
+| 端到端延迟     | 8ms     | 11.5ms    | +43% (可接受) |
+| 证书轮换成功率 | N/A     | 99.97%    | 高可靠        |
+| 安全事件检出率 | 45%     | 98.5%     | +118%         |
 
 **业务价值**：
 
@@ -1722,12 +1723,12 @@ class ABACPolicy:
 
 class PatientDataEncryption:
     """患者数据加密管理器"""
-    
+
     def __init__(self, master_key: Optional[bytes] = None):
         self.master_key = master_key or os.urandom(32)
         self._patient_keys: Dict[str, bytes] = {}
         self._lock = threading.RLock()
-    
+
     def generate_patient_key(self, patient_id: str) -> bytes:
         """为每个患者生成独立的数据密钥"""
         kdf = PBKDF2HMAC(
@@ -1738,30 +1739,30 @@ class PatientDataEncryption:
             backend=default_backend()
         )
         key = kdf.derive(self.master_key + patient_id.encode())
-        
+
         with self._lock:
             self._patient_keys[patient_id] = key
         return key
-    
+
     def encrypt_patient_data(self, patient_id: str, data: str) -> Tuple[bytes, bytes, bytes]:
         """加密患者数据（AES-256-GCM）"""
         key = self._patient_keys.get(patient_id)
         if not key:
             key = self.generate_patient_key(patient_id)
-        
+
         iv = os.urandom(12)
         cipher = Cipher(algorithms.AES(key), modes.GCM(iv), backend=default_backend())
         encryptor = cipher.encryptor()
         ciphertext = encryptor.update(data.encode()) + encryptor.finalize()
         return iv, ciphertext, encryptor.tag
-    
-    def decrypt_patient_data(self, patient_id: str, iv: bytes, 
+
+    def decrypt_patient_data(self, patient_id: str, iv: bytes,
                              ciphertext: bytes, tag: bytes) -> str:
         """解密患者数据"""
         key = self._patient_keys.get(patient_id)
         if not key:
             raise ValueError(f"Patient key not found: {patient_id}")
-        
+
         cipher = Cipher(algorithms.AES(key), modes.GCM(iv, tag), backend=default_backend())
         decryptor = cipher.decryptor()
         plaintext = decryptor.update(ciphertext) + decryptor.finalize()
@@ -1770,17 +1771,17 @@ class PatientDataEncryption:
 
 class BlockchainAuditLog:
     """基于哈希链的不可篡改审计日志"""
-    
+
     def __init__(self):
         self._logs: List[ImmutableAuditLog] = []
         self._last_hash = "0" * 64
         self._lock = threading.RLock()
-    
+
     def _calculate_hash(self, log: ImmutableAuditLog) -> str:
         """计算日志条目的哈希"""
         data = f"{log.log_id}{log.timestamp}{log.previous_hash}{log.user_id}{log.patient_id}{log.action}"
         return hashlib.sha256(data.encode()).hexdigest()
-    
+
     def log_access(self, user_id: str, patient_id: str, action: str,
                    resource: str, result: AccessResult,
                    justification: Optional[str] = None) -> ImmutableAuditLog:
@@ -1803,9 +1804,9 @@ class BlockchainAuditLog:
             log.current_hash = self._calculate_hash(log)
             self._logs.append(log)
             self._last_hash = log.current_hash
-        
+
         return log
-    
+
     def verify_integrity(self) -> Tuple[bool, List[int]]:
         """验证日志链完整性"""
         tampered = []
@@ -1819,12 +1820,12 @@ class BlockchainAuditLog:
 
 class ABACAccessControl:
     """基于属性的访问控制系统"""
-    
+
     def __init__(self):
         self._policies: List[ABACPolicy] = []
         self._user_attributes: Dict[str, UserAttributes] = {}
         self._init_default_policies()
-    
+
     def _init_default_policies(self):
         """初始化默认ABAC策略"""
         self._policies = [
@@ -1861,11 +1862,11 @@ class ABACAccessControl:
             ),
         ]
         self._policies.sort(key=lambda p: -p.priority)
-    
+
     def register_user(self, user_attrs: UserAttributes):
         """注册用户属性"""
         self._user_attributes[user_attrs.user_id] = user_attrs
-    
+
     def evaluate_access(self, user_id: str, resource: ResourceAttributes,
                         env: EnvironmentAttributes, requested_permissions: Set[str],
                         mfa_provided: bool = False) -> Tuple[AccessResult, str]:
@@ -1873,20 +1874,20 @@ class ABACAccessControl:
         user = self._user_attributes.get(user_id)
         if not user:
             return AccessResult.DENIED, "User not found"
-        
+
         if resource.sensitivity in (DataSensitivity.CRITICAL, DataSensitivity.RESTRICTED):
             if not mfa_provided:
                 return AccessResult.MFA_REQUIRED, "MFA required for critical data"
-        
+
         for policy in self._policies:
             if self._matches_policy(user, resource, env, policy):
                 if requested_permissions.issubset(policy.permissions):
                     if policy.require_justification and not env.emergency_mode:
                         return AccessResult.GRANTED, f"Policy {policy.name} matched - justification required"
                     return AccessResult.GRANTED, f"Policy {policy.name} matched"
-        
+
         return AccessResult.DENIED, "No matching policy found"
-    
+
     def _matches_policy(self, user: UserAttributes, resource: ResourceAttributes,
                         env: EnvironmentAttributes, policy: ABACPolicy) -> bool:
         """检查是否匹配策略条件"""
@@ -1904,14 +1905,14 @@ class ABACAccessControl:
 
 class MedicalSecurityCompliance:
     """医疗安全合规检查器"""
-    
-    def __init__(self, access_control: ABACAccessControl, 
+
+    def __init__(self, access_control: ABACAccessControl,
                  audit_log: BlockchainAuditLog,
                  encryption: PatientDataEncryption):
         self.access_control = access_control
         self.audit_log = audit_log
         self.encryption = encryption
-    
+
     def check_hipaa_compliance(self) -> Dict[str, bool]:
         """检查HIPAA合规性"""
         return {
@@ -1920,7 +1921,7 @@ class MedicalSecurityCompliance:
             "audit_controls": len(self.audit_log._logs) > 0,
             "integrity_controls": self.audit_log.verify_integrity()[0]
         }
-    
+
     def generate_compliance_report(self) -> Dict:
         """生成合规报告"""
         hipaa = self.check_hipaa_compliance()
@@ -1938,7 +1939,7 @@ class MedicalSecurityCompliance:
 
 class MedicalDeviceSecuritySystem:
     """医疗设备安全系统 - 主类"""
-    
+
     def __init__(self):
         self.encryption = PatientDataEncryption()
         self.audit_log = BlockchainAuditLog()
@@ -1948,12 +1949,12 @@ class MedicalDeviceSecuritySystem:
         )
         self._patients: Dict[str, PatientRecord] = {}
         self._lock = threading.RLock()
-    
-    def register_patient(self, patient_id: str, name: str, 
+
+    def register_patient(self, patient_id: str, name: str,
                          date_of_birth: datetime) -> PatientRecord:
         """注册患者"""
         self.encryption.generate_patient_key(patient_id)
-        
+
         record = PatientRecord(
             patient_id=patient_id,
             name=name,
@@ -1961,12 +1962,12 @@ class MedicalDeviceSecuritySystem:
             diagnosis="",
             data_key_id=patient_id
         )
-        
+
         with self._lock:
             self._patients[patient_id] = record
-        
+
         return record
-    
+
     def create_patient_record(self, user_id: str, patient_id: str,
                               diagnosis: str, medications: List[str],
                               env: EnvironmentAttributes) -> bool:
@@ -1978,18 +1979,18 @@ class MedicalDeviceSecuritySystem:
             patient_id=patient_id,
             owner_department=Department.CARDIOLOGY
         )
-        
+
         result, msg = self.access_control.evaluate_access(
             user_id, resource, env, {"write"}
         )
-        
+
         if result not in (AccessResult.GRANTED, AccessResult.EMERGENCY_OVERRIDE):
             self.audit_log.log_access(
                 user_id, patient_id, "create_record", "ehr",
                 AccessResult.DENIED
             )
             return False
-        
+
         patient = self._patients.get(patient_id)
         if patient:
             data = json.dumps({
@@ -2006,15 +2007,15 @@ class MedicalDeviceSecuritySystem:
             }).encode()
             patient.diagnosis = diagnosis
             patient.medications = medications
-        
+
         self.audit_log.log_access(
             user_id, patient_id, "create_record", "ehr",
             result,
             justification="Emergency" if env.emergency_mode else None
         )
-        
+
         return True
-    
+
     def access_patient_record(self, user_id: str, patient_id: str,
                               env: EnvironmentAttributes,
                               mfa_provided: bool = False) -> Optional[Dict]:
@@ -2022,11 +2023,11 @@ class MedicalDeviceSecuritySystem:
         patient = self._patients.get(patient_id)
         if not patient:
             return None
-        
+
         sensitivity = DataSensitivity.SENSITIVE
         if "HIV" in patient.diagnosis:
             sensitivity = DataSensitivity.RESTRICTED
-        
+
         resource = ResourceAttributes(
             resource_id=patient_id,
             data_type=DataType.EHR,
@@ -2034,21 +2035,21 @@ class MedicalDeviceSecuritySystem:
             patient_id=patient_id,
             owner_department=Department.CARDIOLOGY
         )
-        
+
         result, msg = self.access_control.evaluate_access(
             user_id, resource, env, {"read"}, mfa_provided
         )
-        
+
         if result == AccessResult.MFA_REQUIRED:
             return {"error": "MFA_REQUIRED", "message": msg}
-        
+
         if result not in (AccessResult.GRANTED, AccessResult.EMERGENCY_OVERRIDE):
             self.audit_log.log_access(
                 user_id, patient_id, "read_record", "ehr",
                 AccessResult.DENIED
             )
             return None
-        
+
         decrypted_data = None
         if patient.encrypted_data:
             encrypted = json.loads(patient.encrypted_data)
@@ -2058,13 +2059,13 @@ class MedicalDeviceSecuritySystem:
             decrypted_data = self.encryption.decrypt_patient_data(
                 patient_id, iv, ciphertext, tag
             )
-        
+
         self.audit_log.log_access(
             user_id, patient_id, "read_record", "ehr",
             result,
             justification="Emergency" if env.emergency_mode else None
         )
-        
+
         return {
             "patient_id": patient_id,
             "name": patient.name,
@@ -2080,11 +2081,11 @@ if __name__ == "__main__":
     print("=" * 70)
     print("医疗设备安全合规系统演示")
     print("=" * 70)
-    
+
     system = MedicalDeviceSecuritySystem()
-    
+
     print("\n[1] 注册医护人员")
-    
+
     attending = UserAttributes(
         user_id="DOC001",
         role=UserRole.PHYSICIAN,
@@ -2097,7 +2098,7 @@ if __name__ == "__main__":
     )
     system.access_control.register_user(attending)
     print(f"  主治医生: {attending.user_id} (心内科)")
-    
+
     nurse = UserAttributes(
         user_id="NUR001",
         role=UserRole.NURSE,
@@ -2110,7 +2111,7 @@ if __name__ == "__main__":
     )
     system.access_control.register_user(nurse)
     print(f"  护士: {nurse.user_id} (心内科病房)")
-    
+
     intern = UserAttributes(
         user_id="INT001",
         role=UserRole.INTERN,
@@ -2123,18 +2124,18 @@ if __name__ == "__main__":
     )
     system.access_control.register_user(intern)
     print(f"  实习生: {intern.user_id}")
-    
+
     print("\n[2] 注册患者")
     patient = system.register_patient("P001", "张三", datetime(1980, 5, 15))
     print(f"  患者: {patient.name} (ID: {patient.patient_id})")
-    
+
     print("\n[3] 创建患者病历")
     env_normal = EnvironmentAttributes(
         location=Location.WARD,
         device_trust_level="high",
         emergency_mode=False
     )
-    
+
     success = system.create_patient_record(
         "DOC001", "P001",
         diagnosis="冠心病，高血压",
@@ -2142,37 +2143,37 @@ if __name__ == "__main__":
         env=env_normal
     )
     print(f"  主治医生创建病历: {'✓ 成功' if success else '✗ 失败'}")
-    
+
     print("\n[4] 访问控制测试")
-    
+
     result = system.access_patient_record("DOC001", "P001", env_normal)
     print(f"  主治医生访问患者P001: {'✓ 成功' if result and 'error' not in result else '✗ 失败'}")
-    
+
     result = system.access_patient_record("NUR001", "P001", env_normal)
     print(f"  护士访问患者P001: {'✓ 成功' if result and 'error' not in result else '✗ 失败'}")
-    
+
     result = system.access_patient_record("INT001", "P001", env_normal)
     print(f"  实习生访问患者P001: {'✓ 成功' if result and 'error' not in result else '✗ 拒绝'}")
-    
+
     print("\n[5] 急救模式访问测试")
     env_emergency = EnvironmentAttributes(
         location=Location.EMERGENCY,
         device_trust_level="high",
         emergency_mode=True
     )
-    
+
     result = system.access_patient_record("INT001", "P001", env_emergency)
     print(f"  实习生急救模式访问: {'✓ 成功' if result and 'error' not in result else '✗ 失败'}")
-    
+
     print("\n[6] 审计日志验证")
     integrity_ok, tampered = system.audit_log.verify_integrity()
     print(f"  日志链完整性: {'✓ 通过' if integrity_ok else '✗ 失败'}")
     print(f"  总日志条目: {len(system.audit_log._logs)}")
-    
+
     print("\n[7] 合规性检查")
     report = system.compliance.generate_compliance_report()
     print(f"  HIPAA合规: {'✓ 通过' if report['hipaa']['compliant'] else '✗ 未通过'}")
-    
+
     print("\n" + "=" * 70)
     print("演示完成")
     print("=" * 70)
@@ -2182,16 +2183,16 @@ if __name__ == "__main__":
 
 **性能指标**：
 
-| 指标 | 改进前 | 改进后 | 提升 |
-|------|--------|--------|------|
-| 患者数据加密率 | 0% | 100% | +100% |
-| 访问授权响应时间 | >10s | 1.8s | -82% |
-| 审计日志完整性 | 不可验证 | 100%可验证 | +100% |
-| 未授权访问检出 | 35% | 99.7% | +185% |
-| 内部威胁检出率 | 12% | 87% | +625% |
-| 批量访问告警 | N/A | <5分钟 | 实时 |
-| 数据检索性能（加密） | N/A | <200ms | 可接受 |
-| 系统可用性 | 99.5% | 99.98% | +0.48% |
+| 指标                 | 改进前   | 改进后     | 提升   |
+| -------------------- | -------- | ---------- | ------ |
+| 患者数据加密率       | 0%       | 100%       | +100%  |
+| 访问授权响应时间     | >10s     | 1.8s       | -82%   |
+| 审计日志完整性       | 不可验证 | 100%可验证 | +100%  |
+| 未授权访问检出       | 35%      | 99.7%      | +185%  |
+| 内部威胁检出率       | 12%      | 87%        | +625%  |
+| 批量访问告警         | N/A      | <5分钟     | 实时   |
+| 数据检索性能（加密） | N/A      | <200ms     | 可接受 |
+| 系统可用性           | 99.5%    | 99.98%     | +0.48% |
 
 **业务价值**：
 
@@ -2439,13 +2440,13 @@ class ResponseTask:
 
 class RealTimeRuleEngine:
     """实时规则检测引擎"""
-    
+
     def __init__(self):
         self._rules: List[Dict] = []
         self._event_windows: Dict[str, deque] = defaultdict(lambda: deque(maxlen=10000))
         self._lock = threading.RLock()
         self._init_default_rules()
-    
+
     def _init_default_rules(self):
         """初始化默认检测规则"""
         self._rules = [
@@ -2477,23 +2478,23 @@ class RealTimeRuleEngine:
                 "description": "Sequential port scanning detected"
             },
         ]
-    
+
     def process_event(self, event: SecurityEvent) -> Optional[DetectionResult]:
         """处理单个事件"""
         with self._lock:
             device_window = self._event_windows[event.device_id]
             device_window.append(event)
-            
+
             cutoff = datetime.now() - timedelta(seconds=3600)
             while device_window and device_window[0].timestamp < cutoff:
                 device_window.popleft()
-            
+
             for rule in self._rules:
                 window_events = [
                     e for e in device_window
                     if (datetime.now() - e.timestamp).total_seconds() <= rule["window_seconds"]
                 ]
-                
+
                 if rule["condition"](window_events):
                     return DetectionResult(
                         threat_type=rule["threat_type"],
@@ -2504,9 +2505,9 @@ class RealTimeRuleEngine:
                         evidence={"rule_id": rule["rule_id"], "matched_events": len(window_events)},
                         recommended_action=self._get_action_for_level(rule["threat_level"])
                     )
-        
+
         return None
-    
+
     def _get_action_for_level(self, level: ThreatLevel) -> ResponseAction:
         """根据威胁级别获取响应动作"""
         mapping = {
@@ -2522,12 +2523,12 @@ class RealTimeRuleEngine:
 
 class BehavioralAnomalyDetection:
     """基于设备行为画像的异常检测"""
-    
+
     def __init__(self):
         self._profiles: Dict[str, DeviceBehaviorProfile] = {}
         self._learning_mode: Set[str] = set()
         self._profile_lock = threading.RLock()
-    
+
     def create_profile(self, device_id: str) -> DeviceBehaviorProfile:
         """创建设备行为画像"""
         profile = DeviceBehaviorProfile(device_id=device_id)
@@ -2535,16 +2536,16 @@ class BehavioralAnomalyDetection:
             self._profiles[device_id] = profile
             self._learning_mode.add(device_id)
         return profile
-    
+
     def update_profile(self, event: SecurityEvent):
         """使用事件更新行为画像"""
         with self._profile_lock:
             if event.device_id not in self._profiles:
                 self.create_profile(event.device_id)
-            
+
             profile = self._profiles[event.device_id]
             profile.updated_at = datetime.now()
-            
+
             if event.event_type == EventType.NETWORK_FLOW:
                 if event.destination_ip:
                     profile.normal_destinations.add(event.destination_ip)
@@ -2555,39 +2556,39 @@ class BehavioralAnomalyDetection:
                     if len(profile.packet_sizes) >= 10:
                         profile.avg_packet_size = statistics.mean(profile.packet_sizes)
                         profile.std_packet_size = statistics.stdev(profile.packet_sizes) if len(profile.packet_sizes) > 1 else 0
-            
+
             if (datetime.now() - profile.created_at).days >= 1:
                 self._learning_mode.discard(event.device_id)
-    
+
     def detect_anomaly(self, event: SecurityEvent) -> Optional[DetectionResult]:
         """基于行为画像检测异常"""
         with self._profile_lock:
             if event.device_id not in self._profiles:
                 self.create_profile(event.device_id)
                 return None
-            
+
             profile = self._profiles[event.device_id]
-            
+
             if event.device_id in self._learning_mode:
                 return None
-            
+
             anomalies = []
             evidence = {}
-            
+
             if event.destination_ip and event.destination_ip not in profile.normal_destinations:
                 anomalies.append("new_destination")
                 evidence["destination_ip"] = event.destination_ip
-            
+
             if event.destination_port and event.destination_port not in profile.normal_ports:
                 anomalies.append("new_port")
                 evidence["destination_port"] = event.destination_port
-            
+
             if event.bytes_transferred > 0 and profile.std_packet_size > 0:
                 z_score = abs(event.bytes_transferred - profile.avg_packet_size) / profile.std_packet_size
                 if z_score > 3:
                     anomalies.append("anomalous_packet_size")
                     evidence["z_score"] = z_score
-            
+
             if anomalies:
                 return DetectionResult(
                     threat_type=ThreatType.ANOMALY_BEHAVIOR,
@@ -2598,7 +2599,7 @@ class BehavioralAnomalyDetection:
                     evidence=evidence,
                     recommended_action=ResponseAction.RATE_LIMIT if len(anomalies) < 3 else ResponseAction.ISOLATE
                 )
-        
+
         return None
 
 
@@ -2606,7 +2607,7 @@ class BehavioralAnomalyDetection:
 
 class ThreatIntelligenceManager:
     """威胁情报管理器"""
-    
+
     def __init__(self):
         self._iocs: Dict[str, ThreatIndicator] = {}
         self._ip_iocs: Set[str] = set()
@@ -2614,7 +2615,7 @@ class ThreatIntelligenceManager:
         self._hash_iocs: Set[str] = set()
         self._lock = threading.RLock()
         self._init_default_iocs()
-    
+
     def _init_default_iocs(self):
         """初始化默认威胁情报"""
         default_iocs = [
@@ -2624,7 +2625,7 @@ class ThreatIntelligenceManager:
         ]
         for ioc in default_iocs:
             self.add_ioc(ioc)
-    
+
     def add_ioc(self, ioc: ThreatIndicator):
         """添加威胁指标"""
         with self._lock:
@@ -2635,7 +2636,7 @@ class ThreatIntelligenceManager:
                 self._domain_iocs.add(ioc.value)
             elif ioc.ioc_type == "hash":
                 self._hash_iocs.add(ioc.value)
-    
+
     def check_event(self, event: SecurityEvent) -> Optional[DetectionResult]:
         """检查事件是否匹配威胁情报"""
         with self._lock:
@@ -2650,7 +2651,7 @@ class ThreatIntelligenceManager:
                     evidence={"ioc_type": "ip", "ioc_value": event.destination_ip, "tags": list(ioc.tags)},
                     recommended_action=ResponseAction.BLOCK
                 )
-            
+
             domain = event.metadata.get("domain")
             if domain and domain in self._domain_iocs:
                 ioc = self._iocs[domain]
@@ -2663,7 +2664,7 @@ class ThreatIntelligenceManager:
                     evidence={"ioc_type": "domain", "ioc_value": domain},
                     recommended_action=ResponseAction.BLOCK
                 )
-        
+
         return None
 
 
@@ -2671,13 +2672,13 @@ class ThreatIntelligenceManager:
 
 class AutomatedResponseSystem:
     """自动化响应系统"""
-    
+
     def __init__(self):
         self._tasks: Dict[str, ResponseTask] = {}
         self._device_status: Dict[str, str] = {}
         self._action_handlers: Dict[ResponseAction, Callable] = {}
         self._init_handlers()
-    
+
     def _init_handlers(self):
         """初始化响应处理器"""
         self._action_handlers = {
@@ -2687,7 +2688,7 @@ class AutomatedResponseSystem:
             ResponseAction.BLOCK: self._handle_block,
             ResponseAction.QUARANTINE: self._handle_quarantine
         }
-    
+
     def execute_response(self, detection: DetectionResult) -> ResponseTask:
         """执行响应"""
         task = ResponseTask(
@@ -2696,7 +2697,7 @@ class AutomatedResponseSystem:
             target_device=detection.device_id,
             parameters={"reason": detection.description, "confidence": detection.confidence}
         )
-        
+
         handler = self._action_handlers.get(detection.recommended_action)
         if handler:
             task.status = "executing"
@@ -2707,35 +2708,35 @@ class AutomatedResponseSystem:
             except Exception as e:
                 task.result = f"Failed: {str(e)}"
                 task.status = "failed"
-        
+
         task.executed_at = datetime.now()
         self._tasks[task.task_id] = task
-        
+
         return task
-    
+
     def _handle_alert(self, device_id: str, params: Dict) -> str:
         """处理告警"""
         print(f"[ALERT] Device {device_id}: {params.get('reason')}")
         return f"Alert sent to security team"
-    
+
     def _handle_rate_limit(self, device_id: str, params: Dict) -> str:
         """处理速率限制"""
         self._device_status[device_id] = "rate_limited"
         print(f"[RATE_LIMIT] Device {device_id} traffic rate limited to 10kbps")
         return f"Rate limit applied: 10kbps"
-    
+
     def _handle_isolate(self, device_id: str, params: Dict) -> str:
         """处理隔离"""
         self._device_status[device_id] = "isolated"
         print(f"[ISOLATE] Device {device_id} moved to isolation VLAN")
         return f"Device isolated in VLAN 999"
-    
+
     def _handle_block(self, device_id: str, params: Dict) -> str:
         """处理阻断"""
         self._device_status[device_id] = "blocked"
         print(f"[BLOCK] Device {device_id} network access blocked")
         return f"All traffic blocked"
-    
+
     def _handle_quarantine(self, device_id: str, params: Dict) -> str:
         """处理隔离区"""
         self._device_status[device_id] = "quarantined"
@@ -2747,64 +2748,64 @@ class AutomatedResponseSystem:
 
 class IoTThreatDetectionSystem:
     """IoT威胁检测与响应系统 - 主类"""
-    
+
     def __init__(self):
         self.rule_engine = RealTimeRuleEngine()
         self.behavioral_detection = BehavioralAnomalyDetection()
         self.threat_intel = ThreatIntelligenceManager()
         self.response_system = AutomatedResponseSystem()
-        
+
         self._detections: List[DetectionResult] = []
         self._events_processed: int = 0
         self._detection_count: int = 0
         self._lock = threading.RLock()
-    
+
     def process_event(self, event: SecurityEvent) -> Optional[DetectionResult]:
         """处理安全事件"""
         with self._lock:
             self._events_processed += 1
-        
+
         self.behavioral_detection.update_profile(event)
-        
+
         detections = []
-        
+
         rule_detection = self.rule_engine.process_event(event)
         if rule_detection:
             detections.append(rule_detection)
-        
+
         anomaly_detection = self.behavioral_detection.detect_anomaly(event)
         if anomaly_detection:
             detections.append(anomaly_detection)
-        
+
         intel_detection = self.threat_intel.check_event(event)
         if intel_detection:
             detections.append(intel_detection)
-        
+
         if detections:
             priority = {ThreatLevel.CRITICAL: 4, ThreatLevel.HIGH: 3, ThreatLevel.MEDIUM: 2, ThreatLevel.LOW: 1}
             best_detection = max(detections, key=lambda d: priority.get(d.threat_level, 0))
-            
+
             with self._lock:
                 self._detections.append(best_detection)
                 self._detection_count += 1
-            
+
             response = self.response_system.execute_response(best_detection)
             print(f"[RESPONSE] {response.action.value} executed for {event.device_id}")
-            
+
             return best_detection
-        
+
         return None
-    
+
     def get_statistics(self) -> Dict:
         """获取检测统计"""
         with self._lock:
             threat_type_counts = defaultdict(int)
             threat_level_counts = defaultdict(int)
-            
+
             for d in self._detections:
                 threat_type_counts[d.threat_type.value] += 1
                 threat_level_counts[d.threat_level.value] += 1
-            
+
             return {
                 "events_processed": self._events_processed,
                 "detections": self._detection_count,
@@ -2822,13 +2823,13 @@ if __name__ == "__main__":
     print("=" * 70)
     print("IoT安全威胁检测与响应系统演示")
     print("=" * 70)
-    
+
     system = IoTThreatDetectionSystem()
-    
+
     print("\n[1] 设备行为学习阶段（模拟7天正常行为）")
-    
+
     device_id = "CAM_001"
-    
+
     for i in range(100):
         event = SecurityEvent(
             event_type=EventType.NETWORK_FLOW,
@@ -2840,11 +2841,11 @@ if __name__ == "__main__":
             bytes_transferred=5000 + (i % 1000)
         )
         system.process_event(event)
-    
+
     print(f"  设备 {device_id} 行为画像已建立")
-    
+
     print("\n[2] 暴力破解攻击检测")
-    
+
     for i in range(7):
         event = SecurityEvent(
             event_type=EventType.AUTHENTICATION,
@@ -2857,9 +2858,9 @@ if __name__ == "__main__":
             print(f"  攻击检测: {detection.description}")
             print(f"  威胁级别: {detection.threat_level.value}")
             print(f"  建议动作: {detection.recommended_action.value}")
-    
+
     print("\n[3] C&C通信检测（威胁情报匹配）")
-    
+
     event = SecurityEvent(
         event_type=EventType.NETWORK_FLOW,
         device_id=device_id,
@@ -2874,9 +2875,9 @@ if __name__ == "__main__":
         print(f"  威胁检测: {detection.description}")
         print(f"  置信度: {detection.confidence:.0%}")
         print(f"  响应动作: {detection.recommended_action.value}")
-    
+
     print("\n[4] 异常行为检测")
-    
+
     event = SecurityEvent(
         event_type=EventType.NETWORK_FLOW,
         device_id=device_id,
@@ -2890,18 +2891,18 @@ if __name__ == "__main__":
     if detection:
         print(f"  异常检测: {detection.description}")
         print(f"  证据: {detection.evidence}")
-    
+
     print("\n[5] 检测系统统计")
     stats = system.get_statistics()
     print(f"  处理事件总数: {stats['events_processed']}")
     print(f"  威胁检测数: {stats['detections']}")
     print(f"  检测率: {stats['detection_rate']:.2%}")
     print(f"  威胁级别分布: {stats['threat_level_distribution']}")
-    
+
     print("\n[6] 设备安全状态")
     for device, status in system.response_system._device_status.items():
         print(f"  设备 {device}: {status}")
-    
+
     print("\n" + "=" * 70)
     print("演示完成")
     print("=" * 70)
@@ -2911,16 +2912,16 @@ if __name__ == "__main__":
 
 **性能指标**：
 
-| 指标 | 改进前 | 改进后 | 提升 |
-|------|--------|--------|------|
-| 威胁检测延迟 | 45分钟 | 85ms | -99.97% |
-| 自动响应时间 | 人工/45分钟 | 4.2秒 | -99.8% |
-| 检测准确率 | 65% | 97.3% | +49.7% |
-| 误报率 | 35% | 4.8% | -86.3% |
-| 僵尸网络检出 | 23% | 94% | +308% |
-| DDoS攻击缓解时间 | 2小时 | 30秒 | -99.6% |
-| 日处理事件量 | 1亿 | 150亿 | +14900% |
-| 系统可用性 | 99.5% | 99.99% | +0.49% |
+| 指标             | 改进前      | 改进后 | 提升    |
+| ---------------- | ----------- | ------ | ------- |
+| 威胁检测延迟     | 45分钟      | 85ms   | -99.97% |
+| 自动响应时间     | 人工/45分钟 | 4.2秒  | -99.8%  |
+| 检测准确率       | 65%         | 97.3%  | +49.7%  |
+| 误报率           | 35%         | 4.8%   | -86.3%  |
+| 僵尸网络检出     | 23%         | 94%    | +308%   |
+| DDoS攻击缓解时间 | 2小时       | 30秒   | -99.6%  |
+| 日处理事件量     | 1亿         | 150亿  | +14900% |
+| 系统可用性       | 99.5%       | 99.99% | +0.49%  |
 
 **业务价值**：
 

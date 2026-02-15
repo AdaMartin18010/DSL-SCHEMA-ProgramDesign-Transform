@@ -694,8 +694,8 @@ class IoTControlAnalyzer:
 
 ### 7.3 在线资源
 
-- **IEC官网**：<https://www.iec.ch/>
-- **PostgreSQL官网**：<https://www.postgresql.org/>
+- **IEC官网**：[https://www.iec.ch/](https://www.iec.ch/)
+- **PostgreSQL官网**：[https://www.postgresql.org/](https://www.postgresql.org/)
 
 ---
 

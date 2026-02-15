@@ -80,71 +80,71 @@ IoT传感器Schema转换体系支持将Schema定义
 
 ### 2.1 类型映射维度
 
-| Schema类型 | Python | Rust | Java | Go | C/C++ |
-|-----------|--------|------|------|-----|-------|
-| `BOOL` | `bool` | `bool` | `boolean` | `bool` | `bool` |
-| `INT8` | `int` | `i8` | `byte` | `int8` | `int8_t` |
-| `INT16` | `int` | `i16` | `short` | `int16` | `int16_t` |
-| `INT32` | `int` | `i32` | `int` | `int32` | `int32_t` |
-| `INT64` | `int` | `i64` | `long` | `int64` | `int64_t` |
-| `FLOAT32` | `float` | `f32` | `float` | `float32` | `float` |
-| `FLOAT64` | `float` | `f64` | `double` | `float64` | `double` |
-| `STRING` | `str` | `String` | `String` | `string` | `char*` |
-| `BYTES` | `bytes` | `Vec<u8>` | `byte[]` | `[]byte` | `uint8_t*` |
-| `ARRAY<T>` | `List[T]` | `Vec<T>` | `List<T>` | `[]T` | `T[]` |
-| `STRUCT` | `class` | `struct` | `class` | `struct` | `struct` |
-| `ENUM` | `Enum` | `enum` | `enum` | `const` | `enum` |
+| Schema类型   | Python        | Rust             | Java         | Go          | C/C++        |
+| ------------ | ------------- | ---------------- | ------------ | ----------- | ------------ |
+| `BOOL`     | `bool`      | `bool`         | `boolean`  | `bool`    | `bool`     |
+| `INT8`     | `int`       | `i8`           | `byte`     | `int8`    | `int8_t`   |
+| `INT16`    | `int`       | `i16`          | `short`    | `int16`   | `int16_t`  |
+| `INT32`    | `int`       | `i32`          | `int`      | `int32`   | `int32_t`  |
+| `INT64`    | `int`       | `i64`          | `long`     | `int64`   | `int64_t`  |
+| `FLOAT32`  | `float`     | `f32`          | `float`    | `float32` | `float`    |
+| `FLOAT64`  | `float`     | `f64`          | `double`   | `float64` | `double`   |
+| `STRING`   | `str`       | `String`       | `String`   | `string`  | `char*`    |
+| `BYTES`    | `bytes`     | `Vec<u8>`      | `byte[]`   | `[]byte`  | `uint8_t*` |
+| `ARRAY<T>` | `List[T]`   | `Vec<T>`       | `List<T>`  | `[]T`     | `T[]`      |
+| `STRUCT`   | `class`     | `struct`       | `class`    | `struct`  | `struct`   |
+| `ENUM`     | `Enum`      | `enum`         | `enum`     | `const`   | `enum`     |
 | `MAP<K,V>` | `Dict[K,V]` | `HashMap<K,V>` | `Map<K,V>` | `map[K]V` | `std::map` |
 
 ### 2.2 内存布局维度
 
-| 目标语言 | 内存对齐 | 字节序 | 内存管理 |
-|---------|---------|--------|---------|
-| Python | 自动对齐 | 平台相关 | GC管理 |
-| Rust | 显式对齐 | 平台相关 | 所有权系统 |
-| Java | JVM对齐 | 大端序 | GC管理 |
-| Go | 自动对齐 | 平台相关 | GC管理 |
-| C/C++ | 显式对齐 | 平台相关 | 手动管理 |
+| 目标语言 | 内存对齐 | 字节序   | 内存管理   |
+| -------- | -------- | -------- | ---------- |
+| Python   | 自动对齐 | 平台相关 | GC管理     |
+| Rust     | 显式对齐 | 平台相关 | 所有权系统 |
+| Java     | JVM对齐  | 大端序   | GC管理     |
+| Go       | 自动对齐 | 平台相关 | GC管理     |
+| C/C++    | 显式对齐 | 平台相关 | 手动管理   |
 
 ### 2.3 控制流维度
 
-| Schema控制 | Python | Rust | Java | Go | C/C++ |
-|-----------|--------|------|------|-----|-------|
-| 采样控制 | `async/await` | `async/await` | `CompletableFuture` | `goroutine` | 回调函数 |
-| 事件处理 | `asyncio.Event` | `tokio::sync` | `EventBus` | `channel` | 信号量 |
-| 状态机 | `state_machine` | `state_machine` | `StateMachine` | `state_machine` | `switch-case` |
+| Schema控制 | Python            | Rust              | Java                  | Go                | C/C++           |
+| ---------- | ----------------- | ----------------- | --------------------- | ----------------- | --------------- |
+| 采样控制   | `async/await`   | `async/await`   | `CompletableFuture` | `goroutine`     | 回调函数        |
+| 事件处理   | `asyncio.Event` | `tokio::sync`   | `EventBus`          | `channel`       | 信号量          |
+| 状态机     | `state_machine` | `state_machine` | `StateMachine`      | `state_machine` | `switch-case` |
 
 ### 2.4 错误模型维度
 
-| Schema错误 | Python | Rust | Java | Go | C/C++ |
-|-----------|--------|------|------|-----|-------|
-| 数据验证错误 | `ValueError` | `Result<T,E>` | `IllegalArgumentException` | `error` | 返回码 |
-| 通信错误 | `ConnectionError` | `io::Error` | `IOException` | `net.Error` | `errno` |
-| 超时错误 | `TimeoutError` | `tokio::time::error` | `TimeoutException` | `context.DeadlineExceeded` | `ETIMEDOUT` |
+| Schema错误   | Python              | Rust                   | Java                         | Go                           | C/C++         |
+| ------------ | ------------------- | ---------------------- | ---------------------------- | ---------------------------- | ------------- |
+| 数据验证错误 | `ValueError`      | `Result<T,E>`        | `IllegalArgumentException` | `error`                    | 返回码        |
+| 通信错误     | `ConnectionError` | `io::Error`          | `IOException`              | `net.Error`                | `errno`     |
+| 超时错误     | `TimeoutError`    | `tokio::time::error` | `TimeoutException`         | `context.DeadlineExceeded` | `ETIMEDOUT` |
 
 ### 2.5 并发原语维度
 
-| Schema并发 | Python | Rust | Java | Go | C/C++ |
-|-----------|--------|------|------|-----|-------|
-| 数据采集 | `asyncio` | `tokio` | `ExecutorService` | `goroutine` | `pthread` |
-| 数据同步 | `asyncio.Lock` | `Mutex<T>` | `synchronized` | `sync.Mutex` | `pthread_mutex` |
-| 消息传递 | `asyncio.Queue` | `mpsc::channel` | `BlockingQueue` | `channel` | `message_queue` |
+| Schema并发 | Python            | Rust              | Java                | Go             | C/C++             |
+| ---------- | ----------------- | ----------------- | ------------------- | -------------- | ----------------- |
+| 数据采集   | `asyncio`       | `tokio`         | `ExecutorService` | `goroutine`  | `pthread`       |
+| 数据同步   | `asyncio.Lock`  | `Mutex<T>`      | `synchronized`    | `sync.Mutex` | `pthread_mutex` |
+| 消息传递   | `asyncio.Queue` | `mpsc::channel` | `BlockingQueue`   | `channel`    | `message_queue` |
 
 ### 2.6 二进制编码维度
 
-| Schema编码 | Python | Rust | Java | Go | C/C++ |
-|-----------|--------|------|------|-----|-------|
-| Modbus RTU | `pymodbus` | `modbus-rs` | `jlibmodbus` | `go-modbus` | `libmodbus` |
-| CAN | `python-can` | `can` | `can4java` | `go-can` | `SocketCAN` |
-| 自定义二进制 | `struct` | `bincode` | `ByteBuffer` | `encoding/binary` | `memcpy` |
+| Schema编码   | Python         | Rust          | Java           | Go                  | C/C++         |
+| ------------ | -------------- | ------------- | -------------- | ------------------- | ------------- |
+| Modbus RTU   | `pymodbus`   | `modbus-rs` | `jlibmodbus` | `go-modbus`       | `libmodbus` |
+| CAN          | `python-can` | `can`       | `can4java`   | `go-can`          | `SocketCAN` |
+| 自定义二进制 | `struct`     | `bincode`   | `ByteBuffer` | `encoding/binary` | `memcpy`    |
 
 ### 2.7 安全边界维度
 
-| Schema安全 | Python | Rust | Java | Go | C/C++ |
-|-----------|--------|------|------|-----|-------|
-| TLS/DTLS | `ssl` | `rustls` | `javax.net.ssl` | `crypto/tls` | `OpenSSL` |
-| 认证 | `requests.auth` | `reqwest` | `javax.security` | `golang.org/x/oauth2` | `libcurl` |
-| 加密 | `cryptography` | `ring` | `javax.crypto` | `golang.org/x/crypto` | `OpenSSL` |
+| Schema安全 | Python            | Rust        | Java               | Go                      | C/C++       |
+| ---------- | ----------------- | ----------- | ------------------ | ----------------------- | ----------- |
+| TLS/DTLS   | `ssl`           | `rustls`  | `javax.net.ssl`  | `crypto/tls`          | `OpenSSL` |
+| 认证       | `requests.auth` | `reqwest` | `javax.security` | `golang.org/x/oauth2` | `libcurl` |
+| 加密       | `cryptography`  | `ring`    | `javax.crypto`   | `golang.org/x/crypto` | `OpenSSL` |
 
 ---
 

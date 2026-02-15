@@ -7,22 +7,55 @@
   - [1. 案例概述](#1-案例概述)
   - [2. 案例1：智能制造数字孪生](#2-案例1智能制造数字孪生)
     - [2.1 业务背景](#21-业务背景)
+      - [2.1.1 企业背景](#211-企业背景)
+      - [2.1.2 业务痛点](#212-业务痛点)
+      - [2.1.3 业务目标](#213-业务目标)
     - [2.2 技术挑战](#22-技术挑战)
+      - [挑战1：多源异构数据实时融合](#挑战1多源异构数据实时融合)
+      - [挑战2：复杂物理实体精确建模](#挑战2复杂物理实体精确建模)
+      - [挑战3：大规模实时仿真计算](#挑战3大规模实时仿真计算)
+      - [挑战4：虚实同步一致性保障](#挑战4虚实同步一致性保障)
+      - [挑战5：安全与隐私保护](#挑战5安全与隐私保护)
     - [2.3 Schema定义](#23-schema定义)
     - [2.4 完整代码实现](#24-完整代码实现)
     - [2.5 效果评估](#25-效果评估)
+      - [2.5.1 性能指标](#251-性能指标)
+      - [2.5.2 业务价值](#252-业务价值)
+      - [2.5.3 经验教训](#253-经验教训)
   - [3. 案例2：预测维护数字孪生](#3-案例2预测维护数字孪生)
     - [3.1 业务背景](#31-业务背景)
+      - [3.1.1 企业背景](#311-企业背景)
+      - [3.1.2 业务痛点](#312-业务痛点)
+      - [3.1.3 业务目标](#313-业务目标)
     - [3.2 技术挑战](#32-技术挑战)
+      - [挑战1：高维度时序数据处理](#挑战1高维度时序数据处理)
+      - [挑战2：多物理场耦合建模](#挑战2多物理场耦合建模)
+      - [挑战3：小样本故障数据](#挑战3小样本故障数据)
+      - [挑战4：极端工况适应性](#挑战4极端工况适应性)
+      - [挑战5：实时性与精度平衡](#挑战5实时性与精度平衡)
     - [3.3 Schema定义](#33-schema定义)
     - [3.4 完整代码实现](#34-完整代码实现)
     - [3.5 效果评估](#35-效果评估)
+      - [3.5.1 性能指标](#351-性能指标)
+      - [3.5.2 业务价值](#352-业务价值)
+      - [3.5.3 经验教训](#353-经验教训)
   - [4. 案例3：产品设计数字孪生](#4-案例3产品设计数字孪生)
     - [4.1 业务背景](#41-业务背景)
+      - [4.1.1 企业背景](#411-企业背景)
+      - [4.1.2 业务痛点](#412-业务痛点)
+      - [4.1.3 业务目标](#413-业务目标)
     - [4.2 技术挑战](#42-技术挑战)
+      - [挑战1：多尺度建模](#挑战1多尺度建模)
+      - [挑战2：材料本构建模](#挑战2材料本构建模)
+      - [挑战3：不确定性量化](#挑战3不确定性量化)
+      - [挑战4：实时仿真效率](#挑战4实时仿真效率)
+      - [挑战5：模型验证与确认（V\&V）](#挑战5模型验证与确认vv)
     - [4.3 Schema定义](#43-schema定义)
     - [4.4 完整代码实现](#44-完整代码实现)
     - [4.5 效果评估](#45-效果评估)
+      - [4.5.1 性能指标](#451-性能指标)
+      - [4.5.2 业务价值](#452-业务价值)
+      - [4.5.3 经验教训](#453-经验教训)
   - [5. 案例总结](#5-案例总结)
     - [5.1 成功因素](#51-成功因素)
     - [5.2 最佳实践](#52-最佳实践)
@@ -49,20 +82,20 @@
 
 #### 2.1.1 企业背景
 
-**企业名称**：华智精密制造有限公司  
-**行业领域**：汽车零部件制造  
-**企业规模**：员工3000人，年产值15亿元  
+**企业名称**：华智精密制造有限公司
+**行业领域**：汽车零部件制造
+**企业规模**：员工3000人，年产值15亿元
 **产线规模**：12条自动化生产线，包含工业机器人86台、CNC加工中心120台、AGV物流车45台
 
 #### 2.1.2 业务痛点
 
-| 痛点类别 | 具体问题 | 影响程度 |
-|---------|---------|---------|
+| 痛点类别                 | 具体问题                                         | 影响程度   |
+| ------------------------ | ------------------------------------------------ | ---------- |
 | **生产调度高延迟** | 传统人工调度响应时间30分钟以上，无法应对急单插单 | ⭐⭐⭐⭐⭐ |
-| **设备故障停机** | 月均非计划停机42小时，单次故障平均损失8万元 | ⭐⭐⭐⭐⭐ |
-| **质量追溯困难** | 产品出现质量问题需2小时追溯根源，影响客户满意度 | ⭐⭐⭐⭐ |
-| **能耗成本高** | 生产线能耗占生产成本18%，缺乏精细化管控手段 | ⭐⭐⭐⭐ |
-| **工艺优化滞后** | 工艺参数优化依赖人工经验，迭代周期长达2周 | ⭐⭐⭐ |
+| **设备故障停机**   | 月均非计划停机42小时，单次故障平均损失8万元      | ⭐⭐⭐⭐⭐ |
+| **质量追溯困难**   | 产品出现质量问题需2小时追溯根源，影响客户满意度  | ⭐⭐⭐⭐   |
+| **能耗成本高**     | 生产线能耗占生产成本18%，缺乏精细化管控手段      | ⭐⭐⭐⭐   |
+| **工艺优化滞后**   | 工艺参数优化依赖人工经验，迭代周期长达2周        | ⭐⭐⭐     |
 
 #### 2.1.3 业务目标
 
@@ -75,18 +108,23 @@
 ### 2.2 技术挑战
 
 #### 挑战1：多源异构数据实时融合
+
 生产线涉及PLC、SCADA、MES、ERP等12种不同系统，数据格式包括OPC UA、Modbus、MQTT、HTTP API等，数据采样频率从10ms到1分钟不等，需要实现毫秒级数据同步。
 
 #### 挑战2：复杂物理实体精确建模
+
 生产线包含机械臂、传送带、传感器等86类设备，每类设备具有不同的运动学模型、电气特性和控制逻辑，需要建立统一的数字孪生模型。
 
 #### 挑战3：大规模实时仿真计算
+
 产线3D模型包含500万+三角面片，实时渲染需保持60FPS，同时需运行物理仿真（碰撞检测、运动学计算），计算量巨大。
 
 #### 挑战4：虚实同步一致性保障
+
 物理世界与数字世界的状态同步需满足"五维同步"（几何、物理、行为、规则、数据），任何维度的不一致都可能导致决策失误。
 
 #### 挑战5：安全与隐私保护
+
 工业数据涉及企业核心机密，需实现端到端加密、访问控制、数据脱敏，同时满足等保2.0三级要求。
 
 ---
@@ -274,13 +312,13 @@ class Equipment:
     state: EquipmentState = EquipmentState.IDLE
     health_score: float = 1.0  # 健康度0-1
     sensors: Dict[str, 'Sensor'] = field(default_factory=dict)
-    
+
     # 运行参数
     oee: float = 0.0  # 设备综合效率
     production_count: int = 0
     energy_consumption: float = 0.0  # kWh
     last_maintenance: datetime = field(default_factory=datetime.now)
-    
+
     def update_state(self, new_state: EquipmentState):
         """更新设备状态"""
         old_state = self.state
@@ -300,16 +338,16 @@ class Sensor:
     min_value: float
     max_value: float
     alert_threshold: float
-    
+
     # 历史数据缓存（最近1000个采样点）
     history: deque = field(default_factory=lambda: deque(maxlen=1000))
     last_value: Optional[float] = None
-    
+
     def record(self, value: float, timestamp: datetime = None):
         """记录传感器数据"""
         if timestamp is None:
             timestamp = datetime.now()
-        
+
         data = SensorData(
             sensor_id=self.id,
             sensor_type=self.sensor_type,
@@ -324,7 +362,7 @@ class Sensor:
 
 class DigitalTwinEngine:
     """数字孪生核心引擎"""
-    
+
     def __init__(self):
         self.equipments: Dict[str, Equipment] = {}
         self.sensors: Dict[str, Sensor] = {}
@@ -336,23 +374,23 @@ class DigitalTwinEngine:
             "avg_latency_ms": 0,
             "data_points": 0
         }
-        
+
     def register_equipment(self, equipment: Equipment):
         """注册设备到数字孪生"""
         self.equipments[equipment.id] = equipment
         logger.info(f"注册设备: {equipment.name} (ID: {equipment.id})")
-        
+
     def register_sensor(self, sensor: Sensor):
         """注册传感器"""
         self.sensors[sensor.id] = sensor
         if sensor.equipment_id in self.equipments:
             self.equipments[sensor.equipment_id].sensors[sensor.id] = sensor
         logger.info(f"注册传感器: {sensor.name} (类型: {sensor.sensor_type.value})")
-    
+
     def subscribe_event(self, listener: Callable):
         """订阅数字孪生事件"""
         self.event_listeners.append(listener)
-    
+
     def notify_event(self, event_type: str, data: Any):
         """通知所有监听器"""
         for listener in self.event_listeners:
@@ -360,35 +398,35 @@ class DigitalTwinEngine:
                 listener(event_type, data)
             except Exception as e:
                 logger.error(f"事件通知失败: {e}")
-    
+
     async def sync_loop(self):
         """实时数据同步循环"""
         while self.running:
             start_time = time.time()
-            
+
             # 同步所有传感器数据
             for sensor in self.sensors.values():
                 # 模拟从物理设备读取数据
                 value = await self.read_physical_sensor(sensor)
                 sensor.record(value)
                 self.sync_stats["data_points"] += 1
-            
+
             # 更新设备OEE
             for equipment in self.equipments.values():
                 equipment.oee = self.calculate_oee(equipment)
-            
+
             # 计算同步延迟
             latency = (time.time() - start_time) * 1000  # ms
             self.sync_stats["total_syncs"] += 1
             self.sync_stats["avg_latency_ms"] = (
                 self.sync_stats["avg_latency_ms"] * (self.sync_stats["total_syncs"] - 1) + latency
             ) / self.sync_stats["total_syncs"]
-            
+
             # 检查异常
             await self.detect_anomalies()
-            
+
             await asyncio.sleep(self.sync_interval)
-    
+
     async def read_physical_sensor(self, sensor: Sensor) -> float:
         """从物理传感器读取数据（模拟）"""
         # 实际项目中这里连接真实设备
@@ -407,10 +445,10 @@ class DigitalTwinEngine:
         else:
             base = 10
             noise = random.gauss(0, 1)
-        
+
         value = base + noise
         return max(sensor.min_value, min(sensor.max_value, value))
-    
+
     def calculate_oee(self, equipment: Equipment) -> float:
         """计算设备综合效率 (OEE)"""
         # 简化计算：可用率 × 性能率 × 质量率
@@ -423,7 +461,7 @@ class DigitalTwinEngine:
             performance = 0.0
             quality = 1.0
         return availability * performance * quality
-    
+
     async def detect_anomalies(self):
         """异常检测"""
         for sensor in self.sensors.values():
@@ -440,27 +478,27 @@ class DigitalTwinEngine:
                         "value": sensor.last_value,
                         "threshold": sensor.alert_threshold
                     })
-    
+
     async def predict_maintenance(self, equipment_id: str) -> Dict:
         """预测性维护分析"""
         equipment = self.equipments.get(equipment_id)
         if not equipment:
             return {"error": "设备不存在"}
-        
+
         # 获取振动传感器历史数据
         vibration_data = []
         for sensor in equipment.sensors.values():
             if sensor.sensor_type == SensorType.VIBRATION:
                 vibration_data = [d.value for d in sensor.history]
                 break
-        
+
         if len(vibration_data) < 100:
             return {"status": "数据不足，无法预测"}
-        
+
         # 简单趋势分析（实际使用LSTM等模型）
         recent_avg = np.mean(vibration_data[-100:])
         overall_avg = np.mean(vibration_data)
-        
+
         if recent_avg > overall_avg * 1.3:
             health_trend = "degrading"
             days_to_maintenance = 7
@@ -473,12 +511,12 @@ class DigitalTwinEngine:
             health_trend = "healthy"
             days_to_maintenance = 90
             confidence = 0.95
-        
+
         return {
             "equipment_id": equipment_id,
             "equipment_name": equipment.name,
             "health_trend": health_trend,
-            "predicted_maintenance_date": (datetime.now() + 
+            "predicted_maintenance_date": (datetime.now() +
                 __import__('datetime').timedelta(days=days_to_maintenance)).isoformat(),
             "confidence": confidence,
             "recommended_action": "计划维护" if health_trend != "healthy" else "正常运行",
@@ -487,14 +525,14 @@ class DigitalTwinEngine:
                 "overall_avg": round(overall_avg, 3)
             }
         }
-    
+
     def optimize_production_schedule(self) -> Dict:
         """生产排程优化"""
-        running_count = sum(1 for e in self.equipments.values() 
+        running_count = sum(1 for e in self.equipments.values()
                           if e.state == EquipmentState.RUNNING)
         total_capacity = len(self.equipments)
         utilization = running_count / total_capacity if total_capacity > 0 else 0
-        
+
         # 识别瓶颈设备
         bottleneck = None
         min_oee = float('inf')
@@ -502,7 +540,7 @@ class DigitalTwinEngine:
             if equipment.oee < min_oee and equipment.state == EquipmentState.RUNNING:
                 min_oee = equipment.oee
                 bottleneck = equipment
-        
+
         return {
             "current_utilization": round(utilization, 2),
             "running_equipments": running_count,
@@ -513,13 +551,13 @@ class DigitalTwinEngine:
                 "对OEE<0.5的设备进行维护" if min_oee < 0.5 else None
             ]
         }
-    
+
     def get_production_report(self) -> Dict:
         """生成生产报告"""
         total_production = sum(e.production_count for e in self.equipments.values())
         total_energy = sum(e.energy_consumption for e in self.equipments.values())
         avg_oee = np.mean([e.oee for e in self.equipments.values()]) if self.equipments else 0
-        
+
         return {
             "report_time": datetime.now().isoformat(),
             "production_summary": {
@@ -533,13 +571,13 @@ class DigitalTwinEngine:
             },
             "sync_statistics": self.sync_stats
         }
-    
+
     async def start(self):
         """启动数字孪生引擎"""
         self.running = True
         logger.info("🚀 数字孪生引擎启动")
         await self.sync_loop()
-    
+
     def stop(self):
         """停止数字孪生引擎"""
         self.running = False
@@ -551,7 +589,7 @@ async def main():
     """主程序示例"""
     # 创建数字孪生引擎
     dt_engine = DigitalTwinEngine()
-    
+
     # 创建设备
     robot = Equipment(
         id="ROB-001",
@@ -560,7 +598,7 @@ async def main():
         position={"x": 1000, "y": 500, "z": 0},
         state=EquipmentState.RUNNING
     )
-    
+
     cnc = Equipment(
         id="CNC-001",
         name="数控加工中心-1",
@@ -568,11 +606,11 @@ async def main():
         position={"x": 2000, "y": 500, "z": 0},
         state=EquipmentState.RUNNING
     )
-    
+
     # 注册设备
     dt_engine.register_equipment(robot)
     dt_engine.register_equipment(cnc)
-    
+
     # 创建传感器
     robot_temp = Sensor(
         id="SEN-ROB-001-T",
@@ -585,7 +623,7 @@ async def main():
         max_value=100,
         alert_threshold=75
     )
-    
+
     robot_vib = Sensor(
         id="SEN-ROB-001-V",
         name="机器人振动传感器",
@@ -597,7 +635,7 @@ async def main():
         max_value=20,
         alert_threshold=7.0
     )
-    
+
     cnc_current = Sensor(
         id="SEN-CNC-001-C",
         name="CNC电流传感器",
@@ -609,42 +647,42 @@ async def main():
         max_value=50,
         alert_threshold=40
     )
-    
+
     # 注册传感器
     dt_engine.register_sensor(robot_temp)
     dt_engine.register_sensor(robot_vib)
     dt_engine.register_sensor(cnc_current)
-    
+
     # 订阅事件
     def on_event(event_type, data):
         if event_type == "ALERT":
             print(f"🔔 收到告警: {data}")
-    
+
     dt_engine.subscribe_event(on_event)
-    
+
     # 运行3秒后执行预测和报告
     async def demo_tasks():
         await asyncio.sleep(3)
-        
+
         # 预测性维护
         print("\n=== 预测性维护分析 ===")
         for eq_id in ["ROB-001", "CNC-001"]:
             result = await dt_engine.predict_maintenance(eq_id)
             print(json.dumps(result, indent=2, ensure_ascii=False))
-        
+
         # 生产优化
         print("\n=== 生产排程优化 ===")
         opt_result = dt_engine.optimize_production_schedule()
         print(json.dumps(opt_result, indent=2, ensure_ascii=False))
-        
+
         # 生产报告
         print("\n=== 实时生产报告 ===")
         report = dt_engine.get_production_report()
         print(json.dumps(report, indent=2, ensure_ascii=False))
-        
+
         # 停止引擎
         dt_engine.stop()
-    
+
     # 同时启动同步循环和演示任务
     await asyncio.gather(
         dt_engine.start(),
@@ -662,36 +700,38 @@ if __name__ == "__main__":
 
 #### 2.5.1 性能指标
 
-| 指标类别 | 指标名称 | 实施前 | 实施后 | 提升幅度 |
-|---------|---------|-------|-------|---------|
-| **实时性** | 数据同步延迟 | 500ms | 35ms | ↓93% |
-| **实时性** | 3D渲染帧率 | 15 FPS | 62 FPS | ↑313% |
-| **准确性** | 设备状态同步准确率 | 82% | 99.5% | ↑17.5% |
-| **准确性** | 故障预测准确率 | - | 87% | - |
-| **效率** | 设备OEE（平均） | 68% | 82% | ↑20.6% |
-| **效率** | 排程优化响应时间 | 30min | 5s | ↓99.7% |
-| **可靠性** | 系统可用性 | 99.5% | 99.95% | ↑0.45% |
+| 指标类别         | 指标名称           | 实施前 | 实施后 | 提升幅度 |
+| ---------------- | ------------------ | ------ | ------ | -------- |
+| **实时性** | 数据同步延迟       | 500ms  | 35ms   | ↓93%    |
+| **实时性** | 3D渲染帧率         | 15 FPS | 62 FPS | ↑313%   |
+| **准确性** | 设备状态同步准确率 | 82%    | 99.5%  | ↑17.5%  |
+| **准确性** | 故障预测准确率     | -      | 87%    | -        |
+| **效率**   | 设备OEE（平均）    | 68%    | 82%    | ↑20.6%  |
+| **效率**   | 排程优化响应时间   | 30min  | 5s     | ↓99.7%  |
+| **可靠性** | 系统可用性         | 99.5%  | 99.95% | ↑0.45%  |
 
 #### 2.5.2 业务价值
 
-| 价值维度 | 具体成果 | 量化数据 |
-|---------|---------|---------|
-| **ROI** | 项目投资回报率 | 280%（18个月回收期） |
-| **生产效率** | 整体设备效率提升 | +20.6% |
-| **运维成本** | 非计划停机减少 | -52% |
-| **运维成本** | 维护成本降低 | -28% |
-| **质量提升** | 产品质量合格率 | +3.2% |
-| **能耗优化** | 生产线能耗降低 | -15% |
-| **交付能力** | 订单交付准时率 | +12% |
+| 价值维度           | 具体成果         | 量化数据             |
+| ------------------ | ---------------- | -------------------- |
+| **ROI**      | 项目投资回报率   | 280%（18个月回收期） |
+| **生产效率** | 整体设备效率提升 | +20.6%               |
+| **运维成本** | 非计划停机减少   | -52%                 |
+| **运维成本** | 维护成本降低     | -28%                 |
+| **质量提升** | 产品质量合格率   | +3.2%                |
+| **能耗优化** | 生产线能耗降低   | -15%                 |
+| **交付能力** | 订单交付准时率   | +12%                 |
 
 #### 2.5.3 经验教训
 
 **成功经验**：
+
 1. **分层架构设计**：采用"边缘-平台-应用"三层架构，边缘层处理实时数据，平台层运行数字孪生引擎，应用层提供业务功能，各层解耦便于独立扩展
 2. **数据质量优先**：投入30%项目时间建立数据治理体系，确保传感器校准、数据清洗、异常值处理，这是后续AI分析的基础
 3. **渐进式部署**：先完成1条试点产线，验证技术可行性后再推广到12条产线，降低实施风险
 
 **改进方向**：
+
 1. **模型精度提升**：当前物理仿真精度0.1mm，下一步目标是0.05mm，需引入更高精度的CAD模型和物理引擎
 2. **跨系统集成**：与ERP、PLM系统的集成深度不足，需建立统一的数据总线
 3. **知识沉淀**：故障诊断模型依赖专家经验，需建立故障知识图谱实现知识传承
@@ -704,20 +744,20 @@ if __name__ == "__main__":
 
 #### 3.1.1 企业背景
 
-**企业名称**：东方能源集团  
-**行业领域**：火力发电  
-**企业规模**：装机容量500万千瓦，员工8000人  
+**企业名称**：东方能源集团
+**行业领域**：火力发电
+**企业规模**：装机容量500万千瓦，员工8000人
 **设备规模**：8台600MW燃煤发电机组，配套磨煤机48台、送风机24台、引风机24台、给水泵16台
 
 #### 3.1.2 业务痛点
 
-| 痛点类别 | 具体问题 | 年度损失 |
-|---------|---------|---------|
-| **非计划停机** | 关键设备故障导致机组非停，单次损失500-2000万元 | 年均3.2亿元 |
-| **过度维护** | 按周期维护，部分设备状态良好却被拆解，浪费人力物力 | 年均8000万元 |
-| **备件库存** | 关键备件储备不足或过剩，库存资金占用3.5亿元 | 资金成本高 |
-| **专家依赖** | 故障诊断依赖资深工程师经验，人员退休导致知识流失 | - |
-| **安全风险** | 锅炉、汽轮机等高压设备故障可能引发安全事故 | 安全隐患大 |
+| 痛点类别             | 具体问题                                           | 年度损失     |
+| -------------------- | -------------------------------------------------- | ------------ |
+| **非计划停机** | 关键设备故障导致机组非停，单次损失500-2000万元     | 年均3.2亿元  |
+| **过度维护**   | 按周期维护，部分设备状态良好却被拆解，浪费人力物力 | 年均8000万元 |
+| **备件库存**   | 关键备件储备不足或过剩，库存资金占用3.5亿元        | 资金成本高   |
+| **专家依赖**   | 故障诊断依赖资深工程师经验，人员退休导致知识流失   | -            |
+| **安全风险**   | 锅炉、汽轮机等高压设备故障可能引发安全事故         | 安全隐患大   |
 
 #### 3.1.3 业务目标
 
@@ -730,18 +770,23 @@ if __name__ == "__main__":
 ### 3.2 技术挑战
 
 #### 挑战1：高维度时序数据处理
+
 单台机组监测点超过5000个，数据采样频率从1Hz到10kHz不等，日均产生数据量超过2TB，需要高效的数据压缩、存储和实时分析能力。
 
 #### 挑战2：多物理场耦合建模
+
 汽轮机涉及热力学、流体力学、转子动力学、材料力学等多物理场耦合，传统机理模型计算耗时数小时，无法满足实时预测需求。
 
 #### 挑战3：小样本故障数据
+
 重大设备故障属于小概率事件，历史故障样本不足50例，深度学习模型面临严重的数据不平衡问题。
 
 #### 挑战4：极端工况适应性
+
 设备运行工况随电网负荷调度频繁变化（30%-100%负荷），模型需适应宽范围工况变化，避免误报。
 
 #### 挑战5：实时性与精度平衡
+
 故障预测需在故障发生前7-30天给出预警，同时要保证预测准确率，算法复杂度与实时性需精细平衡。
 
 ---
@@ -913,28 +958,28 @@ class Sensor:
     sampling_rate: float  # Hz
     unit: str
     location: Dict[str, float]
-    
+
     # 阈值设置
     warning_threshold: float
     alarm_threshold: float
     danger_threshold: float
-    
+
     # 数据存储
     history: deque = field(default_factory=lambda: deque(maxlen=10000))
     features: Dict[str, float] = field(default_factory=dict)
-    
+
     def add_reading(self, value: float, timestamp: datetime = None):
         """添加传感器读数"""
         if timestamp is None:
             timestamp = datetime.now()
         self.history.append({"value": value, "timestamp": timestamp})
         self._update_features()
-    
+
     def _update_features(self):
         """更新特征值"""
         if len(self.history) < 100:
             return
-        
+
         values = [h["value"] for h in list(self.history)[-1000:]]
         self.features = {
             "mean": np.mean(values),
@@ -944,7 +989,7 @@ class Sensor:
             "crest_factor": np.max(values) / np.sqrt(np.mean(np.square(values))) if np.sqrt(np.mean(np.square(values))) > 0 else 0,
             "kurtosis": self._calculate_kurtosis(values)
         }
-    
+
     def _calculate_kurtosis(self, values: List[float]) -> float:
         """计算峭度"""
         n = len(values)
@@ -964,19 +1009,19 @@ class Equipment:
     criticality: CriticalityLevel
     unit_id: str
     rated_power_kw: float
-    
+
     # 状态
     health_score: float = 1.0
     health_status: HealthStatus = HealthStatus.HEALTHY
     running_hours: float = 0.0
     start_time: datetime = field(default_factory=datetime.now)
-    
+
     # 关联传感器
     sensors: Dict[str, Sensor] = field(default_factory=dict)
-    
+
     # 预测结果
     predictions: Dict[str, Any] = field(default_factory=dict)
-    
+
     def update_health_status(self):
         """更新健康状态"""
         # 基于健康评分确定状态
@@ -992,14 +1037,14 @@ class Equipment:
 
 class PredictiveMaintenanceEngine:
     """预测维护引擎"""
-    
+
     def __init__(self):
         self.equipments: Dict[str, Equipment] = {}
         self.scaler = StandardScaler()
         self.anomaly_detector: Optional[IsolationForest] = None
         self.fault_classifier: Optional[RandomForestClassifier] = None
         self.model_trained = False
-        
+
         # 统计信息
         self.stats = {
             "total_predictions": 0,
@@ -1007,17 +1052,17 @@ class PredictiveMaintenanceEngine:
             "false_alarms": 0,
             "missed_faults": 0
         }
-        
+
     def register_equipment(self, equipment: Equipment):
         """注册设备"""
         self.equipments[equipment.id] = equipment
         logger.info(f"注册设备: {equipment.name} ({equipment.equipment_type.value}, 关键性: {equipment.criticality.value})")
-    
+
     def simulate_sensor_data(self, sensor: Sensor, fault_mode: str = None) -> float:
         """模拟传感器数据（含故障模式）"""
         base_value = 0
         noise_level = 0.1
-        
+
         if sensor.sensor_type == SensorType.VIBRATION:
             # 振动基线 2-5 mm/s
             base_value = 3.0
@@ -1028,43 +1073,43 @@ class PredictiveMaintenanceEngine:
             elif fault_mode == "bearing_fault":
                 base_value = 12.0  # 轴承故障
                 noise_level = 0.3
-        
+
         elif sensor.sensor_type == SensorType.TEMPERATURE:
             base_value = 65.0  # 温度基线
             if fault_mode == "overheating":
                 base_value = 95.0
-        
+
         elif sensor.sensor_type == SensorType.CURRENT:
             base_value = 150.0  # 电流基线 A
             if fault_mode == "overload":
                 base_value = 200.0
-        
+
         # 添加随机噪声
         noise = np.random.normal(0, base_value * noise_level)
         return base_value + noise
-    
+
     def collect_training_data(self, equipment_id: str, samples: int = 1000) -> Tuple[np.ndarray, np.ndarray]:
         """收集训练数据"""
         equipment = self.equipments.get(equipment_id)
         if not equipment:
             return None, None
-        
+
         X = []
         y = []
-        
+
         fault_modes = [None, "imbalance", "misalignment", "bearing_fault", "overheating"]
         fault_labels = [0, 1, 2, 3, 4]  # 0=正常, 1-4=不同故障类型
-        
+
         for _ in range(samples):
             # 随机选择故障模式
             fault_idx = np.random.choice(len(fault_modes))
             fault_mode = fault_modes[fault_idx]
-            
+
             features = []
             for sensor in equipment.sensors.values():
                 value = self.simulate_sensor_data(sensor, fault_mode)
                 sensor.add_reading(value)
-                
+
                 # 使用统计特征
                 if sensor.features:
                     features.extend([
@@ -1073,25 +1118,25 @@ class PredictiveMaintenanceEngine:
                         sensor.features.get("rms", 0),
                         sensor.features.get("kurtosis", 0)
                     ])
-            
+
             if features:
                 X.append(features)
                 y.append(fault_labels[fault_idx])
-        
+
         return np.array(X), np.array(y)
-    
+
     def train_models(self, equipment_id: str):
         """训练预测模型"""
         logger.info(f"开始训练设备 {equipment_id} 的预测模型...")
-        
+
         X, y = self.collect_training_data(equipment_id, samples=2000)
         if X is None or len(X) < 100:
             logger.error("训练数据不足")
             return False
-        
+
         # 标准化
         X_scaled = self.scaler.fit_transform(X)
-        
+
         # 异常检测模型
         self.anomaly_detector = IsolationForest(
             contamination=0.1,
@@ -1099,12 +1144,12 @@ class PredictiveMaintenanceEngine:
             n_estimators=100
         )
         self.anomaly_detector.fit(X_scaled[y == 0])  # 仅用正常数据训练
-        
+
         # 故障分类模型
         X_train, X_test, y_train, y_test = train_test_split(
             X_scaled, y, test_size=0.2, random_state=42, stratify=y
         )
-        
+
         self.fault_classifier = RandomForestClassifier(
             n_estimators=100,
             max_depth=10,
@@ -1112,21 +1157,21 @@ class PredictiveMaintenanceEngine:
             class_weight='balanced'
         )
         self.fault_classifier.fit(X_train, y_train)
-        
+
         # 评估
         y_pred = self.fault_classifier.predict(X_test)
         accuracy = np.mean(y_pred == y_test)
         logger.info(f"模型训练完成，测试集准确率: {accuracy:.2%}")
-        
+
         self.model_trained = True
         return True
-    
+
     def predict_health(self, equipment_id: str) -> Dict:
         """预测设备健康状态"""
         equipment = self.equipments.get(equipment_id)
         if not equipment:
             return {"error": "设备不存在"}
-        
+
         # 收集当前特征
         features = []
         for sensor in equipment.sensors.values():
@@ -1137,28 +1182,28 @@ class PredictiveMaintenanceEngine:
                     sensor.features.get("rms", 0),
                     sensor.features.get("kurtosis", 0)
                 ])
-        
+
         if not features or not self.model_trained:
             return {"status": "模型未训练或数据不足"}
-        
+
         X = np.array([features])
         X_scaled = self.scaler.transform(X)
-        
+
         # 异常检测
         anomaly_score = self.anomaly_detector.decision_function(X_scaled)[0]
         is_anomaly = self.anomaly_detector.predict(X_scaled)[0] == -1
-        
+
         # 故障类型预测
         fault_probs = self.fault_classifier.predict_proba(X_scaled)[0]
         predicted_fault = self.fault_classifier.predict(X_scaled)[0]
-        
+
         fault_names = ["正常", "不平衡", "不对中", "轴承故障", "过热"]
-        
+
         # 计算健康评分
         health_score = max(0, min(1, (anomaly_score + 0.5)))
         equipment.health_score = health_score
         equipment.update_health_status()
-        
+
         # 预测剩余寿命（简化模型）
         if predicted_fault == 0:
             remaining_days = np.random.randint(60, 180)
@@ -1166,7 +1211,7 @@ class PredictiveMaintenanceEngine:
             # 根据故障严重程度估算
             severity = fault_probs[predicted_fault]
             remaining_days = int(30 * (1 - severity))
-        
+
         prediction_result = {
             "equipment_id": equipment_id,
             "equipment_name": equipment.name,
@@ -1184,12 +1229,12 @@ class PredictiveMaintenanceEngine:
             ),
             "maintenance_priority": "high" if predicted_fault != 0 else "low"
         }
-        
+
         equipment.predictions = prediction_result
         self.stats["total_predictions"] += 1
-        
+
         return prediction_result
-    
+
     def _get_recommendation(self, status: HealthStatus, fault_type: int, rul: int) -> str:
         """获取维护建议"""
         if status == HealthStatus.HEALTHY:
@@ -1200,13 +1245,13 @@ class PredictiveMaintenanceEngine:
             return f"建议7天内安排维护，预计剩余寿命{rul}天"
         else:
             return f"⚠️ 紧急维护！建议立即停止运行，预计剩余寿命{rul}天"
-    
+
     def calculate_maintenance_cost(self, equipment_id: str) -> Dict:
         """计算维护成本模型"""
         equipment = self.equipments.get(equipment_id)
         if not equipment:
             return {}
-        
+
         # 成本参数（万元）
         costs = {
             "preventive_maintenance": 5.0,
@@ -1214,7 +1259,7 @@ class PredictiveMaintenanceEngine:
             "production_loss_per_day": 200.0,
             "safety_risk_cost": 500.0
         }
-        
+
         # 基于预测计算预期成本
         if equipment.health_status == HealthStatus.HEALTHY:
             optimal_strategy = "继续运行，按计划维护"
@@ -1228,7 +1273,7 @@ class PredictiveMaintenanceEngine:
         else:
             optimal_strategy = "立即停机维护"
             expected_cost = costs["corrective_maintenance"] + costs["production_loss_per_day"] * 2
-        
+
         return {
             "equipment_id": equipment_id,
             "current_health": equipment.health_status.value,
@@ -1237,11 +1282,11 @@ class PredictiveMaintenanceEngine:
             "potential_savings": round(costs["corrective_maintenance"] - expected_cost, 2),
             "cost_breakdown": costs
         }
-    
+
     def generate_maintenance_schedule(self) -> Dict:
         """生成维护计划"""
         schedule = []
-        
+
         for equipment in self.equipments.values():
             if equipment.predictions:
                 pred = equipment.predictions
@@ -1249,28 +1294,28 @@ class PredictiveMaintenanceEngine:
                     "equipment_name": equipment.name,
                     "equipment_type": equipment.equipment_type.value,
                     "priority": pred.get("maintenance_priority", "low"),
-                    "recommended_date": (datetime.now() + 
+                    "recommended_date": (datetime.now() +
                         timedelta(days=pred.get("remaining_useful_life_days", 30))).strftime("%Y-%m-%d"),
                     "predicted_fault": pred.get("predicted_fault_type", "未知"),
                     "health_score": pred.get("health_score", 1.0)
                 })
-        
+
         # 按优先级排序
         priority_order = {"high": 0, "medium": 1, "low": 2}
         schedule.sort(key=lambda x: priority_order.get(x["priority"], 3))
-        
+
         return {
             "generated_at": datetime.now().isoformat(),
             "total_equipments": len(schedule),
             "high_priority": sum(1 for s in schedule if s["priority"] == "high"),
             "schedule": schedule[:10]  # 返回前10项
         }
-    
+
     def get_system_health_dashboard(self) -> Dict:
         """系统健康仪表板"""
         status_counts = {status: 0 for status in HealthStatus}
         critical_equipments = []
-        
+
         for equipment in self.equipments.values():
             status_counts[equipment.health_status] += 1
             if equipment.criticality == CriticalityLevel.CRITICAL:
@@ -1279,9 +1324,9 @@ class PredictiveMaintenanceEngine:
                     "health_score": equipment.health_score,
                     "status": equipment.health_status.value
                 })
-        
+
         overall_health = np.mean([e.health_score for e in self.equipments.values()]) if self.equipments else 0
-        
+
         return {
             "timestamp": datetime.now().isoformat(),
             "overall_health_score": round(overall_health, 3),
@@ -1298,7 +1343,7 @@ class PredictiveMaintenanceEngine:
 async def main():
     """主程序示例"""
     engine = PredictiveMaintenanceEngine()
-    
+
     # 创建设备 - 汽轮机给水泵（关键设备）
     pump = Equipment(
         id="PUMP-5A",
@@ -1308,7 +1353,7 @@ async def main():
         unit_id="UNIT-5",
         rated_power_kw=12000
     )
-    
+
     # 创建传感器
     vib_sensor = Sensor(
         id="VIB-PUMP-5A-Drive",
@@ -1322,7 +1367,7 @@ async def main():
         alarm_threshold=7.1,
         danger_threshold=11.0
     )
-    
+
     temp_sensor = Sensor(
         id="TEMP-PUMP-5A-Bearing",
         name="给水泵轴承温度",
@@ -1335,7 +1380,7 @@ async def main():
         alarm_threshold=90,
         danger_threshold=100
     )
-    
+
     current_sensor = Sensor(
         id="CUR-PUMP-5A-Motor",
         name="给水泵电机电流",
@@ -1348,19 +1393,19 @@ async def main():
         alarm_threshold=200,
         danger_threshold=220
     )
-    
+
     pump.sensors = {
         vib_sensor.id: vib_sensor,
         temp_sensor.id: temp_sensor,
         current_sensor.id: current_sensor
     }
-    
+
     engine.register_equipment(pump)
-    
+
     # 训练模型
     print("=== 训练预测模型 ===")
     engine.train_models("PUMP-5A")
-    
+
     # 模拟实时监测和预测
     print("\n=== 实时健康预测 ===")
     for i in range(5):
@@ -1371,27 +1416,27 @@ async def main():
             fault = "bearing_fault"  # 模拟轴承故障
         else:
             fault = None
-        
+
         for sensor in pump.sensors.values():
             value = engine.simulate_sensor_data(sensor, fault)
             sensor.add_reading(value)
-        
+
         result = engine.predict_health("PUMP-5A")
         print(f"\n预测结果 {i+1}:")
         print(json.dumps(result, indent=2, ensure_ascii=False))
-        
+
         await asyncio.sleep(0.5)
-    
+
     # 成本分析
     print("\n=== 维护成本分析 ===")
     cost_analysis = engine.calculate_maintenance_cost("PUMP-5A")
     print(json.dumps(cost_analysis, indent=2, ensure_ascii=False))
-    
+
     # 维护计划
     print("\n=== 维护计划 ===")
     schedule = engine.generate_maintenance_schedule()
     print(json.dumps(schedule, indent=2, ensure_ascii=False))
-    
+
     # 系统健康仪表板
     print("\n=== 系统健康仪表板 ===")
     dashboard = engine.get_system_health_dashboard()
@@ -1408,34 +1453,36 @@ if __name__ == "__main__":
 
 #### 3.5.1 性能指标
 
-| 指标类别 | 指标名称 | 目标值 | 实际达成 | 评价 |
-|---------|---------|-------|---------|------|
-| **预测性能** | 故障预测准确率 | ≥90% | 91.5% | ✅ 达标 |
-| **预测性能** | 预测提前期 | 7-30天 | 平均18天 | ✅ 达标 |
-| **预测性能** | 误报率 | ≤5% | 3.2% | ✅ 优秀 |
-| **预测性能** | 漏报率 | ≤2% | 1.5% | ✅ 优秀 |
-| **系统性能** | 数据处理能力 | 10k点/秒 | 15k点/秒 | ✅ 超标 |
-| **系统性能** | 模型推理延迟 | ≤500ms | 120ms | ✅ 优秀 |
+| 指标类别           | 指标名称       | 目标值   | 实际达成 | 评价    |
+| ------------------ | -------------- | -------- | -------- | ------- |
+| **预测性能** | 故障预测准确率 | ≥90%    | 91.5%    | ✅ 达标 |
+| **预测性能** | 预测提前期     | 7-30天   | 平均18天 | ✅ 达标 |
+| **预测性能** | 误报率         | ≤5%     | 3.2%     | ✅ 优秀 |
+| **预测性能** | 漏报率         | ≤2%     | 1.5%     | ✅ 优秀 |
+| **系统性能** | 数据处理能力   | 10k点/秒 | 15k点/秒 | ✅ 超标 |
+| **系统性能** | 模型推理延迟   | ≤500ms  | 120ms    | ✅ 优秀 |
 
 #### 3.5.2 业务价值
 
-| 价值维度 | 具体成果 | 年度效益 |
-|---------|---------|---------|
-| **避免停机损失** | 成功预警并避免重大故障12次 | 节省1.2亿元 |
-| **维护成本** | 从定期维护转为预测维护 | 降低28%（3200万元） |
-| **备件库存** | 优化备件采购策略 | 库存资金减少25%（8750万元） |
-| **设备寿命** | 延长关键设备使用寿命 | 平均延长15% |
-| **安全提升** | 重大安全隐患提前发现 | 安全事故零发生 |
-| **ROI** | 项目总投资3000万元 | 首年ROI 465% |
+| 价值维度               | 具体成果                   | 年度效益                    |
+| ---------------------- | -------------------------- | --------------------------- |
+| **避免停机损失** | 成功预警并避免重大故障12次 | 节省1.2亿元                 |
+| **维护成本**     | 从定期维护转为预测维护     | 降低28%（3200万元）         |
+| **备件库存**     | 优化备件采购策略           | 库存资金减少25%（8750万元） |
+| **设备寿命**     | 延长关键设备使用寿命       | 平均延长15%                 |
+| **安全提升**     | 重大安全隐患提前发现       | 安全事故零发生              |
+| **ROI**          | 项目总投资3000万元         | 首年ROI 465%                |
 
 #### 3.5.3 经验教训
 
 **成功经验**：
+
 1. **数据质量是关键**：项目初期投入3个月进行传感器校准、数据清洗，建立数据质量管理体系，这是模型准确的基础
 2. **领域知识融合**：将设备机理模型（转子动力学、热力学）与数据驱动模型结合，显著提升小样本场景下的预测准确率
 3. **人机协同验证**：建立"AI预警-人工复核-现场确认"三级验证机制，既保证预测可靠性，又逐步积累专家经验
 
 **改进方向**：
+
 1. **多机组联合分析**：当前单机组独立建模，未考虑公用系统（如循环水、制粉系统）的耦合影响，下一步建立全厂级设备关联分析
 2. **知识图谱构建**：故障案例依赖人工录入，需构建设备故障知识图谱，实现故障自动归因和解决方案推荐
 3. **边缘智能部署**：部分关键设备需毫秒级响应，计划将轻量级模型部署到边缘网关
@@ -1448,20 +1495,20 @@ if __name__ == "__main__":
 
 #### 4.1.1 企业背景
 
-**企业名称**：翱翔航空科技有限公司  
-**行业领域**：民用航空发动机零部件制造  
-**企业规模**：研发中心500人，年产值8亿元  
+**企业名称**：翱翔航空科技有限公司
+**行业领域**：民用航空发动机零部件制造
+**企业规模**：研发中心500人，年产值8亿元
 **产品范围**：航空发动机涡轮叶片、燃烧室组件、机匣等高温合金精密铸件
 
 #### 4.1.2 业务痛点
 
-| 痛点类别 | 具体问题 | 影响分析 |
-|---------|---------|---------|
+| 痛点类别                 | 具体问题                                                | 影响分析     |
+| ------------------------ | ------------------------------------------------------- | ------------ |
 | **物理试验成本高** | 单个涡轮叶片高温疲劳试验需200万元，完整认证需100+试验件 | 研发成本极高 |
-| **设计迭代慢** | 传统"设计-制造-试验"周期18-24个月 | 市场响应慢 |
-| **多物理场耦合** | 叶片同时承受气动、热、离心、振动复合载荷，仿真难度大 | 仿真精度不足 |
-| **工艺-性能关联** | 铸造工艺参数（温度、流速）与最终性能关系不明确 | 合格率波动 |
-| **适航认证** | 需向局方证明设计可靠性，缺乏数字化证据链 | 认证周期长 |
+| **设计迭代慢**     | 传统"设计-制造-试验"周期18-24个月                       | 市场响应慢   |
+| **多物理场耦合**   | 叶片同时承受气动、热、离心、振动复合载荷，仿真难度大    | 仿真精度不足 |
+| **工艺-性能关联**  | 铸造工艺参数（温度、流速）与最终性能关系不明确          | 合格率波动   |
+| **适航认证**       | 需向局方证明设计可靠性，缺乏数字化证据链                | 认证周期长   |
 
 #### 4.1.3 业务目标
 
@@ -1474,18 +1521,23 @@ if __name__ == "__main__":
 ### 4.2 技术挑战
 
 #### 挑战1：多尺度建模
+
 涡轮叶片需同时考虑宏观结构（毫米级）、晶粒组织（微米级）、析出相（纳米级）对性能的影响，多尺度耦合计算量巨大。
 
 #### 挑战2：材料本构建模
+
 镍基高温合金在650°C-1100°C范围内表现出复杂的粘塑性、蠕变、疲劳行为，现有商业软件材料库无法直接满足需求。
 
 #### 挑战3：不确定性量化
+
 制造公差、材料分散性、边界条件不确定性对性能有显著影响，需建立概率化设计方法而非传统确定性设计。
 
 #### 挑战4：实时仿真效率
+
 单次完整多物理场仿真需72小时，而设计优化需进行数千次仿真，传统HPC无法满足时效性要求。
 
 #### 挑战5：模型验证与确认（V&V）
+
 仿真模型需通过系统性的验证（Verification）和确认（Validation）才能用于适航认证，缺乏标准化的V&V流程。
 
 ---
@@ -1659,23 +1711,23 @@ class MaterialProperties:
     """材料性能"""
     alloy: AlloyType
     density: float  # kg/m3
-    
+
     # 温度相关材料性能 (°C -> MPa)
     temp_points: List[float] = field(default_factory=list)
     elastic_modulus_points: List[float] = field(default_factory=list)
     yield_strength_points: List[float] = field(default_factory=list)
-    
+
     # 蠕变参数 (Larson-Miller)
     creep_C: float = 20.0
-    
+
     def get_elastic_modulus(self, temperature: float) -> float:
         """获取温度相关的弹性模量"""
         if not self.temp_points:
             return 200000  # 默认值 MPa
-        f = interp1d(self.temp_points, self.elastic_modulus_points, 
+        f = interp1d(self.temp_points, self.elastic_modulus_points,
                      kind='linear', fill_value='extrapolate')
         return float(f(temperature))
-    
+
     def get_yield_strength(self, temperature: float) -> float:
         """获取温度相关的屈服强度"""
         if not self.temp_points:
@@ -1683,7 +1735,7 @@ class MaterialProperties:
         f = interp1d(self.temp_points, self.yield_strength_points,
                      kind='linear', fill_value='extrapolate')
         return float(f(temperature))
-    
+
     def calculate_creep_life(self, stress: float, temperature: float) -> float:
         """使用Larson-Miller参数计算蠕变寿命"""
         # 简化模型: P = T*(C + log(t))，这里使用经验公式
@@ -1703,17 +1755,17 @@ class Geometry:
     chord_length: float  # mm
     max_thickness: float  # mm
     twist_angle: float  # degree
-    
+
     # 质量估算
     estimated_volume: float = field(init=False)
     estimated_mass: float = field(init=False)
-    
+
     def __post_init__(self):
         # 简化估算: 叶片体积 ~ 高度 * 弦长 * 厚度 * 系数
-        self.estimated_volume = (self.blade_height * self.chord_length * self.max_thickness 
+        self.estimated_volume = (self.blade_height * self.chord_length * self.max_thickness
                                 * 0.6 * 1e-9)  # m3
         self.estimated_mass = 0  # 需要材料密度
-    
+
     def update_mass(self, density: float):
         """更新质量估算"""
         self.estimated_mass = self.estimated_volume * density  # kg
@@ -1739,7 +1791,7 @@ class SimulationResult:
     max_displacement: float  # mm
     safety_factor: float
     fatigue_life: Optional[float] = None  # cycles
-    
+
     # 详细结果
     stress_distribution: Dict[str, float] = field(default_factory=dict)
     temp_distribution: Dict[str, float] = field(default_factory=dict)
@@ -1747,23 +1799,23 @@ class SimulationResult:
 
 class TurbineBladeDigitalTwin:
     """涡轮叶片数字孪生"""
-    
+
     def __init__(self, part_number: str):
         self.part_number = part_number
         self.design_phase = DesignPhase.CONCEPTUAL
         self.version = "1.0.0"
-        
+
         # 核心组件
         self.geometry: Optional[Geometry] = None
         self.material: Optional[MaterialProperties] = None
         self.load_conditions: Dict[str, LoadCondition] = {}
-        
+
         # 仿真结果
         self.simulation_results: Dict[str, SimulationResult] = {}
-        
+
         # 设计优化历史
         self.optimization_history: List[Dict] = []
-        
+
         # 验证状态
         self.validation_status = {
             "geometry_verified": False,
@@ -1771,32 +1823,32 @@ class TurbineBladeDigitalTwin:
             "simulation_verified": False,
             "test_correlated": False
         }
-        
+
     def set_geometry(self, geometry: Geometry):
         """设置几何"""
         self.geometry = geometry
         if self.material:
             geometry.update_mass(self.material.density)
         logger.info(f"设置几何: 叶高={geometry.blade_height}mm, 弦长={geometry.chord_length}mm")
-    
+
     def set_material(self, material: MaterialProperties):
         """设置材料"""
         self.material = material
         if self.geometry:
             self.geometry.update_mass(material.density)
         logger.info(f"设置材料: {material.alloy.value}")
-    
+
     def add_load_condition(self, condition: LoadCondition):
         """添加载荷工况"""
         self.load_conditions[condition.name] = condition
         logger.info(f"添加载荷工况: {condition.name}")
-    
+
     def run_aerothermal_simulation(self, condition_name: str) -> SimulationResult:
         """运行气动热力仿真"""
         condition = self.load_conditions.get(condition_name)
         if not condition:
             raise ValueError(f"工况 {condition_name} 不存在")
-        
+
         # 简化仿真模型 - 实际使用CFD求解器
         # 温度分布估算
         temp_gradient = (condition.inlet_temp - condition.outlet_temp) / 10
@@ -1805,10 +1857,10 @@ class TurbineBladeDigitalTwin:
             for i in range(11)
         }
         max_temp = max(temp_distribution.values())
-        
+
         # 气动载荷估算
         pressure_drop = 0.5e6 * (condition.pressure_ratio - 1)  # Pa
-        
+
         result = SimulationResult(
             sim_type=SimulationType.AEROTHERMAL,
             max_stress=0,  # 气动单独不计算应力
@@ -1817,38 +1869,38 @@ class TurbineBladeDigitalTwin:
             safety_factor=0,
             temp_distribution=temp_distribution
         )
-        
+
         self.simulation_results[f"aero_{condition_name}"] = result
         logger.info(f"气动热力仿真完成: 最高温度={max_temp:.1f}°C")
         return result
-    
+
     def run_structural_simulation(self, condition_name: str) -> SimulationResult:
         """运行结构强度仿真"""
         condition = self.load_conditions.get(condition_name)
         if not condition or not self.geometry or not self.material:
             raise ValueError("缺少必要的输入数据")
-        
+
         # 简化结构仿真 - 离心应力估算
         # σ_c = ρ * ω² * r² / 2
         rho = self.material.density  # kg/m3
         omega = condition.rotational_speed * 2 * np.pi / 60  # rad/s
         r = self.geometry.blade_height * 1e-3  # m
-        
+
         centrifugal_stress = rho * omega**2 * r**2 / 2 / 1e6  # MPa
-        
+
         # 温度应力估算
         thermal_stress = self.material.get_elastic_modulus(condition.inlet_temp) * 1e-6 * 12e-6 * \
                         (condition.inlet_temp - condition.outlet_temp)  # MPa
-        
+
         max_stress = centrifugal_stress + thermal_stress * 0.3
-        
+
         # 计算安全系数
         yield_strength = self.material.get_yield_strength(max_temp := condition.inlet_temp)
         safety_factor = yield_strength / max_stress if max_stress > 0 else 999
-        
+
         # 位移估算 (简化)
         max_disp = max_stress * r / self.material.get_elastic_modulus(condition.inlet_temp) * 1000  # mm
-        
+
         result = SimulationResult(
             sim_type=SimulationType.STRUCTURAL,
             max_stress=max_stress,
@@ -1857,20 +1909,20 @@ class TurbineBladeDigitalTwin:
             safety_factor=safety_factor,
             stress_distribution={"centrifugal": centrifugal_stress, "thermal": thermal_stress}
         )
-        
+
         self.simulation_results[f"struct_{condition_name}"] = result
         logger.info(f"结构仿真完成: 最大应力={max_stress:.1f}MPa, 安全系数={safety_factor:.2f}")
         return result
-    
+
     def run_fatigue_analysis(self, condition_name: str, cycles: int = 10000) -> SimulationResult:
         """运行疲劳寿命分析"""
         struct_result = self.simulation_results.get(f"struct_{condition_name}")
         if not struct_result:
             struct_result = self.run_structural_simulation(condition_name)
-        
+
         # 简化疲劳分析 - 使用S-N曲线
         stress_amplitude = struct_result.max_stress * 0.4  # 假设40%应力幅
-        
+
         # Inconel 718的简化S-N曲线
         if stress_amplitude > 800:
             fatigue_life = 1e3
@@ -1880,7 +1932,7 @@ class TurbineBladeDigitalTwin:
             fatigue_life = 1e5
         else:
             fatigue_life = 1e7
-        
+
         result = SimulationResult(
             sim_type=SimulationType.FATIGUE,
             max_stress=stress_amplitude,
@@ -1889,27 +1941,27 @@ class TurbineBladeDigitalTwin:
             safety_factor=fatigue_life / cycles if cycles > 0 else 0,
             fatigue_life=fatigue_life
         )
-        
+
         self.simulation_results[f"fatigue_{condition_name}"] = result
         logger.info(f"疲劳分析完成: 疲劳寿命={fatigue_life:.0f}循环")
         return result
-    
+
     def optimize_design(self, target_mass: float = None, min_safety_factor: float = 1.5) -> Dict:
         """优化设计参数"""
         if not self.geometry:
             return {"error": "几何未定义"}
-        
+
         logger.info("开始设计优化...")
-        
+
         original_params = {
             "blade_height": self.geometry.blade_height,
             "chord_length": self.geometry.chord_length,
             "max_thickness": self.geometry.max_thickness
         }
-        
+
         best_design = None
         best_score = float('inf')
-        
+
         # 简单的网格搜索优化
         for height_factor in np.linspace(0.95, 1.05, 5):
             for chord_factor in np.linspace(0.9, 1.1, 5):
@@ -1919,16 +1971,16 @@ class TurbineBladeDigitalTwin:
                     self.geometry.chord_length = original_params["chord_length"] * chord_factor
                     self.geometry.max_thickness = original_params["max_thickness"] * thick_factor
                     self.geometry.update_mass(self.material.density)
-                    
+
                     # 运行仿真评估
                     try:
                         struct_result = self.run_structural_simulation("max_power")
-                        
+
                         if struct_result.safety_factor >= min_safety_factor:
                             # 计算得分 (质量越小越好)
                             mass_penalty = abs(self.geometry.estimated_mass - target_mass) if target_mass else 0
                             score = self.geometry.estimated_mass + mass_penalty * 0.5
-                            
+
                             if score < best_score:
                                 best_score = score
                                 best_design = {
@@ -1941,16 +1993,16 @@ class TurbineBladeDigitalTwin:
                                 }
                     except Exception as e:
                         continue
-        
+
         # 恢复原始几何
         self.geometry.blade_height = original_params["blade_height"]
         self.geometry.chord_length = original_params["chord_length"]
         self.geometry.max_thickness = original_params["max_thickness"]
-        
+
         if best_design:
             improvement = (original_params["max_thickness"] - best_design["max_thickness"]) / \
                          original_params["max_thickness"] * 100
-            
+
             optimization_result = {
                 "success": True,
                 "original_mass": self.geometry.estimated_mass,
@@ -1959,31 +2011,31 @@ class TurbineBladeDigitalTwin:
                 "iterations": 125,
                 "constraint_satisfied": best_design["safety_factor"] >= min_safety_factor
             }
-            
+
             self.optimization_history.append(optimization_result)
             logger.info(f"优化完成: 质量降低 {improvement:.1f}%")
             return optimization_result
         else:
             return {"success": False, "message": "未找到满足约束的设计"}
-    
+
     def perform_uncertainty_analysis(self, n_samples: int = 1000) -> Dict:
         """不确定性量化分析 (Monte Carlo)"""
         if not self.material or not self.geometry:
             return {"error": "缺少材料或几何定义"}
-        
+
         logger.info(f"运行Monte Carlo不确定性分析 (n={n_samples})...")
-        
+
         stresses = []
         safety_factors = []
-        
+
         for _ in range(n_samples):
             # 材料属性不确定性
             temp_variation = np.random.normal(0, 10)  # ±10°C
             material_scatter = np.random.normal(1.0, 0.05)  # ±5%材料分散性
-            
+
             # 几何公差
             thick_tolerance = np.random.normal(1.0, 0.02)  # ±2%厚度公差
-            
+
             # 计算应力
             condition = self.load_conditions.get("max_power")
             if condition:
@@ -1991,16 +2043,16 @@ class TurbineBladeDigitalTwin:
                 r = self.geometry.blade_height * 1e-3
                 rho = self.material.density
                 stress = rho * omega**2 * r**2 / 2 / 1e6 * thick_tolerance
-                
+
                 temp = condition.inlet_temp + temp_variation
                 yield_strength = self.material.get_yield_strength(temp) * material_scatter
-                
+
                 stresses.append(stress)
                 safety_factors.append(yield_strength / stress if stress > 0 else 999)
-        
+
         stresses = np.array(stresses)
         safety_factors = np.array(safety_factors)
-        
+
         result = {
             "method": "Monte Carlo",
             "samples": n_samples,
@@ -2018,34 +2070,34 @@ class TurbineBladeDigitalTwin:
             },
             "confidence_level": 0.95
         }
-        
+
         logger.info(f"不确定性分析完成: 可靠度={result['safety_factor']['reliability']:.2%}")
         return result
-    
+
     def correlate_with_test(self, test_results: Dict) -> Dict:
         """仿真与试验相关性验证"""
         correlation_metrics = {}
-        
+
         # 频率相关性
         if "natural_freq_test" in test_results and "natural_freq_sim" in test_results:
             freq_error = abs(test_results["natural_freq_sim"] - test_results["natural_freq_test"]) / \
                         test_results["natural_freq_test"]
             correlation_metrics["natural_frequency_error"] = freq_error
-        
+
         # 应力相关性
         if "stress_test" in test_results and "stress_sim" in test_results:
             stress_error = abs(test_results["stress_sim"] - test_results["stress_test"]) / \
                           test_results["stress_test"]
             correlation_metrics["stress_error"] = stress_error
-        
+
         # 评估是否通过验证
         passed = all([
             correlation_metrics.get("natural_frequency_error", 0) < 0.05,
             correlation_metrics.get("stress_error", 0) < 0.10
         ])
-        
+
         self.validation_status["test_correlated"] = passed
-        
+
         return {
             "part_number": self.part_number,
             "correlation_metrics": correlation_metrics,
@@ -2056,7 +2108,7 @@ class TurbineBladeDigitalTwin:
                 "stress_error": "<10%"
             }
         }
-    
+
     def generate_design_report(self) -> Dict:
         """生成设计验证报告"""
         return {
@@ -2093,7 +2145,7 @@ def main():
     # 创建涡轮叶片数字孪生
     blade = TurbineBladeDigitalTwin(part_number="TB-HPT-2024-001")
     blade.design_phase = DesignPhase.PRELIMINARY
-    
+
     # 定义材料 (Inconel 718)
     material = MaterialProperties(
         alloy=AlloyType.IN718,
@@ -2104,7 +2156,7 @@ def main():
         creep_C=20.0
     )
     blade.set_material(material)
-    
+
     # 定义几何
     geometry = Geometry(
         blade_height=120.0,
@@ -2113,7 +2165,7 @@ def main():
         twist_angle=25.0
     )
     blade.set_geometry(geometry)
-    
+
     # 定义载荷工况
     max_power = LoadCondition(
         name="max_power",
@@ -2124,7 +2176,7 @@ def main():
         mass_flow=85.0
     )
     blade.add_load_condition(max_power)
-    
+
     cruise = LoadCondition(
         name="cruise",
         rotational_speed=11500,
@@ -2134,36 +2186,36 @@ def main():
         mass_flow=72.0
     )
     blade.add_load_condition(cruise)
-    
+
     # 运行多物理场仿真
     print("=== 多物理场仿真分析 ===")
-    
+
     print("\n1. 气动热力仿真")
     aero_result = blade.run_aerothermal_simulation("max_power")
     print(f"   最高温度: {aero_result.max_temp:.1f}°C")
     print(f"   温度分布: {aero_result.temp_distribution}")
-    
+
     print("\n2. 结构强度仿真")
     struct_result = blade.run_structural_simulation("max_power")
     print(f"   最大应力: {struct_result.max_stress:.1f} MPa")
     print(f"   最大位移: {struct_result.max_displacement:.3f} mm")
     print(f"   安全系数: {struct_result.safety_factor:.2f}")
-    
+
     print("\n3. 疲劳寿命分析")
     fatigue_result = blade.run_fatigue_analysis("max_power", cycles=10000)
     print(f"   疲劳寿命: {fatigue_result.fatigue_life:.0f} 循环")
     print(f"   安全裕度: {fatigue_result.safety_factor:.2f}")
-    
+
     # 设计优化
     print("\n=== 设计优化 ===")
     opt_result = blade.optimize_design(target_mass=0.35, min_safety_factor=1.5)
     print(json.dumps(opt_result, indent=2, ensure_ascii=False))
-    
+
     # 不确定性分析
     print("\n=== 不确定性量化分析 ===")
     uncertainty = blade.perform_uncertainty_analysis(n_samples=500)
     print(json.dumps(uncertainty, indent=2, ensure_ascii=False))
-    
+
     # 试验相关性验证
     print("\n=== 仿真-试验相关性验证 ===")
     test_data = {
@@ -2174,7 +2226,7 @@ def main():
     }
     correlation = blade.correlate_with_test(test_data)
     print(json.dumps(correlation, indent=2, ensure_ascii=False))
-    
+
     # 生成设计报告
     print("\n=== 设计验证报告 ===")
     report = blade.generate_design_report()
@@ -2191,35 +2243,37 @@ if __name__ == "__main__":
 
 #### 4.5.1 性能指标
 
-| 指标类别 | 指标名称 | 目标值 | 实际达成 | 评价 |
-|---------|---------|-------|---------|------|
-| **仿真精度** | 固有频率误差 | <5% | 3.2% | ✅ 达标 |
-| **仿真精度** | 稳态应力误差 | <10% | 7.8% | ✅ 达标 |
-| **仿真精度** | 瞬态温度误差 | <8% | 6.5% | ✅ 达标 |
-| **仿真精度** | 疲劳寿命预测 | ±2倍 | 1.5倍 | ✅ 达标 |
-| **效率** | 单次仿真耗时 | <24h | 8h | ✅ 超标 |
-| **效率** | 代理模型精度 | >95% | 97.2% | ✅ 达标 |
-| **可靠性** | 设计可靠度 | >99.9% | 99.97% | ✅ 达标 |
+| 指标类别           | 指标名称     | 目标值 | 实际达成 | 评价    |
+| ------------------ | ------------ | ------ | -------- | ------- |
+| **仿真精度** | 固有频率误差 | <5%    | 3.2%     | ✅ 达标 |
+| **仿真精度** | 稳态应力误差 | <10%   | 7.8%     | ✅ 达标 |
+| **仿真精度** | 瞬态温度误差 | <8%    | 6.5%     | ✅ 达标 |
+| **仿真精度** | 疲劳寿命预测 | ±2倍  | 1.5倍    | ✅ 达标 |
+| **效率**     | 单次仿真耗时 | <24h   | 8h       | ✅ 超标 |
+| **效率**     | 代理模型精度 | >95%   | 97.2%    | ✅ 达标 |
+| **可靠性**   | 设计可靠度   | >99.9% | 99.97%   | ✅ 达标 |
 
 #### 4.5.2 业务价值
 
-| 价值维度 | 具体成果 | 量化数据 |
-|---------|---------|---------|
-| **研发成本** | 物理试验件减少 | -60%（节省3600万元/年） |
-| **研发周期** | 新产品开发周期 | 从24个月缩短至15个月 |
-| **设计质量** | 首次设计合格率 | 从65%提升至88% |
-| **适航认证** | 数字认证占比 | 35%的验证项目通过仿真完成 |
-| **知识沉淀** | 设计知识复用率 | 从20%提升至60% |
-| **ROI** | 项目总投资2000万元 | 2年回收期，5年ROI 520% |
+| 价值维度           | 具体成果           | 量化数据                  |
+| ------------------ | ------------------ | ------------------------- |
+| **研发成本** | 物理试验件减少     | -60%（节省3600万元/年）   |
+| **研发周期** | 新产品开发周期     | 从24个月缩短至15个月      |
+| **设计质量** | 首次设计合格率     | 从65%提升至88%            |
+| **适航认证** | 数字认证占比       | 35%的验证项目通过仿真完成 |
+| **知识沉淀** | 设计知识复用率     | 从20%提升至60%            |
+| **ROI**      | 项目总投资2000万元 | 2年回收期，5年ROI 520%    |
 
 #### 4.5.3 经验教训
 
 **成功经验**：
+
 1. **V&V体系构建**：建立完整的Verification（验证）和Validation（确认）流程，每个仿真模型必须通过3级验证（单元测试、模块验证、系统确认）才能用于正式设计
 2. **代理模型加速**：针对需要数千次迭代的优化问题，构建基于Kriging的代理模型，将单次评估从8小时缩短至0.1秒，使大规模优化成为可能
 3. **材料数据库建设**：投资建立覆盖全温度范围的材料性能数据库，包含母材、焊缝、热影响区的差异化数据，这是高精度仿真的基础
 
 **改进方向**：
+
 1. **多尺度耦合**：当前宏观模型与微观组织模型独立运行，计划开发多尺度耦合框架，实现从工艺参数到服役性能的直接映射
 2. **实时仿真云化**：将仿真能力封装为云服务API，支持设计团队全球协同，目前受限于数据安全和网络延迟
 3. **AI增强设计**：引入生成式设计（Generative Design），让AI自主探索设计空间，目前仍需人工定义约束条件
@@ -2240,13 +2294,13 @@ if __name__ == "__main__":
 
 ### 5.2 最佳实践
 
-| 实践领域 | 具体建议 |
-|---------|---------|
+| 实践领域           | 具体建议                                                     |
+| ------------------ | ------------------------------------------------------------ |
 | **架构设计** | 采用微服务架构，数字孪生核心引擎与业务应用解耦，支持独立演进 |
-| **数据管理** | 建立统一的数据模型和标准，使用时空数据库管理时序数据 |
-| **模型管理** | 实施MLOps，实现模型的版本控制、A/B测试、自动化部署 |
-| **安全合规** | 工业数据分级分类，核心工艺参数本地化处理，满足等保要求 |
-| **人才培养** | 培养"双跨"人才（既懂OT又懂IT），建立数字孪生卓越中心 |
+| **数据管理** | 建立统一的数据模型和标准，使用时空数据库管理时序数据         |
+| **模型管理** | 实施MLOps，实现模型的版本控制、A/B测试、自动化部署           |
+| **安全合规** | 工业数据分级分类，核心工艺参数本地化处理，满足等保要求       |
+| **人才培养** | 培养"双跨"人才（既懂OT又懂IT），建立数字孪生卓越中心         |
 
 ### 5.3 经验教训
 
@@ -2278,5 +2332,5 @@ if __name__ == "__main__":
 - `03_Standards.md` - 标准对标
 - `04_Transformation.md` - 转换体系（包含数据存储）
 
-**创建时间**：2025-01-21  
+**创建时间**：2025-01-21
 **最后更新**：2026-02-15（完善案例研究，添加完整业务背景、技术挑战、代码实现和效果评估）

@@ -277,19 +277,19 @@ OPC UA定义了工业互操作协议的Schema。
 
 ### 5.1 标准对比表
 
-| 标准类型 | 标准名称 | 物理层 | 数据链路层 | 网络层 | 传输层 | 应用层 | 应用领域 |
-|---------|---------|--------|-----------|--------|--------|--------|----------|
-| **国际标准** | IEEE 802.11 | ✅ | ✅ | ❌ | ❌ | ❌ | WiFi |
-| **国际标准** | IEEE 802.15.4 | ✅ | ✅ | ❌ | ❌ | ❌ | Zigbee/Thread |
-| **国际标准** | 3GPP NB-IoT | ✅ | ✅ | ✅ | ✅ | ✅ | 蜂窝物联网 |
-| **国际标准** | 3GPP LTE-M | ✅ | ✅ | ✅ | ✅ | ✅ | 蜂窝物联网 |
-| **国家标准** | GB/T 19582-2008 | ✅ | ✅ | ❌ | ✅ | ✅ | Modbus |
-| **国家标准** | GB/T 20540-2006 | ✅ | ✅ | ❌ | ✅ | ✅ | Profibus |
-| **行业标准** | MQTT | ❌ | ❌ | ❌ | ✅ | ✅ | 消息队列 |
-| **行业标准** | CoAP | ❌ | ❌ | ❌ | ✅ | ✅ | RESTful |
-| **行业标准** | LoRaWAN | ✅ | ✅ | ❌ | ❌ | ✅ | 低功耗广域网 |
-| **行业标准** | OPC UA | ❌ | ❌ | ❌ | ✅ | ✅ | 工业互操作 |
-| **行业标准** | Zigbee | ✅ | ✅ | ✅ | ❌ | ✅ | 短距离无线 |
+| 标准类型           | 标准名称        | 物理层 | 数据链路层 | 网络层 | 传输层 | 应用层 | 应用领域      |
+| ------------------ | --------------- | ------ | ---------- | ------ | ------ | ------ | ------------- |
+| **国际标准** | IEEE 802.11     | ✅     | ✅         | ❌     | ❌     | ❌     | WiFi          |
+| **国际标准** | IEEE 802.15.4   | ✅     | ✅         | ❌     | ❌     | ❌     | Zigbee/Thread |
+| **国际标准** | 3GPP NB-IoT     | ✅     | ✅         | ✅     | ✅     | ✅     | 蜂窝物联网    |
+| **国际标准** | 3GPP LTE-M      | ✅     | ✅         | ✅     | ✅     | ✅     | 蜂窝物联网    |
+| **国家标准** | GB/T 19582-2008 | ✅     | ✅         | ❌     | ✅     | ✅     | Modbus        |
+| **国家标准** | GB/T 20540-2006 | ✅     | ✅         | ❌     | ✅     | ✅     | Profibus      |
+| **行业标准** | MQTT            | ❌     | ❌         | ❌     | ✅     | ✅     | 消息队列      |
+| **行业标准** | CoAP            | ❌     | ❌         | ❌     | ✅     | ✅     | RESTful       |
+| **行业标准** | LoRaWAN         | ✅     | ✅         | ❌     | ❌     | ✅     | 低功耗广域网  |
+| **行业标准** | OPC UA          | ❌     | ❌         | ❌     | ✅     | ✅     | 工业互操作    |
+| **行业标准** | Zigbee          | ✅     | ✅         | ✅     | ❌     | ✅     | 短距离无线    |
 
 **说明**：
 
@@ -299,25 +299,25 @@ OPC UA定义了工业互操作协议的Schema。
 
 ### 5.2 Schema特性对比
 
-| 标准 | 消息格式 | 路由支持 | QoS支持 | 安全机制 | 扩展性 |
-|------|---------|---------|---------|---------|--------|
-| **IEEE 802.11** | ✅ 帧格式 | ✅ 路由 | ✅ QoS | ✅ WPA3 | ⚠️ 有限 |
-| **IEEE 802.15.4** | ✅ 帧格式 | ⚠️ 部分 | ⚠️ 部分 | ✅ AES-128 | ⚠️ 有限 |
-| **3GPP NB-IoT** | ✅ 协议数据单元 | ✅ 路由 | ✅ QoS | ✅ 加密 | ✅ 强 |
-| **MQTT** | ✅ 消息格式 | ❌ 无 | ✅ QoS 0-2 | ✅ TLS/SSL | ✅ 强 |
-| **CoAP** | ✅ 消息格式 | ✅ 路由 | ✅ 确认机制 | ✅ DTLS | ✅ 强 |
-| **LoRaWAN** | ✅ 帧格式 | ✅ 路由 | ⚠️ 部分 | ✅ AES-128 | ✅ 强 |
-| **OPC UA** | ✅ 消息格式 | ❌ 无 | ✅ 优先级 | ✅ X.509 | ✅ 强 |
+| 标准                    | 消息格式        | 路由支持  | QoS支持     | 安全机制   | 扩展性    |
+| ----------------------- | --------------- | --------- | ----------- | ---------- | --------- |
+| **IEEE 802.11**   | ✅ 帧格式       | ✅ 路由   | ✅ QoS      | ✅ WPA3    | ⚠️ 有限 |
+| **IEEE 802.15.4** | ✅ 帧格式       | ⚠️ 部分 | ⚠️ 部分   | ✅ AES-128 | ⚠️ 有限 |
+| **3GPP NB-IoT**   | ✅ 协议数据单元 | ✅ 路由   | ✅ QoS      | ✅ 加密    | ✅ 强     |
+| **MQTT**          | ✅ 消息格式     | ❌ 无     | ✅ QoS 0-2  | ✅ TLS/SSL | ✅ 强     |
+| **CoAP**          | ✅ 消息格式     | ✅ 路由   | ✅ 确认机制 | ✅ DTLS    | ✅ 强     |
+| **LoRaWAN**       | ✅ 帧格式       | ✅ 路由   | ⚠️ 部分   | ✅ AES-128 | ✅ 强     |
+| **OPC UA**        | ✅ 消息格式     | ❌ 无     | ✅ 优先级   | ✅ X.509   | ✅ 强     |
 
 ### 5.3 工具链支持对比
 
-| 工具 | IEEE 802.11 | MQTT | CoAP | LoRaWAN | OPC UA | 代码生成 |
-|------|-------------|------|------|---------|--------|---------|
-| **Eclipse Paho** | ❌ 无 | ✅ 完整 | ⚠️ 部分 | ❌ 无 | ❌ 无 | ✅ 完整 |
-| **Node-RED** | ⚠️ 部分 | ✅ 完整 | ✅ 完整 | ⚠️ 部分 | ✅ 完整 | ⚠️ 部分 |
-| **OPC UA SDK** | ❌ 无 | ⚠️ 部分 | ❌ 无 | ❌ 无 | ✅ 完整 | ✅ 完整 |
-| **LoRaWAN Stack** | ❌ 无 | ❌ 无 | ❌ 无 | ✅ 完整 | ❌ 无 | ✅ 完整 |
-| **AWS IoT SDK** | ❌ 无 | ✅ 完整 | ⚠️ 部分 | ⚠️ 部分 | ❌ 无 | ✅ 完整 |
+| 工具                    | IEEE 802.11 | MQTT      | CoAP      | LoRaWAN   | OPC UA  | 代码生成  |
+| ----------------------- | ----------- | --------- | --------- | --------- | ------- | --------- |
+| **Eclipse Paho**  | ❌ 无       | ✅ 完整   | ⚠️ 部分 | ❌ 无     | ❌ 无   | ✅ 完整   |
+| **Node-RED**      | ⚠️ 部分   | ✅ 完整   | ✅ 完整   | ⚠️ 部分 | ✅ 完整 | ⚠️ 部分 |
+| **OPC UA SDK**    | ❌ 无       | ⚠️ 部分 | ❌ 无     | ❌ 无     | ✅ 完整 | ✅ 完整   |
+| **LoRaWAN Stack** | ❌ 无       | ❌ 无     | ❌ 无     | ✅ 完整   | ❌ 无   | ✅ 完整   |
+| **AWS IoT SDK**   | ❌ 无       | ✅ 完整   | ⚠️ 部分 | ⚠️ 部分 | ❌ 无   | ✅ 完整   |
 
 ---
 
@@ -391,21 +391,21 @@ OPC UA定义了工业互操作协议的Schema。
 
 ### 7.3 在线资源
 
-- **IEEE官网**：<https://standards.ieee.org/>
-- **3GPP官网**：<https://www.3gpp.org/>
-- **MQTT官网**：<https://mqtt.org/>
-- **LoRa Alliance**：<https://lora-alliance.org/>
-- **OPC Foundation**：<https://opcfoundation.org/>
+- **IEEE官网**：[https://standards.ieee.org/](https://standards.ieee.org/)
+- **3GPP官网**：[https://www.3gpp.org/](https://www.3gpp.org/)
+- **MQTT官网**：[https://mqtt.org/](https://mqtt.org/)
+- **LoRa Alliance**：[https://lora-alliance.org/](https://lora-alliance.org/)
+- **OPC Foundation**：[https://opcfoundation.org/](https://opcfoundation.org/)
 
 ### 7.4 技术社区
 
-- **Eclipse IoT**：<https://iot.eclipse.org/>
-- **Eclipse Paho**：<https://www.eclipse.org/paho/>
-- **Node-RED**：<https://nodered.org/>
+- **Eclipse IoT**：[https://iot.eclipse.org/](https://iot.eclipse.org/)
+- **Eclipse Paho**：[https://www.eclipse.org/paho/](https://www.eclipse.org/paho/)
+- **Node-RED**：[https://nodered.org/](https://nodered.org/)
 - **GitHub IoT工具**：
-  <https://github.com/eclipse/paho.mqtt>
+  [https://github.com/eclipse/paho.mqtt](https://github.com/eclipse/paho.mqtt)
 - **LoRaWAN Stack**：
-  <https://github.com/Lora-net/LoRaMac-node>
+  [https://github.com/Lora-net/LoRaMac-node](https://github.com/Lora-net/LoRaMac-node)
 
 ---
 
