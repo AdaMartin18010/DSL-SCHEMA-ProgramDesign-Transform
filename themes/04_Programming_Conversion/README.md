@@ -24,6 +24,7 @@
   - [6. 实践应用](#6-实践应用)
     - [6.1 典型应用场景](#61-典型应用场景)
   - [7. 参考文献](#7-参考文献)
+    - [7.1 标准文档](#71-标准文档)
 
 ---
 
@@ -133,9 +134,13 @@
 
 ### 5.1 相关标准
 
-- **OpenAPI**：API规范标准
-- **JSON Schema**：JSON Schema标准
-- **Protocol Buffers**：序列化标准
+- **Protocol Buffers Edition 2024** (protobuf 32.x, 2025-Q3)：序列化标准
+- **JSON Schema Draft 2020-12** (2021年发布)：JSON Schema标准
+- **OpenAPI Specification 3.1.1** (2024-10-24)：API规范标准
+- **ASN.1** ISO/IEC 8824/8825-1:2021：抽象语法标记标准
+- **SQL:2023** (ISO/IEC 9075:2023)：SQL语言标准
+- **PostgreSQL 17** (2024-09-26)：PostgreSQL数据库标准
+- **SQLite 3.47.0** (2024-10-21)：SQLite数据库标准
 
 ---
 
@@ -152,11 +157,16 @@
 
 ## 7. 参考文献
 
-- OpenAPI Specification
-- JSON Schema Specification
-- Protocol Buffers Specification
+### 7.1 标准文档
+
+- Protocol Buffers Edition 2024 Specification
+- JSON Schema Draft 2020-12
+- OpenAPI Specification 3.1.1
+- ISO/IEC 8824-1:2021 (ASN.1)
+- ISO/IEC 8825-1:2021 (ASN.1编码规则)
+- ISO/IEC 9075:2023 SQL:2023
 
 ---
 
 **创建时间**：2025-01-21
-**最后更新**：2025-01-21
+**最后更新**：2026-02-15

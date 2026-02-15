@@ -168,22 +168,26 @@ IoT Schema支持**七维转换**：
 
 ### 5.1 国际标准
 
-- **W3C WoT**：Web of Things标准
+- **IEEE 1451.0-2024**：智能传感器接口标准（2024年6月发布）
+- **IEEE 1451.1.6-2025**：MQTT网络设备通信标准
+- **W3C WoT Thing Description 1.1**：W3C Recommendation (2023-12-05)
+- **OneM2M Release 4**：物联网M2M标准（2025年2月正式批准）
 - **IEEE 802.11**：WiFi标准
 - **IEEE 802.15.4**：Zigbee标准
 - **LoRaWAN**：低功耗广域网标准
 
 ### 5.2 国家标准
 
-- **GB/T 34068-2017**：物联网总体技术 智能传感器接口规范
+- **GB/T 34068-2017**：物联网总体技术 智能传感器接口规范（2025-05-30复审通过）
+- **YD/T 3334-2018**：物联网总体技术 智能传感器接口规范
 - **YD/T系列**：通信行业标准
 - **GB/T 34679-2017**：智慧城市评价模型
 
 ### 5.3 行业标准
 
-- **IO-Link**：工业传感器接口标准
-- **OPC UA**：工业自动化标准
-- **MQTT**：消息队列遥测传输协议
+- **IO-Link V1.1.4**：工业传感器接口标准（2024-06, Package 2024）
+- **OPC UA 1.05.06**：工业自动化标准（2025-10-31）
+- **MQTT 5.0**：消息队列遥测传输协议
 
 ---
 
@@ -209,9 +213,13 @@ IoT Schema支持**七维转换**：
 
 ### 7.1 标准文档
 
-- GB/T 34068-2017 物联网总体技术 智能传感器接口规范
-- W3C WoT Thing Description 1.1
-- OPC UA Part 1-14
+- IEEE 1451.0-2024 Standard for a Smart Transducer Interface
+- IEEE 1451.1.6-2025 MQTT Network Device Communication
+- OneM2M Release 4 Specification (2025-02批准)
+- W3C WoT Thing Description 1.1 (W3C Recommendation 2023-12-05)
+- GB/T 34068-2017 物联网总体技术 智能传感器接口规范 (2025-05复审通过)
+- IO-Link Specification V1.1.4 (Package 2024)
+- OPC UA 1.05.06
 
 ### 7.2 学术文献
 

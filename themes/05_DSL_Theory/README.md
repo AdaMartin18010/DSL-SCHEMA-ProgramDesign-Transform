@@ -20,6 +20,8 @@
     - [4.1 理论基础](#41-理论基础)
   - [5. 标准对标](#5-标准对标)
     - [5.1 相关标准](#51-相关标准)
+      - [W3C 标准](#w3c-标准)
+      - [ISO/IEC 标准](#isoiec-标准)
   - [6. 实践应用](#6-实践应用)
     - [6.1 典型应用场景](#61-典型应用场景)
   - [7. 参考文献](#7-参考文献)
@@ -124,9 +126,24 @@ DSL转换理论主题涵盖**DSL Schema转换的理论基础**，
 
 ### 5.1 相关标准
 
-- **W3C标准**
-- **IETF标准**
-- **ISO标准**
+#### W3C 标准
+
+- **W3C RDF 1.2** (Working Draft 2026-01-28)
+  - Triple Terms支持
+  - 方向性语言标记字符串
+- **W3C OWL 2** (2012) - 状态：稳定，维护模式
+- **W3C JSON-LD 1.1** (2020) - 状态：稳定
+- **W3C RDF Schema 1.2** - 与RDF 1.2同步
+- **W3C SPARQL 1.2** - 开发中
+
+#### ISO/IEC 标准
+
+- **ISO/IEC 21838** 顶级本体标准
+  - Part 1: Requirements (2021)
+  - Part 2: BFO (2021)
+  - Part 3: DOLCE (2023)
+  - Part 4: TUpper (2023)
+  - Part 5: UFO (开发中)
 
 ---
 
@@ -145,10 +162,14 @@ DSL转换理论主题涵盖**DSL Schema转换的理论基础**，
 
 ### 7.1 标准文档
 
-- W3C RDF 1.1 Concepts and Abstract Syntax
+- W3C RDF 1.2 Concepts and Abstract Data Model (Working Draft 2026-01-28)
 - W3C OWL 2 Web Ontology Language
-- ISO/IEC 21838 Information technology - Top-level ontologies
 - W3C JSON-LD 1.1
+- W3C RDF Schema 1.2
+- ISO/IEC 21838-1:2021 Top-level ontologies - Part 1: Requirements
+- ISO/IEC 21838-2:2021 Top-level ontologies - Part 2: BFO
+- ISO/IEC 21838-3:2023 Top-level ontologies - Part 3: DOLCE
+- ISO/IEC 21838-4:2023 Top-level ontologies - Part 4: TUpper
 
 ### 7.2 学术文献
 
@@ -160,4 +181,4 @@ DSL转换理论主题涵盖**DSL Schema转换的理论基础**，
 ---
 
 **创建时间**：2025-01-21
-**最后更新**：2025-01-21
+**最后更新**：2026-02-15

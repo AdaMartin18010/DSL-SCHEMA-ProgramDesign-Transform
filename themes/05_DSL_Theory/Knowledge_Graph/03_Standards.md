@@ -29,6 +29,7 @@
       - [5.3.1 AI增强知识图谱](#531-ai增强知识图谱)
       - [5.3.2 量子知识图谱](#532-量子知识图谱)
       - [5.3.3 联邦知识图谱](#533-联邦知识图谱)
+      - [5.3.4 RDF 1.2正式发布](#534-rdf-12正式发布)
   - [6. 参考文献](#6-参考文献)
     - [6.1 标准文档](#61-标准文档)
     - [6.2 学术文献](#62-学术文献)
@@ -74,10 +75,37 @@ Resource Description Framework
 **Schema体现**：
 RDF定义了知识图谱的基础数据模型Schema。
 
-**最新版本**：RDF 1.1 (2014)
+**最新版本**：RDF 1.2 (2026年1月28日工作草案)
+
+**RDF 1.2 主要新特性**：
+
+| 特性 | 描述 | 影响 |
+|------|------|------|
+| **Triple Terms（三元项）** | 允许将RDF三元组本身作为另一个三元组的宾语，支持嵌套陈述 | 极大地扩展了RDF的表达能力，支持元数据标注、出处追踪、引文管理等高级场景 |
+| **方向性语言标记字符串** | 新增`rdf:dirLangString`数据类型，支持双向文本（RTL/LTR） | 解决了阿拉伯语、希伯来语等从右向左书写语言在知识图谱中的表示问题 |
+| **版本声明机制** | 引入显式RDF版本标识（"1.2"、"1.2-basic"、"1.1"） | 提高了互操作性，使应用程序能够明确识别和处理不同版本的RDF数据 |
+| **符合性级别** | Full conformance（支持Triple Terms）和Basic conformance | 提供了灵活的实施路径，基础实现可选择不支持Triple Terms以简化复杂度 |
+
+**Triple Terms 示例**：
+
+```turtle
+# RDF 1.2 允许将三元组作为宾语
+@prefix : <http://example.org/> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+
+# 声明一个关于三元组的元陈述
+:statement1 rdf:type rdf:TripleTerm ;
+             rdf:subject :Alice ;
+             rdf:predicate :knows ;
+             rdf:object :Bob ;
+             :assertedBy :Charlie ;
+             :assertedDate "2024-01-15"^^xsd:date .
+```
 
 **参考链接**：
-[W3C RDF](https://www.w3.org/RDF/)
+
+- [W3C RDF](https://www.w3.org/RDF/)
+- [RDF 1.2 Concepts and Abstract Syntax (Working Draft)](https://www.w3.org/TR/rdf12-concepts/)
 
 ### 2.2 W3C OWL
 
@@ -95,6 +123,9 @@ Web Ontology Language
 OWL定义了知识图谱的本体Schema。
 
 **最新版本**：OWL 2 (2012)
+
+**状态说明**：
+OWL 2自2012年发布以来保持稳定，目前无重大更新计划。W3C OWL工作组目前处于维护模式，主要关注与RDF 1.2的兼容性适配。
 
 **参考链接**：
 [W3C OWL](https://www.w3.org/OWL/)
@@ -116,6 +147,16 @@ ISO/IEC 21838定义了知识图谱的本体Schema。
 
 **最新版本**：ISO/IEC 21838系列
 
+**各部分详细信息**：
+
+| 部分 | 名称 | 状态 | 发布年份 | 描述 |
+|------|------|------|----------|------|
+| **Part 1** | Requirements | 已发布 | 2021 | 定义顶层本体的要求、建议和合格判定标准，为后续部分提供基础框架 |
+| **Part 2** | BFO (Basic Formal Ontology) | 已发布 | 2021 | 基础形式化本体，用于科学和工程领域，强调连续体和独立对象的区别 |
+| **Part 3** | DOLCE (Descriptive Ontology for Linguistic and Cognitive Engineering) | 已发布 | 2023 | 语言与认知工程描述本体，注重认知基础，区分物理对象和抽象对象 |
+| **Part 4** | TUpper (Top-level Upper Level Ontology) | 已发布 | 2023 | 顶层上层本体，提供通用的顶层概念结构 |
+| **Part 5** | UFO (Unified Foundational Ontology) | 开发中 | - | 统一基础本体，整合多种本体理论，提供更全面的概念框架 |
+
 **参考链接**：
 [ISO官网](https://www.iso.org/)
 
@@ -134,7 +175,16 @@ RDF Schema
 **Schema体现**：
 RDF Schema定义了知识图谱的词汇表Schema。
 
-**最新版本**：RDF Schema 1.1 (2014)
+**最新版本**：RDF Schema 1.2 (与RDF 1.2同步更新)
+
+**RDF Schema 1.2 更新内容**：
+
+| 类别 | 更新内容 |
+|------|----------|
+| **类定义** | 新增`rdf:TripleTerm`类以支持RDF 1.2的Triple Terms特性 |
+| **属性扩展** | 新增`rdf:subject`、`rdf:predicate`、`rdf:object`属性用于描述三元项 |
+| **数据类型** | 新增`rdf:dirLangString`以支持方向性语言标记字符串 |
+| **版本标识** | 更新命名空间以反映1.2版本 |
 
 **参考链接**：
 [W3C RDF Schema](https://www.w3.org/TR/rdf-schema/)
@@ -178,6 +228,9 @@ JSON-LD定义了JSON格式的知识图谱Schema。
 
 **最新版本**：JSON-LD 1.1 (2020)
 
+**状态说明**：
+JSON-LD 1.1自2020年发布以来保持稳定，目前无重大更新。JSON-LD工作组正在关注RDF 1.2的发展，评估是否需要对JSON-LD进行相应更新以支持Triple Terms等新特性。
+
 **参考链接**：
 [W3C JSON-LD](https://www.w3.org/TR/json-ld11/)
 
@@ -207,11 +260,11 @@ Cypher定义了图数据库查询的Schema。
 
 | 标准 | 范围 | 数据模型 | 推理能力 | 查询语言 | 状态 |
 |------|------|----------|----------|----------|------|
-| **W3C RDF** | 通用 | 三元组 | ⚠️ 基础 | ✅ SPARQL | ✅ 已发布 |
-| **W3C OWL** | 通用 | 本体 | ✅ 强 | ✅ SPARQL | ✅ 已发布 |
-| **ISO/IEC 21838** | 通用 | 顶层本体 | ⚠️ 中 | ⚠️ 多种 | ✅ 已发布 |
+| **W3C RDF** | 通用 | 三元组 | ⚠️ 基础 | ✅ SPARQL | 🔄 RDF 1.2 工作草案 |
+| **W3C OWL** | 通用 | 本体 | ✅ 强 | ✅ SPARQL | ✅ 已发布 (稳定) |
+| **ISO/IEC 21838** | 通用 | 顶层本体 | ⚠️ 中 | ⚠️ 多种 | 🔄 Part 5 开发中 |
 | **Schema.org** | Web | 结构化数据 | ❌ 弱 | ❌ 无 | ✅ 已发布 |
-| **JSON-LD** | Web | JSON-RDF | ⚠️ 基础 | ✅ SPARQL | ✅ 已发布 |
+| **JSON-LD** | Web | JSON-RDF | ⚠️ 基础 | ✅ SPARQL | ✅ 已发布 (稳定) |
 | **Neo4j Cypher** | 图数据库 | 属性图 | ⚠️ 中 | ✅ Cypher | ✅ 已发布 |
 | **Amazon Neptune** | 云平台 | 属性图 | ⚠️ 中 | ✅ Gremlin/SPARQL | ✅ 已发布 |
 | **Apache TinkerPop** | 图计算 | 属性图 | ⚠️ 中 | ✅ Gremlin | ✅ 已发布 |
@@ -224,6 +277,7 @@ Cypher定义了图数据库查询的Schema。
 - ✅：完全支持/已发布
 - ⚠️：部分支持/中等
 - ❌：不支持/弱
+- 🔄：更新中/开发中
 
 ### 4.2 Schema特性对比
 
@@ -261,7 +315,9 @@ Cypher定义了图数据库查询的Schema。
 
 **趋势**：
 
-- **语义增强**：增强语义表示能力
+- **RDF 1.2演进**：Triple Terms等重大特性正在标准化过程中
+- **多语言支持增强**：方向性语言标记字符串支持全球化应用
+- **元数据表达能力**：通过Triple Terms支持更丰富的元数据标注
 - **互操作性**：提高互操作性
 - **标准化**：统一标准规范
 
@@ -270,6 +326,7 @@ Cypher定义了图数据库查询的Schema。
 - 提高知识表示能力
 - 促进知识共享
 - 支持跨平台应用
+- 支持更复杂的知识图谱应用场景（如出处追踪、引文管理）
 
 #### 5.1.2 图数据库标准
 
@@ -278,6 +335,7 @@ Cypher定义了图数据库查询的Schema。
 - **性能优化**：查询性能优化
 - **分布式**：分布式图数据库
 - **标准化**：图数据库标准
+- **RDF 1.2适配**：图数据库需要适配Triple Terms等新特性
 
 **影响**：
 
@@ -292,6 +350,7 @@ Cypher定义了图数据库查询的Schema。
 - **推理能力**：增强推理能力
 - **推理引擎**：标准化推理引擎
 - **推理算法**：高效推理算法
+- **Triple Terms推理**：支持对Triple Terms的推理
 
 **影响**：
 
@@ -305,6 +364,7 @@ Cypher定义了图数据库查询的Schema。
 2. **互操作性**：增强不同平台互操作
 3. **可扩展性**：支持行业特定扩展
 4. **智能化**：加强AI知识图谱Schema定义
+5. **国际化**：增强多语言和跨文化支持
 
 ### 5.3 2025-2026年展望
 
@@ -326,16 +386,30 @@ Cypher定义了图数据库查询的Schema。
 - **影响**：需要联邦知识Schema定义
 - **标准**：新兴标准制定中
 
+#### 5.3.4 RDF 1.2正式发布
+
+- **预期时间**：2025-2026年
+- **主要影响**：
+  - 需要更新现有的RDF处理工具和库
+  - 需要制定从RDF 1.1到1.2的迁移指南
+  - 需要更新教育和培训材料
+  - 需要评估Triple Terms对现有系统的影响
+
 ---
 
 ## 6. 参考文献
 
 ### 6.1 标准文档
 
+- W3C RDF 1.2 Concepts and Abstract Syntax (Working Draft, 2026-01-28)
 - W3C RDF 1.1 Concepts and Abstract Syntax
 - W3C OWL 2 Web Ontology Language
-- ISO/IEC 21838 Information technology - Top-level ontologies
-- W3C RDF Schema 1.1
+- ISO/IEC 21838-1:2021 Information technology - Top-level ontologies - Part 1: Requirements
+- ISO/IEC 21838-2:2021 Information technology - Top-level ontologies - Part 2: BFO
+- ISO/IEC 21838-3:2023 Information technology - Top-level ontologies - Part 3: DOLCE
+- ISO/IEC 21838-4:2023 Information technology - Top-level ontologies - Part 4: TUpper
+- ISO/IEC 21838-5 (Development) Information technology - Top-level ontologies - Part 5: UFO
+- W3C RDF Schema 1.2
 - W3C JSON-LD 1.1
 
 ### 6.2 学术文献
@@ -343,25 +417,24 @@ Cypher定义了图数据库查询的Schema。
 - 知识图谱技术标准研究
 - 语义Web标准发展
 - 图数据库标准化
+- RDF 1.2新特性分析与评估
 
 ### 6.3 在线资源
 
 - **W3C官网**：<https://www.w3.org/>
+- **RDF 1.2工作草案**：<https://www.w3.org/TR/rdf12-concepts/>
 - **Schema.org**：<https://schema.org/>
 - **Neo4j官网**：<https://neo4j.com/>
-- **JSON-LD Playground**：
-  <https://json-ld.org/playground/>
+- **JSON-LD Playground**：<https://json-ld.org/playground/>
+- **ISO官网**：<https://www.iso.org/>
 
 ### 6.4 技术社区
 
 - **Apache Jena**：<https://jena.apache.org/>
 - **RDFLib**：<https://rdflib.readthedocs.io/>
-- **Amazon Neptune**：
-  <https://aws.amazon.com/neptune/>
-- **Apache TinkerPop**：
-  <https://tinkerpop.apache.org/>
-- **GitHub知识图谱工具**：
-  <https://github.com/apache/jena>
+- **Amazon Neptune**：<https://aws.amazon.com/neptune/>
+- **Apache TinkerPop**：<https://tinkerpop.apache.org/>
+- **GitHub知识图谱工具**：<https://github.com/apache/jena>
 
 ---
 
@@ -373,4 +446,4 @@ Cypher定义了图数据库查询的Schema。
 - `05_Case_Studies.md` - 实践案例
 
 **创建时间**：2025-01-21
-**最后更新**：2025-01-21
+**最后更新**：2026-02-15

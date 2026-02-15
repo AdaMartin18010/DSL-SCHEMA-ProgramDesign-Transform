@@ -146,22 +146,24 @@ CAN_Schema = Physical_Schema ⊕ DataLink_Schema
 
 ### 5.1 国际标准
 
-- **IEC 61131-3**：PLC编程语言标准
-- **ISO 11898**：CAN协议标准
+- **IEC 61131-3:2025**：PLC编程语言标准（第四版）
+- **IEC 61499:2012**：分布式控制系统标准
+- **ISO 11898-1:2024**：CAN协议标准 - 数据链路层和物理信号
+- **ISO 11898-2:2024**：CAN协议标准 - 高速介质访问单元
 - **IEC 61850**：变电站通信标准
-- **IEC 61499**：分布式控制系统标准
 
 ### 5.2 国家标准
 
-- **GB/T 33008.1-2016**：PLC编程语言标准
-- **GB/T 19582**：Modbus协议标准
-- **GB/T 20540**：Profibus协议标准
+- **GB/T 15969.3-2017**：可编程序控制器 第3部分：编程语言
+- **GB/T 19582-2008**：Modbus协议标准
+- **GB/T 20540-2006**：Profibus协议标准
 
 ### 5.3 行业标准
 
+- **PLCopen XML v2.01 / IEC 61131-10:2019**：PLC编程软件接口规范
 - **SAE J1939**：商用车CAN协议标准
-- **CANopen**：工业自动化CAN协议标准
-- **DeviceNet**：设备网络标准
+- **CANopen CiA 301**：工业自动化CAN协议标准
+- **OPC UA**：开放平台通信统一架构
 
 ---
 
@@ -189,9 +191,12 @@ CAN_Schema = Physical_Schema ⊕ DataLink_Schema
 
 ### 7.1 标准文档
 
-- IEC 61131-3:2013 Programmable controllers
-- ISO 11898-1:2015 Road vehicles - Controller area network
-- GB/T 33008.1-2016 可编程控制器编程语言
+- IEC 61131-3:2025 Programmable controllers - Part 3: Programming languages (Edition 4.0)
+- IEC 61499-1:2012 Function blocks - Part 1: Architecture
+- ISO 11898-1:2024 Road vehicles - Controller area network (CAN) - Part 1: Data link layer and physical signalling
+- ISO 11898-2:2024 Road vehicles - Controller area network (CAN) - Part 2: High-speed medium access unit
+- GB/T 15969.3-2017 可编程序控制器 第3部分：编程语言
+- PLCopen XML v2.01 Specification / IEC 61131-10:2019
 
 ### 7.2 学术文献
 
@@ -208,5 +213,5 @@ CAN_Schema = Physical_Schema ⊕ DataLink_Schema
 ---
 
 **创建时间**：2025-01-21
-**最后更新**：2025-01-21
+**最后更新**：2025-02-15
 **维护者**：DSL Schema研究团队

@@ -9,50 +9,120 @@
   - [2. 案例1：商用车J1939应用](#2-案例1商用车j1939应用)
     - [2.1 项目背景](#21-项目背景)
     - [2.2 业务背景](#22-业务背景)
+      - [2.2.1 企业背景](#221-企业背景)
+      - [2.2.2 业务痛点](#222-业务痛点)
+      - [2.2.3 业务目标](#223-业务目标)
     - [2.3 技术挑战](#23-技术挑战)
+      - [挑战1：多ECU数据融合](#挑战1多ecu数据融合)
+      - [挑战2：J1939协议复杂性](#挑战2j1939协议复杂性)
+      - [挑战3：实时性与可靠性平衡](#挑战3实时性与可靠性平衡)
+      - [挑战4：车载计算资源受限](#挑战4车载计算资源受限)
+      - [挑战5：恶劣环境适应性](#挑战5恶劣环境适应性)
     - [2.4 实施步骤](#24-实施步骤)
+      - [步骤1：J1939 Schema定义](#步骤1j1939-schema定义)
+      - [步骤2：代码生成](#步骤2代码生成)
+      - [步骤3：集成测试](#步骤3集成测试)
     - [2.5 Schema结构分析](#25-schema结构分析)
     - [2.6 结果分析](#26-结果分析)
+      - [2.6.1 效果评估](#261-效果评估)
   - [3. 案例2：工业自动化CANopen应用](#3-案例2工业自动化canopen应用)
     - [3.1 项目背景](#31-项目背景)
     - [3.2 业务背景](#32-业务背景)
+      - [3.2.1 企业背景](#321-企业背景)
+      - [3.2.2 业务痛点](#322-业务痛点)
+      - [3.2.3 业务目标](#323-业务目标)
     - [3.3 技术挑战](#33-技术挑战)
+      - [挑战1：多协议融合](#挑战1多协议融合)
+      - [挑战2：实时性要求](#挑战2实时性要求)
+      - [挑战3：设备配置复杂](#挑战3设备配置复杂)
+      - [挑战4：故障安全设计](#挑战4故障安全设计)
+      - [挑战5：大规模网络管理](#挑战5大规模网络管理)
     - [3.4 实施步骤](#34-实施步骤)
+      - [步骤1：CANopen对象字典定义](#步骤1canopen对象字典定义)
+      - [步骤2：PDO映射定义](#步骤2pdo映射定义)
+      - [步骤3：设备配置](#步骤3设备配置)
     - [3.5 Schema结构分析](#35-schema结构分析)
     - [3.6 结果分析](#36-结果分析)
+      - [3.6.1 效果评估](#361-效果评估)
   - [4. 案例3：DBC文件版本管理](#4-案例3dbc文件版本管理)
     - [4.1 项目背景](#41-项目背景)
     - [4.2 业务背景](#42-业务背景)
+      - [4.2.1 企业背景](#421-企业背景)
+      - [4.2.2 业务痛点](#422-业务痛点)
+      - [4.2.3 业务目标](#423-业务目标)
     - [4.3 技术挑战](#43-技术挑战)
+      - [挑战1：DBC文件格式复杂](#挑战1dbc文件格式复杂)
+      - [挑战2：多维度版本管理](#挑战2多维度版本管理)
+      - [挑战3：语义级差异检测](#挑战3语义级差异检测)
+      - [挑战4：自动化集成](#挑战4自动化集成)
+      - [挑战5：权限和审核](#挑战5权限和审核)
     - [4.4 Schema版本管理方案](#44-schema版本管理方案)
+      - [方案1：基于Git的版本控制](#方案1基于git的版本控制)
+      - [方案2：结构化版本管理](#方案2结构化版本管理)
     - [4.5 实践效果](#45-实践效果)
+      - [4.5.1 效果评估](#451-效果评估)
   - [5. 案例4：跨平台代码生成](#5-案例4跨平台代码生成)
     - [5.1 项目背景](#51-项目背景)
     - [5.2 业务背景](#52-业务背景)
+      - [5.2.1 企业背景](#521-企业背景)
+      - [5.2.2 业务痛点](#522-业务痛点)
+      - [5.2.3 业务目标](#523-业务目标)
     - [5.3 技术挑战](#53-技术挑战)
+      - [挑战1：类型系统差异](#挑战1类型系统差异)
+      - [挑战2：内存布局差异](#挑战2内存布局差异)
+      - [挑战3：运行时环境差异](#挑战3运行时环境差异)
+      - [挑战4：错误处理模式差异](#挑战4错误处理模式差异)
+      - [挑战5：API设计一致性](#挑战5api设计一致性)
     - [5.4 转换流程](#54-转换流程)
+      - [流程1：DBC解析](#流程1dbc解析)
+      - [流程2：多平台代码生成](#流程2多平台代码生成)
     - [5.5 转换挑战](#55-转换挑战)
+      - [挑战1：类型系统差异](#挑战1类型系统差异-1)
+      - [挑战2：内存布局差异](#挑战2内存布局差异-1)
     - [5.6 转换结果](#56-转换结果)
+      - [5.6.1 效果评估](#561-效果评估)
   - [6. 案例5：CAN总线测试自动化](#6-案例5can总线测试自动化)
     - [6.1 项目背景](#61-项目背景)
     - [6.2 业务背景](#62-业务背景)
+      - [6.2.1 企业背景](#621-企业背景)
+      - [6.2.2 业务痛点](#622-业务痛点)
+      - [6.2.3 业务目标](#623-业务目标)
     - [6.3 技术挑战](#63-技术挑战)
+      - [挑战1：测试用例生成策略](#挑战1测试用例生成策略)
+      - [挑战2：多协议支持](#挑战2多协议支持)
+      - [挑战3：实时性要求](#挑战3实时性要求)
+      - [挑战4：测试结果判定](#挑战4测试结果判定)
+      - [挑战5：测试环境管理](#挑战5测试环境管理)
     - [6.4 测试生成方法](#64-测试生成方法)
+      - [方法1：基于Schema结构生成](#方法1基于schema结构生成)
+      - [方法2：基于消息流生成](#方法2基于消息流生成)
     - [6.5 生成示例](#65-生成示例)
     - [6.6 实践效果](#66-实践效果)
+      - [6.6.1 效果评估](#661-效果评估)
   - [7. 案例6：CAN数据存储与分析系统](#7-案例6can数据存储与分析系统)
     - [7.1 项目背景](#71-项目背景)
     - [7.2 业务背景](#72-业务背景)
+      - [7.2.1 企业背景](#721-企业背景)
+      - [7.2.2 业务痛点](#722-业务痛点)
+      - [7.2.3 业务目标](#723-业务目标)
     - [7.3 技术挑战](#73-技术挑战)
+      - [挑战1：海量数据存储](#挑战1海量数据存储)
+      - [挑战2：高并发写入](#挑战2高并发写入)
+      - [挑战3：复杂查询优化](#挑战3复杂查询优化)
+      - [挑战4：实时性要求](#挑战4实时性要求)
+      - [挑战5：数据安全](#挑战5数据安全)
     - [7.4 实现代码](#74-实现代码)
     - [7.5 验证结果](#75-验证结果)
+      - [7.5.1 效果评估](#751-效果评估)
   - [8. 完整Python代码实现](#8-完整python代码实现)
     - [8.1 系统架构](#81-系统架构)
     - [8.2 核心代码实现](#82-核心代码实现)
+    - [8.3 系统特点](#83-系统特点)
   - [9. 案例总结](#9-案例总结)
     - [9.1 成功经验](#91-成功经验)
     - [9.2 挑战与解决方案](#92-挑战与解决方案)
     - [9.3 未来方向](#93-未来方向)
+  - [附录：ROI汇总](#附录roi汇总)
 
 ---
 
@@ -77,9 +147,9 @@
 
 ### 2.1 项目背景
 
-**项目名称**：重汽智能车队管理系统  
-**实施周期**：2023年1月 - 2023年9月  
-**项目规模**：支持5000+辆重型商用车  
+**项目名称**：重汽智能车队管理系统
+**实施周期**：2023年1月 - 2023年9月
+**项目规模**：支持5000+辆重型商用车
 **技术栈**：SAE J1939、CAN 2.0B、嵌入式Linux、Python、C/C++
 
 **目标**：开发商用车ECU通信系统，使用SAE J1939协议进行发动机、变速箱、ABS、车身控制等ECU之间的通信，实现车队远程监控、故障诊断和驾驶行为分析。
@@ -88,9 +158,10 @@
 
 #### 2.2.1 企业背景
 
-**客户**：某大型重型卡车制造商（年产能15万辆）  
-**业务规模**：运营车辆超过50万辆，覆盖全国物流网络  
+**客户**：某大型重型卡车制造商（年产能15万辆）
+**业务规模**：运营车辆超过50万辆，覆盖全国物流网络
 **市场挑战**：
+
 - 国六排放标准实施，需实时监控排放数据
 - 客户对车辆TCO（总拥有成本）要求提高
 - 车队管理数字化需求迫切
@@ -116,26 +187,31 @@
 ### 2.3 技术挑战
 
 #### 挑战1：多ECU数据融合
+
 - 车辆搭载15+个ECU，使用不同协议版本
 - 数据时标不一致，需要进行时间同步
 - 数据量大，高峰期每秒产生500+条消息
 
 #### 挑战2：J1939协议复杂性
+
 - PGN（参数组号）超过500种，需要正确解析
 - 多包传输（BAM/RTS/CTS）处理复杂
 - 网络管理（地址声明、NAME解析）逻辑繁琐
 
 #### 挑战3：实时性与可靠性平衡
+
 - 发动机关键数据需要50ms级响应
 - 网络拥塞时需要优先级调度
 - 数据丢失率要求<0.01%
 
 #### 挑战4：车载计算资源受限
+
 - 车载终端仅配备ARM Cortex-A53（1.2GHz）
 - 内存限制512MB
 - 存储空间16GB eMMC
 
 #### 挑战5：恶劣环境适应性
+
 - 工作温度范围-40°C ~ +85°C
 - 振动等级5.5Grms
 - 电磁干扰环境复杂
@@ -370,16 +446,16 @@ import time
 
 class TestJ1939Communication:
     """J1939通信测试套件"""
-    
+
     @classmethod
     def setup_class(cls):
         cls.db = cantools.database.load_file('heavy_truck_j1939.dbc')
         cls.bus = can.interface.Bus('vcan0', bustype='socketcan')
-    
+
     def test_engine_speed_communication(self):
         """测试发动机速度通信"""
         message = self.db.get_message_by_name('EngineSpeed')
-        
+
         # 创建消息数据
         data = message.encode({
             'EngineSpeed': 2000,           # 2000 rpm
@@ -387,7 +463,7 @@ class TestJ1939Communication:
             'ActualEnginePercentTorque': 75,
             'EngineTorqueMode': 1
         })
-        
+
         # 发送消息
         can_msg = can.Message(
             arbitration_id=message.frame_id,
@@ -395,11 +471,11 @@ class TestJ1939Communication:
             is_extended_id=True
         )
         self.bus.send(can_msg)
-        
+
         # 接收消息
         received_msg = self.bus.recv(timeout=1.0)
         assert received_msg is not None
-        
+
         # 解码验证
         decoded = message.decode(received_msg.data)
         assert decoded['EngineSpeed'] == 2000
@@ -407,18 +483,18 @@ class TestJ1939Communication:
         assert decoded['ActualEnginePercentTorque'] == 75
         assert decoded['EngineTorqueMode'] == 1
         print("✓ 发动机速度通信测试通过")
-    
+
     def test_dtc_message(self):
         """测试诊断故障码消息"""
         message = self.db.get_message_by_name('ActiveDiagnosticTroubleCodes')
-        
+
         data = message.encode({
             'SPN': 110,    # 发动机冷却液温度传感器
             'FMI': 4,      # 电压低于正常值
             'OC': 5,       // 发生次数
             'SPNConversionMethod': 0
         })
-        
+
         can_msg = can.Message(
             arbitration_id=message.frame_id,
             data=data,
@@ -427,11 +503,11 @@ class TestJ1939Communication:
         self.bus.send(can_msg)
         received_msg = self.bus.recv(timeout=1.0)
         decoded = message.decode(received_msg.data)
-        
+
         assert decoded['SPN'] == 110
         assert decoded['FMI'] == 4
         print("✓ DTC消息测试通过")
-    
+
     @classmethod
     def teardown_class(cls):
         cls.bus.shutdown()
@@ -527,9 +603,9 @@ if __name__ == '__main__':
 
 ### 3.1 项目背景
 
-**项目名称**：智能制造产线控制系统升级  
-**实施周期**：2023年3月 - 2023年11月  
-**项目规模**：覆盖12条自动化产线，600+个设备节点  
+**项目名称**：智能制造产线控制系统升级
+**实施周期**：2023年3月 - 2023年11月
+**项目规模**：覆盖12条自动化产线，600+个设备节点
 **技术栈**：CANopen、CAN 2.0A、EtherCAT、Python、C++、TwinCAT
 
 **目标**：开发工业自动化系统，使用CANopen协议进行伺服驱动器、I/O模块、编码器、传感器等设备之间的通信，实现设备互联互通和集中监控。
@@ -538,9 +614,10 @@ if __name__ == '__main__':
 
 #### 3.2.1 企业背景
 
-**客户**：某精密制造企业（汽车零部件供应商）  
-**业务规模**：年产零部件2000万件，客户包括多家国际知名车企  
+**客户**：某精密制造企业（汽车零部件供应商）
+**业务规模**：年产零部件2000万件，客户包括多家国际知名车企
 **产线情况**：
+
 - 冲压线4条、焊接线5条、装配线3条
 - 设备品牌混杂（西门子、博世、三菱等）
 - 原有系统已运行10年，老化严重
@@ -566,26 +643,31 @@ if __name__ == '__main__':
 ### 3.3 技术挑战
 
 #### 挑战1：多协议融合
+
 - 需整合CANopen、Modbus、EtherCAT等多种协议
 - 不同协议的数据格式和时序差异大
 - 需要统一的数据模型和接口
 
 #### 挑战2：实时性要求
+
 - 伺服控制要求1ms周期
 - 安全相关信号要求<5ms响应
 - 需要硬实时保证
 
 #### 挑战3：设备配置复杂
+
 - 每个伺服驱动器有200+个对象字典条目
 - PDO映射需要根据工艺动态调整
 - 设备参数备份和恢复机制复杂
 
 #### 挑战4：故障安全设计
+
 - 安全完整性等级要求SIL2
 - 需要双通道安全链
 - 故障检测和响应时间<100ms
 
 #### 挑战5：大规模网络管理
+
 - 单条总线最多64个节点
 - 需要分段和桥接
 - 网络负载均衡优化
@@ -605,9 +687,9 @@ object_dictionary = {
     0x1008: {"name": "ManufacturerDeviceName", "type": "STRING", "access": "ro", "value": "ServoDrive-3000"},
     0x1009: {"name": "ManufacturerHardwareVersion", "type": "STRING", "access": "ro", "value": "V2.1.0"},
     0x100A: {"name": "ManufacturerSoftwareVersion", "type": "STRING", "access": "ro", "value": "V3.2.1"},
-    
+
     # 通信参数 (1400h-1BFFh)
-    0x1400: {"name": "RPDO1Parameter", "type": "PDO_PAR", "access": "rw", 
+    0x1400: {"name": "RPDO1Parameter", "type": "PDO_PAR", "access": "rw",
              "subindices": {
                  0: {"name": "NumberOfEntries", "type": "UINT8", "value": 5},
                  1: {"name": "COB-ID", "type": "UINT32", "value": 0x80000200},
@@ -616,7 +698,7 @@ object_dictionary = {
                  4: {"name": "Reserved", "type": "UINT8", "value": 0},
                  5: {"name": "EventTimer", "type": "UINT16", "value": 0}
              }},
-    
+
     # 制造商特定参数 (2000h-5FFFh)
     0x2000: {"name": "PositionActualValue", "type": "INT32", "access": "ro", "value": 0, "unit": "inc"},
     0x2001: {"name": "VelocityActualValue", "type": "INT32", "access": "ro", "value": 0, "unit": "rpm"},
@@ -626,7 +708,7 @@ object_dictionary = {
     0x2020: {"name": "ControlWord", "type": "UINT16", "access": "rw", "value": 0},
     0x2021: {"name": "StatusWord", "type": "UINT16", "access": "ro", "value": 0},
     0x2030: {"name": "OperationMode", "type": "INT8", "access": "rw", "value": 1},  # 1=Position, 3=Velocity, 4=Torque
-    
+
     # 保护参数
     0x2100: {"name": "MaxCurrent", "type": "UINT16", "access": "rw", "value": 1000, "unit": "mA"},
     0x2101: {"name": "MaxVelocity", "type": "UINT32", "access": "rw", "value": 6000, "unit": "rpm"},
@@ -688,29 +770,29 @@ from typing import List, Dict
 
 class CANopenDeviceConfigurator:
     """CANopen设备配置器"""
-    
+
     def __init__(self, interface: str = 'can0'):
         self.network = canopen.Network()
         self.network.connect(channel=interface, bustype='socketcan')
         self.nodes: Dict[int, canopen.RemoteNode] = {}
-    
+
     def add_node(self, node_id: int, eds_file: str):
         """添加CANopen节点"""
         node = canopen.RemoteNode(node_id, eds_file)
         self.network.add_node(node)
         self.nodes[node_id] = node
         return node
-    
+
     def configure_pdo_mapping(self, node_id: int, pdo_type: str, mapping: List[tuple]):
         """配置PDO映射
-        
+
         Args:
             node_id: 节点ID
             pdo_type: 'tpdo' 或 'rpdo'
             mapping: [(index, subindex, size), ...]
         """
         node = self.nodes[node_id]
-        
+
         # 禁用PDO
         if pdo_type == 'tpdo':
             node.tpdo.read()
@@ -718,26 +800,26 @@ class CANopenDeviceConfigurator:
         else:
             node.rpdo.read()
             pdo = node.rpdo[1]
-        
+
         # 清除现有映射
         pdo.clear()
-        
+
         # 添加新映射
         for index, subindex, size in mapping:
             pdo.add_variable(index, subindex, size)
-        
+
         # 启用PDO
         pdo.enabled = True
         pdo.cob_id = pdo.cob_id & 0x7FF  # 清除禁止位
         pdo.save()
-    
+
     def configure_sync(self, cycle_time_ms: int):
         """配置SYNC同步周期"""
         self.network.sync.start(cycle_time_ms / 1000.0)
-    
+
     def set_operation_mode(self, node_id: int, mode: int):
         """设置操作模式
-        
+
         Modes:
             1: Profile Position Mode
             3: Profile Velocity Mode
@@ -747,19 +829,19 @@ class CANopenDeviceConfigurator:
         node = self.nodes[node_id]
         node.sdo[0x2030].raw = mode
         time.sleep(0.1)
-    
+
     def save_configuration(self, node_id: int):
         """保存配置到非易失性存储"""
         node = self.nodes[node_id]
         # 写入0x1010:1保存配置
         node.sdo[0x1010][1].raw = b'save'
         print(f"Node {node_id}: Configuration saved")
-    
+
     def backup_config(self, node_id: int, filename: str):
         """备份设备配置"""
         node = self.nodes[node_id]
         config = {}
-        
+
         # 读取关键参数
         key_indices = [0x2000, 0x2001, 0x2010, 0x2011, 0x2020, 0x2100, 0x2101]
         for index in key_indices:
@@ -767,11 +849,11 @@ class CANopenDeviceConfigurator:
                 config[f"0x{index:04X}"] = node.sdo[index].raw
             except:
                 pass
-        
+
         with open(filename, 'w') as f:
             json.dump(config, f, indent=2)
         print(f"Node {node_id}: Config backed up to {filename}")
-    
+
     def shutdown(self):
         """关闭网络连接"""
         self.network.sync.stop()
@@ -781,34 +863,34 @@ class CANopenDeviceConfigurator:
 # 使用示例
 if __name__ == "__main__":
     configurator = CANopenDeviceConfigurator('can0')
-    
+
     # 添加伺服驱动器
     servo = configurator.add_node(1, 'servo_drive.eds')
-    
+
     # 配置TPDO1: 状态字 + 实际位置
     configurator.configure_pdo_mapping(1, 'tpdo', [
         (0x2021, 0, 16),  # StatusWord
         (0x2000, 0, 32),  # PositionActualValue
     ])
-    
+
     # 配置RPDO1: 控制字 + 目标速度
     configurator.configure_pdo_mapping(1, 'rpdo', [
         (0x2020, 0, 16),  # ControlWord
         (0x2011, 0, 32),  # TargetVelocity
     ])
-    
+
     # 配置同步周期1ms
     configurator.configure_sync(1)
-    
+
     # 设置速度模式
     configurator.set_operation_mode(1, 3)
-    
+
     # 保存配置
     configurator.save_configuration(1)
-    
+
     # 备份配置
     configurator.backup_config(1, 'servo1_backup.json')
-    
+
     configurator.shutdown()
 ```
 
@@ -893,9 +975,9 @@ if __name__ == "__main__":
 
 ### 4.1 项目背景
 
-**项目名称**：智能网联汽车通信规范管理平台  
-**实施周期**：2023年5月 - 2023年10月  
-**项目规模**：管理50+车型平台，200+ECU类型  
+**项目名称**：智能网联汽车通信规范管理平台
+**实施周期**：2023年5月 - 2023年10月
+**项目规模**：管理50+车型平台，200+ECU类型
 **技术栈**：Git、GitLab CI/CD、Python、PostgreSQL、FastAPI
 
 **目标**：建立DBC文件的版本管理体系，支持差异比较、合并、审核和发布，确保车辆通信规范的准确性和一致性。
@@ -904,9 +986,10 @@ if __name__ == "__main__":
 
 #### 4.2.1 企业背景
 
-**客户**：某大型汽车集团研发中心  
-**组织规模**：2000+研发人员，30+供应商  
+**客户**：某大型汽车集团研发中心
+**组织规模**：2000+研发人员，30+供应商
 **项目复杂度**：
+
 - 每年推出10+新车型
 - 每车型涉及20+ECU供应商
 - DBC文件变更频率：平均每周50+次
@@ -932,27 +1015,32 @@ if __name__ == "__main__":
 ### 4.3 技术挑战
 
 #### 挑战1：DBC文件格式复杂
+
 - 文本格式但语义复杂
 - 空格和顺序变化不影响功能
 - 注释和格式信息需要保留
 
 #### 挑战2：多维度版本管理
+
 - 车型版本（平台A、平台B...）
 - 开发阶段（概念、开发、量产）
 - 供应商版本（V1.0、V1.1...）
 - 地区版本（中国、欧洲、北美）
 
 #### 挑战3：语义级差异检测
+
 - 纯文本diff无法识别语义变化
 - 需要理解信号、消息、节点的关系
 - 需要检测破坏性变更
 
 #### 挑战4：自动化集成
+
 - 需要与CI/CD流水线集成
 - 需要与需求管理系统联动
 - 需要自动通知相关方
 
 #### 挑战5：权限和审核
+
 - 不同角色有不同的编辑权限
 - 重大变更需要多级审核
 - 需要完整的审计日志
@@ -1006,8 +1094,8 @@ analyze_changes:
 semantic_diff:
   stage: analyze
   script:
-    - python -m dbc_semantic_diff 
-        --old $CI_MERGE_REQUEST_DIFF_BASE_SHA 
+    - python -m dbc_semantic_diff
+        --old $CI_MERGE_REQUEST_DIFF_BASE_SHA
         --new $CI_COMMIT_SHA
         --format markdown
         --output semantic_diff.md
@@ -1018,7 +1106,7 @@ semantic_diff:
 generate_report:
   stage: test
   script:
-    - python -m dbc_report_generator 
+    - python -m dbc_report_generator
         --dbc-files "*.dbc"
         --output reports/
   artifacts:
@@ -1030,10 +1118,10 @@ release_package:
   only:
     - tags
   script:
-    - python -m dbc_packager 
+    - python -m dbc_packager
         --version $CI_COMMIT_TAG
         --output dist/
-    - python -m dbc_notifier 
+    - python -m dbc_notifier
         --channels "email,slack"
         --message "DBC v$CI_COMMIT_TAG released"
 ```
@@ -1085,17 +1173,17 @@ class MessageChange:
 
 class DBCDiffAnalyzer:
     """DBC差异分析器"""
-    
+
     def __init__(self, old_dbc: str, new_dbc: str):
         self.old_db = cantools.database.load_file(old_dbc)
         self.new_db = cantools.database.load_file(new_dbc)
         self.changes: List[MessageChange] = []
-    
+
     def analyze(self) -> List[MessageChange]:
         """执行差异分析"""
         old_messages = {msg.name: msg for msg in self.old_db.messages}
         new_messages = {msg.name: msg for msg in self.new_db.messages}
-        
+
         # 检测删除的消息
         for name in old_messages:
             if name not in new_messages:
@@ -1107,7 +1195,7 @@ class DBCDiffAnalyzer:
                     attributes={},
                     impact_level=ImpactLevel.BREAKING
                 ))
-        
+
         # 检测新增的消息
         for name in new_messages:
             if name not in old_messages:
@@ -1119,41 +1207,41 @@ class DBCDiffAnalyzer:
                     attributes={},
                     impact_level=ImpactLevel.MEDIUM
                 ))
-        
+
         # 检测修改的消息
         for name in old_messages:
             if name in new_messages:
                 change = self._compare_messages(
-                    old_messages[name], 
+                    old_messages[name],
                     new_messages[name]
                 )
                 if change:
                     self.changes.append(change)
-        
+
         return self.changes
-    
+
     def _compare_messages(self, old_msg, new_msg) -> Optional[MessageChange]:
         """比较两个消息的差异"""
         signals = []
         attributes = {}
         max_impact = ImpactLevel.NONE
-        
+
         # 比较基本属性
         if old_msg.frame_id != new_msg.frame_id:
             attributes['frame_id'] = (old_msg.frame_id, new_msg.frame_id)
             max_impact = ImpactLevel.BREAKING
-        
+
         if old_msg.length != new_msg.length:
             attributes['dlc'] = (old_msg.length, new_msg.length)
             max_impact = max(max_impact, ImpactLevel.HIGH)
-        
+
         if old_msg.cycle_time != new_msg.cycle_time:
             attributes['cycle_time'] = (old_msg.cycle_time, new_msg.cycle_time)
-        
+
         # 比较信号
         old_signals = {s.name: s for s in old_msg.signals}
         new_signals = {s.name: s for s in new_msg.signals}
-        
+
         for sig_name in old_signals:
             if sig_name not in new_signals:
                 signals.append(SignalChange(
@@ -1172,7 +1260,7 @@ class DBCDiffAnalyzer:
                 if sig_change:
                     signals.append(sig_change)
                     max_impact = max(max_impact, sig_change.impact_level)
-        
+
         for sig_name in new_signals:
             if sig_name not in old_signals:
                 signals.append(SignalChange(
@@ -1182,7 +1270,7 @@ class DBCDiffAnalyzer:
                     impact_level=ImpactLevel.MEDIUM,
                     description=f"新增信号 {sig_name}"
                 ))
-        
+
         if attributes or signals:
             return MessageChange(
                 name=old_msg.name,
@@ -1193,14 +1281,14 @@ class DBCDiffAnalyzer:
                 impact_level=max_impact
             )
         return None
-    
+
     def _compare_signals(self, old_sig, new_sig) -> Optional[SignalChange]:
         """比较两个信号的差异"""
         attrs = {}
         impact = ImpactLevel.NONE
-        
+
         # 位布局变更 = 破坏性变更
-        if (old_sig.start != new_sig.start or 
+        if (old_sig.start != new_sig.start or
             old_sig.length != new_sig.length or
             old_sig.byte_order != new_sig.byte_order):
             attrs['layout'] = (
@@ -1208,7 +1296,7 @@ class DBCDiffAnalyzer:
                 f"start={new_sig.start},len={new_sig.length},order={new_sig.byte_order}"
             )
             impact = ImpactLevel.BREAKING
-        
+
         # 因子/偏移变更 = 高风险
         if old_sig.scale != new_sig.scale or old_sig.offset != new_sig.offset:
             attrs['scaling'] = (
@@ -1216,7 +1304,7 @@ class DBCDiffAnalyzer:
                 f"factor={new_sig.scale},offset={new_sig.offset}"
             )
             impact = max(impact, ImpactLevel.HIGH)
-        
+
         # 范围扩展 = 中风险
         if old_sig.minimum != new_sig.minimum or old_sig.maximum != new_sig.maximum:
             attrs['range'] = (
@@ -1224,12 +1312,12 @@ class DBCDiffAnalyzer:
                 f"[{new_sig.minimum},{new_sig.maximum}]"
             )
             impact = max(impact, ImpactLevel.MEDIUM)
-        
+
         # 单位变更 = 低风险
         if old_sig.unit != new_sig.unit:
             attrs['unit'] = (old_sig.unit, new_sig.unit)
             impact = max(impact, ImpactLevel.LOW)
-        
+
         if attrs:
             return SignalChange(
                 name=old_sig.name,
@@ -1239,20 +1327,20 @@ class DBCDiffAnalyzer:
                 description=f"信号 {old_sig.name} 属性变更"
             )
         return None
-    
+
     def generate_report(self, format: str = 'markdown') -> str:
         """生成差异报告"""
         if format == 'json':
             return json.dumps([asdict(c) for c in self.changes], indent=2)
-        
+
         # Markdown格式
         lines = ["# DBC变更分析报告", ""]
-        
+
         # 摘要
         breaking = sum(1 for c in self.changes if c.impact_level == ImpactLevel.BREAKING)
         high = sum(1 for c in self.changes if c.impact_level == ImpactLevel.HIGH)
         medium = sum(1 for c in self.changes if c.impact_level == ImpactLevel.MEDIUM)
-        
+
         lines.extend([
             "## 变更摘要",
             "",
@@ -1264,13 +1352,13 @@ class DBCDiffAnalyzer:
             f"| 📊 总计 | {len(self.changes)} |",
             ""
         ])
-        
+
         # 详细变更
         for change in self.changes:
             icon = "🔴" if change.impact_level == ImpactLevel.BREAKING else \
                    "🟠" if change.impact_level == ImpactLevel.HIGH else \
                    "🟡" if change.impact_level == ImpactLevel.MEDIUM else "🟢"
-            
+
             lines.extend([
                 f"## {icon} {change.name} (0x{change.frame_id:08X})",
                 "",
@@ -1278,39 +1366,39 @@ class DBCDiffAnalyzer:
                 f"- **影响级别**: {change.impact_level.value}",
                 ""
             ])
-            
+
             if change.attributes:
                 lines.extend(["### 消息属性变更", ""])
                 for attr, (old, new) in change.attributes.items():
                     lines.append(f"- **{attr}**: `{old}` → `{new}`")
                 lines.append("")
-            
+
             if change.signals:
                 lines.extend(["### 信号变更", ""])
                 for sig in change.signals:
                     sig_icon = "🔴" if sig.impact_level == ImpactLevel.BREAKING else "🟢"
                     lines.append(f"{sig_icon} **{sig.name}**: {sig.description}")
                 lines.append("")
-        
+
         return "\n".join(lines)
 
 
 # 命令行接口
 if __name__ == "__main__":
     import argparse
-    
+
     parser = argparse.ArgumentParser(description="DBC差异分析工具")
     parser.add_argument("--old", required=True, help="旧版本DBC文件")
     parser.add_argument("--new", required=True, help="新版本DBC文件")
     parser.add_argument("--format", choices=['markdown', 'json'], default='markdown')
     parser.add_argument("--output", help="输出文件")
-    
+
     args = parser.parse_args()
-    
+
     analyzer = DBCDiffAnalyzer(args.old, args.new)
     analyzer.analyze()
     report = analyzer.generate_report(args.format)
-    
+
     if args.output:
         with open(args.output, 'w') as f:
             f.write(report)
@@ -1431,9 +1519,9 @@ if __name__ == "__main__":
 
 ### 5.1 项目背景
 
-**项目名称**：云端车云一体化开发平台  
-**实施周期**：2023年7月 - 2024年2月  
-**项目规模**：支持5种目标平台，200+ECU类型  
+**项目名称**：云端车云一体化开发平台
+**实施周期**：2023年7月 - 2024年2月
+**项目规模**：支持5种目标平台，200+ECU类型
 **技术栈**：Python、Jinja2、C、Rust、Swift、Go、TypeScript
 
 **目标**：从单一DBC文件生成多平台代码（嵌入式C、云端Python、移动端Swift、车机端Go、Web端TypeScript），实现跨平台CAN通信代码的一致性。
@@ -1442,8 +1530,9 @@ if __name__ == "__main__":
 
 #### 5.2.1 企业背景
 
-**客户**：某新能源车企智能化部门  
+**客户**：某新能源车企智能化部门
 **技术栈复杂度**：
+
 - 车端：嵌入式C/C++（AUTOSAR）
 - T-Box：Linux C++
 - 云端：Python/Java微服务
@@ -1472,27 +1561,32 @@ if __name__ == "__main__":
 ### 5.3 技术挑战
 
 #### 挑战1：类型系统差异
+
 - 不同语言的数据类型范围和精度不同
 - 浮点数处理行为差异
 - 位域和字节对齐规则不同
 
 #### 挑战2：内存布局差异
+
 - 不同平台的字节序（大小端）
 - 结构体内存对齐方式不同
 - 打包/解包规则差异
 
 #### 挑战3：运行时环境差异
+
 - 嵌入式平台无浮点运算单元
 - 云端需要支持高并发
 - 移动端需要考虑电池优化
 
 #### 挑战4：错误处理模式差异
+
 - C语言使用返回值
 - Rust使用Result
 - Swift使用throws
 - Go使用多返回值
 
 #### 挑战5：API设计一致性
+
 - 保持各平台API风格自然
 - 同时保持语义一致性
 - 文档和示例同步
@@ -1538,10 +1632,10 @@ class NormalizedMessage:
 
 class DBCNormalizer:
     """DBC标准化解析器"""
-    
+
     def __init__(self, dbc_file: str):
         self.db = cantools.database.load_file(dbc_file)
-    
+
     def normalize(self) -> List[NormalizedMessage]:
         """将DBC解析为标准化格式"""
         messages = []
@@ -1562,7 +1656,7 @@ class DBCNormalizer:
                     unit=sig.unit or "",
                     comment=sig.comment or ""
                 ))
-            
+
             messages.append(NormalizedMessage(
                 name=msg.name,
                 frame_id=msg.frame_id,
@@ -1587,7 +1681,7 @@ from typing import Dict
 
 class MultiPlatformCodeGenerator:
     """多平台代码生成器"""
-    
+
     # 类型映射表
     TYPE_MAP = {
         'c': {
@@ -1631,29 +1725,29 @@ class MultiPlatformCodeGenerator:
             'bool': 'boolean'
         }
     }
-    
+
     def __init__(self, template_dir: str):
         self.env = Environment(
             loader=FileSystemLoader(template_dir),
             trim_blocks=True,
             lstrip_blocks=True
         )
-    
-    def generate(self, messages: List[NormalizedMessage], 
+
+    def generate(self, messages: List[NormalizedMessage],
                  platform: str, output_dir: str):
         """生成指定平台的代码"""
         template = self.env.get_template(f'{platform}.j2')
-        
+
         # 准备模板数据
         context = {
             'messages': messages,
             'type_map': self.TYPE_MAP[platform],
             'platform': platform
         }
-        
+
         # 渲染模板
         code = template.render(**context)
-        
+
         # 保存文件
         ext_map = {
             'c': 'h', 'rust': 'rs', 'swift': 'swift',
@@ -1661,7 +1755,7 @@ class MultiPlatformCodeGenerator:
         }
         output_path = Path(output_dir) / f"can_messages.{ext_map[platform]}"
         output_path.write_text(code, encoding='utf-8')
-        
+
         return output_path
 ```
 
@@ -1772,7 +1866,7 @@ pub struct {{ msg.name }} {
 impl {{ msg.name }} {
     pub const FRAME_ID: u32 = 0x{{ "%08X" | format(msg.frame_id) }};
     pub const LENGTH: usize = {{ msg.length }};
-    
+
     /**
      * Encode message to CAN frame data
      */
@@ -1796,7 +1890,7 @@ impl {{ msg.name }} {
         {% endfor %}
         data
     }
-    
+
     /**
      * Decode message from CAN frame data
      */
@@ -1939,9 +2033,9 @@ TYPE_MAPPING = {
 
 ### 6.1 项目背景
 
-**项目名称**：CAN网络自动化测试平台  
-**实施周期**：2023年8月 - 2024年1月  
-**项目规模**：覆盖12个车型平台，800+测试用例  
+**项目名称**：CAN网络自动化测试平台
+**实施周期**：2023年8月 - 2024年1月
+**项目规模**：覆盖12个车型平台，800+测试用例
 **技术栈**：Python、pytest、cantools、Vector CANoe、CI/CD
 
 **目标**：基于DBC Schema自动生成CAN总线测试用例，实现测试设计、执行、报告的全流程自动化。
@@ -1950,8 +2044,9 @@ TYPE_MAPPING = {
 
 #### 6.2.1 企业背景
 
-**客户**：某车企测试验证中心  
+**客户**：某车企测试验证中心
 **测试规模**：
+
 - 年测试里程：50万公里
 - 测试用例数量：5000+
 - 测试人员：40人
@@ -1978,26 +2073,31 @@ TYPE_MAPPING = {
 ### 6.3 技术挑战
 
 #### 挑战1：测试用例生成策略
+
 - 如何生成有效的测试数据
 - 如何处理信号间的依赖关系
 - 如何生成异常和边界测试
 
 #### 挑战2：多协议支持
+
 - J1939、CANopen、UDS等不同协议
 - 多包传输、流控制处理
 - 诊断服务测试
 
 #### 挑战3：实时性要求
+
 - 部分测试需要us级精度
 - 需要精确的时间戳验证
 - 网络负载模拟
 
 #### 挑战4：测试结果判定
+
 - 预期结果动态计算
 - 容错范围设置
 - 多维度结果分析
 
 #### 挑战5：测试环境管理
+
 - 硬件在环（HIL）集成
 - 多车辆并行测试
 - 测试数据管理
@@ -2051,18 +2151,18 @@ class SignalTestCase:
 
 class DBCBasedTestGenerator:
     """基于DBC的测试用例生成器"""
-    
+
     def __init__(self, dbc_file: str):
         self.db = cantools.database.load_file(dbc_file)
-    
-    def generate_signal_tests(self, message_name: str, 
+
+    def generate_signal_tests(self, message_name: str,
                               signal_name: str) -> SignalTestCase:
         """为指定信号生成测试用例"""
         message = self.db.get_message_by_name(message_name)
         signal = message.get_signal_by_name(signal_name)
-        
+
         values = []
-        
+
         # 边界值测试
         if signal.minimum is not None:
             values.append(TestValue(
@@ -2077,7 +2177,7 @@ class DBCBasedTestGenerator:
                 description=f"低于最小值: {signal.minimum - signal.scale}",
                 should_pass=False
             ))
-        
+
         if signal.maximum is not None:
             values.append(TestValue(
                 value=signal.maximum,
@@ -2091,7 +2191,7 @@ class DBCBasedTestGenerator:
                 description=f"高于最大值: {signal.maximum + signal.scale}",
                 should_pass=False
             ))
-        
+
         # 正常值测试
         if signal.minimum is not None and signal.maximum is not None:
             normal_val = (signal.minimum + signal.maximum) / 2
@@ -2101,7 +2201,7 @@ class DBCBasedTestGenerator:
                 description=f"正常值: {normal_val}",
                 should_pass=True
             ))
-        
+
         # 枚举类型特殊处理
         if signal.choices:
             for choice_val, choice_name in signal.choices.items():
@@ -2119,30 +2219,30 @@ class DBCBasedTestGenerator:
                 description=f"无效枚举值: {invalid_choice}",
                 should_pass=False
             ))
-        
+
         return SignalTestCase(
             signal_name=signal_name,
             message_name=message_name,
             values=values
         )
-    
+
     def generate_message_tests(self, message_name: str) -> List[SignalTestCase]:
         """为消息中所有信号生成测试用例"""
         message = self.db.get_message_by_name(message_name)
         test_cases = []
-        
+
         for signal in message.signals:
             test_cases.append(
                 self.generate_signal_tests(message_name, signal.name)
             )
-        
+
         return test_cases
-    
-    def generate_combinatorial_tests(self, message_name: str, 
+
+    def generate_combinatorial_tests(self, message_name: str,
                                      max_combinations: int = 100) -> List[Dict]:
         """生成组合测试用例"""
         message = self.db.get_message_by_name(message_name)
-        
+
         # 为每个信号选择代表性的值
         signal_values = {}
         for signal in message.signals:
@@ -2154,28 +2254,28 @@ class DBCBasedTestGenerator:
                     signal.maximum
                 ]
             signal_values[signal.name] = values
-        
+
         # 生成组合（使用笛卡尔积或配对测试）
         from itertools import product
-        
+
         signal_names = list(signal_values.keys())
         value_lists = [signal_values[s] for s in signal_names]
-        
+
         combinations = []
         for combo in product(*value_lists):
             if len(combinations) >= max_combinations:
                 break
             test_data = dict(zip(signal_names, combo))
             combinations.append(test_data)
-        
+
         return combinations
-    
-    def generate_pytest_code(self, message_name: str, 
+
+    def generate_pytest_code(self, message_name: str,
                             output_file: str):
         """生成pytest测试代码"""
         message = self.db.get_message_by_name(message_name)
         test_cases = self.generate_message_tests(message_name)
-        
+
         lines = [
             "# Auto-generated test file - DO NOT MODIFY",
             "import pytest",
@@ -2196,7 +2296,7 @@ class DBCBasedTestGenerator:
             "        bus.shutdown()",
             "    ",
         ]
-        
+
         for case in test_cases:
             for test_val in case.values:
                 test_name = f"test_{case.signal_name}_{test_val.test_type.value}"
@@ -2212,17 +2312,17 @@ class DBCBasedTestGenerator:
                     f"        assert decoded['{case.signal_name}'] == {test_val.value}",
                     "    ",
                 ])
-        
+
         with open(output_file, 'w') as f:
             f.write('\n'.join(lines))
-        
+
         return output_file
 
 
 # 批量生成示例
 if __name__ == "__main__":
     generator = DBCBasedTestGenerator('vehicle.dbc')
-    
+
     # 为EngineSpeed消息生成测试
     test_cases = generator.generate_message_tests('EngineSpeed')
     for case in test_cases:
@@ -2230,11 +2330,11 @@ if __name__ == "__main__":
         for val in case.values:
             status = "✓" if val.should_pass else "✗"
             print(f"  {status} {val.test_type.value}: {val.description}")
-    
+
     # 生成组合测试
     combo_tests = generator.generate_combinatorial_tests('EngineSpeed', max_combinations=50)
     print(f"\n生成了 {len(combo_tests)} 个组合测试用例")
-    
+
     # 生成pytest代码
     generator.generate_pytest_code('EngineSpeed', 'test_engine_speed.py')
 ```
@@ -2272,13 +2372,13 @@ message = db.get_message_by_name('EngineSpeed')
 
 class TestEngineSpeed:
     """Generated test cases for EngineSpeed"""
-    
+
     @pytest.fixture
     def bus(self):
         bus = can.interface.Bus('vcan0', bustype='socketcan')
         yield bus
         bus.shutdown()
-    
+
     # Speed信号边界值测试
     def test_speed_boundary_min(self, bus):
         """最小边界值: 0"""
@@ -2289,7 +2389,7 @@ class TestEngineSpeed:
         assert rx_msg is not None
         decoded = message.decode(rx_msg.data)
         assert decoded['Speed'] == 0
-    
+
     def test_speed_boundary_max(self, bus):
         """最大边界值: 8000"""
         data = message.encode({'Speed': 8000})
@@ -2299,17 +2399,17 @@ class TestEngineSpeed:
         assert rx_msg is not None
         decoded = message.decode(rx_msg.data)
         assert decoded['Speed'] == 8000
-    
+
     def test_speed_boundary_below_min(self, bus):
         """低于最小值: -0.125"""
         with pytest.raises(cantools.database.errors.EncodeError):
             message.encode({'Speed': -0.125})
-    
+
     def test_speed_boundary_above_max(self, bus):
         """高于最大值: 8000.125"""
         with pytest.raises(cantools.database.errors.EncodeError):
             message.encode({'Speed': 8000.125})
-    
+
     def test_speed_normal(self, bus):
         """正常值: 4000.0"""
         data = message.encode({'Speed': 4000.0})
@@ -2319,7 +2419,7 @@ class TestEngineSpeed:
         assert rx_msg is not None
         decoded = message.decode(rx_msg.data)
         assert decoded['Speed'] == 4000.0
-    
+
     # Valid信号测试
     def test_valid_true(self, bus):
         """有效状态"""
@@ -2329,7 +2429,7 @@ class TestEngineSpeed:
         rx_msg = bus.recv(timeout=1.0)
         decoded = message.decode(rx_msg.data)
         assert decoded['Valid'] == True
-    
+
     def test_valid_false(self, bus):
         """无效状态"""
         data = message.encode({'Speed': 1000, 'Valid': 0})
@@ -2387,9 +2487,9 @@ class TestEngineSpeed:
 
 ### 7.1 项目背景
 
-**项目名称**：车辆大数据平台 - CAN数据湖  
-**实施周期**：2023年6月 - 2024年3月  
-**项目规模**：日处理10亿条CAN消息，存储量50TB+  
+**项目名称**：车辆大数据平台 - CAN数据湖
+**实施周期**：2023年6月 - 2024年3月
+**项目规模**：日处理10亿条CAN消息，存储量50TB+
 **技术栈**：PostgreSQL、TimescaleDB、Python、Kafka、Grafana
 
 **目标**：使用PostgreSQL存储和管理CAN总线数据，包括DBC定义、消息日志、统计分析，支持高效查询、异常检测和总线负载分析。
@@ -2398,8 +2498,9 @@ class TestEngineSpeed:
 
 #### 7.2.1 企业背景
 
-**客户**：某新势力车企数据平台部门  
+**客户**：某新势力车企数据平台部门
 **数据规模**：
+
 - 车队规模：10万辆
 - 日均行驶里程：500万公里
 - 日均CAN消息：10亿条
@@ -2426,26 +2527,31 @@ class TestEngineSpeed:
 ### 7.3 技术挑战
 
 #### 挑战1：海量数据存储
+
 - 日增数据100GB+
 - 需要保留3年历史数据
 - 冷热数据分层管理
 
 #### 挑战2：高并发写入
+
 - 峰值写入100万条/秒
 - 需要批量写入优化
 - 不能影响查询性能
 
 #### 挑战3：复杂查询优化
+
 - 需要支持时间范围查询
 - 需要信号级精确查询
 - 需要聚合统计分析
 
 #### 挑战4：实时性要求
+
 - 实时监控需要秒级延迟
 - 异常检测需要流处理
 - 告警需要即时推送
 
 #### 挑战5：数据安全
+
 - 车辆数据涉及隐私
 - 需要权限控制
 - 需要审计日志
@@ -2727,7 +2833,7 @@ class CANMessage:
     channel: int = 0
     is_extended: bool = True
     is_error_frame: bool = False
-    
+
     def to_dict(self) -> Dict:
         return {
             'can_id': self.can_id,
@@ -2744,7 +2850,7 @@ class CANMessage:
 class DBCDefinition(Base):
     """DBC定义表"""
     __tablename__ = 'dbc_definitions'
-    
+
     id = Column(Integer, primary_key=True)
     name = Column(String(100), nullable=False, unique=True)
     version = Column(String(20), nullable=False)
@@ -2753,7 +2859,7 @@ class DBCDefinition(Base):
     content = Column(Text)  # 原始DBC内容
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
+
     # 关系
     messages = relationship("MessageDefinition", back_populates="dbc_def", cascade="all, delete-orphan")
 
@@ -2761,7 +2867,7 @@ class DBCDefinition(Base):
 class MessageDefinition(Base):
     """消息定义表"""
     __tablename__ = 'message_definitions'
-    
+
     id = Column(Integer, primary_key=True)
     dbc_id = Column(Integer, ForeignKey('dbc_definitions.id'), nullable=False)
     message_id = Column(BigInteger, nullable=False)
@@ -2770,11 +2876,11 @@ class MessageDefinition(Base):
     cycle_time = Column(Integer)
     senders = Column(ARRAY(String))
     comment = Column(Text)
-    
+
     # 关系
     dbc_def = relationship("DBCDefinition", back_populates="messages")
     signals = relationship("SignalDefinition", back_populates="message_def", cascade="all, delete-orphan")
-    
+
     __table_args__ = (
         Index('idx_message_dbc_id', 'dbc_id'),
         Index('idx_message_id', 'message_id'),
@@ -2784,7 +2890,7 @@ class MessageDefinition(Base):
 class SignalDefinition(Base):
     """信号定义表"""
     __tablename__ = 'signal_definitions'
-    
+
     id = Column(Integer, primary_key=True)
     message_id = Column(Integer, ForeignKey('message_definitions.id'), nullable=False)
     name = Column(String(100), nullable=False)
@@ -2800,10 +2906,10 @@ class SignalDefinition(Base):
     choices = Column(JSONB)
     comment = Column(Text)
     receivers = Column(ARRAY(String))
-    
+
     # 关系
     message_def = relationship("MessageDefinition", back_populates="signals")
-    
+
     __table_args__ = (
         Index('idx_signal_message', 'message_id'),
         Index('idx_signal_name', 'name'),
@@ -2813,7 +2919,7 @@ class SignalDefinition(Base):
 class CANMessageLog(Base):
     """CAN消息日志表 - TimescaleDB超表"""
     __tablename__ = 'can_message_logs'
-    
+
     id = Column(BigInteger, primary_key=True)
     timestamp = Column(DateTime, nullable=False)
     can_id = Column(BigInteger, nullable=False)
@@ -2825,7 +2931,7 @@ class CANMessageLog(Base):
     raw_data = Column(String(16))
     channel = Column(Integer, default=0)
     vehicle_id = Column(String(50))
-    
+
     __table_args__ = (
         Index('idx_logs_timestamp', 'timestamp'),
         Index('idx_logs_can_id', 'can_id'),
@@ -2837,7 +2943,7 @@ class CANMessageLog(Base):
 class BusStatistics(Base):
     """总线统计表"""
     __tablename__ = 'bus_statistics'
-    
+
     id = Column(Integer, primary_key=True)
     timestamp = Column(DateTime, nullable=False)
     dbc_name = Column(String(100))
@@ -2850,7 +2956,7 @@ class BusStatistics(Base):
     avg_interval_ms = Column(Float)
     data_bytes = Column(BigInteger, default=0)
     bus_load_percent = Column(Float)
-    
+
     __table_args__ = (
         Index('idx_stats_time', 'timestamp'),
         Index('idx_stats_dbc', 'dbc_name'),
@@ -2860,7 +2966,7 @@ class BusStatistics(Base):
 class AnomalyRecord(Base):
     """异常记录表"""
     __tablename__ = 'anomaly_records'
-    
+
     id = Column(Integer, primary_key=True)
     timestamp = Column(DateTime, nullable=False)
     vehicle_id = Column(String(50))
@@ -2872,7 +2978,7 @@ class AnomalyRecord(Base):
     actual_value = Column(Float)
     severity = Column(String(20))  # 'low', 'medium', 'high', 'critical'
     details = Column(JSONB)
-    
+
     __table_args__ = (
         Index('idx_anomaly_time', 'timestamp'),
         Index('idx_anomaly_vehicle', 'vehicle_id'),
@@ -2886,11 +2992,11 @@ class AnomalyRecord(Base):
 
 class CANDatabaseStorage:
     """CAN数据库存储管理器"""
-    
+
     def __init__(self, db_url: str, pool_size: int = 10):
         """
         初始化存储管理器
-        
+
         Args:
             db_url: PostgreSQL连接URL
             pool_size: 连接池大小
@@ -2900,44 +3006,44 @@ class CANDatabaseStorage:
         self._ensure_tables()
         self._init_timescale()
         logger.info("CANDatabaseStorage initialized")
-    
+
     def _ensure_tables(self):
         """确保表结构存在"""
         Base.metadata.create_all(self.engine)
         logger.info("Database tables ensured")
-    
+
     def _init_timescale(self):
         """初始化TimescaleDB扩展和超表"""
         with self.engine.connect() as conn:
             # 启用TimescaleDB扩展
             conn.execute("CREATE EXTENSION IF NOT EXISTS timescaledb;")
-            
+
             # 检查并转换为超表
             result = conn.execute("""
-                SELECT hypertable_name 
-                FROM timescaledb_information.hypertables 
+                SELECT hypertable_name
+                FROM timescaledb_information.hypertables
                 WHERE hypertable_name = 'can_message_logs';
             """).fetchone()
-            
+
             if not result:
                 conn.execute("""
-                    SELECT create_hypertable('can_message_logs', 'timestamp', 
+                    SELECT create_hypertable('can_message_logs', 'timestamp',
                         chunk_time_interval => INTERVAL '1 day',
                         if_not_exists => TRUE);
                 """)
                 logger.info("TimescaleDB hypertable created for can_message_logs")
-    
-    def store_dbc_definition(self, dbc_name: str, version: str, 
+
+    def store_dbc_definition(self, dbc_name: str, version: str,
                              definition: Dict, content: Optional[str] = None) -> int:
         """
         存储DBC定义
-        
+
         Args:
             dbc_name: DBC名称
             version: 版本号
             definition: 定义字典
             content: 原始内容
-            
+
         Returns:
             DBC定义ID
         """
@@ -2947,16 +3053,16 @@ class CANDatabaseStorage:
             content_hash = hashlib.sha256(
                 json.dumps(definition, sort_keys=True).encode()
             ).hexdigest()
-            
+
             # 检查是否已存在
             existing = session.query(DBCDefinition).filter_by(
                 name=dbc_name, file_hash=content_hash
             ).first()
-            
+
             if existing:
                 logger.info(f"DBC '{dbc_name}' v{version} already exists (id={existing.id})")
                 return existing.id
-            
+
             # 创建新定义
             dbc_def = DBCDefinition(
                 name=dbc_name,
@@ -2967,18 +3073,18 @@ class CANDatabaseStorage:
             )
             session.add(dbc_def)
             session.flush()  # 获取ID
-            
+
             session.commit()
             logger.info(f"Stored DBC definition '{dbc_name}' v{version} (id={dbc_def.id})")
             return dbc_def.id
-            
+
         except Exception as e:
             session.rollback()
             logger.error(f"Failed to store DBC definition: {e}")
             raise
         finally:
             session.close()
-    
+
     def store_message_definition(self, dbc_name: str, message_id: int,
                                   message_name: str, dlc: int,
                                   signals: List[DBCSignal],
@@ -2987,7 +3093,7 @@ class CANDatabaseStorage:
                                   comment: Optional[str] = None) -> int:
         """
         存储消息定义
-        
+
         Args:
             dbc_name: DBC名称
             message_id: CAN消息ID
@@ -2997,7 +3103,7 @@ class CANDatabaseStorage:
             cycle_time: 周期时间(ms)
             senders: 发送节点列表
             comment: 注释
-            
+
         Returns:
             消息定义ID
         """
@@ -3007,12 +3113,12 @@ class CANDatabaseStorage:
             dbc_def = session.query(DBCDefinition).filter_by(name=dbc_name).first()
             if not dbc_def:
                 raise ValueError(f"DBC definition '{dbc_name}' not found")
-            
+
             # 检查是否已存在
             existing = session.query(MessageDefinition).filter_by(
                 dbc_id=dbc_def.id, message_id=message_id
             ).first()
-            
+
             if existing:
                 # 更新现有定义
                 existing.name = message_name
@@ -3021,7 +3127,7 @@ class CANDatabaseStorage:
                 existing.senders = senders or []
                 existing.comment = comment
                 msg_def = existing
-                
+
                 # 删除旧信号定义
                 session.query(SignalDefinition).filter_by(message_id=msg_def.id).delete()
             else:
@@ -3037,7 +3143,7 @@ class CANDatabaseStorage:
                 )
                 session.add(msg_def)
                 session.flush()
-            
+
             # 存储信号定义
             for sig in signals:
                 sig_def = SignalDefinition(
@@ -3056,18 +3162,18 @@ class CANDatabaseStorage:
                     comment=sig.comment
                 )
                 session.add(sig_def)
-            
+
             session.commit()
             logger.info(f"Stored message definition '{message_name}' (0x{message_id:08X})")
             return msg_def.id
-            
+
         except Exception as e:
             session.rollback()
             logger.error(f"Failed to store message definition: {e}")
             raise
         finally:
             session.close()
-    
+
     def store_message_logs_batch(self, messages: List[CANMessage],
                                   dbc_name: Optional[str] = None,
                                   decoder_func: Optional[Callable] = None,
@@ -3075,20 +3181,20 @@ class CANDatabaseStorage:
                                   batch_size: int = 10000) -> int:
         """
         批量存储CAN消息日志
-        
+
         Args:
             messages: CAN消息列表
             dbc_name: DBC名称（用于解码）
             decoder_func: 解码函数
             vehicle_id: 车辆ID
             batch_size: 批量大小
-            
+
         Returns:
             存储的消息数量
         """
         if not messages:
             return 0
-        
+
         # 准备数据
         records = []
         for msg in messages:
@@ -3103,7 +3209,7 @@ class CANDatabaseStorage:
                 'vehicle_id': vehicle_id,
                 'decoded_signals': None
             }
-            
+
             # 解码信号
             if decoder_func:
                 try:
@@ -3113,39 +3219,39 @@ class CANDatabaseStorage:
                         record['message_name'] = decoded.get('_message_name', '')
                 except Exception as e:
                     logger.debug(f"Failed to decode message 0x{msg.can_id:08X}: {e}")
-            
+
             records.append(record)
-        
+
         # 批量插入
         with self.engine.connect() as conn:
             inserted = 0
             for i in range(0, len(records), batch_size):
                 batch = records[i:i + batch_size]
-                
+
                 insert_sql = """
-                    INSERT INTO can_message_logs 
-                    (timestamp, can_id, dbc_name, message_name, data, dlc, 
+                    INSERT INTO can_message_logs
+                    (timestamp, can_id, dbc_name, message_name, data, dlc,
                      decoded_signals, raw_data, channel, vehicle_id)
                     VALUES %s
                 """
-                
+
                 values = [(
-                    r['timestamp'], r['can_id'], r['dbc_name'], 
+                    r['timestamp'], r['can_id'], r['dbc_name'],
                     r.get('message_name', ''), r['data'], r['dlc'],
                     json.dumps(r['decoded_signals']) if r['decoded_signals'] else None,
                     r['raw_data'], r['channel'], r['vehicle_id']
                 ) for r in batch]
-                
+
                 try:
                     execute_values(conn, insert_sql, values)
                     inserted += len(batch)
                 except Exception as e:
                     logger.error(f"Batch insert failed: {e}")
                     raise
-        
+
         logger.info(f"Stored {inserted} message logs")
         return inserted
-    
+
     def query_by_signal_value(self, dbc_name: str, signal_name: str,
                               min_value: Optional[float] = None,
                               max_value: Optional[float] = None,
@@ -3154,7 +3260,7 @@ class CANDatabaseStorage:
                               limit: int = 1000) -> List[Dict]:
         """
         按信号值查询消息
-        
+
         Args:
             dbc_name: DBC名称
             signal_name: 信号名称
@@ -3163,7 +3269,7 @@ class CANDatabaseStorage:
             time_range: 时间范围
             vehicle_id: 车辆ID
             limit: 结果限制
-            
+
         Returns:
             匹配的消息列表
         """
@@ -3175,20 +3281,20 @@ class CANDatabaseStorage:
                   AND decoded_signals @> %s
             """
             params = [dbc_name, json.dumps({signal_name: True})]
-            
+
             if time_range:
                 sql += " AND timestamp BETWEEN %s AND %s"
                 params.extend([time_range[0], time_range[1]])
-            
+
             if vehicle_id:
                 sql += " AND vehicle_id = %s"
                 params.append(vehicle_id)
-            
+
             # 信号值过滤（在Python中处理，因为JSONB查询限制）
             sql += f" ORDER BY timestamp DESC LIMIT {limit}"
-            
+
             result = conn.execute(sql, params).fetchall()
-            
+
             # 过滤信号值
             filtered = []
             for row in result:
@@ -3207,24 +3313,24 @@ class CANDatabaseStorage:
                         'vehicle_id': row.vehicle_id,
                         'all_signals': signals
                     })
-            
+
             return filtered
-    
+
     def calculate_statistics(self, can_id: int,
                             time_range: Optional[Tuple[datetime, datetime]] = None) -> Dict:
         """
         计算消息统计信息
-        
+
         Args:
             can_id: CAN消息ID
             time_range: 时间范围
-            
+
         Returns:
             统计信息字典
         """
         with self.engine.connect() as conn:
             sql = """
-                SELECT 
+                SELECT
                     COUNT(*) as msg_count,
                     MIN(timestamp) as first_seen,
                     MAX(timestamp) as last_seen,
@@ -3233,18 +3339,18 @@ class CANDatabaseStorage:
                 WHERE can_id = %s
             """
             params = [can_id]
-            
+
             if time_range:
                 sql += " AND timestamp BETWEEN %s AND %s"
                 params.extend([time_range[0], time_range[1]])
-            
+
             result = conn.execute(sql, params).fetchone()
-            
+
             if result.msg_count == 0:
                 return {'message_count': 0}
-            
+
             duration = result.last_seen - result.first_seen
-            
+
             return {
                 'message_count': result.msg_count,
                 'first_seen': result.first_seen,
@@ -3253,18 +3359,18 @@ class CANDatabaseStorage:
                 'active_days': result.active_days,
                 'average_frequency_hz': result.msg_count / duration.total_seconds() if duration and duration.total_seconds() > 0 else 0
             }
-    
+
     def find_anomalies(self, can_id: int,
                       time_range: Optional[Tuple[datetime, datetime]] = None,
                       z_threshold: float = 3.0) -> List[Dict]:
         """
         查找异常消息（基于信号值的统计异常）
-        
+
         Args:
             can_id: CAN消息ID
             time_range: 时间范围
             z_threshold: Z-score阈值
-            
+
         Returns:
             异常消息列表
         """
@@ -3275,13 +3381,13 @@ class CANDatabaseStorage:
                 WHERE can_id = %s AND decoded_signals IS NOT NULL
             """
             params = [can_id]
-            
+
             if time_range:
                 sql += " AND timestamp BETWEEN %s AND %s"
                 params.extend([time_range[0], time_range[1]])
-            
+
             result = conn.execute(sql, params).fetchall()
-            
+
             # 按信号分组
             signal_values = {}
             for row in result:
@@ -3295,20 +3401,20 @@ class CANDatabaseStorage:
                             'value': value,
                             'vehicle_id': row.vehicle_id
                         })
-            
+
             # 检测异常
             anomalies = []
             for sig_name, values in signal_values.items():
                 if len(values) < 10:
                     continue
-                
+
                 vals = [v['value'] for v in values]
                 mean = np.mean(vals)
                 std = np.std(vals)
-                
+
                 if std == 0:
                     continue
-                
+
                 for v in values:
                     z_score = abs((v['value'] - mean) / std)
                     if z_score > z_threshold:
@@ -3320,11 +3426,11 @@ class CANDatabaseStorage:
                             'z_score': z_score,
                             'vehicle_id': v['vehicle_id']
                         })
-            
+
             # 按时间排序
             anomalies.sort(key=lambda x: x['timestamp'], reverse=True)
             return anomalies
-    
+
     def close(self):
         """关闭存储管理器"""
         self.engine.dispose()
@@ -3337,21 +3443,21 @@ class CANDatabaseStorage:
 
 class CANDataAnalyzer:
     """CAN数据分析器"""
-    
+
     def __init__(self, storage: CANDatabaseStorage):
         self.storage = storage
-    
+
     def analyze_message_frequency(self, can_id: int,
                                    time_window: timedelta = timedelta(minutes=1),
                                    time_range: Optional[Tuple[datetime, datetime]] = None) -> Dict:
         """
         分析消息频率
-        
+
         Args:
             can_id: CAN消息ID
             time_window: 统计时间窗口
             time_range: 整体时间范围
-            
+
         Returns:
             频率分析结果
         """
@@ -3362,28 +3468,28 @@ class CANDataAnalyzer:
                 WHERE can_id = %s
             """
             params = [can_id]
-            
+
             if time_range:
                 sql += " AND timestamp BETWEEN %s AND %s"
                 params.extend([time_range[0], time_range[1]])
-            
+
             sql += " ORDER BY timestamp"
-            
+
             result = conn.execute(sql, params).fetchall()
-            
+
             if len(result) < 2:
                 return {'message_count': len(result), 'avg_frequency_hz': 0}
-            
+
             # 计算时间间隔
             intervals = []
             for i in range(1, len(result)):
                 interval = (result[i].timestamp - result[i-1].timestamp).total_seconds()
                 if interval > 0:
                     intervals.append(interval)
-            
+
             if not intervals:
                 return {'message_count': len(result), 'avg_frequency_hz': 0}
-            
+
             return {
                 'message_count': len(result),
                 'avg_frequency_hz': 1.0 / np.mean(intervals) if intervals else 0,
@@ -3392,34 +3498,34 @@ class CANDataAnalyzer:
                 'std_interval_ms': np.std(intervals) * 1000 if intervals else 0,
                 'expected_cycle_ms': self._get_expected_cycle(conn, can_id)
             }
-    
+
     def _get_expected_cycle(self, conn, can_id: int) -> Optional[int]:
         """获取预期周期时间"""
         result = conn.execute("""
-            SELECT md.cycle_time 
+            SELECT md.cycle_time
             FROM message_definitions md
             WHERE md.message_id = %s
             LIMIT 1
         """, [can_id]).fetchone()
         return result.cycle_time if result else None
-    
+
     def analyze_bus_load(self, dbc_name: Optional[str] = None,
                          time_range: Optional[Tuple[datetime, datetime]] = None,
                          bus_speed_bps: int = 500000) -> Dict:
         """
         分析总线负载
-        
+
         Args:
             dbc_name: DBC名称
             time_range: 时间范围
             bus_speed_bps: 总线波特率
-            
+
         Returns:
             总线负载分析结果
         """
         with self.storage.engine.connect() as conn:
             sql = """
-                SELECT 
+                SELECT
                     can_id,
                     COUNT(*) as msg_count,
                     dlc,
@@ -3429,50 +3535,50 @@ class CANDataAnalyzer:
                 WHERE 1=1
             """
             params = []
-            
+
             if dbc_name:
                 sql += " AND dbc_name = %s"
                 params.append(dbc_name)
-            
+
             if time_range:
                 sql += " AND timestamp BETWEEN %s AND %s"
                 params.extend([time_range[0], time_range[1]])
-            
+
             sql += " GROUP BY can_id, dlc ORDER BY msg_count DESC"
-            
+
             result = conn.execute(sql, params).fetchall()
-            
+
             total_bits = 0
             duration_seconds = 0
             message_stats = []
-            
+
             for row in result:
-                # CAN帧开销：帧头(1) + ID(11/29) + RTR(1) + DLC(4) + Data(0-64) + 
+                # CAN帧开销：帧头(1) + ID(11/29) + RTR(1) + DLC(4) + Data(0-64) +
                 # CRC(15) + ACK(2) + EOF(7) + IFS(3) ≈ 47 + 8*DLC bits
                 overhead_bits = 47 + (29 if row.can_id > 0x7FF else 11)
                 frame_bits = overhead_bits + row.dlc * 8
-                
+
                 # 填充位估算（平均约20%）
                 frame_bits_with_stuffing = int(frame_bits * 1.2)
-                
+
                 total_msg_bits = frame_bits_with_stuffing * row.msg_count
                 total_bits += total_msg_bits
-                
+
                 if row.first_seen and row.last_seen:
                     duration = (row.last_seen - row.first_seen).total_seconds()
                     duration_seconds = max(duration_seconds, duration)
-                
+
                 message_stats.append({
                     'can_id': f"0x{row.can_id:08X}",
                     'message_count': row.msg_count,
                     'dlc': row.dlc,
                     'estimated_bits': total_msg_bits
                 })
-            
+
             bus_load_percent = 0
             if duration_seconds > 0:
                 bus_load_percent = (total_bits / duration_seconds) / bus_speed_bps * 100
-            
+
             return {
                 'total_messages': sum(r.msg_count for r in result),
                 'unique_messages': len(result),
@@ -3482,16 +3588,16 @@ class CANDataAnalyzer:
                 'bus_speed_bps': bus_speed_bps,
                 'message_breakdown': message_stats[:20]  # Top 20
             }
-    
+
     def find_error_frames(self, time_range: Optional[Tuple[datetime, datetime]] = None,
                          vehicle_id: Optional[str] = None) -> List[Dict]:
         """
         查找错误帧
-        
+
         Args:
             time_range: 时间范围
             vehicle_id: 车辆ID
-            
+
         Returns:
             错误帧列表
         """
@@ -3502,35 +3608,35 @@ class CANDataAnalyzer:
                 WHERE is_error_frame = TRUE
             """
             params = []
-            
+
             if time_range:
                 sql += " AND timestamp BETWEEN %s AND %s"
                 params.extend([time_range[0], time_range[1]])
-            
+
             if vehicle_id:
                 sql += " AND vehicle_id = %s"
                 params.append(vehicle_id)
-            
+
             sql += " ORDER BY timestamp DESC LIMIT 1000"
-            
+
             result = conn.execute(sql, params).fetchall()
-            
+
             return [{
                 'timestamp': r.timestamp,
                 'can_id': f"0x{r.can_id:08X}",
                 'channel': r.channel,
                 'vehicle_id': r.vehicle_id
             } for r in result]
-    
+
     def generate_report(self, dbc_name: str,
                        time_range: Tuple[datetime, datetime]) -> Dict:
         """
         生成综合分析报告
-        
+
         Args:
             dbc_name: DBC名称
             time_range: 时间范围
-            
+
         Returns:
             分析报告
         """
@@ -3543,31 +3649,31 @@ class CANDataAnalyzer:
             'message_stats': [],
             'anomalies': []
         }
-        
+
         # 总线负载分析
         report['bus_load'] = self.analyze_bus_load(dbc_name, time_range)
-        
+
         # 获取所有消息类型
         with self.storage.engine.connect() as conn:
             result = conn.execute("""
-                SELECT DISTINCT can_id 
-                FROM can_message_logs 
+                SELECT DISTINCT can_id
+                FROM can_message_logs
                 WHERE dbc_name = %s AND timestamp BETWEEN %s AND %s
             """, [dbc_name, time_range[0], time_range[1]]).fetchall()
-            
+
             can_ids = [r.can_id for r in result]
-        
+
         # 分析每个消息类型
         for can_id in can_ids[:50]:  # 限制分析数量
             freq = self.analyze_message_frequency(can_id, time_range=time_range)
             stats = self.storage.calculate_statistics(can_id, time_range)
-            
+
             report['message_stats'].append({
                 'can_id': f"0x{can_id:08X}",
                 'frequency_analysis': freq,
                 'statistics': stats
             })
-        
+
         # 异常检测
         for can_id in can_ids[:10]:
             anomalies = self.find_anomalies(can_id, time_range)
@@ -3577,14 +3683,14 @@ class CANDataAnalyzer:
                     'count': len(anomalies),
                     'examples': anomalies[:5]
                 })
-        
+
         # 汇总
         report['summary'] = {
             'total_messages': report['bus_load'].get('total_messages', 0),
             'unique_messages': len(can_ids),
             'anomaly_count': sum(a['count'] for a in report['anomalies'])
         }
-        
+
         return report
 
 
@@ -3594,15 +3700,15 @@ class CANDataAnalyzer:
 
 def main():
     """主函数示例"""
-    
+
     # 初始化存储
     storage = CANDatabaseStorage("postgresql://canuser:canpass@localhost:5432/candb")
-    
+
     try:
         # 1. 加载DBC文件
         dbc_file = "vehicle.dbc"
         db = cantools.database.load_file(dbc_file)
-        
+
         # 2. 存储DBC定义
         dbc_id = storage.store_dbc_definition(
             dbc_name="vehicle_v1",
@@ -3614,7 +3720,7 @@ def main():
             content=Path(dbc_file).read_text()
         )
         print(f"✓ DBC定义已存储 (ID: {dbc_id})")
-        
+
         # 3. 存储消息定义
         for msg in db.messages:
             signals = []
@@ -3633,7 +3739,7 @@ def main():
                     choices=sig.choices,
                     comment=sig.comment
                 ))
-            
+
             storage.store_message_definition(
                 dbc_name="vehicle_v1",
                 message_id=msg.frame_id,
@@ -3645,7 +3751,7 @@ def main():
                 comment=msg.comment
             )
         print(f"✓ 已存储 {len(db.messages)} 条消息定义")
-        
+
         # 4. 解码函数
         def decode_message(message: CANMessage) -> Dict:
             try:
@@ -3655,17 +3761,17 @@ def main():
                 return decoded
             except:
                 return None
-        
+
         # 5. 生成模拟数据
         messages = []
         base_time = datetime.utcnow() - timedelta(hours=1)
-        
+
         for i in range(5000):
             timestamp = base_time + timedelta(milliseconds=i * 10)
             # 模拟发动机转速消息 (0x0CF00400)
             rpm_raw = int((1500 + 500 * np.sin(i / 100)) / 0.125)  # 1500±500 RPM
             data = rpm_raw.to_bytes(2, 'little') + b'\x00' * 6
-            
+
             messages.append(CANMessage(
                 can_id=0x0CF00400,
                 timestamp=timestamp,
@@ -3673,7 +3779,7 @@ def main():
                 dlc=8,
                 vehicle_id="TEST_VIN_001"
             ))
-        
+
         # 6. 批量存储
         stored_count = storage.store_message_logs_batch(
             messages,
@@ -3682,10 +3788,10 @@ def main():
             vehicle_id="TEST_VIN_001"
         )
         print(f"✓ 已存储 {stored_count} 条消息日志")
-        
+
         # 7. 数据分析
         analyzer = CANDataAnalyzer(storage)
-        
+
         # 分析消息频率
         freq_analysis = analyzer.analyze_message_frequency(0x0CF00400)
         print(f"\n消息频率分析:")
@@ -3693,14 +3799,14 @@ def main():
         print(f"  - 平均频率: {freq_analysis['avg_frequency_hz']:.2f} Hz")
         print(f"  - 最小间隔: {freq_analysis['min_interval_ms']:.2f} ms")
         print(f"  - 最大间隔: {freq_analysis['max_interval_ms']:.2f} ms")
-        
+
         # 分析总线负载
         bus_load = analyzer.analyze_bus_load("vehicle_v1", (base_time, datetime.utcnow()))
         print(f"\n总线负载分析:")
         print(f"  - 总消息数: {bus_load['total_messages']}")
         print(f"  - 唯一消息: {bus_load['unique_messages']}")
         print(f"  - 总线负载: {bus_load['bus_load_percent']:.2f}%")
-        
+
         # 8. 按信号值查询
         high_rpm_messages = storage.query_by_signal_value(
             dbc_name="vehicle_v1",
@@ -3709,23 +3815,23 @@ def main():
             time_range=(base_time, datetime.utcnow())
         )
         print(f"\n高转速消息 (>1800 RPM): {len(high_rpm_messages)} 条")
-        
+
         # 9. 查找异常
         anomalies = storage.find_anomalies(0x0CF00400, (base_time, datetime.utcnow()))
         print(f"\n异常检测: 发现 {len(anomalies)} 个异常")
-        
+
         # 10. 生成报告
         report = analyzer.generate_report("vehicle_v1", (base_time, datetime.utcnow()))
         print(f"\n分析报告已生成:")
         print(f"  - 总消息数: {report['summary']['total_messages']}")
         print(f"  - 异常数量: {report['summary']['anomaly_count']}")
-        
+
         # 保存报告
         report_file = "can_analysis_report.json"
         with open(report_file, 'w') as f:
             json.dump(report, f, indent=2, default=str)
         print(f"✓ 报告已保存: {report_file}")
-        
+
     finally:
         storage.close()
 
@@ -3809,5 +3915,5 @@ if __name__ == "__main__":
 - `03_Standards.md` - 标准对标
 - `04_Transformation.md` - 转换体系（包含数据存储）
 
-**创建时间**：2025-01-21  
+**创建时间**：2025-01-21
 **最后更新**：2025-02-15（完善所有案例，添加完整业务背景、技术挑战、代码实现和效果评估）

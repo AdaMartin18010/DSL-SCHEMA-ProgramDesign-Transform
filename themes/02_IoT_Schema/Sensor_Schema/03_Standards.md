@@ -79,14 +79,28 @@ for Sensors and Actuators
 
 - **IEEE 1451.0**：通用功能、通信协议、传感器电子数据表（TEDS）
 - **IEEE 1451.1**：网络应用处理器（NCAP）信息模型
+- **IEEE 1451.1.6**：MQTT网络设备通信（2025年新增）
 - **IEEE 1451.2**：点对点通信协议
 - **IEEE 1451.4**：混合模式接口
+
+**2024年重大更新（IEEE 1451.0-2024）**：
+
+- **发布时间**：2024年6月26日
+- **更新周期**：17年以来的重大更新
+- **新增特性**：
+  - **UUID支持**：新增全局唯一标识符支持
+  - **安全框架**：集成完整的安全框架
+  - **时间同步框架**：新增时间同步机制
+  - **互操作性增强**：支持约12种IEEE 1451系列标准的互操作
+- **新增子标准 IEEE 1451.1.6-2025**：
+  - MQTT网络设备通信标准
+  - 支持基于MQTT协议的传感器网络通信
 
 **Schema体现**：
 IEEE 1451定义了传感器电子数据表（TEDS），
 这是传感器Schema的直接体现。
 
-**最新版本**：IEEE 1451.0-2007
+**最新版本**：IEEE 1451.0-2024
 
 **参考链接**：
 [IEEE官网](https://standards.ieee.org/)
@@ -102,11 +116,19 @@ OneM2M - Machine-to-Machine Communications
 - **数据格式**：JSON、XML、CBOR
 - **安全机制**：认证、授权、加密
 
+**版本演进**：
+
+- **Release 4**：2025年2月正式批准（原2023年草案）
+  - 新增ROS机器人操作系统互操作
+  - 新增ETSI MEC边缘计算集成
+- **Release 5**：开发中（计划2025年完成）
+- **Release 6**：已规划（预计2027年Q2完成）
+
 **Schema体现**：
 OneM2M定义了标准化的资源结构，
 这是IoT设备Schema的体现。
 
-**最新版本**：Release 4 (2023)
+**最新版本**：Release 4 (2025年2月正式批准)
 
 **参考链接**：
 [OneM2M官网](https://www.onem2m.org/)
@@ -126,7 +148,9 @@ Web of Things (WoT) Thing Description
 W3C WoT Thing Description是IoT设备Schema
 的标准化格式。
 
-**最新版本**：WoT TD 1.1 (2023)
+**最新版本**：W3C Recommendation (2023年12月5日发布)
+
+> **状态说明**：W3C WoT TD 1.1 已于2023年12月5日正式成为W3C推荐标准（W3C Recommendation），不再是草案状态。
 
 **参考链接**：
 [W3C WoT官网](https://www.w3.org/WoT/)
@@ -153,6 +177,11 @@ GB/T 34068-2017明确定义了IoT传感器
 的五维Schema结构。
 
 **状态**：现行有效
+
+**复审信息**：
+
+- **复审日期**：2025年5月30日
+- **复审结果**：复审通过，继续有效
 
 **参考链接**：
 [国家标准查询平台](https://www.sac.gov.cn/)
@@ -211,7 +240,12 @@ IO-Link Specification
 IO-Link IODD文件是工业传感器Schema
 的标准化格式。
 
-**最新版本**：IO-Link Specification V1.1.3
+**版本演进**：
+
+- **V1.1.4**：2024年6月发布（Package 2024）
+  - 最新稳定版本
+
+**最新版本**：IO-Link Specification V1.1.4
 
 **参考链接**：
 [IO-Link官网](https://www.io-link.com/)
@@ -233,7 +267,13 @@ OPC Unified Architecture
 OPC UA信息模型是IoT设备Schema
 的标准化格式。
 
-**最新版本**：OPC UA 1.05
+**版本演进**：
+
+- **1.05.04**：2024年11月29日发布
+- **1.05.05**：2025年7月10日发布
+- **1.05.06**：2025年10月31日发布（最新）
+
+**最新版本**：OPC UA 1.05.06
 
 **参考链接**：
 [OPC Foundation](https://opcfoundation.org/)
@@ -416,11 +456,14 @@ AWS IoT定义了设备定义Schema。
 
 ### 8.1 标准文档
 
-- GB/T 34068-2017 物联网总体技术 智能传感器接口规范
+- GB/T 34068-2017 物联网总体技术 智能传感器接口规范（2025年复审通过，继续有效）
 - YD/T 3334-2018 物联网智能传感器数据格式规范
-- IEEE 1451.0-2007 Standard for a Smart Transducer Interface
-- OneM2M Release 4 Specification
-- W3C WoT Thing Description 1.1
+- IEEE 1451.0-2024 Standard for a Smart Transducer Interface（2024年6月26日发布）
+- IEEE 1451.1.6-2025 MQTT Network Device Communication Standard
+- OneM2M Release 4 Specification（2025年2月正式批准）
+- W3C WoT Thing Description 1.1 - W3C Recommendation（2023年12月5日）
+- IO-Link Specification V1.1.4（2024年6月，Package 2024）
+- OPC UA 1.05.06（2025年10月31日）
 
 ### 8.2 学术文献
 
@@ -456,4 +499,4 @@ AWS IoT定义了设备定义Schema。
 - `05_Case_Studies.md` - 实践案例
 
 **创建时间**：2025-01-21
-**最后更新**：2025-01-21
+**最后更新**：2025-02-15
