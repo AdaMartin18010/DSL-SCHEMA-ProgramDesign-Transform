@@ -136,12 +136,15 @@ Physical_Schema = (Electrical ⊕ Mechanical ⊕ Thermal
 - `Digital_Twin/03_Standards.md` - 标准对标
 - `Digital_Twin/04_Transformation.md` - 转换体系
 - `Digital_Twin/05_Case_Studies.md` - 实践案例
+- `Digital_Twin/06_Formal_Grammar_Semantics.md` ⭐新增 - 形式语法语义分析
+- `Digital_Twin/07_Dynamic_Action_Analysis.md` ⭐新增 - 动态动作分析
 
 ### 3.6 跨主题文档
 
 - `Mind_Map.md` - 思维导图
 - `Knowledge_Matrix.md` - 多维知识矩阵
 - `Formal_Proofs.md` - 形式化证明
+- `Decision_Trees.md` ⭐新增 - 决策树图 (数字孪生平台/安全等级/CAD格式)
 
 ---
 

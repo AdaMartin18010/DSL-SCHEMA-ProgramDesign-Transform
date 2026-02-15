@@ -97,6 +97,8 @@ IoT Schema支持**七维转换**：
 - `Sensor_Schema/03_Standards.md` - 标准对标
 - `Sensor_Schema/04_Transformation.md` - 转换体系
 - `Sensor_Schema/05_Case_Studies.md` - 实践案例
+- `Sensor_Schema/06_Formal_Grammar_Semantics.md` ⭐新增 - 形式语法语义分析
+- `Sensor_Schema/07_Dynamic_Action_Analysis.md` ⭐新增 - 动态动作分析
 
 ### 3.2 通信Schema子主题
 
@@ -143,6 +145,7 @@ IoT Schema支持**七维转换**：
 - `Mind_Map.md` - 思维导图
 - `Knowledge_Matrix.md` - 多维知识矩阵
 - `Formal_Proofs.md` - 形式化证明
+- `Decision_Trees.md` ⭐新增 - 决策树图 (IoT协议/传感器/云平台选择)
 
 ---
 
