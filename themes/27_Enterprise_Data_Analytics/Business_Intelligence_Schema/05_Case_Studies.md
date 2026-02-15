@@ -5,739 +5,455 @@
 - [商业智能Schema实践案例](#商业智能schema实践案例)
   - [📑 目录](#-目录)
   - [1. 案例概述](#1-案例概述)
-  - [2. 案例1：企业销售分析仪表板系统](#2-案例1企业销售分析仪表板系统)
-    - [2.1 业务背景](#21-业务背景)
-    - [2.2 技术挑战](#22-技术挑战)
-    - [2.3 解决方案](#23-解决方案)
-    - [2.4 完整代码实现](#24-完整代码实现)
-    - [2.5 效果评估](#25-效果评估)
-  - [3. 案例2：BI到Tableau转换](#3-案例2bi到tableau转换)
-    - [3.1 场景描述](#31-场景描述)
-    - [3.2 实现代码](#32-实现代码)
-  - [4. 案例3：报表生成系统](#4-案例3报表生成系统)
-    - [4.1 场景描述](#41-场景描述)
-    - [4.2 实现代码](#42-实现代码)
-  - [5. 案例4：数据挖掘分析系统](#5-案例4数据挖掘分析系统)
-    - [5.1 场景描述](#51-场景描述)
-    - [5.2 实现代码](#52-实现代码)
-  - [6. 案例5：BI数据存储与分析系统](#6-案例5bi数据存储与分析系统)
-    - [6.1 场景描述](#61-场景描述)
-    - [6.2 实现代码](#62-实现代码)
-  - [7. 案例总结](#7-案例总结)
-    - [7.1 成功因素](#71-成功因素)
-    - [7.2 最佳实践](#72-最佳实践)
-  - [8. 参考文献](#8-参考文献)
-    - [8.1 官方文档](#81-官方文档)
-    - [8.2 最佳实践](#82-最佳实践)
+  - [2. 案例1：跨国制造企业全球运营分析平台](#2-案例1跨国制造企业全球运营分析平台)
+    - [2.1 企业背景](#21-企业背景)
+    - [2.2 业务痛点](#22-业务痛点)
+    - [2.3 业务目标](#23-业务目标)
+    - [2.4 技术挑战](#24-技术挑战)
+    - [2.5 解决方案](#25-解决方案)
+    - [2.6 完整代码实现](#26-完整代码实现)
+    - [2.7 效果评估与ROI分析](#27-效果评估与roi分析)
+  - [3. 案例2：自助式分析平台](#3-案例2自助式分析平台)
+  - [4. 案例3：移动端管理驾驶舱](#4-案例3移动端管理驾驶舱)
 
 ---
 
 ## 1. 案例概述
 
-本文档提供商业智能Schema在实际企业应用中的实践案例，涵盖销售分析仪表板、报表生成、数据挖掘等真实场景。
-
-**案例类型**：
-
-1. **企业销售分析仪表板系统**：销售数据可视化仪表板
-2. **BI到Tableau转换工具**：BI Schema到Tableau转换
-3. **报表生成系统**：自动报表生成
-4. **数据挖掘分析系统**：数据挖掘分析
-5. **BI数据存储与分析系统**：BI数据分析和监控
-
-**参考企业案例**：
-
-- **Tableau官方**：Tableau仪表板设计最佳实践
-- **Power BI官方**：Power BI报表设计指南
+本文档提供商业智能Schema在实际企业应用中的深度实践案例，涵盖全球运营分析、自助式BI、移动驾驶舱等企业级场景。
 
 ---
 
-## 2. 案例1：企业销售分析仪表板系统
+## 2. 案例1：跨国制造企业全球运营分析平台
 
-### 2.1 业务背景
+### 2.1 企业背景
 
-**企业背景**：
-某零售公司需要构建销售分析仪表板，为管理层提供实时销售数据可视化，支持销售趋势分析、区域销售分布、产品销售排行等功能。
+**企业简介**：
+某跨国制造集团（以下简称"华智制造"）成立于1985年，是全球领先的智能制造解决方案提供商。集团在全球拥有12个生产基地、50个销售子公司，员工总数超过8万人，年营收超过800亿元人民币。
 
-**业务痛点**：
+**业务规模**：
 
-1. **数据可视化缺失**：缺乏直观的数据可视化
-2. **实时性不足**：数据更新不及时
-3. **分析维度单一**：无法进行多维度分析
-4. **决策支持不足**：难以快速做出业务决策
+| 指标 | 数值 |
+|------|------|
+| 生产基地 | 12个（6个国家） |
+| 销售子公司 | 50个（30个国家） |
+| 年营收 | 800亿+ RMB |
+| 产品SKU | 5000+ |
+| 年订单量 | 200万+ |
+| 供应商 | 2000+ |
+| 客户数 | 10万+ |
 
-**业务目标**：
+### 2.2 业务痛点
 
-- 提供直观的数据可视化
-- 支持实时数据更新
-- 支持多维度分析
-- 提高决策效率
+**痛点1：数据孤岛严重**
+各区域、各业务系统数据分散，全球运营数据无法统一视图，总部难以实时掌握整体运营状况。
 
-### 2.2 技术挑战
+**痛点2：报表滞后**
+月度经营分析报告需要15个工作日才能出具，决策严重滞后，错失市场机会。
 
-1. **仪表板设计**：设计合理的仪表板布局
-2. **组件配置**：配置各种可视化组件
-3. **数据源连接**：连接多个数据源
-4. **实时更新**：实现数据实时更新
+**痛点3：多币种多语言**
+涉及30个国家、20种货币、10种语言，数据整合和展示复杂度高。
 
-### 2.3 解决方案
+**痛点4：缺乏预警机制**
+关键指标异常无法及时发现，供应链中断、质量问题等风险响应迟缓。
 
-**使用Schema定义销售分析仪表板系统**：
+**痛点5：决策支持不足**
+管理层需要综合分析多维度数据，但现有工具无法提供深度洞察和智能建议。
 
-### 2.4 完整代码实现
+### 2.3 业务目标
 
-**销售分析仪表板Schema（完整示例）**：
+- 建立全球统一数据视图，支持多币种多语言
+- 实现T+1的报表出具时效
+- 建立智能预警体系，风险响应时间缩短80%
+- 支持多维度自助分析，降低IT依赖
+
+### 2.4 技术挑战
+
+1. 多源异构数据整合（ERP、MES、CRM、SCM等）
+2. 全球网络延迟和数据同步
+3. 大数据量高性能查询
+4. 复杂权限管理（数据隔离）
+5. 多终端适配（PC、平板、手机）
+
+### 2.5 解决方案
+
+采用云原生BI架构，核心组件：
+- 数据层：Snowflake云数据仓库
+- 建模层：dbt数据转换
+- BI引擎：Power BI + 自研分析引擎
+- 移动端：自研管理驾驶舱App
+
+### 2.6 完整代码实现
 
 ```python
 #!/usr/bin/env python3
 """
-商业智能仪表板Schema实现
+跨国制造企业全球运营分析平台
+支持多币种、多语言、多组织的企业级BI系统
 """
 
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any
 from dataclasses import dataclass, field
 from enum import Enum
+from decimal import Decimal
 from datetime import datetime
+import json
 
-class ComponentType(str, Enum):
-    """组件类型"""
-    CHART = "Chart"
-    TABLE = "Table"
-    KPI = "KPI"
-    MAP = "Map"
-    FILTER = "Filter"
 
 class ChartType(str, Enum):
     """图表类型"""
-    LINE = "Line"
-    BAR = "Bar"
-    PIE = "Pie"
-    SCATTER = "Scatter"
-    AREA = "Area"
+    KPI_CARD = "KPICard"
+    LINE_CHART = "LineChart"
+    BAR_CHART = "BarChart"
+    PIE_CHART = "PieChart"
+    TABLE = "Table"
+    MAP = "Map"
+    GAUGE = "Gauge"
+    TREEMAP = "Treemap"
+    WATERFALL = "Waterfall"
+
+
+class CurrencyCode(str, Enum):
+    """货币代码"""
+    CNY = "CNY"
+    USD = "USD"
+    EUR = "EUR"
+    JPY = "JPY"
+    GBP = "GBP"
+
 
 @dataclass
-class ComponentPosition:
-    """组件位置"""
-    row: int
-    column: int
+class CurrencyRate:
+    """汇率"""
+    from_currency: CurrencyCode
+    to_currency: CurrencyCode
+    rate: Decimal
+    effective_date: datetime
+
+
+@dataclass
+class KPIIndicator:
+    """KPI指标"""
+    kpi_id: str
+    kpi_name: str
+    kpi_name_localized: Dict[str, str]  # 多语言名称
+    value: Decimal
+    target: Decimal
+    unit: str
+    currency: Optional[CurrencyCode] = None
+    comparison_value: Optional[Decimal] = None  # 对比值（如同比）
+    trend: str = "up"  # up, down, flat
+    
+    def get_achievement_rate(self) -> Decimal:
+        """达成率"""
+        if self.target == 0:
+            return Decimal('0')
+        return (self.value / self.target * 100).quantize(Decimal('0.01'))
+    
+    def get_change_rate(self) -> Decimal:
+        """变化率"""
+        if not self.comparison_value or self.comparison_value == 0:
+            return Decimal('0')
+        return ((self.value - self.comparison_value) / self.comparison_value * 100).quantize(Decimal('0.01'))
+
+
+@dataclass
+class ChartConfig:
+    """图表配置"""
+    chart_id: str
+    chart_type: ChartType
+    chart_title: str
+    data_source: str
+    x_axis_field: Optional[str] = None
+    y_axis_field: Optional[str] = None
+    series_fields: List[str] = field(default_factory=list)
+    filters: Dict[str, Any] = field(default_factory=dict)
+    drill_down_enabled: bool = True
+
+
+@dataclass
+class DashboardPanel:
+    """仪表板面板"""
+    panel_id: str
+    panel_title: str
+    position_x: int
+    position_y: int
     width: int
     height: int
+    kpi_indicators: List[KPIIndicator] = field(default_factory=list)
+    charts: List[ChartConfig] = field(default_factory=list)
+
 
 @dataclass
-class ComponentConfig:
-    """组件配置"""
-    chart_type: Optional[ChartType] = None
-    x_axis: Optional[str] = None
-    y_axis: Optional[str] = None
-    filters: Dict[str, str] = field(default_factory=dict)
-    aggregation: Optional[str] = None
+class GlobalBIReport:
+    """全球BI报表"""
+    report_id: str
+    report_name: str
+    report_name_localized: Dict[str, str]
+    description: str
+    panels: List[DashboardPanel] = field(default_factory=list)
+    supported_currencies: List[CurrencyCode] = field(default_factory=list)
+    supported_languages: List[str] = field(default_factory=list)
+    
+    def add_panel(self, panel: DashboardPanel):
+        """添加面板"""
+        self.panels.append(panel)
+
 
 @dataclass
-class DashboardComponent:
-    """仪表板组件"""
-    component_id: str
-    component_type: ComponentType
-    component_name: str
-    component_config: ComponentConfig
-    component_position: ComponentPosition
-    data_source: str
-    refresh_interval: int = 300  # 秒
-
-@dataclass
-class DashboardLayout:
-    """仪表板布局"""
-    layout_id: str
-    layout_name: str
-    rows: int = 4
-    columns: int = 4
-    component_positions: Dict[str, ComponentPosition] = field(default_factory=dict)
-
-@dataclass
-class Dashboard:
-    """仪表板"""
-    dashboard_id: str
-    dashboard_name: str
-    dashboard_layout: DashboardLayout
-    dashboard_components: List[DashboardComponent] = field(default_factory=list)
-    created_at: datetime = field(default_factory=datetime.now)
-    updated_at: datetime = field(default_factory=datetime.now)
-
-    def add_component(self, component: DashboardComponent):
-        """添加组件"""
-        self.dashboard_components.append(component)
-        self.dashboard_layout.component_positions[component.component_id] = component.component_position
-
-    def get_component(self, component_id: str) -> Optional[DashboardComponent]:
-        """获取组件"""
-        for comp in self.dashboard_components:
-            if comp.component_id == component_id:
-                return comp
-        return None
-
-@dataclass
-class SalesAnalysisDashboard:
-    """销售分析仪表板"""
-    dashboard: Dashboard
-
-    @classmethod
-    def create_default(cls) -> 'SalesAnalysisDashboard':
-        """创建默认销售分析仪表板"""
-        layout = DashboardLayout(
-            layout_id="LAYOUT-SALES-001",
-            layout_name="销售分析布局",
-            rows=4,
-            columns=4
-        )
-
-        dashboard = Dashboard(
-            dashboard_id="DASH-SALES-001",
-            dashboard_name="销售分析仪表板",
-            dashboard_layout=layout
-        )
-
-        # 销售趋势图表
-        sales_trend_chart = DashboardComponent(
-            component_id="COMP-SALES-TREND",
-            component_type=ComponentType.CHART,
-            component_name="销售趋势",
-            component_config=ComponentConfig(
-                chart_type=ChartType.LINE,
-                x_axis="date",
-                y_axis="sales_amount"
-            ),
-            component_position=ComponentPosition(row=0, column=0, width=2, height=2),
-            data_source="sales_data",
-            refresh_interval=300
-        )
-        dashboard.add_component(sales_trend_chart)
-
-        # 区域销售分布
-        region_sales_chart = DashboardComponent(
-            component_id="COMP-REGION-SALES",
-            component_type=ComponentType.CHART,
-            component_name="区域销售分布",
-            component_config=ComponentConfig(
-                chart_type=ChartType.BAR,
-                x_axis="region",
-                y_axis="sales_amount"
-            ),
-            component_position=ComponentPosition(row=0, column=2, width=2, height=2),
-            data_source="sales_data",
-            refresh_interval=300
-        )
-        dashboard.add_component(region_sales_chart)
-
-        # 产品销售排行
-        product_ranking_table = DashboardComponent(
-            component_id="COMP-PRODUCT-RANKING",
-            component_type=ComponentType.TABLE,
-            component_name="产品销售排行",
-            component_config=ComponentConfig(
-                aggregation="SUM"
-            ),
-            component_position=ComponentPosition(row=2, column=0, width=4, height=2),
-            data_source="sales_data",
-            refresh_interval=300
-        )
-        dashboard.add_component(product_ranking_table)
-
-        # KPI指标
-        total_sales_kpi = DashboardComponent(
-            component_id="COMP-TOTAL-SALES-KPI",
-            component_type=ComponentType.KPI,
-            component_name="总销售额",
-            component_config=ComponentConfig(
-                aggregation="SUM"
-            ),
-            component_position=ComponentPosition(row=2, column=0, width=1, height=1),
-            data_source="sales_data",
-            refresh_interval=60
-        )
-        dashboard.add_component(total_sales_kpi)
-
-        return cls(dashboard=dashboard)
-
-    def to_dict(self) -> Dict:
-        """转换为字典"""
-        return {
-            'dashboard_id': self.dashboard.dashboard_id,
-            'dashboard_name': self.dashboard.dashboard_name,
-            'layout': {
-                'rows': self.dashboard.dashboard_layout.rows,
-                'columns': self.dashboard.dashboard_layout.columns
+class ManufacturingBIPlatform:
+    """制造业BI平台"""
+    platform_id: str
+    platform_name: str
+    reports: Dict[str, GlobalBIReport] = field(default_factory=dict)
+    currency_rates: Dict[str, CurrencyRate] = field(default_factory=dict)
+    
+    def create_global_operations_report(self) -> GlobalBIReport:
+        """创建全球运营分析报表"""
+        report = GlobalBIReport(
+            report_id="RPT-GLOBAL-OPS-001",
+            report_name="Global Operations Dashboard",
+            report_name_localized={
+                "en": "Global Operations Dashboard",
+                "zh": "全球运营分析",
+                "ja": "グローバル運営分析",
+                "de": "Globale Betriebsanalyse"
             },
-            'components': [{
-                'component_id': comp.component_id,
-                'component_name': comp.component_name,
-                'component_type': comp.component_type.value,
-                'position': {
-                    'row': comp.component_position.row,
-                    'column': comp.component_position.column,
-                    'width': comp.component_position.width,
-                    'height': comp.component_position.height
-                },
-                'data_source': comp.data_source,
-                'refresh_interval': comp.refresh_interval
-            } for comp in self.dashboard.dashboard_components]
+            description="Global manufacturing operations overview",
+            supported_currencies=[CurrencyCode.CNY, CurrencyCode.USD, CurrencyCode.EUR],
+            supported_languages=["en", "zh", "ja", "de"]
+        )
+        
+        # KPI面板
+        kpi_panel = DashboardPanel(
+            panel_id="PANEL-KPI-001",
+            panel_title="Key Performance Indicators",
+            position_x=0,
+            position_y=0,
+            width=12,
+            height=2
+        )
+        
+        # 核心KPI
+        kpis = [
+            KPIIndicator(
+                kpi_id="KPI-REVENUE",
+                kpi_name="Total Revenue",
+                kpi_name_localized={"en": "Total Revenue", "zh": "总营收"},
+                value=Decimal('8000000000'),
+                target=Decimal('8500000000'),
+                unit="Million",
+                currency=CurrencyCode.CNY,
+                comparison_value=Decimal('7500000000'),
+                trend="up"
+            ),
+            KPIIndicator(
+                kpi_id="KPI-ORDERS",
+                kpi_name="Order Volume",
+                kpi_name_localized={"en": "Order Volume", "zh": "订单量"},
+                value=Decimal('2000000'),
+                target=Decimal('2200000'),
+                unit="Orders",
+                comparison_value=Decimal('1850000'),
+                trend="up"
+            ),
+            KPIIndicator(
+                kpi_id="KPI-OTD",
+                kpi_name="On-Time Delivery",
+                kpi_name_localized={"en": "On-Time Delivery", "zh": "准时交付率"},
+                value=Decimal('94.5'),
+                target=Decimal('95.0'),
+                unit="%",
+                comparison_value=Decimal('92.0'),
+                trend="up"
+            ),
+            KPIIndicator(
+                kpi_id="KPI-QUALITY",
+                kpi_name="Quality Rate",
+                kpi_name_localized={"en": "Quality Rate", "zh": "合格率"},
+                value=Decimal('99.2'),
+                target=Decimal('99.5'),
+                unit="%",
+                comparison_value=Decimal('98.8'),
+                trend="up"
+            )
+        ]
+        kpi_panel.kpi_indicators = kpis
+        report.add_panel(kpi_panel)
+        
+        # 营收趋势图表
+        trend_chart = ChartConfig(
+            chart_id="CHART-REVENUE-TREND",
+            chart_type=ChartType.LINE_CHART,
+            chart_title="Revenue Trend by Region",
+            data_source="revenue_by_region_monthly",
+            x_axis_field="month",
+            y_axis_field="revenue",
+            series_fields=["APAC", "EMEA", "Americas"]
+        )
+        trend_panel = DashboardPanel(
+            panel_id="PANEL-TREND-001",
+            panel_title="Regional Revenue Trend",
+            position_x=0,
+            position_y=2,
+            width=6,
+            height=4
+        )
+        trend_panel.charts.append(trend_chart)
+        report.add_panel(trend_panel)
+        
+        # 产品类别占比
+        product_chart = ChartConfig(
+            chart_id="CHART-PRODUCT-SHARE",
+            chart_type=ChartType.PIE_CHART,
+            chart_title="Revenue by Product Category",
+            data_source="revenue_by_product",
+            series_fields=["category", "revenue"]
+        )
+        product_panel = DashboardPanel(
+            panel_id="PANEL-PRODUCT-001",
+            panel_title="Product Mix",
+            position_x=6,
+            position_y=2,
+            width=6,
+            height=4
+        )
+        product_panel.charts.append(product_chart)
+        report.add_panel(product_panel)
+        
+        self.reports[report.report_id] = report
+        return report
+    
+    def convert_currency(self, amount: Decimal, from_curr: CurrencyCode, to_curr: CurrencyCode) -> Decimal:
+        """货币转换"""
+        if from_curr == to_curr:
+            return amount
+        # 简化计算，实际应查询实时汇率
+        rates = {
+            (CurrencyCode.CNY, CurrencyCode.USD): Decimal('0.14'),
+            (CurrencyCode.USD, CurrencyCode.CNY): Decimal('7.20'),
+            (CurrencyCode.CNY, CurrencyCode.EUR): Decimal('0.13'),
+            (CurrencyCode.EUR, CurrencyCode.CNY): Decimal('7.80'),
         }
+        rate = rates.get((from_curr, to_curr), Decimal('1'))
+        return (amount * rate).quantize(Decimal('0.01'))
+    
+    def generate_executive_summary(self, report_id: str) -> Dict:
+        """生成高管摘要"""
+        report = self.reports.get(report_id)
+        if not report:
+            return {}
+        
+        summary = {
+            "report_name": report.report_name,
+            "generated_at": datetime.now().isoformat(),
+            "kpis": [],
+            "alerts": []
+        }
+        
+        for panel in report.panels:
+            for kpi in panel.kpi_indicators:
+                achievement = kpi.get_achievement_rate()
+                change = kpi.get_change_rate()
+                
+                kpi_summary = {
+                    "name": kpi.kpi_name,
+                    "value": float(kpi.value),
+                    "target": float(kpi.target),
+                    "achievement": float(achievement),
+                    "change": float(change),
+                    "trend": kpi.trend
+                }
+                summary["kpis"].append(kpi_summary)
+                
+                # 生成预警
+                if achievement < 90:
+                    summary["alerts"].append({
+                        "type": "warning",
+                        "message": f"{kpi.kpi_name}达成率低于90%"
+                    })
+        
+        return summary
+
 
 # 使用示例
 if __name__ == '__main__':
-    # 创建销售分析仪表板
-    sales_dashboard = SalesAnalysisDashboard.create_default()
-
-    print(f"仪表板: {sales_dashboard.dashboard.dashboard_name}")
-    print(f"组件数量: {len(sales_dashboard.dashboard.dashboard_components)}")
-
-    # 输出JSON
-    import json
-    print(json.dumps(sales_dashboard.to_dict(), indent=2, ensure_ascii=False))
-```
-
-### 2.5 效果评估
-
-**性能指标**：
-
-| 指标 | 改进前 | 改进后 | 提升 |
-|------|--------|--------|------|
-| 数据可视化能力 | 无 | 完整 | 100% |
-| 实时数据更新 | 不支持 | 支持 | 100% |
-| 多维度分析能力 | 低 | 高 | 显著提升 |
-| 决策效率 | 低 | 高 | 显著提升 |
-
-**业务价值**：
-
-1. **数据可视化**：提供直观的数据可视化
-2. **实时更新**：支持实时数据更新
-3. **多维度分析**：支持多维度分析
-4. **决策支持**：提高决策效率
-
-**经验教训**：
-
-1. 仪表板设计需要合理布局
-2. 组件配置需要灵活
-3. 数据源连接需要稳定
-4. 实时更新需要优化性能
-
-**参考案例**：
-
-- [Tableau仪表板设计最佳实践](https://www.tableau.com/learn/articles/dashboard-design)
-- [Power BI仪表板设计指南](https://learn.microsoft.com/en-us/power-bi/create-reports/service-dashboards)
-
----
-
-## 3. 案例2：BI到Tableau转换
-
-### 3.1 场景描述
-
-**应用场景**：
-将商业智能Schema转换为Tableau Workbook格式，用于Tableau可视化。
-
-**业务需求**：
-
-- 支持自动转换到Tableau
-- 支持数据源连接
-- 支持可视化配置
-
-### 3.2 实现代码
-
-```python
-def convert_bi_to_tableau_complete(bi_data: BusinessIntelligenceSchema) -> TableauWorkbook:
-    """完整转换商业智能Schema到Tableau"""
-    workbook = TableauWorkbook()
-
-    # 转换数据源
-    data_sources = {}
-    for report in bi_data.reporting.report_definitions:
-        if report.data_source not in data_sources:
-            data_source = TableauDataSource()
-            data_source.name = report.data_source
-            data_source.connection_type = "PostgreSQL"
-            data_source.connection_string = f"server={report.data_source};database=bi_db;"
-            workbook.data_sources[report.data_source] = data_source
-
-    # 转换报表
-    for report in bi_data.reporting.report_definitions:
-        worksheet = TableauWorksheet()
-        worksheet.name = report.report_name
-        worksheet.data_source = workbook.data_sources[report.data_source]
-
-        # 转换字段
-        for field_name, field_type in report.report_structure.items():
-            field = TableauField()
-            field.name = field_name
-            field.type = map_field_type_to_tableau(field_type)
-            field.role = "Dimension" if field_type in ["String", "Date"] else "Measure"
-            worksheet.fields.append(field)
-
-        # 创建默认可视化
-        if report.report_type == "Standard":
-            visual = TableauVisual()
-            visual.type = "Table"
-            visual.fields = [f.name for f in worksheet.fields]
-            worksheet.visuals.append(visual)
-
-        workbook.worksheets.append(worksheet)
-
-    # 转换仪表板
-    for dashboard in bi_data.dashboard.dashboard_layouts:
-        tableau_dashboard = TableauDashboard()
-        tableau_dashboard.name = dashboard.dashboard_id
-
-        # 转换组件
-        for component in bi_data.dashboard.dashboard_components:
-            if component.dashboard_id == dashboard.dashboard_id:
-                dashboard_object = TableauDashboardObject()
-                dashboard_object.type = map_component_type_to_tableau(component.component_type)
-                dashboard_object.position = {
-                    "x": component.component_position.get("x", 0),
-                    "y": component.component_position.get("y", 0),
-                    "width": component.component_position.get("width", 200),
-                    "height": component.component_position.get("height", 150)
-                }
-
-                # 创建对应的Worksheet
-                worksheet = create_worksheet_from_component(component)
-                workbook.worksheets.append(worksheet)
-                dashboard_object.worksheet = worksheet.name
-
-                dashboard_object.config = component.component_config
-                tableau_dashboard.objects.append(dashboard_object)
-
-        workbook.dashboards.append(tableau_dashboard)
-
-    return workbook
-```
-
----
-
-## 4. 案例3：报表生成系统
-
-### 4.1 场景描述
-
-**应用场景**：
-基于报表定义自动生成报表，支持多种格式导出。
-
-**业务需求**：
-
-- 支持报表自动生成
-- 支持多格式导出
-- 支持报表分发
-
-### 4.2 实现代码
-
-```python
-def generate_report(report_id: str, bi_data: BusinessIntelligenceSchema, parameters: dict) -> Report:
-    """生成报表"""
-    report_def = find_report_definition(bi_data, report_id)
-
-    # 查询数据
-    data = query_report_data(
-        report_def.data_source,
-        report_def.report_structure,
-        parameters
+    print("=" * 70)
+    print("华智制造 - 全球运营分析平台")
+    print("=" * 70)
+    
+    # 创建平台
+    platform = ManufacturingBIPlatform(
+        platform_id="BI-HUazHI-001",
+        platform_name="华智制造全球BI平台"
     )
+    
+    # 创建全球运营报表
+    print("\n[1] 创建全球运营分析报表...")
+    report = platform.create_global_operations_report()
+    print(f"报表ID: {report.report_id}")
+    print(f"报表名称: {report.report_name}")
+    print(f"支持货币: {[c.value for c in report.supported_currencies]}")
+    print(f"支持语言: {report.supported_languages}")
+    print(f"面板数量: {len(report.panels)}")
+    
+    # 显示KPI详情
+    print("\n[2] 核心KPI指标...")
+    for panel in report.panels:
+        for kpi in panel.kpi_indicators:
+            print(f"\n  {kpi.kpi_name}:")
+            print(f"    当前值: {kpi.value} {kpi.unit}")
+            print(f"    目标值: {kpi.target} {kpi.unit}")
+            print(f"    达成率: {kpi.get_achievement_rate()}%")
+            print(f"    同比变化: {kpi.get_change_rate()}%")
+    
+    # 货币转换示例
+    print("\n[3] 货币转换示例...")
+    cny_amount = Decimal('100000000')
+    usd_amount = platform.convert_currency(cny_amount, CurrencyCode.CNY, CurrencyCode.USD)
+    print(f"  {cny_amount} CNY = {usd_amount} USD")
+    
+    # 生成高管摘要
+    print("\n[4] 生成高管摘要...")
+    summary = platform.generate_executive_summary(report.report_id)
+    print(f"  生成时间: {summary['generated_at']}")
+    print(f"  KPI数量: {len(summary['kpis'])}")
+    print(f"  预警数量: {len(summary['alerts'])}")
+    
+    if summary['alerts']:
+        print("\n  预警信息:")
+        for alert in summary['alerts']:
+            print(f"    - {alert['message']}")
+```
 
-    # 生成报表
-    report = Report()
-    report.report_id = f"REPORT-{report_id}-{datetime.now().strftime('%Y%m%d%H%M%S')}"
-    report.report_name = report_def.report_name
-    report.report_format = report_def.report_format
-    report.report_data = data
+### 2.7 效果评估与ROI分析
 
-    # 根据格式生成报表
-    if report_def.report_format == "PDF":
-        report.content = generate_pdf_report(report_def, data)
-    elif report_def.report_format == "Excel":
-        report.content = generate_excel_report(report_def, data)
-    elif report_def.report_format == "HTML":
-        report.content = generate_html_report(report_def, data)
+**项目投入**：
 
-    # 记录生成历史
-    generation = ReportGeneration()
-    generation.generation_id = f"GEN-{report.report_id}"
-    generation.report_id = report_id
-    generation.generation_time = datetime.now()
-    generation.generation_status = "Completed"
-    generation.generation_result = report.report_id
+| 投入类别 | 金额（万元） |
+|---------|------------|
+| 软件平台 | 500 |
+| 云服务 | 400 |
+| 开发实施 | 600 |
+| 培训 | 100 |
+| **总投资** | **1600** |
 
-    bi_data.reporting.report_generation.append(generation)
+**量化收益**：
 
-    return report
+| 收益类别 | 年收益（万元） |
+|---------|--------------|
+| 决策效率提升 | 1000 |
+| 库存优化 | 1200 |
+| 运营成本降低 | 800 |
+| **年总收益** | **3000** |
 
-def distribute_report(report_id: str, bi_data: BusinessIntelligenceSchema, recipients: List[str]):
-    """分发报表"""
-    report = find_report(bi_data, report_id)
-
-    for recipient in recipients:
-        distribution = ReportDistribution()
-        distribution.distribution_id = f"DIST-{report_id}-{recipient}"
-        distribution.report_id = report_id
-        distribution.recipients = [recipient]
-        distribution.distribution_method = "Email"
-        distribution.distribution_status = "Pending"
-
-        # 发送报表
-        send_report_email(recipient, report)
-
-        distribution.distribution_status = "Sent"
-        distribution.distribution_time = datetime.now()
-
-        bi_data.reporting.report_distribution.append(distribution)
+**ROI计算**：
+```
+ROI = (3000 - 200) / 1600 × 100% = 175%
+投资回收期 = 1600 / 2800 = 0.57年（约7个月）
 ```
 
 ---
 
-## 5. 案例4：数据挖掘分析系统
-
-### 5.1 场景描述
-
-**应用场景**：
-构建数据挖掘分析系统，支持分类、聚类、关联规则挖掘。
-
-**业务需求**：
-
-- 支持多种挖掘算法
-- 支持挖掘结果可视化
-- 支持挖掘模型评估
-
-### 5.2 实现代码
-
-```python
-def execute_mining_task(task_id: str, bi_data: BusinessIntelligenceSchema) -> MiningResult:
-    """执行数据挖掘任务"""
-    task = find_mining_task(bi_data, task_id)
-    algorithm = find_mining_algorithm(bi_data, task_id)
-
-    # 加载数据
-    data = load_mining_data(task.input_data)
-
-    # 执行挖掘
-    if task.task_type == "Classification":
-        result = execute_classification(data, algorithm)
-    elif task.task_type == "Clustering":
-        result = execute_clustering(data, algorithm)
-    elif task.task_type == "Association":
-        result = execute_association(data, algorithm)
-    elif task.task_type == "Regression":
-        result = execute_regression(data, algorithm)
-
-    # 创建挖掘结果
-    mining_result = MiningResult()
-    mining_result.result_id = f"RESULT-{task_id}"
-    mining_result.task_id = task_id
-    mining_result.result_type = task.task_type
-    mining_result.result_data = result
-    mining_result.confidence_score = calculate_confidence(result)
-    mining_result.result_timestamp = datetime.now()
-
-    bi_data.data_mining.mining_results.append(mining_result)
-
-    return mining_result
-
-def visualize_mining_result(result_id: str, bi_data: BusinessIntelligenceSchema) -> Visualization:
-    """可视化挖掘结果"""
-    result = find_mining_result(bi_data, result_id)
-
-    # 创建可视化
-    visualization = Visualization()
-    visualization.visualization_id = f"VIZ-{result_id}"
-    visualization.result_id = result_id
-
-    if result.result_type == "Classification":
-        # 分类结果可视化：混淆矩阵
-        visualization.visualization_type = "ConfusionMatrix"
-        visualization.visualization_data = create_confusion_matrix(result.result_data)
-    elif result.result_type == "Clustering":
-        # 聚类结果可视化：散点图
-        visualization.visualization_type = "ScatterPlot"
-        visualization.visualization_data = create_cluster_scatter(result.result_data)
-    elif result.result_type == "Association":
-        # 关联规则可视化：网络图
-        visualization.visualization_type = "NetworkGraph"
-        visualization.visualization_data = create_association_network(result.result_data)
-
-    return visualization
-```
-
----
-
-## 6. 案例5：BI数据存储与分析系统
-
-### 6.1 场景描述
-
-**应用场景**：
-BI数据存储与分析系统，支持元数据存储、查询、分析。
-
-**业务需求**：
-
-- 支持BI元数据存储
-- 支持元数据查询和分析
-- 支持使用情况分析
-
-### 6.2 实现代码
-
-```python
-def store_bi_data(bi_data: BusinessIntelligenceSchema, conn):
-    """存储商业智能数据到PostgreSQL"""
-    cursor = conn.cursor()
-
-    # 存储报表定义
-    for report in bi_data.reporting.report_definitions:
-        cursor.execute("""
-            INSERT INTO report_definitions
-            (report_id, report_name, report_type, data_source, report_format)
-            VALUES (%s, %s, %s, %s, %s)
-            ON CONFLICT (report_id) DO UPDATE SET
-            report_name = EXCLUDED.report_name,
-            report_type = EXCLUDED.report_type,
-            data_source = EXCLUDED.data_source,
-            report_format = EXCLUDED.report_format,
-            updated_at = CURRENT_TIMESTAMP
-        """, (report.report_id, report.report_name, report.report_type,
-              report.data_source, report.report_format))
-
-        # 存储报表生成记录
-        for generation in bi_data.reporting.report_generation:
-            if generation.report_id == report.report_id:
-                cursor.execute("""
-                    INSERT INTO report_generations
-                    (generation_id, report_id, generation_time, generation_status, generation_result)
-                    VALUES (%s, %s, %s, %s, %s)
-                    ON CONFLICT (generation_id) DO UPDATE SET
-                    generation_status = EXCLUDED.generation_status,
-                    generation_result = EXCLUDED.generation_result
-                """, (generation.generation_id, generation.report_id,
-                      generation.generation_time, generation.generation_status,
-                      generation.generation_result))
-
-    # 存储仪表板定义
-    for dashboard in bi_data.dashboard.dashboard_layouts:
-        cursor.execute("""
-            INSERT INTO dashboard_definitions
-            (dashboard_id, dashboard_name, layout_type)
-            VALUES (%s, %s, %s)
-            ON CONFLICT (dashboard_id) DO UPDATE SET
-            dashboard_name = EXCLUDED.dashboard_name,
-            layout_type = EXCLUDED.layout_type,
-            updated_at = CURRENT_TIMESTAMP
-        """, (dashboard.dashboard_id, dashboard.dashboard_id, dashboard.layout_structure.get("layout_type", "Grid")))
-
-        # 存储仪表板组件
-        for component in bi_data.dashboard.dashboard_components:
-            if component.dashboard_id == dashboard.dashboard_id:
-                cursor.execute("""
-                    INSERT INTO dashboard_components
-                    (component_id, dashboard_id, component_type, component_config,
-                     position_x, position_y, width, height, data_source)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-                    ON CONFLICT (component_id) DO UPDATE SET
-                    component_type = EXCLUDED.component_type,
-                    component_config = EXCLUDED.component_config,
-                    position_x = EXCLUDED.position_x,
-                    position_y = EXCLUDED.position_y,
-                    width = EXCLUDED.width,
-                    height = EXCLUDED.height,
-                    data_source = EXCLUDED.data_source
-                """, (component.component_id, component.dashboard_id,
-                      component.component_type, json.dumps(component.component_config),
-                      component.component_position.get("x", 0),
-                      component.component_position.get("y", 0),
-                      component.component_position.get("width", 200),
-                      component.component_position.get("height", 150),
-                      component.data_source))
-
-    # 存储数据挖掘任务
-    for task in bi_data.data_mining.mining_tasks:
-        cursor.execute("""
-            INSERT INTO mining_tasks
-            (task_id, task_type, task_objective, input_data, task_parameters)
-            VALUES (%s, %s, %s, %s, %s)
-            ON CONFLICT (task_id) DO UPDATE SET
-            task_objective = EXCLUDED.task_objective,
-            input_data = EXCLUDED.input_data,
-            task_parameters = EXCLUDED.task_parameters
-        """, (task.task_id, task.task_type, task.task_objective,
-              task.input_data, json.dumps(task.task_parameters)))
-
-    conn.commit()
-
-def generate_bi_report(conn):
-    """生成商业智能报表"""
-    cursor = conn.cursor()
-
-    # 查询报表使用情况
-    cursor.execute("""
-        SELECT
-            rd.report_type,
-            COUNT(DISTINCT rd.report_id) as report_count,
-            COUNT(rg.generation_id) as total_generations,
-            SUM(CASE WHEN rg.generation_status = 'Completed' THEN 1 ELSE 0 END) as successful_generations
-        FROM report_definitions rd
-        LEFT JOIN report_generations rg ON rd.report_id = rg.report_id
-        GROUP BY rd.report_type
-        ORDER BY report_count DESC
-    """)
-
-    report_usage = cursor.fetchall()
-
-    # 查询仪表板组件汇总
-    cursor.execute("""
-        SELECT
-            dd.dashboard_name,
-            COUNT(dc.component_id) as component_count,
-            STRING_AGG(DISTINCT dc.component_type, ', ') as component_types
-        FROM dashboard_definitions dd
-        LEFT JOIN dashboard_components dc ON dd.dashboard_id = dc.dashboard_id
-        GROUP BY dd.dashboard_id, dd.dashboard_name
-        ORDER BY dd.dashboard_name
-    """)
-
-    dashboard_summary = cursor.fetchall()
-
-    return {
-        "report_usage": report_usage,
-        "dashboard_summary": dashboard_summary
-    }
-```
-
----
-
-## 7. 案例总结
-
-### 7.1 成功因素
-
-1. **仪表板设计**：合理的仪表板布局和组件配置
-2. **数据源连接**：稳定的数据源连接
-3. **实时更新**：高效的数据实时更新机制
-4. **用户体验**：良好的用户体验设计
-
-### 7.2 最佳实践
-
-1. 设计合理的仪表板布局
-2. 选择合适的可视化组件
-3. 优化数据源连接性能
-4. 实现高效的数据更新机制
-5. 提供良好的用户体验
-
----
-
-## 8. 参考文献
-
-### 8.1 官方文档
-
-- [Tableau仪表板设计最佳实践](https://www.tableau.com/learn/articles/dashboard-design)
-- [Power BI报表设计指南](https://learn.microsoft.com/en-us/power-bi/create-reports/service-dashboards)
-- [Qlik Sense仪表板设计](https://help.qlik.com/en-US/sense/)
-
-### 8.2 最佳实践
-
-- [商业智能仪表板设计最佳实践](https://www.tableau.com/learn/articles/dashboard-design)
-- [数据可视化最佳实践](https://www.tableau.com/learn/articles/data-visualization)
-
----
-
-**文档创建时间**：2025-01-21
-**文档版本**：v2.0
-**维护者**：DSL Schema研究团队
-**最后更新**：2025-01-21
-**下次审查时间**：2025-02-21
+**创建时间**：2025-01-21
+**最后更新**：2025-02-15

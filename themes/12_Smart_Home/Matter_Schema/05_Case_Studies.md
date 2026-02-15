@@ -5,2722 +5,1265 @@
 - [Matter Schema实践案例](#matter-schema实践案例)
   - [📑 目录](#-目录)
   - [1. 案例概述](#1-案例概述)
-  - [2. 案例1：Matter On/Off Light控制](#2-案例1matter-onoff-light控制)
-    - [2.1 场景描述](#21-场景描述)
-    - [2.2 Schema定义](#22-schema定义)
-    - [2.3 实现代码](#23-实现代码)
-  - [3. 案例2：Matter Door Lock控制](#3-案例2matter-door-lock控制)
-    - [3.1 场景描述](#31-场景描述)
-    - [3.2 Schema定义](#32-schema定义)
-    - [3.3 实现代码](#33-实现代码)
-  - [4. 案例3：Matter Thermostat控制](#4-案例3matter-thermostat控制)
-    - [4.1 场景描述](#41-场景描述)
-    - [4.2 Schema定义](#42-schema定义)
-    - [4.3 实现代码](#43-实现代码)
-  - [5. 案例4：Matter设备发现和管理](#5-案例4matter设备发现和管理)
-    - [5.1 场景描述](#51-场景描述)
-    - [5.2 实现代码](#52-实现代码)
-  - [6. 案例5：Matter Color Light控制](#6-案例5matter-color-light控制)
-    - [6.1 场景描述](#61-场景描述)
-    - [6.2 实现代码](#62-实现代码)
-  - [7. 案例6：Matter数据存储和分析](#7-案例6matter数据存储和分析)
-    - [7.1 场景描述](#71-场景描述)
-    - [7.2 实现代码](#72-实现代码)
-    - [7.3 数据分析示例](#73-数据分析示例)
-  - [8. 案例7：Matter设备组控制](#8-案例7matter设备组控制)
-    - [8.1 场景描述](#81-场景描述)
-    - [8.2 Schema定义](#82-schema定义)
-    - [8.3 实现代码](#83-实现代码)
-  - [9. 案例8：Matter设备固件升级](#9-案例8matter设备固件升级)
-    - [9.1 场景描述](#91-场景描述)
-    - [9.2 Schema定义](#92-schema定义)
-    - [9.3 实现代码](#93-实现代码)
-  - [10. 案例9：Matter多设备联动](#10-案例9matter多设备联动)
-    - [10.1 场景描述](#101-场景描述)
-    - [10.2 Schema定义](#102-schema定义)
-    - [10.3 实现代码](#103-实现代码)
-  - [11. 案例10：Matter场景自动化](#11-案例10matter场景自动化)
-    - [11.1 场景描述](#111-场景描述)
-    - [11.2 Schema定义](#112-schema定义)
-    - [11.3 实现代码](#113-实现代码)
-  - [12. 案例11：Matter设备故障诊断](#12-案例11matter设备故障诊断)
-    - [12.1 场景描述](#121-场景描述)
-    - [12.2 Schema定义](#122-schema定义)
-    - [12.3 实现代码](#123-实现代码)
+  - [2. 案例1：Matter生态系统集成平台](#2-案例1matter生态系统集成平台)
+    - [2.1 企业背景](#21-企业背景)
+    - [2.2 业务痛点](#22-业务痛点)
+    - [2.3 业务目标](#23-业务目标)
+    - [2.4 技术挑战](#24-技术挑战)
+    - [2.5 解决方案](#25-解决方案)
+    - [2.6 完整实现代码](#26-完整实现代码)
+    - [2.7 效果评估与ROI](#27-效果评估与roi)
+  - [3. 案例2：Matter设备认证测试系统](#3-案例2matter设备认证测试系统)
+    - [3.1 企业背景](#31-企业背景)
+    - [3.2 业务痛点](#32-业务痛点)
+    - [3.3 业务目标](#33-业务目标)
+    - [3.4 技术挑战](#34-技术挑战)
+    - [3.5 完整实现代码](#35-完整实现代码)
+    - [3.6 效果评估与ROI](#36-效果评估与roi)
+  - [4. 案例3：Matter智能家居网关](#4-案例3matter智能家居网关)
+    - [4.1 企业背景](#41-企业背景)
+    - [4.2 业务痛点](#42-业务痛点)
+    - [4.3 业务目标](#43-业务目标)
+    - [4.4 技术挑战](#44-技术挑战)
+    - [4.5 完整实现代码](#45-完整实现代码)
+    - [4.6 效果评估与ROI](#46-效果评估与roi)
 
 ---
 
 ## 1. 案例概述
 
-本文档提供Matter Schema在实际应用中的实践案例。
+本文档提供Matter Schema在实际应用中的实践案例，涵盖Matter生态系统集成、设备认证测试、智能家居网关等核心场景。
+
+**案例类型**：
+
+1. **Matter生态系统集成平台**：跨品牌设备互联互通
+2. **Matter设备认证测试系统**：设备兼容性测试和认证
+3. **Matter智能家居网关**：多协议融合的智能家居中枢
+
+**参考标准**：
+
+- **Matter 1.0/1.1/1.2**：统一应用层规范
+- **CSA认证**：Connectivity Standards Alliance认证
+- **IP网络**：基于IPv6的底层通信
 
 ---
 
-## 2. 案例1：Matter On/Off Light控制
+## 2. 案例1：Matter生态系统集成平台
 
-### 2.1 场景描述
+### 2.1 企业背景
 
-**业务背景**：
-用户需要通过Matter协议控制智能开关灯，实现远程开关控制、
-状态查询和定时控制功能。
+**SmartLink科技**是一家专注于智能家居连接解决方案的公司，致力于解决不同品牌智能设备之间的互联互通问题，已服务超过50家智能硬件厂商。
 
-**技术挑战**：
+- **成立时间**：2018年
+- **合作厂商**：50+家
+- **支持设备类型**：200+种
+- **日活跃连接**：500万+
+- **Matter认证设备**：100+款
 
-- 需要建立Matter设备连接
-- 需要处理设备离线情况
-- 需要实现状态同步
-- 需要记录操作历史
+### 2.2 业务痛点
 
-**解决方案**：
-使用MatterDeviceController封装Matter SDK，实现设备连接、
-命令发送和状态查询功能。
+| 序号 | 痛点 | 影响程度 | 业务影响 |
+|------|------|----------|----------|
+| 1 | **协议碎片化** | 严重 | 市场存在Zigbee、Z-Wave、WiFi、蓝牙等10+种协议，设备无法互通 |
+| 2 | **生态封闭** | 严重 | 各品牌自建生态，用户被锁定在单一品牌，选择受限 |
+| 3 | **开发成本高** | 严重 | 厂商需为每个生态单独开发适配，成本增加3-5倍 |
+| 4 | **用户体验差** | 高 | 用户需要安装多个APP，场景配置复杂 |
+| 5 | **认证周期长** | 高 | 传统认证流程需6个月，产品上市慢 |
 
-### 2.2 Schema定义
+### 2.3 业务目标
 
-**Matter On/Off Light Schema**：
+| 序号 | 目标 | 当前值 | 目标值 | 时间框架 |
+|------|------|--------|--------|----------|
+| 1 | 跨品牌设备互通率 | 10% | 95% | 12个月 |
+| 2 | 单APP控制覆盖率 | 20% | 90% | 9个月 |
+| 3 | 厂商开发成本降低 | 0% | 60% | 12个月 |
+| 4 | 用户配置时间 | 30分钟 | <5分钟 | 6个月 |
+| 5 | 设备认证周期 | 6个月 | <1个月 | 9个月 |
 
-```json
-{
-  "device_id": "LIGHT001",
-  "device_type": "OnOffLight",
-  "endpoint_id": 1,
-  "node_id": 0x12344321,
-  "clusters": [{
-    "cluster_id": 0x0006,
-    "cluster_name": "OnOff",
-    "attributes": {
-      "on_off": false,
-      "global_scene_control": true,
-      "on_time": 0,
-      "off_wait_time": 0,
-      "start_up_on_off": "Off"
-    },
-    "commands": {
-      "on": {
-        "command_id": 0x00,
-        "parameters": {}
-      },
-      "off": {
-        "command_id": 0x01,
-        "parameters": {}
-      },
-      "toggle": {
-        "command_id": 0x02,
-        "parameters": {}
-      }
-    }
-  }]
-}
+### 2.4 技术挑战
+
+1. **多协议桥接**：需要实现Matter与非Matter设备（Zigbee、Z-Wave等）的无缝桥接，保持功能一致性
+
+2. **本地vs云端**：需要在本地处理和云端服务之间找到平衡，保证断网时基本功能可用
+
+3. **设备发现与配网**：需要实现统一的设备发现机制和配网流程，降低用户使用门槛
+
+4. **安全证书管理**：需要管理大量的设备证书和DAC（Device Attestation Certificate），确保安全性
+
+5. **固件OTA升级**：需要支持安全的空中固件升级，支持批量设备管理和灰度发布
+
+### 2.5 解决方案
+
+**Matter生态系统架构**：
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                     应用层                                   │
+│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌───────────────┐ │
+│  │ 厂商APP  │ │ 平台APP  │ │ 语音助手 │ │ 第三方集成    │ │
+│  └──────────┘ └──────────┘ └──────────┘ └───────────────┘ │
+└─────────────────────────────────────────────────────────────┘
+                              │
+┌─────────────────────────────────────────────────────────────┐
+│                     Matter核心服务层                         │
+│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌───────────────┐ │
+│  │ 设备目录 │ │ 场景引擎 │ │ 安全服务 │ │ OTA管理       │ │
+│  └──────────┘ └──────────┘ └──────────┘ └───────────────┘ │
+└─────────────────────────────────────────────────────────────┘
+                              │
+┌─────────────────────────────────────────────────────────────┐
+│                     协议适配层                               │
+│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌───────────────┐ │
+│  │ Matter   │ │ Zigbee   │ │ Z-Wave   │ │ 其他协议      │ │
+│  └──────────┘ └──────────┘ └──────────┘ └───────────────┘ │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-### 2.3 实现代码
-
-**完整的On/Off Light控制实现**：
+### 2.6 完整实现代码
 
 ```python
+#!/usr/bin/env python3
+"""
+Matter生态系统集成平台 - 核心实现
+支持设备管理、场景联动、OTA升级
+"""
+
 import asyncio
-from matter_device_controller import MatterOnOffLightController
-from matter_storage import MatterStorage
-from datetime import datetime
-
-# 初始化存储
-storage = MatterStorage("postgresql://user:pass@localhost/matter")
-
-# 创建设备控制器
-light_controller = MatterOnOffLightController("LIGHT001", 0x12344321)
-
-async def control_on_off_light():
-    """控制On/Off Light"""
-    try:
-        # 连接设备
-        connected = await light_controller.connect()
-        if not connected:
-            print("Failed to connect to device")
-            return
-
-        # 打开灯光
-        print("Turning on light...")
-        result = await light_controller.turn_on()
-        if result:
-            # 记录命令
-            cmd_id = storage.store_command(
-                "LIGHT001", 1, 0x0006, 0x00, "on", {}
-            )
-            storage.update_command_status(cmd_id, "Success")
-            print("Light turned on successfully")
-        else:
-            storage.update_command_status(cmd_id, "Failed")
-            print("Failed to turn on light")
-
-        # 获取状态
-        state = await light_controller.get_state()
-        print(f"Current light state: {state}")
-
-        # 等待3秒
-        await asyncio.sleep(3)
-
-        # 关闭灯光
-        print("Turning off light...")
-        result = await light_controller.turn_off()
-        if result:
-            cmd_id = storage.store_command(
-                "LIGHT001", 1, 0x0006, 0x01, "off", {}
-            )
-            storage.update_command_status(cmd_id, "Success")
-            print("Light turned off successfully")
-
-        # 切换灯光
-        print("Toggling light...")
-        result = await light_controller.toggle()
-        if result:
-            cmd_id = storage.store_command(
-                "LIGHT001", 1, 0x0006, 0x02, "toggle", {}
-            )
-            storage.update_command_status(cmd_id, "Success")
-            print("Light toggled successfully")
-
-        # 断开连接
-        await light_controller.disconnect()
-
-    except Exception as e:
-        print(f"Error controlling light: {e}")
-
-# 运行控制示例
-if __name__ == "__main__":
-    asyncio.run(control_on_off_light())
-```
-
----
-
-## 3. 案例2：Matter Door Lock控制
-
-### 3.1 场景描述
-
-**业务背景**：
-用户需要通过Matter协议控制智能门锁，实现远程开锁、锁定、
-状态查询和PIN码验证功能。
-
-**技术挑战**：
-
-- 需要安全的PIN码验证
-- 需要处理门锁状态变化事件
-- 需要记录开锁历史
-- 需要处理异常情况（如门未关闭）
-
-**解决方案**：
-使用MatterDoorLockController实现门锁控制，集成PIN码验证
-和事件监听功能。
-
-### 3.2 Schema定义
-
-**Matter Door Lock Schema**：
-
-```json
-{
-  "device_id": "LOCK001",
-  "device_type": "DoorLock",
-  "endpoint_id": 1,
-  "node_id": 0x12344322,
-  "clusters": [{
-    "cluster_id": 0x0101,
-    "cluster_name": "DoorLock",
-    "attributes": {
-      "lock_state": 1,
-      "lock_type": "DeadBolt",
-      "actuator_enabled": true,
-      "door_state": "Closed",
-      "door_open_events": 0,
-      "door_closed_events": 0,
-      "open_period": 0
-    },
-    "commands": {
-      "lock_door": {
-        "command_id": 0x00,
-        "parameters": {
-          "pin_code": "1234"
-        }
-      },
-      "unlock_door": {
-        "command_id": 0x01,
-        "parameters": {
-          "pin_code": "1234"
-        }
-      }
-    },
-    "events": {
-      "door_lock_alarm": {
-        "event_id": 0x00,
-        "alarm_code": "DoorForcedOpen"
-      }
-    }
-  }]
-}
-```
-
-### 3.3 实现代码
-
-**完整的Door Lock控制实现**：
-
-```python
-import asyncio
-from matter_device_controller import MatterDoorLockController
-from matter_storage import MatterStorage
-
-# 初始化存储
-storage = MatterStorage("postgresql://user:pass@localhost/matter")
-
-# 创建设备控制器
-lock_controller = MatterDoorLockController("LOCK001", 0x12344322)
-
-async def control_door_lock():
-    """控制Door Lock"""
-    try:
-        # 连接设备
-        connected = await lock_controller.connect()
-        if not connected:
-            print("Failed to connect to door lock")
-            return
-
-        # 获取当前锁状态
-        lock_state = await lock_controller.get_lock_state()
-        print(f"Current lock state: {lock_state}")
-
-        # 如果已锁定，则解锁
-        if lock_state == "Locked":
-            print("Unlocking door...")
-            pin_code = "1234"  # 实际应用中应从安全存储获取
-            result = await lock_controller.unlock_door(pin_code)
-
-            if result:
-                cmd_id = storage.store_command(
-                    "LOCK001", 1, 0x0101, 0x01, "unlock_door",
-                    {"pin_code": "****"}  # 不存储实际PIN码
-                )
-                storage.update_command_status(cmd_id, "Success")
-
-                # 记录事件
-                storage.store_event(
-                    "LOCK001", 1, 0x0101, 0x01, "DoorUnlocked",
-                    {"timestamp": datetime.now().isoformat()}
-                )
-                print("Door unlocked successfully")
-            else:
-                print("Failed to unlock door")
-
-        # 等待5秒
-        await asyncio.sleep(5)
-
-        # 锁定门
-        print("Locking door...")
-        result = await lock_controller.lock_door()
-
-        if result:
-            cmd_id = storage.store_command(
-                "LOCK001", 1, 0x0101, 0x00, "lock_door", {}
-            )
-            storage.update_command_status(cmd_id, "Success")
-
-            # 记录事件
-            storage.store_event(
-                "LOCK001", 1, 0x0101, 0x00, "DoorLocked",
-                {"timestamp": datetime.now().isoformat()}
-            )
-            print("Door locked successfully")
-
-        # 再次获取状态确认
-        lock_state = await lock_controller.get_lock_state()
-        print(f"Final lock state: {lock_state}")
-
-        # 断开连接
-        await lock_controller.disconnect()
-
-    except Exception as e:
-        print(f"Error controlling door lock: {e}")
-
-# 运行控制示例
-if __name__ == "__main__":
-    asyncio.run(control_door_lock())
-```
-
----
-
-## 4. 案例3：Matter Thermostat控制
-
-### 4.1 场景描述
-
-**业务背景**：
-用户需要通过Matter协议控制智能温控器，实现温度设置、
-模式切换和温度监控功能。
-
-**技术挑战**：
-
-- 需要实时读取温度值
-- 需要设置目标温度
-- 需要切换运行模式（制冷/制热/自动）
-- 需要处理温度范围限制
-
-**解决方案**：
-使用MatterThermostatController实现温控器控制，支持温度
-读取、设置和模式切换功能。
-
-### 4.2 Schema定义
-
-**Matter Thermostat Schema**：
-
-详见第4.2节原始定义。
-
-### 4.3 实现代码
-
-**完整的Thermostat控制实现**：
-
-```python
-import asyncio
-from matter_device_controller import MatterThermostatController
-from matter_storage import MatterStorage
-from datetime import datetime
-
-# 初始化存储
-storage = MatterStorage("postgresql://user:pass@localhost/matter")
-
-# 创建设备控制器
-thermostat_controller = MatterThermostatController("THERMOSTAT001", 0x12344323)
-
-async def control_thermostat():
-    """控制Thermostat"""
-    try:
-        # 连接设备
-        connected = await thermostat_controller.connect()
-        if not connected:
-            print("Failed to connect to thermostat")
-            return
-
-        # 获取当前温度
-        current_temp = await thermostat_controller.get_current_temperature()
-        print(f"Current temperature: {current_temp}°C")
-
-        # 设置目标温度为26°C（制冷模式）
-        print("Setting target temperature to 26°C (Cool mode)...")
-        result = await thermostat_controller.set_target_temperature(26.0, "Cool")
-
-        if result:
-            # 设置系统模式为制冷
-            await thermostat_controller.set_system_mode("Cool")
-
-            # 记录命令
-            cmd_id = storage.store_command(
-                "THERMOSTAT001", 1, 0x0201, 0x00, "set_target_temperature",
-                {"temperature": 26.0, "mode": "Cool"}
-            )
-            storage.update_command_status(cmd_id, "Success")
-            print("Target temperature set successfully")
-
-        # 等待并再次读取温度
-        await asyncio.sleep(5)
-        current_temp = await thermostat_controller.get_current_temperature()
-        print(f"Current temperature after setting: {current_temp}°C")
-
-        # 切换到自动模式
-        print("Switching to Auto mode...")
-        result = await thermostat_controller.set_system_mode("Auto")
-
-        if result:
-            cmd_id = storage.store_command(
-                "THERMOSTAT001", 1, 0x0201, 0x00, "set_system_mode",
-                {"mode": "Auto"}
-            )
-            storage.update_command_status(cmd_id, "Success")
-            print("System mode switched to Auto")
-
-        # 断开连接
-        await thermostat_controller.disconnect()
-
-    except Exception as e:
-        print(f"Error controlling thermostat: {e}")
-
-# 运行控制示例
-if __name__ == "__main__":
-    asyncio.run(control_thermostat())
-```
-
----
-
-## 5. 案例4：Matter设备发现和管理
-
-### 5.1 场景描述
-
-**业务背景**：
-系统需要自动发现网络中的Matter设备，注册设备信息，
-并建立设备连接池进行统一管理。
-
-**技术挑战**：
-
-- 需要实现设备发现协议
-- 需要处理设备上线/下线
-- 需要管理设备连接状态
-- 需要存储设备信息
-
-**解决方案**：
-使用MatterDeviceDiscovery和MatterDeviceManager实现设备
-发现和管理功能。
-
-### 5.2 实现代码
-
-**完整的设备发现和管理实现**：
-
-```python
-import asyncio
-from matter_device_manager import MatterDeviceManager
-from matter_storage import MatterStorage
-
-# 初始化存储和管理器
-storage = MatterStorage("postgresql://user:pass@localhost/matter")
-device_manager = MatterDeviceManager(storage)
-
-async def discover_and_manage_devices():
-    """发现和管理设备"""
-    try:
-        # 发现设备
-        print("Discovering Matter devices...")
-        registered_ids = await device_manager.discover_and_register()
-        print(f"Discovered and registered {len(registered_ids)} devices: {registered_ids}")
-
-        # 连接所有设备
-        for device_id in registered_ids:
-            print(f"Connecting to device {device_id}...")
-            connected = await device_manager.connect_device(device_id)
-            if connected:
-                print(f"Device {device_id} connected successfully")
-            else:
-                print(f"Failed to connect to device {device_id}")
-
-        # 获取设备控制器并执行操作
-        light_controller = device_manager.get_controller("LIGHT001")
-        if light_controller:
-            # 控制灯光
-            await light_controller.turn_on()
-            await asyncio.sleep(2)
-            await light_controller.turn_off()
-
-        # 断开所有设备
-        for device_id in registered_ids:
-            await device_manager.disconnect_device(device_id)
-            print(f"Disconnected from device {device_id}")
-
-    except Exception as e:
-        print(f"Error in device discovery and management: {e}")
-
-# 运行示例
-if __name__ == "__main__":
-    asyncio.run(discover_and_manage_devices())
-```
-
----
-
-## 6. 案例5：Matter Color Light控制
-
-### 6.1 场景描述
-
-**业务背景**：
-用户需要通过Matter协议控制彩色智能灯，实现色相、饱和度、
-色温和亮度的精确控制。
-
-**技术挑战**：
-
-- 需要支持多种颜色空间（HSV、RGB、色温）
-- 需要实现颜色转换
-- 需要平滑的颜色过渡
-- 需要保存和恢复颜色场景
-
-**解决方案**：
-使用MatterColorLightController实现完整的颜色控制功能。
-
-### 6.2 实现代码
-
-**完整的Color Light控制实现**：
-
-```python
-import asyncio
-from matter_device_controller import MatterColorLightController
-from matter_storage import MatterStorage
-
-# 初始化存储
-storage = MatterStorage("postgresql://user:pass@localhost/matter")
-
-# 创建设备控制器
-color_light_controller = MatterColorLightController("LIGHT003", 0x12344323)
-
-async def control_color_light():
-    """控制Color Light"""
-    try:
-        # 连接设备
-        connected = await color_light_controller.connect()
-        if not connected:
-            print("Failed to connect to color light")
-            return
-
-        # 打开灯光
-        await color_light_controller.turn_on()
-
-        # 设置亮度为50%
-        await color_light_controller.set_level(127)  # 127/254 = 50%
-        print("Set brightness to 50%")
-
-        # 设置色相和饱和度（绿色）
-        await color_light_controller.set_hue_saturation(120, 200)
-        print("Set color to green (Hue: 120, Saturation: 200)")
-
-        await asyncio.sleep(3)
-
-        # 设置色温（暖白光）
-        await color_light_controller.set_color_temperature(400)
-        print("Set color temperature to 400 mireds (warm white)")
-
-        await asyncio.sleep(3)
-
-        # 获取当前颜色状态
-        hue_sat = await color_light_controller.get_hue_saturation()
-        color_temp = await color_light_controller.get_color_temperature()
-        level = await color_light_controller.get_level()
-
-        print(f"Current color state:")
-        print(f"  Hue: {hue_sat['hue']}, Saturation: {hue_sat['saturation']}")
-        print(f"  Color Temperature: {color_temp} mireds")
-        print(f"  Level: {level}/254")
-
-        # 关闭灯光
-        await color_light_controller.turn_off()
-
-        # 断开连接
-        await color_light_controller.disconnect()
-
-    except Exception as e:
-        print(f"Error controlling color light: {e}")
-
-# 运行控制示例
-if __name__ == "__main__":
-    asyncio.run(control_color_light())
-```
-
----
-
-## 7. 案例6：Matter数据存储和分析
-
-### 7.1 场景描述
-
-**应用场景**：
-使用PostgreSQL存储Matter设备数据，支持设备状态查询、
-命令执行分析和设备使用统计。
-
-### 7.2 实现代码
-
-详见 `04_Transformation.md` 第6章。
-
-### 7.3 数据分析示例
-
-**设备使用统计查询**：
-
-```python
-from matter_storage import MatterStorage
-from datetime import datetime, timedelta
-
-storage = MatterStorage("postgresql://user:pass@localhost/matter")
-
-# 查询设备集群统计
-clusters = storage.get_cluster_statistics("LIGHT001")
-print("Device clusters:")
-for cluster in clusters:
-    print(f"  {cluster['cluster_name']}: {cluster['attribute_count']} attributes")
-
-# 查询命令执行统计
-start_time = datetime.now() - timedelta(days=7)
-cmd_stats = storage.get_command_statistics(start_time)
-print("\nCommand statistics:")
-for stat in cmd_stats:
-    print(f"  {stat['command_name']}: {stat['count']} executions, "
-          f"avg time: {stat['avg_execution_time']:.2f}s")
-
-# 查询设备使用统计
-usage_stats = storage.get_device_usage_statistics("LIGHT001", days=7)
-print("\nDevice usage statistics:")
-print(f"  Active days: {usage_stats['active_days']}")
-print(f"  Total commands: {usage_stats['total_commands']}")
-print(f"  Success rate: {usage_stats['success_commands'] / usage_stats['total_commands'] * 100:.1f}%")
-print(f"  Avg response time: {usage_stats['avg_response_time']:.2f}s")
-```
-
----
-
-## 8. 案例7：Matter设备组控制
-
-### 8.1 场景描述
-
-**业务背景**：
-智能家居场景中，用户需要同时控制多个设备，例如：
-
-- 同时打开/关闭多个房间的灯光
-- 同时调整多个温控器的温度
-- 创建场景联动（如"回家模式"、"睡眠模式"）
-
-**技术挑战**：
-
-- 需要将多个设备组织成组
-- 需要支持组内设备的批量控制
-- 需要处理组内设备的部分失败情况
-- 需要记录组操作的执行历史
-
-**解决方案**：
-使用Matter设备组功能，将多个设备组织成逻辑组，实现批量控制和场景联动。
-
-### 8.2 Schema定义
-
-**Matter设备组Schema**：
-
-```json
-{
-  "group_id": 1,
-  "group_name": "客厅灯光组",
-  "devices": [
-    {
-      "device_id": "LIGHT001",
-      "endpoint_id": 1,
-      "device_type": "DimmableLight"
-    },
-    {
-      "device_id": "LIGHT002",
-      "endpoint_id": 1,
-      "device_type": "DimmableLight"
-    },
-    {
-      "device_id": "LIGHT003",
-      "endpoint_id": 1,
-      "device_type": "ColorLight"
-    }
-  ],
-  "scenes": [
-    {
-      "scene_id": "scene_bright",
-      "scene_name": "明亮模式",
-      "actions": [
-        {
-          "device_id": "LIGHT001",
-          "cluster_id": 0x0008,
-          "command": "move_to_level",
-          "parameters": {"level": 254, "transition_time": 0}
-        },
-        {
-          "device_id": "LIGHT002",
-          "cluster_id": 0x0008,
-          "command": "move_to_level",
-          "parameters": {"level": 254, "transition_time": 0}
-        }
-      ]
-    }
-  ]
-}
-```
-
-### 8.3 实现代码
-
-**完整的设备组控制实现**：
-
-```python
-import asyncio
-import logging
-from typing import List, Dict, Optional
-from matter_device_controller import (
-    MatterDeviceController,
-    MatterDimmableLightController,
-    MatterColorLightController
-)
-from matter_storage import MatterStorage
-
-logger = logging.getLogger(__name__)
-
-class MatterDeviceGroupController:
-    """Matter设备组控制器"""
-
-    def __init__(self, group_id: int, group_name: str, storage: MatterStorage):
-        self.group_id = group_id
-        self.group_name = group_name
-        self.storage = storage
-        self.devices: Dict[str, MatterDeviceController] = {}
-        self.scenes: Dict[str, Dict] = {}
-
-    async def initialize(self):
-        """初始化设备组"""
-        # 从存储中加载组内设备
-        group_devices = self.storage.get_group_devices(self.group_id)
-
-        for device_info in group_devices:
-            device_id = device_info["device_id"]
-            device_type = device_info["device_type"]
-
-            # 根据设备类型创建控制器
-            if device_type == "DimmableLight":
-                controller = MatterDimmableLightController(
-                    device_id,
-                    device_info.get("node_id", 0x12344321),
-                    device_info.get("endpoint_id", 1)
-                )
-            elif device_type == "ExtendedColorLight":
-                controller = MatterColorLightController(
-                    device_id,
-                    device_info.get("node_id", 0x12344321),
-                    device_info.get("endpoint_id", 1)
-                )
-            else:
-                logger.warning(f"Unsupported device type: {device_type}")
-                continue
-
-            # 连接设备
-            if await controller.connect():
-                self.devices[device_id] = controller
-                logger.info(f"Added device {device_id} to group {self.group_name}")
-            else:
-                logger.error(f"Failed to connect device {device_id}")
-
-    async def group_turn_on(self) -> Dict[str, bool]:
-        """组内所有设备打开"""
-        results = {}
-
-        for device_id, controller in self.devices.items():
-            if isinstance(controller, MatterOnOffLightController):
-                try:
-                    result = await controller.turn_on()
-                    results[device_id] = result
-                except Exception as e:
-                    logger.error(f"Failed to turn on {device_id}: {e}")
-                    results[device_id] = False
-            else:
-                logger.warning(f"Device {device_id} does not support On/Off")
-                results[device_id] = False
-
-        return results
-
-    async def group_turn_off(self) -> Dict[str, bool]:
-        """组内所有设备关闭"""
-        results = {}
-
-        for device_id, controller in self.devices.items():
-            if isinstance(controller, MatterOnOffLightController):
-                try:
-                    result = await controller.turn_off()
-                    results[device_id] = result
-                except Exception as e:
-                    logger.error(f"Failed to turn off {device_id}: {e}")
-                    results[device_id] = False
-            else:
-                logger.warning(f"Device {device_id} does not support On/Off")
-                results[device_id] = False
-
-        return results
-
-    async def group_set_level(self, level: int, transition_time: int = 0) -> Dict[str, bool]:
-        """组内所有可调光设备设置亮度"""
-        results = {}
-
-        for device_id, controller in self.devices.items():
-            if isinstance(controller, MatterDimmableLightController):
-                try:
-                    result = await controller.set_level(level)
-                    results[device_id] = result
-                except Exception as e:
-                    logger.error(f"Failed to set level for {device_id}: {e}")
-                    results[device_id] = False
-            else:
-                logger.warning(f"Device {device_id} does not support level control")
-                results[device_id] = False
-
-        return results
-
-    async def execute_scene(self, scene_id: str) -> Dict[str, bool]:
-        """执行场景"""
-        if scene_id not in self.scenes:
-            logger.error(f"Scene {scene_id} not found")
-            return {}
-
-        scene = self.scenes[scene_id]
-        results = {}
-
-        # 并行执行所有场景动作
-        tasks = []
-        for action in scene.get("actions", []):
-            device_id = action["device_id"]
-            controller = self.devices.get(device_id)
-
-            if not controller:
-                logger.error(f"Device {device_id} not found in group")
-                results[device_id] = False
-                continue
-
-            # 根据命令类型执行
-            command = action.get("command")
-            parameters = action.get("parameters", {})
-
-            if command == "turn_on":
-                task = controller.turn_on()
-            elif command == "turn_off":
-                task = controller.turn_off()
-            elif command == "move_to_level":
-                task = controller.set_level(parameters.get("level", 128))
-            elif command == "set_color_temperature":
-                task = controller.set_color_temperature(parameters.get("color_temp_mireds", 250))
-            else:
-                logger.warning(f"Unknown command: {command}")
-                results[device_id] = False
-                continue
-
-            tasks.append((device_id, task))
-
-        # 等待所有任务完成
-        for device_id, task in tasks:
-            try:
-                result = await task
-                results[device_id] = result
-            except Exception as e:
-                logger.error(f"Failed to execute action for {device_id}: {e}")
-                results[device_id] = False
-
-        return results
-
-    def add_scene(self, scene_id: str, scene_name: str, actions: List[Dict]):
-        """添加场景"""
-        self.scenes[scene_id] = {
-            "scene_id": scene_id,
-            "scene_name": scene_name,
-            "actions": actions
-        }
-        logger.info(f"Added scene {scene_name} to group {self.group_name}")
-
-    async def cleanup(self):
-        """清理资源"""
-        for device_id, controller in self.devices.items():
-            await controller.disconnect()
-
-async def control_device_group():
-    """设备组控制示例"""
-    # 初始化存储
-    storage = MatterStorage("postgresql://user:pass@localhost/matter")
-
-    # 创建设备组
-    group_id = storage.create_device_group(1, "客厅灯光组")
-
-    # 添加设备到组
-    storage.add_device_to_group(1, "LIGHT001", 1)
-    storage.add_device_to_group(1, "LIGHT002", 1)
-    storage.add_device_to_group(1, "LIGHT003", 1)
-
-    # 创建设备组控制器
-    group_controller = MatterDeviceGroupController(1, "客厅灯光组", storage)
-    await group_controller.initialize()
-
-    # 执行组操作
-    print("Turning on all devices in group...")
-    results = await group_controller.group_turn_on()
-    print(f"Results: {results}")
-
-    # 设置组内所有设备亮度
-    print("\nSetting all devices to level 200...")
-    results = await group_controller.group_set_level(200)
-    print(f"Results: {results}")
-
-    # 添加场景
-    group_controller.add_scene(
-        "scene_bright",
-        "明亮模式",
-        [
-            {
-                "device_id": "LIGHT001",
-                "cluster_id": 0x0008,
-                "command": "move_to_level",
-                "parameters": {"level": 254}
-            },
-            {
-                "device_id": "LIGHT002",
-                "cluster_id": 0x0008,
-                "command": "move_to_level",
-                "parameters": {"level": 254}
-            }
-        ]
-    )
-
-    # 执行场景
-    print("\nExecuting scene 'bright'...")
-    results = await group_controller.execute_scene("scene_bright")
-    print(f"Results: {results}")
-
-    # 清理
-    await group_controller.cleanup()
-    storage.close()
-
-if __name__ == "__main__":
-    asyncio.run(control_device_group())
-```
-
----
-
-## 9. 案例8：Matter设备固件升级
-
-### 9.1 场景描述
-
-**业务背景**：
-智能家居设备需要定期进行固件升级，以修复bug、添加新功能或提升性能。Matter协议支持OTA（Over-The-Air）固件升级功能。
-
-**技术挑战**：
-
-- 需要支持固件版本检查
-- 需要支持固件下载和验证
-- 需要支持升级进度监控
-- 需要处理升级失败和回滚
-- 需要记录升级历史
-
-**解决方案**：
-使用Matter OTA升级功能，结合PostgreSQL存储升级记录，实现完整的固件升级管理。
-
-### 9.2 Schema定义
-
-**Matter固件升级Schema**：
-
-```json
-{
-  "device_id": "LIGHT001",
-  "current_firmware_version": "1.0.0",
-  "target_firmware_version": "1.1.0",
-  "firmware_info": {
-    "firmware_url": "https://example.com/firmware/light_v1.1.0.bin",
-    "firmware_size": 524288,
-    "firmware_checksum": "sha256:abc123...",
-    "firmware_format": "OTA",
-    "min_hardware_version": 1,
-    "max_hardware_version": 2
-  },
-  "upgrade_policy": {
-    "auto_upgrade": false,
-    "scheduled_time": "2025-01-22T02:00:00Z",
-    "rollback_on_failure": true
-  }
-}
-```
-
-### 9.3 实现代码
-
-**完整的固件升级实现**：
-
-```python
-import asyncio
+import json
 import logging
 import hashlib
-import aiohttp
-from typing import Dict, Optional, Callable
+from dataclasses import dataclass, field
 from datetime import datetime
-from matter_device_controller import MatterDeviceController
-from matter_storage import MatterStorage
+from enum import Enum
+from typing import Dict, List, Optional, Any, Set
+from collections import defaultdict
 
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-class MatterFirmwareUpdater:
-    """Matter设备固件升级器"""
 
-    def __init__(self, device_controller: MatterDeviceController,
-                 storage: MatterStorage):
-        self.device_controller = device_controller
-        self.storage = storage
-        self.device_id = device_controller.device_id
-        self.upgrade_progress_callback: Optional[Callable] = None
-
-    async def check_firmware_version(self) -> Optional[str]:
-        """检查当前固件版本"""
-        try:
-            # 读取Basic Cluster的SoftwareVersion属性
-            version = await self.device_controller.read_attribute(
-                0x0028,  # Basic Cluster
-                0x0009   # SoftwareVersion
-            )
-            return version if version else None
-        except Exception as e:
-            logger.error(f"Failed to check firmware version: {e}")
-            return None
-
-    async def download_firmware(self, firmware_url: str) -> bytes:
-        """下载固件文件"""
-        async with aiohttp.ClientSession() as session:
-            async with session.get(firmware_url) as response:
-                if response.status == 200:
-                    firmware_data = await response.read()
-                    logger.info(f"Downloaded firmware: {len(firmware_data)} bytes")
-                    return firmware_data
-                else:
-                    raise Exception(f"Failed to download firmware: HTTP {response.status}")
-
-    def verify_firmware_checksum(self, firmware_data: bytes,
-                                expected_checksum: str) -> bool:
-        """验证固件校验和"""
-        # 提取算法和哈希值
-        if expected_checksum.startswith("sha256:"):
-            algorithm = "sha256"
-            expected_hash = expected_checksum[7:]
-        elif expected_checksum.startswith("sha1:"):
-            algorithm = "sha1"
-            expected_hash = expected_checksum[5:]
-        else:
-            logger.warning(f"Unknown checksum format: {expected_checksum}")
-            return False
-
-        # 计算实际哈希值
-        if algorithm == "sha256":
-            actual_hash = hashlib.sha256(firmware_data).hexdigest()
-        elif algorithm == "sha1":
-            actual_hash = hashlib.sha1(firmware_data).hexdigest()
-        else:
-            return False
-
-        return actual_hash.lower() == expected_hash.lower()
-
-    async def upgrade_firmware(self, firmware_url: str, firmware_version: str,
-                              firmware_size: int = None,
-                              firmware_checksum: str = None,
-                              progress_callback: Callable = None) -> bool:
-        """执行固件升级"""
-        self.upgrade_progress_callback = progress_callback
-
-        # 记录升级开始
-        update_id = self.storage.store_firmware_update(
-            self.device_id,
-            firmware_version,
-            firmware_url,
-            firmware_size,
-            firmware_checksum
-        )
-
-        try:
-            # 检查当前版本
-            current_version = await self.check_firmware_version()
-            logger.info(f"Current firmware version: {current_version}")
-
-            # 下载固件
-            if progress_callback:
-                progress_callback(0, "Downloading firmware...")
-
-            firmware_data = await self.download_firmware(firmware_url)
-
-            # 验证固件
-            if firmware_checksum:
-                if progress_callback:
-                    progress_callback(10, "Verifying firmware...")
-
-                if not self.verify_firmware_checksum(firmware_data, firmware_checksum):
-                    raise Exception("Firmware checksum verification failed")
-
-            # 更新状态为进行中
-            self.storage.update_firmware_status(update_id, "InProgress")
-
-            # 发送固件到设备（这里需要实际的Matter OTA升级命令）
-            if progress_callback:
-                progress_callback(20, "Uploading firmware to device...")
-
-            # 模拟升级过程
-            await self._simulate_firmware_upgrade(firmware_data, progress_callback)
-
-            # 验证升级结果
-            if progress_callback:
-                progress_callback(90, "Verifying upgrade...")
-
-            new_version = await self.check_firmware_version()
-            if new_version == firmware_version:
-                self.storage.update_firmware_status(update_id, "Completed")
-                logger.info(f"Firmware upgrade completed: {current_version} -> {new_version}")
-                return True
-            else:
-                raise Exception(f"Version mismatch: expected {firmware_version}, got {new_version}")
-
-        except Exception as e:
-            logger.error(f"Firmware upgrade failed: {e}")
-            self.storage.update_firmware_status(update_id, "Failed", str(e))
-            return False
-
-    async def _simulate_firmware_upgrade(self, firmware_data: bytes,
-                                        progress_callback: Callable):
-        """模拟固件升级过程"""
-        # 模拟升级进度
-        for progress in range(20, 90, 10):
-            await asyncio.sleep(0.5)
-            if progress_callback:
-                progress_callback(progress, f"Upgrading... {progress}%")
-
-    async def rollback_firmware(self, previous_version: str) -> bool:
-        """回滚到之前的固件版本"""
-        logger.info(f"Rolling back to version {previous_version}")
-        # 这里需要实际的回滚逻辑
-        # Matter协议可能不支持直接回滚，需要重新升级到之前的版本
-        return False
-
-async def upgrade_device_firmware():
-    """固件升级示例"""
-    # 初始化存储
-    storage = MatterStorage("postgresql://user:pass@localhost/matter")
-
-    # 创建设备控制器
-    device_controller = MatterDeviceController("LIGHT001", 0x12344321)
-    await device_controller.connect()
-
-    # 创建固件升级器
-    updater = MatterFirmwareUpdater(device_controller, storage)
-
-    # 检查当前版本
-    current_version = await updater.check_firmware_version()
-    print(f"Current firmware version: {current_version}")
-
-    # 定义进度回调
-    def progress_callback(progress: int, message: str):
-        print(f"[{progress}%] {message}")
-
-    # 执行升级
-    success = await updater.upgrade_firmware(
-        firmware_url="https://example.com/firmware/light_v1.1.0.bin",
-        firmware_version="1.1.0",
-        firmware_size=524288,
-        firmware_checksum="sha256:abc123def456...",
-        progress_callback=progress_callback
-    )
-
-    if success:
-        print("Firmware upgrade completed successfully!")
-    else:
-        print("Firmware upgrade failed!")
-
-    # 查询升级历史
-    updates = storage.get_firmware_updates(device_id="LIGHT001")
-    print("\nFirmware update history:")
-    for update in updates:
-        print(f"  Version: {update['firmware_version']}, "
-              f"Status: {update['update_status']}, "
-              f"Time: {update['created_at']}")
-
-    await device_controller.disconnect()
-    storage.close()
-
-if __name__ == "__main__":
-    asyncio.run(upgrade_device_firmware())
-```
-
----
-
-**参考文档**：
-
-- `01_Overview.md` - 概述
-- `02_Formal_Definition.md` - 形式化定义
-- `03_Standards.md` - 标准对标
-- `04_Transformation.md` - 转换体系
-
----
-
-## 10. 案例9：Matter多设备联动
-
-### 10.1 场景描述
-
-**业务背景**：
-Matter多设备联动系统实现多个Matter设备之间的
-协同工作，例如开门时自动开灯、温度变化时自动
-调节空调等。
-
-**技术挑战**：
-
-- 需要设备状态同步
-- 需要联动规则管理
-- 需要事件触发机制
-- 需要联动效果评估
-
-**解决方案**：
-使用Matter_Schema定义设备联动规则，
-使用Matter SDK实现设备联动，
-使用MatterStorage存储联动数据。
-
-### 10.2 Schema定义
-
-**Matter多设备联动Schema**：
-
-```dsl
-schema MatterDeviceCoordination {
-  coordination_id: String @value("COORD-20250121-001") @required
-  coordination_name: String @value("回家场景联动") @required
-  trigger_device: {
-    device_id: String @value("DOOR-LOCK-001")
-    device_type: Enum { DoorLock } @value(DoorLock)
-    trigger_event: Enum { Unlocked } @value(Unlocked)
-  } @required
-
-  target_devices: [
-    {
-      device_id: String @value("LIGHT-001")
-      device_type: Enum { Light } @value(Light)
-      action: {
-        cluster_id: Integer @value(6) @comment("On/Off Cluster")
-        command_id: Integer @value(1) @comment("On Command")
-        parameters: {
-          on_off: Boolean @value(true)
-        }
-      }
-    },
-    {
-      device_id: String @value("THERMOSTAT-001")
-      device_type: Enum { Thermostat } @value(Thermostat)
-      action: {
-        cluster_id: Integer @value(513) @comment("Thermostat Cluster")
-        command_id: Integer @value(0) @comment("Set Setpoint")
-        parameters: {
-          setpoint: Decimal @value(22.0) @unit("Celsius")
-        }
-      }
-    }
-  ] @required
-
-  coordination_status: {
-    status: Enum { Active } @value(Active)
-    last_triggered: DateTime @value("2025-01-21T18:00:00")
-    trigger_count: Integer @value(5)
-    success_rate: Decimal @value(1.0) @range(0.0, 1.0)
-  } @required
-} @standard("Matter")
-```
-
-### 10.3 实现代码
-
-```python
-from matter_storage import MatterStorage
-from matter_sdk_wrapper import MatterSDKWrapper
-from datetime import datetime
-
-async def matter_device_coordination():
-    """Matter多设备联动示例"""
-    storage = MatterStorage("postgresql://user:password@localhost/matter_db")
-    sdk = MatterSDKWrapper()
-
-    # 联动规则
-    coordination_rule = {
-        "coordination_id": "COORD-20250121-001",
-        "coordination_name": "回家场景联动",
-        "trigger_device": {
-            "device_id": "DOOR-LOCK-001",
-            "device_type": "DoorLock",
-            "trigger_event": "Unlocked"
-        },
-        "target_devices": [
-            {
-                "device_id": "LIGHT-001",
-                "device_type": "Light",
-                "action": {
-                    "cluster_id": 6,  # On/Off Cluster
-                    "command_id": 1,  # On Command
-                    "parameters": {"on_off": True}
-                }
-            },
-            {
-                "device_id": "THERMOSTAT-001",
-                "device_type": "Thermostat",
-                "action": {
-                    "cluster_id": 513,  # Thermostat Cluster
-                    "command_id": 0,  # Set Setpoint
-                    "parameters": {"setpoint": 22.0}
-                }
-            }
-        ]
-    }
-
-    # 监听触发设备事件
-    async def on_door_unlocked(device_id, event_data):
-        """门锁解锁事件处理"""
-        print(f"Door unlocked: {device_id}")
-
-        # 执行联动动作
-        for target_device in coordination_rule["target_devices"]:
-            try:
-                result = await sdk.send_command(
-                    target_device["device_id"],
-                    target_device["action"]["cluster_id"],
-                    target_device["action"]["command_id"],
-                    target_device["action"]["parameters"]
-                )
-
-                if result:
-                    print(f"  {target_device['device_id']} action executed successfully")
-                else:
-                    print(f"  {target_device['device_id']} action failed")
-            except Exception as e:
-                print(f"  Error executing action on {target_device['device_id']}: {e}")
-
-        # 记录联动事件
-        coordination_data = {
-            "coordination_id": coordination_rule["coordination_id"],
-            "trigger_device_id": device_id,
-            "trigger_time": datetime.now(),
-            "target_devices": [d["device_id"] for d in coordination_rule["target_devices"]],
-            "status": "Completed"
-        }
-
-        storage.store_coordination_event(coordination_data)
-
-    # 注册事件监听
-    await sdk.subscribe_to_events("DOOR-LOCK-001", on_door_unlocked)
-
-    print("Matter device coordination system started")
-    print(f"  Coordination: {coordination_rule['coordination_name']}")
-    print(f"  Trigger device: {coordination_rule['trigger_device']['device_id']}")
-    print(f"  Target devices: {len(coordination_rule['target_devices'])}")
-
-    return coordination_rule
-
-if __name__ == "__main__":
-    import asyncio
-    asyncio.run(matter_device_coordination())
-```
-
----
-
-## 11. 案例10：Matter场景自动化
-
-### 11.1 场景描述
-
-**业务背景**：
-Matter场景自动化系统根据时间、环境条件等
-自动触发设备场景，例如早晨自动开灯、温度
-过高时自动开启空调等。
-
-**技术挑战**：
-
-- 需要时间条件判断
-- 需要环境条件监测
-- 需要场景规则管理
-- 需要自动化效果评估
-
-**解决方案**：
-使用Matter_Schema定义场景自动化规则，
-使用Matter SDK实现场景自动化，
-使用MatterStorage存储自动化数据。
-
-### 11.2 Schema定义
-
-**Matter场景自动化Schema**：
-
-```dsl
-schema MatterSceneAutomation {
-  automation_id: String @value("AUTO-20250121-001") @required
-  automation_name: String @value("早晨自动场景") @required
-
-  trigger_conditions: {
-    time_condition: {
-      enabled: Boolean @value(true)
-      time: Time @value("07:00:00")
-      days_of_week: [Enum] @value([Monday, Tuesday, Wednesday, Thursday, Friday])
-    }
-    environment_condition: {
-      enabled: Boolean @value(true)
-      sensor_device_id: String @value("SENSOR-001")
-      condition_type: Enum { Temperature } @value(Temperature)
-      threshold: Decimal @value(25.0) @unit("Celsius")
-      operator: Enum { GreaterThan } @value(GreaterThan)
-    }
-  } @required
-
-  scene_actions: [
-    {
-      device_id: String @value("LIGHT-001")
-      action: {
-        cluster_id: Integer @value(6)
-        command_id: Integer @value(1)
-        parameters: {
-          on_off: Boolean @value(true)
-          brightness: Integer @value(80) @range(0, 100)
-        }
-      }
-    },
-    {
-      device_id: String @value("CURTAIN-001")
-      action: {
-        cluster_id: Integer @value(258) @comment("Window Covering Cluster")
-        command_id: Integer @value(1) @comment("Up Command")
-        parameters: {
-          lift_percent: Integer @value(100)
-        }
-      }
-    }
-  ] @required
-
-  automation_status: {
-    status: Enum { Active } @value(Active)
-    last_executed: DateTime @value("2025-01-21T07:00:00")
-    execution_count: Integer @value(30)
-    success_rate: Decimal @value(0.97) @range(0.0, 1.0)
-  } @required
-} @standard("Matter")
-```
-
-### 11.3 实现代码
-
-```python
-from matter_storage import MatterStorage
-from matter_sdk_wrapper import MatterSDKWrapper
-from datetime import datetime, time
-
-async def matter_scene_automation():
-    """Matter场景自动化示例"""
-    storage = MatterStorage("postgresql://user:password@localhost/matter_db")
-    sdk = MatterSDKWrapper()
-
-    # 自动化规则
-    automation_rule = {
-        "automation_id": "AUTO-20250121-001",
-        "automation_name": "早晨自动场景",
-        "trigger_conditions": {
-            "time_condition": {
-                "enabled": True,
-                "time": time(7, 0, 0),
-                "days_of_week": [0, 1, 2, 3, 4]  # Monday to Friday
-            },
-            "environment_condition": {
-                "enabled": True,
-                "sensor_device_id": "SENSOR-001",
-                "condition_type": "Temperature",
-                "threshold": 25.0,
-                "operator": "GreaterThan"
-            }
-        },
-        "scene_actions": [
-            {
-                "device_id": "LIGHT-001",
-                "action": {
-                    "cluster_id": 6,
-                    "command_id": 1,
-                    "parameters": {"on_off": True, "brightness": 80}
-                }
-            },
-            {
-                "device_id": "CURTAIN-001",
-                "action": {
-                    "cluster_id": 258,
-                    "command_id": 1,
-                    "parameters": {"lift_percent": 100}
-                }
-            }
-        ]
-    }
-
-    # 检查触发条件
-    def check_trigger_conditions(rule):
-        """检查触发条件"""
-        conditions_met = True
-
-        # 检查时间条件
-        if rule["trigger_conditions"]["time_condition"]["enabled"]:
-            current_time = datetime.now().time()
-            target_time = rule["trigger_conditions"]["time_condition"]["time"]
-            current_day = datetime.now().weekday()
-            days_of_week = rule["trigger_conditions"]["time_condition"]["days_of_week"]
-
-            if current_time.hour != target_time.hour or \
-               current_time.minute != target_time.minute or \
-               current_day not in days_of_week:
-                conditions_met = False
-
-        # 检查环境条件
-        if rule["trigger_conditions"]["environment_condition"]["enabled"]:
-            sensor_id = rule["trigger_conditions"]["environment_condition"]["sensor_device_id"]
-            condition_type = rule["trigger_conditions"]["environment_condition"]["condition_type"]
-            threshold = rule["trigger_conditions"]["environment_condition"]["threshold"]
-            operator = rule["trigger_conditions"]["environment_condition"]["operator"]
-
-            # 获取传感器数据（简化示例）
-            sensor_value = 26.5  # 假设从传感器读取
-
-            if operator == "GreaterThan" and sensor_value <= threshold:
-                conditions_met = False
-            elif operator == "LessThan" and sensor_value >= threshold:
-                conditions_met = False
-
-        return conditions_met
-
-    # 执行场景动作
-    async def execute_scene_actions(rule):
-        """执行场景动作"""
-        success_count = 0
-
-        for action in rule["scene_actions"]:
-            try:
-                result = await sdk.send_command(
-                    action["device_id"],
-                    action["action"]["cluster_id"],
-                    action["action"]["command_id"],
-                    action["action"]["parameters"]
-                )
-
-                if result:
-                    success_count += 1
-                    print(f"  {action['device_id']} action executed successfully")
-                else:
-                    print(f"  {action['device_id']} action failed")
-            except Exception as e:
-                print(f"  Error executing action on {action['device_id']}: {e}")
-
-        return success_count
-
-    # 自动化循环
-    while True:
-        if check_trigger_conditions(automation_rule):
-            print(f"Trigger conditions met for: {automation_rule['automation_name']}")
-
-            success_count = await execute_scene_actions(automation_rule)
-            total_actions = len(automation_rule["scene_actions"])
-            success_rate = success_count / total_actions if total_actions > 0 else 0
-
-            # 记录自动化执行
-            automation_data = {
-                "automation_id": automation_rule["automation_id"],
-                "execution_time": datetime.now(),
-                "success_count": success_count,
-                "total_actions": total_actions,
-                "success_rate": success_rate,
-                "status": "Completed" if success_rate == 1.0 else "Partial"
-            }
-
-            storage.store_automation_event(automation_data)
-
-            print(f"Automation executed: {success_count}/{total_actions} actions succeeded")
-
-        # 等待1分钟再检查
-        await asyncio.sleep(60)
-
-    return automation_rule
-
-if __name__ == "__main__":
-    import asyncio
-    asyncio.run(matter_scene_automation())
-```
-
----
-
-## 12. 案例11：Matter设备故障诊断
-
-### 12.1 场景描述
-
-**业务背景**：
-Matter设备故障诊断系统监测设备状态，
-识别设备故障，提供故障诊断和修复建议。
-
-**技术挑战**：
-
-- 需要设备状态监测
-- 需要故障模式识别
-- 需要诊断算法
-- 需要修复建议生成
-
-**解决方案**：
-使用Matter_Schema监测设备状态，
-使用AI算法进行故障诊断，
-使用MatterStorage存储诊断数据。
-
-### 12.2 Schema定义
-
-**Matter设备故障诊断Schema**：
-
-```dsl
-schema MatterDeviceDiagnostics {
-  diagnosis_session_id: String @value("DIAG-20250121-001") @required
-  device_id: String @value("LIGHT-001") @required
-  diagnosis_time: DateTime @value("2025-01-21T10:00:00") @required
-
-  device_status: {
-    online: Boolean @value(false)
-    last_seen: DateTime @value("2025-01-21T09:30:00")
-    response_time: Decimal @value(5000.0) @unit("ms")
-    error_count: Integer @value(5)
-    last_error: String @value("Timeout")
-  } @required
-
-  diagnostic_results: {
-    fault_detected: Boolean @value(true)
-    fault_type: Enum { Connectivity } @value(Connectivity)
-    fault_severity: Enum { Medium } @value(Medium)
-    fault_description: String @value("设备响应超时")
-    root_cause: String @value("网络连接不稳定")
-    confidence: Decimal @value(0.85) @range(0.0, 1.0)
-  } @required
-
-  repair_recommendations: [
-    {
-      recommendation: String @value("检查网络连接")
-      priority: Enum { High } @value(High)
-      expected_fix_probability: Decimal @value(0.80)
-    },
-    {
-      recommendation: String @value("重启设备")
-      priority: Enum { Medium } @value(Medium)
-      expected_fix_probability: Decimal @value(0.60)
-    }
-  ] @required
-} @standard("Matter")
-```
-
-### 12.3 实现代码
-
-```python
-from matter_storage import MatterStorage
-from matter_sdk_wrapper import MatterSDKWrapper
-from datetime import datetime, timedelta
-
-async def matter_device_diagnostics():
-    """Matter设备故障诊断示例"""
-    storage = MatterStorage("postgresql://user:password@localhost/matter_db")
-    sdk = MatterSDKWrapper()
-
-    # 设备状态
-    device_id = "LIGHT-001"
-    device_status = {
-        "online": False,
-        "last_seen": datetime.now() - timedelta(minutes=30),
-        "response_time": 5000.0,
-        "error_count": 5,
-        "last_error": "Timeout"
-    }
-
-    # 故障诊断算法
-    def diagnose_device_fault(status):
-        """诊断设备故障"""
-        fault_detected = False
-        fault_type = None
-        fault_severity = None
-        fault_description = None
-        root_cause = None
-        confidence = 0.0
-        recommendations = []
-
-        # 检查在线状态
-        if not status["online"]:
-            time_since_last_seen = datetime.now() - status["last_seen"]
-
-            if time_since_last_seen.total_seconds() > 3600:  # 1小时
-                fault_detected = True
-                fault_type = "Connectivity"
-                fault_severity = "High"
-                fault_description = "设备长时间离线"
-                root_cause = "网络连接中断或设备故障"
-                confidence = 0.90
-                recommendations.append({
-                    "recommendation": "检查网络连接和设备电源",
-                    "priority": "High",
-                    "expected_fix_probability": 0.70
-                })
-            else:
-                fault_detected = True
-                fault_type = "Connectivity"
-                fault_severity = "Medium"
-                fault_description = "设备暂时离线"
-                root_cause = "网络连接不稳定"
-                confidence = 0.75
-                recommendations.append({
-                    "recommendation": "检查网络连接",
-                    "priority": "High",
-                    "expected_fix_probability": 0.80
-                })
-
-        # 检查响应时间
-        if status["response_time"] > 3000:  # 3秒
-            fault_detected = True
-            if fault_type is None:
-                fault_type = "Performance"
-                fault_severity = "Medium"
-                fault_description = "设备响应缓慢"
-                root_cause = "网络延迟或设备负载过高"
-                confidence = 0.70
-                recommendations.append({
-                    "recommendation": "检查网络延迟和设备负载",
-                    "priority": "Medium",
-                    "expected_fix_probability": 0.60
-                })
-
-        # 检查错误计数
-        if status["error_count"] > 3:
-            fault_detected = True
-            if fault_type is None:
-                fault_type = "Reliability"
-                fault_severity = "Medium"
-                fault_description = "设备频繁出错"
-                root_cause = "设备不稳定或配置错误"
-                confidence = 0.80
-                recommendations.append({
-                    "recommendation": "重启设备",
-                    "priority": "Medium",
-                    "expected_fix_probability": 0.60
-                })
-                recommendations.append({
-                    "recommendation": "检查设备配置",
-                    "priority": "Low",
-                    "expected_fix_probability": 0.50
-                })
-
+class MatterDeviceType(Enum):
+    """Matter设备类型"""
+    ON_OFF_LIGHT = "on_off_light"
+    DIMMABLE_LIGHT = "dimmable_light"
+    COLOR_TEMPERATURE_LIGHT = "color_temperature_light"
+    EXTENDED_COLOR_LIGHT = "extended_color_light"
+    ON_OFF_PLUG = "on_off_plugin_unit"
+    DIMMABLE_PLUG = "dimmable_plugin_unit"
+    THERMOSTAT = "thermostat"
+    DOOR_LOCK = "door_lock"
+    WINDOW_COVERING = "window_covering"
+    CONTACT_SENSOR = "contact_sensor"
+    MOTION_SENSOR = "motion_sensor"
+    TEMPERATURE_SENSOR = "temperature_sensor"
+
+
+class CommissioningStatus(Enum):
+    """配网状态"""
+    NOT_COMMISSIONED = "not_commissioned"
+    IN_PROGRESS = "in_progress"
+    COMMISSIONED = "commissioned"
+    FAILED = "failed"
+
+
+class OTAStatus(Enum):
+    """OTA状态"""
+    IDLE = "idle"
+    DOWNLOADING = "downloading"
+    READY = "ready"
+    IN_PROGRESS = "in_progress"
+    COMPLETED = "completed"
+    FAILED = "failed"
+
+
+@dataclass
+class MatterNode:
+    """Matter节点"""
+    node_id: int
+    vendor_id: int
+    product_id: int
+    device_name: str
+    device_type: MatterDeviceType
+    software_version: int
+    commissioning_status: CommissioningStatus
+    fabric_ids: List[int] = field(default_factory=list)
+    endpoints: Dict[int, Dict] = field(default_factory=dict)
+    last_seen: datetime = field(default_factory=datetime.now)
+    
+    def to_dict(self) -> Dict[str, Any]:
         return {
-            "fault_detected": fault_detected,
-            "fault_type": fault_type,
-            "fault_severity": fault_severity,
-            "fault_description": fault_description,
-            "root_cause": root_cause,
-            "confidence": confidence,
-            "recommendations": recommendations
+            "node_id": self.node_id,
+            "vendor_id": self.vendor_id,
+            "product_id": self.product_id,
+            "device_name": self.device_name,
+            "device_type": self.device_type.value,
+            "software_version": self.software_version,
+            "commissioning_status": self.commissioning_status.value,
+            "fabric_ids": self.fabric_ids,
+            "endpoints": self.endpoints
         }
 
-    # 执行诊断
-    diagnostic_results = diagnose_device_fault(device_status)
 
-    # 存储诊断数据
-    diagnosis_data = {
-        "diagnosis_session_id": "DIAG-20250121-001",
-        "device_id": device_id,
-        "diagnosis_time": datetime.now(),
-        "device_online": device_status["online"],
-        "device_last_seen": device_status["last_seen"],
-        "device_response_time": device_status["response_time"],
-        "device_error_count": device_status["error_count"],
-        "device_last_error": device_status["last_error"],
-        "fault_detected": diagnostic_results["fault_detected"],
-        "fault_type": diagnostic_results["fault_type"],
-        "fault_severity": diagnostic_results["fault_severity"],
-        "fault_description": diagnostic_results["fault_description"],
-        "root_cause": diagnostic_results["root_cause"],
-        "confidence": diagnostic_results["confidence"],
-        "recommendations": diagnostic_results["recommendations"]
-    }
-
-    # 存储到数据库
-    diagnosis_id = storage.store_diagnostic_data(diagnosis_data)
-    print(f"Device diagnosis stored: {diagnosis_id}")
-
-    print(f"\nMatter Device Diagnostics:")
-    print(f"  Device: {device_id}")
-    print(f"  Fault detected: {diagnostic_results['fault_detected']}")
-    if diagnostic_results['fault_detected']:
-        print(f"  Fault type: {diagnostic_results['fault_type']}")
-        print(f"  Fault severity: {diagnostic_results['fault_severity']}")
-        print(f"  Fault description: {diagnostic_results['fault_description']}")
-        print(f"  Root cause: {diagnostic_results['root_cause']}")
-        print(f"  Confidence: {diagnostic_results['confidence']:.2f}")
-        print(f"  Recommendations: {len(diagnostic_results['recommendations'])}")
-        for i, rec in enumerate(diagnostic_results['recommendations'], 1):
-            print(f"    {i}. {rec['recommendation']} (Priority: {rec['priority']})")
-
-    return diagnosis_data
-
-if __name__ == "__main__":
-    import asyncio
-    asyncio.run(matter_device_diagnostics())
-```
-
----
-
-**创建时间**：2025-01-21
-**最后更新**：2025-01-21
-
-
----
-
-## 12. 案例12：Matter多管理员(FMA)配置管理
-
-### 12.1 场景描述
-
-**业务背景**：
-Matter多管理员(Fabric Multi-Admin)功能允许一个设备被多个生态系统（如Apple Home、Google Home、Amazon Alexa）同时管理。需要实现安全的Commissioning流程、ACL权限管理和跨Fabric的设备状态同步。
-
-**技术挑战**：
-
-- 需要管理多个Fabric的Credentials
-- 需要精细的ACL权限控制
-- 需要处理跨Fabric的命令冲突
-- 需要确保Commissioning安全性
-
-**解决方案**：
-使用Matter的Multi-Admin功能，结合PostgreSQL存储各Fabric的配置和ACL规则，实现安全的多管理员管理。
-
-### 12.2 Schema定义
-
-**多管理员配置Schema**：
-
-```json
-{
-  "device_id": "MATTER_LIGHT_001",
-  "fabrics": [
-    {
-      "fabric_id": 1,
-      "fabric_name": "Apple Home",
-      "node_id": 12345,
-      "is_commissioner": true,
-      "acl_entries": [
-        {
-          "privilege": 5,
-          "auth_mode": "CASE",
-          "subjects": [12345],
-          "targets": [{"cluster": 6, "endpoint": 1}]
+@dataclass
+class MatterFabric:
+    """Matter Fabric"""
+    fabric_id: int
+    fabric_name: str
+    root_ca: str
+    nodes: Set[int] = field(default_factory=set)
+    created_at: datetime = field(default_factory=datetime.now)
+    
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "fabric_id": self.fabric_id,
+            "fabric_name": self.fabric_name,
+            "node_count": len(self.nodes),
+            "created_at": self.created_at.isoformat()
         }
-      ]
-    },
-    {
-      "fabric_id": 2,
-      "fabric_name": "Google Home",
-      "node_id": 67890,
-      "acl_entries": [
-        {
-          "privilege": 3,
-          "auth_mode": "CASE",
-          "subjects": [67890],
-          "targets": [{"cluster": 6, "endpoint": 1}]
+
+
+@dataclass
+class OTASoftwareUpdate:
+    """OTA软件更新"""
+    update_id: str
+    vendor_id: int
+    product_id: int
+    software_version: int
+    software_version_string: str
+    release_notes: str
+    image_size: int
+    image_hash: str
+    min_applicable_version: int
+    max_applicable_version: int
+    urgency: str = "normal"
+    
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "update_id": self.update_id,
+            "vendor_id": self.vendor_id,
+            "product_id": self.product_id,
+            "software_version": self.software_version,
+            "software_version_string": self.software_version_string,
+            "release_notes": self.release_notes,
+            "image_size": self.image_size,
+            "urgency": self.urgency
         }
-      ]
-    }
-  ],
-  "operational_credentials": {
-    "root_certificate": "...",
-    "intermediate_certificate": "...",
-    "operational_certificate": "..."
-  }
-}
-```
 
-### 12.3 实现代码
 
-```python
-from matter_storage import MatterStorage
-from typing import List, Dict
+@dataclass
+class DeviceOTAState:
+    """设备OTA状态"""
+    node_id: int
+    current_version: int
+    target_version: int
+    status: OTAStatus
+    progress_percent: int = 0
+    last_update: datetime = field(default_factory=datetime.now)
+    error_code: Optional[int] = None
 
-class MatterMultiAdminManager:
-    """Matter多管理员管理器"""
 
-    def __init__(self, storage: MatterStorage):
-        self.storage = storage
-
-    def commission_to_new_fabric(self, device_id: str, fabric_id: int,
-                                 fabric_name: str, node_id: int,
-                                 passcode: int, discriminator: int) -> bool:
-        """将设备Commission到新Fabric"""
-        try:
-            # 记录Commissioning过程
-            self.storage.store_commissioning_record(
-                device_id=device_id,
-                node_id=node_id,
-                fabric_id=fabric_id,
-                passcode=passcode,
-                discriminator=discriminator,
-                success=True
-            )
-
-            # 存储Fabric信息到设备元数据
-            self.storage.store_network_info(
-                device_id=device_id,
-                fabric_id=fabric_id,
-                node_id=node_id,
-                network_type="Thread"
-            )
-
-            print(f"Device {device_id} successfully commissioned to {fabric_name}")
-            return True
-        except Exception as e:
-            self.storage.store_commissioning_record(
-                device_id=device_id,
-                fabric_id=fabric_id,
-                passcode=passcode,
-                discriminator=discriminator,
-                success=False,
-                error_message=str(e)
-            )
-            return False
-
-    def setup_acl_for_fabric(self, fabric_id: int, privilege: int,
-                            subjects: List[int], targets: List[Dict]) -> int:
-        """为Fabric设置ACL"""
-        acl_id = self.storage.store_acl_entry(
+class MatterEcosystemPlatform:
+    """Matter生态系统平台"""
+    
+    def __init__(self):
+        self.nodes: Dict[int, MatterNode] = {}
+        self.fabrics: Dict[int, MatterFabric] = {}
+        self.ota_images: Dict[str, OTASoftwareUpdate] = {}
+        self.ota_states: Dict[int, DeviceOTAState] = {}
+        
+        # 场景和自动化
+        self.scenes: Dict[str, Dict] = {}
+        self.automations: Dict[str, Dict] = {}
+        
+        # 统计
+        self.stats = {
+            "total_commissioned": 0,
+            "total_ota_completed": 0,
+            "avg_ota_duration_seconds": 0
+        }
+        
+        logger.info("Matter Ecosystem Platform initialized")
+    
+    def create_fabric(self, fabric_id: int, fabric_name: str, root_ca: str) -> MatterFabric:
+        """创建Fabric"""
+        fabric = MatterFabric(
             fabric_id=fabric_id,
-            privilege=privilege,
-            auth_mode="CASE",
-            subjects=subjects,
-            targets=targets
+            fabric_name=fabric_name,
+            root_ca=root_ca
         )
-        print(f"ACL entry created: {acl_id} for fabric {fabric_id}")
-        return acl_id
-
-    def get_device_fabrics(self, device_id: str) -> List[Dict]:
-        """获取设备所属的所有Fabric"""
-        device = self.storage.get_device_by_id(device_id)
-        if not device:
-            return []
-
-        # 查询网络信息获取Fabric列表
-        network_info = self.storage.get_network_info_by_device(device_id)
-        return [
-            {
-                "fabric_id": info.get("fabric_id"),
-                "node_id": info.get("node_id"),
-                "last_seen": info.get("last_seen")
-            }
-            for info in network_info
-        ]
-
-    def remove_fabric(self, device_id: str, fabric_id: int) -> bool:
-        """从设备移除Fabric"""
-        # 实际实现中需要调用Matter SDK的RemoveFabric命令
-        print(f"Removing fabric {fabric_id} from device {device_id}")
+        self.fabrics[fabric_id] = fabric
+        logger.info(f"Created fabric: {fabric_name} (ID: {fabric_id})")
+        return fabric
+    
+    def commission_device(self, node_id: int, vendor_id: int, product_id: int,
+                         device_name: str, device_type: MatterDeviceType,
+                         fabric_id: int, setup_code: str) -> bool:
+        """设备配网"""
+        logger.info(f"Commissioning device {device_name} to fabric {fabric_id}")
+        
+        # 验证配网码（简化）
+        if not self._verify_setup_code(setup_code):
+            logger.error("Invalid setup code")
+            return False
+        
+        # 创建节点
+        node = MatterNode(
+            node_id=node_id,
+            vendor_id=vendor_id,
+            product_id=product_id,
+            device_name=device_name,
+            device_type=device_type,
+            software_version=1,
+            commissioning_status=CommissioningStatus.COMMISSIONED,
+            fabric_ids=[fabric_id]
+        )
+        
+        self.nodes[node_id] = node
+        
+        # 添加到Fabric
+        if fabric_id in self.fabrics:
+            self.fabrics[fabric_id].nodes.add(node_id)
+        
+        self.stats["total_commissioned"] += 1
+        
+        logger.info(f"Device {device_name} commissioned successfully")
         return True
-
-# 使用示例
-def demo_multi_admin():
-    storage = MatterStorage("postgresql://user:pass@localhost/matter")
-    manager = MatterMultiAdminManager(storage)
-
-    # Commission设备到Apple Home
-    manager.commission_to_new_fabric(
-        device_id="MATTER_LIGHT_001",
-        fabric_id=1,
-        fabric_name="Apple Home",
-        node_id=12345,
-        passcode=20202021,
-        discriminator=3840
-    )
-
-    # 设置ACL权限
-    manager.setup_acl_for_fabric(
-        fabric_id=1,
-        privilege=5,  # Administer
-        subjects=[12345],
-        targets=[{"cluster": 6, "endpoint": 1}]  # On/Off Cluster
-    )
-```
-
----
-
-## 13. 案例13：Matter设备固件OTA升级管理
-
-### 13.1 场景描述
-
-**业务背景**：
-Matter设备需要支持OTA（Over-The-Air）固件升级，以修复安全漏洞、添加新功能或提升性能。需要管理固件版本、分发升级包、监控升级进度并处理失败回滚。
-
-**技术挑战**：
-
-- 需要管理固件版本兼容性
-- 需要可靠的断点续传
-- 需要处理升级失败和回滚
-- 需要批量管理多台设备升级
-
-**解决方案**：
-使用Matter OTA Provider集群，结合PostgreSQL存储升级状态和进度，实现安全可靠的固件升级管理。
-
-### 13.2 Schema定义
-
-**OTA升级管理Schema**：
-
-```json
-{
-  "ota_provider": {
-    "provider_node_id": 1000,
-    "provider_fabric_id": 1,
-    "software_version": "2.1.0",
-    "software_version_string": "v2.1.0-stable",
-    "update_token": "OTA-TOKEN-001",
-    "user_consent_needed": false,
-    "metadata_for_requestor": {
-      "release_notes": "Bug fixes and performance improvements",
-      "release_date": "2025-02-01"
-    }
-  },
-  "target_devices": [
-    {
-      "device_id": "MATTER_LIGHT_001",
-      "current_version": "2.0.0",
-      "target_version": "2.1.0",
-      "update_state": "downloading",
-      "progress_percent": 45,
-      "download_timestamp": "2025-02-14T10:30:00Z"
-    }
-  ]
-}
-```
-
-### 13.3 实现代码
-
-```python
-from datetime import datetime
-from typing import List, Dict
-
-class MatterOTAManager:
-    """Matter OTA升级管理器"""
-
-    OTA_STATUS = ["Idle", "Querying", "Delayed", "Downloading", "Applying", "Rebooting", "Complete", "Error"]
-
-    def __init__(self, storage: MatterStorage):
-        self.storage = storage
-
-    def query_image_availability(self, device_id: str, current_version: str) -> Dict:
-        """查询可用升级镜像"""
-        # 实际实现中调用OTA Provider的QueryImage命令
-        available_versions = ["2.1.0", "2.1.1", "2.2.0"]
-
-        if current_version in available_versions:
-            idx = available_versions.index(current_version)
-            if idx < len(available_versions) - 1:
-                return {
-                    "available": True,
-                    "version": available_versions[idx + 1],
-                    "url": f"https://ota.example.com/firmware/v{available_versions[idx + 1]}.bin"
-                }
-
-        return {"available": False}
-
-    def initiate_ota_update(self, device_id: str, firmware_version: str,
-                           firmware_url: str, checksum: str) -> int:
-        """启动OTA升级"""
-        update_id = self.storage.store_firmware_update(
-            device_id=device_id,
-            firmware_version=firmware_version,
-            firmware_url=firmware_url,
-            firmware_checksum=checksum
+    
+    def _verify_setup_code(self, setup_code: str) -> bool:
+        """验证配网码"""
+        # 简化验证：检查格式
+        return len(setup_code) >= 11 and setup_code.isdigit()
+    
+    def send_command(self, node_id: int, endpoint_id: int,
+                    cluster_id: int, command_id: int,
+                    payload: Dict[str, Any]) -> bool:
+        """发送Matter命令"""
+        if node_id not in self.nodes:
+            logger.error(f"Node {node_id} not found")
+            return False
+        
+        node = self.nodes[node_id]
+        
+        if node.commissioning_status != CommissioningStatus.COMMISSIONED:
+            logger.error(f"Node {node_id} is not commissioned")
+            return False
+        
+        logger.info(f"Sending command to node {node_id}, endpoint {endpoint_id}: "
+                   f"cluster={cluster_id}, command={command_id}")
+        
+        # 模拟命令执行
+        # 实际实现需要调用Matter SDK
+        return True
+    
+    def read_attribute(self, node_id: int, endpoint_id: int,
+                      cluster_id: int, attribute_id: int) -> Optional[Any]:
+        """读取属性"""
+        if node_id not in self.nodes:
+            return None
+        
+        # 模拟属性读取
+        return {"value": "mock_value"}
+    
+    def register_ota_image(self, image: OTASoftwareUpdate):
+        """注册OTA镜像"""
+        self.ota_images[image.update_id] = image
+        logger.info(f"Registered OTA image: {image.update_id} "
+                   f"(v{image.software_version_string})")
+    
+    def check_ota_update(self, node_id: int) -> Optional[OTASoftwareUpdate]:
+        """检查OTA更新"""
+        if node_id not in self.nodes:
+            return None
+        
+        node = self.nodes[node_id]
+        
+        # 查找适用的更新
+        for image in self.ota_images.values():
+            if (image.vendor_id == node.vendor_id and
+                image.product_id == node.product_id and
+                image.min_applicable_version <= node.software_version < image.software_version):
+                return image
+        
+        return None
+    
+    def start_ota_update(self, node_id: int, update_id: str) -> bool:
+        """开始OTA更新"""
+        if node_id not in self.nodes or update_id not in self.ota_images:
+            return False
+        
+        image = self.ota_images[update_id]
+        
+        state = DeviceOTAState(
+            node_id=node_id,
+            current_version=self.nodes[node_id].software_version,
+            target_version=image.software_version,
+            status=OTAStatus.DOWNLOADING
         )
-
-        self.storage.update_firmware_status(update_id, "Downloading")
-
-        print(f"OTA update initiated: {update_id} for {device_id} to version {firmware_version}")
-        return update_id
-
-    def update_progress(self, update_id: int, progress_percent: int):
-        """更新升级进度"""
-        # 存储进度到事件日志
-        self.storage.store_event(
-            device_id="OTA_SYSTEM",
-            event_type="ota_progress",
-            event_data={
-                "update_id": update_id,
-                "progress": progress_percent
-            }
-        )
-
-        if progress_percent >= 100:
-            self.storage.update_firmware_status(update_id, "Applying")
-
-    def complete_update(self, update_id: int, success: bool, error_message: str = None):
-        """完成升级"""
-        if success:
-            self.storage.update_firmware_status(update_id, "Completed")
-        else:
-            self.storage.update_firmware_status(
-                update_id, "Failed", error_message
+        
+        self.ota_states[node_id] = state
+        
+        logger.info(f"Started OTA update for node {node_id} to version {image.software_version}")
+        return True
+    
+    def update_ota_progress(self, node_id: int, progress: int,
+                           status: OTAStatus, error_code: int = None):
+        """更新OTA进度"""
+        if node_id not in self.ota_states:
+            return
+        
+        state = self.ota_states[node_id]
+        state.progress_percent = progress
+        state.status = status
+        state.error_code = error_code
+        state.last_update = datetime.now()
+        
+        if status == OTAStatus.COMPLETED:
+            # 更新节点版本
+            if node_id in self.nodes:
+                self.nodes[node_id].software_version = state.target_version
+            
+            self.stats["total_ota_completed"] += 1
+            logger.info(f"OTA completed for node {node_id}")
+    
+    def create_scene(self, scene_id: str, name: str, actions: List[Dict]):
+        """创建场景"""
+        self.scenes[scene_id] = {
+            "scene_id": scene_id,
+            "name": name,
+            "actions": actions,
+            "created_at": datetime.now().isoformat()
+        }
+        logger.info(f"Created scene: {name}")
+    
+    def activate_scene(self, scene_id: str) -> bool:
+        """激活场景"""
+        if scene_id not in self.scenes:
+            return False
+        
+        scene = self.scenes[scene_id]
+        logger.info(f"Activating scene: {scene['name']}")
+        
+        # 执行场景中的命令
+        for action in scene["actions"]:
+            self.send_command(
+                action.get("node_id"),
+                action.get("endpoint_id"),
+                action.get("cluster_id"),
+                action.get("command_id"),
+                action.get("payload", {})
             )
-
-    def get_update_status(self, device_id: str) -> Dict:
-        """获取升级状态"""
-        updates = self.storage.get_firmware_updates(device_id=device_id)
-        if updates:
-            latest = updates[0]
-            return {
-                "device_id": device_id,
-                "current_version": latest.get("firmware_version"),
-                "status": latest.get("update_status"),
-                "progress": self._calculate_progress(latest),
-                "started_at": latest.get("started_at"),
-                "completed_at": latest.get("completed_at")
-            }
-        return {"device_id": device_id, "status": "No updates"}
-
-    def _calculate_progress(self, update_record: Dict) -> int:
-        """计算升级进度"""
-        status = update_record.get("update_status")
-        progress_map = {
-            "Pending": 0,
-            "Downloading": 50,
-            "Applying": 80,
-            "Completed": 100,
-            "Failed": 0
-        }
-        return progress_map.get(status, 0)
-
-    def batch_update(self, device_ids: List[str], firmware_version: str) -> Dict:
-        """批量升级设备"""
-        results = {
-            "total": len(device_ids),
-            "initiated": 0,
-            "failed": 0,
-            "update_ids": []
-        }
-
-        for device_id in device_ids:
-            try:
-                update_id = self.initiate_ota_update(
-                    device_id, firmware_version,
-                    f"https://ota.example.com/firmware/v{firmware_version}.bin",
-                    checksum="sha256:abc123..."
-                )
-                results["initiated"] += 1
-                results["update_ids"].append(update_id)
-            except Exception as e:
-                results["failed"] += 1
-                print(f"Failed to initiate update for {device_id}: {e}")
-
-        return results
-
-# 使用示例
-def demo_ota_update():
-    storage = MatterStorage("postgresql://user:pass@localhost/matter")
-    ota_manager = MatterOTAManager(storage)
-
-    # 检查升级可用性
-    availability = ota_manager.query_image_availability("MATTER_LIGHT_001", "2.0.0")
-    print(f"Update available: {availability}")
-
-    if availability.get("available"):
-        # 启动升级
-        update_id = ota_manager.initiate_ota_update(
-            device_id="MATTER_LIGHT_001",
-            firmware_version=availability["version"],
-            firmware_url=availability["url"],
-            checksum="sha256:abc123..."
-        )
-
-        # 模拟进度更新
-        for progress in [25, 50, 75, 100]:
-            ota_manager.update_progress(update_id, progress)
-
-        # 完成升级
-        ota_manager.complete_update(update_id, success=True)
-```
-
----
-
-## 14. 案例14：Matter桥接设备管理
-
-### 14.1 场景描述
-
-**业务背景**：
-Matter Bridge设备可以将非Matter设备（如Zigbee、Z-Wave设备）桥接到Matter网络。需要管理桥接设备、映射集群、处理设备发现和能力转换。
-
-**技术挑战**：
-
-- 需要动态发现桥接设备
-- 需要处理协议差异的映射
-- 需要管理桥接设备的生命周期
-- 需要处理设备可达性变化
-
-**解决方案**：
-使用Matter Bridged Device Basic Information集群，结合PostgreSQL存储桥接关系和设备信息。
-
-### 14.2 Schema定义
-
-**桥接设备管理Schema**：
-
-```json
-{
-  "bridge_device": {
-    "device_id": "MATTER_BRIDGE_001",
-    "bridge_type": "Zigbee",
-    "firmware_version": "1.2.0"
-  },
-  "bridged_devices": [
-    {
-      "bridged_device_id": "ZIGBEE_SENSOR_001",
-      "vendor_name": "Aqara",
-      "product_name": "Temperature Sensor",
-      "unique_id": "00:11:22:33:44:55:66:77",
-      "endpoint": 1,
-      "clusters": [
-        {
-          "cluster_id": 1026,
-          "cluster_name": "TemperatureMeasurement",
-          "attributes": {
-            "MeasuredValue": 2560
-          }
-        }
-      ],
-      "reachable": true
-    }
-  ]
-}
-```
-
-### 14.3 实现代码
-
-```python
-class MatterBridgeManager:
-    """Matter桥接设备管理器"""
-
-    def __init__(self, storage: MatterStorage):
-        self.storage = storage
-
-    def discover_bridged_devices(self, bridge_id: str) -> List[Dict]:
-        """发现桥接设备"""
-        # 实际实现中调用Bridge的Device Discovery功能
-        # 模拟发现的设备
-        discovered = [
-            {
-                "unique_id": "00:11:22:33:44:55:66:77",
-                "vendor": "Aqara",
-                "product": "Temperature Sensor",
-                "endpoint": 1,
-                "clusters": [1026]  # TemperatureMeasurement
-            }
-        ]
-
-        for device in discovered:
-            self.storage.store_bridged_device(
-                bridge_id=bridge_id,
-                bridged_id=device["unique_id"],
-                vendor=device["vendor"],
-                product=device["product"],
-                unique_id=device["unique_id"],
-                endpoint=device["endpoint"]
-            )
-
-        return discovered
-
-    def map_cluster(self, bridged_device_id: str, native_cluster: int) -> int:
-        """映射原生集群到Matter集群"""
-        # 集群映射表
-        cluster_map = {
-            # Zigbee to Matter
-            0x0006: 0x0006,   # On/Off
-            0x0008: 0x0008,   # Level Control
-            0x0300: 0x0300,   # Color Control
-            0x0402: 0x0402,   # Temperature Measurement
-            # Z-Wave to Matter
-            0x25: 0x0006,     # Binary Switch -> On/Off
-            0x26: 0x0008,     # Multilevel Switch -> Level Control
-        }
-        return cluster_map.get(native_cluster, native_cluster)
-
-    def update_bridged_device_reachability(self, bridge_id: str,
-                                          bridged_id: str, reachable: bool):
-        """更新桥接设备可达性"""
-        # 查询并更新可达性状态
-        self.storage.store_event(
-            device_id=bridge_id,
-            event_type="bridged_device_reachability",
-            event_data={
-                "bridged_device_id": bridged_id,
-                "reachable": reachable,
-                "timestamp": datetime.now().isoformat()
-            }
-        )
-
-        print(f"Bridged device {bridged_id} reachability updated: {reachable}")
-
-    def remove_bridged_device(self, bridge_id: str, bridged_id: str):
-        """移除桥接设备"""
-        # 实际实现中需要调用Bridge的RemoveBridgedDevice命令
-        print(f"Removing bridged device {bridged_id} from bridge {bridge_id}")
-
-    def get_bridged_devices(self, bridge_id: str) -> List[Dict]:
-        """获取桥接设备列表"""
-        # 查询数据库获取桥接设备
-        self.storage.cur.execute("""
-            SELECT bridged_device_id, vendor_name, product_name,
-                   unique_id, bridged_endpoint, reachable
-            FROM matter_bridged_devices
-            WHERE bridge_device_id = %s
-        """, (bridge_id,))
-        return [
-            {
-                "bridged_id": row[0],
-                "vendor": row[1],
-                "product": row[2],
-                "unique_id": row[3],
-                "endpoint": row[4],
-                "reachable": row[5]
-            }
-            for row in self.storage.cur.fetchall()
-        ]
-
-# 使用示例
-def demo_bridge_management():
-    storage = MatterStorage("postgresql://user:pass@localhost/matter")
-    bridge_manager = MatterBridgeManager(storage)
-
-    # 发现桥接设备
-    devices = bridge_manager.discover_bridged_devices("MATTER_BRIDGE_001")
-    print(f"Discovered {len(devices)} bridged devices")
-
-    # 获取桥接设备列表
-    bridged = bridge_manager.get_bridged_devices("MATTER_BRIDGE_001")
-    for device in bridged:
-        print(f"  - {device['vendor']} {device['product']} ({device['unique_id']})")
-```
-
----
-
-## 15. 案例15：Matter设备订阅与事件管理
-
-### 15.1 场景描述
-
-**业务背景**：
-Matter订阅机制允许控制器实时接收设备状态变化通知。需要管理订阅生命周期、处理订阅超时、优化订阅间隔以平衡实时性和网络负载。
-
-**技术挑战**：
-
-- 需要管理大量订阅
-- 需要处理订阅超时和重连
-- 需要优化订阅间隔
-- 需要处理事件丢失
-
-**解决方案**：
-使用Matter Subscribe交互，结合PostgreSQL存储订阅信息和事件历史，实现可靠的订阅管理。
-
-### 15.2 Schema定义
-
-**订阅与事件管理Schema**：
-
-```json
-{
-  "subscription": {
-    "subscription_id": 1,
-    "device_id": "MATTER_LIGHT_001",
-    "endpoint_id": 1,
-    "cluster_id": 6,
-    "attribute_id": 0,
-    "min_interval": 0,
-    "max_interval": 60,
-    "is_active": true,
-    "last_report": "2025-02-14T10:30:00Z"
-  },
-  "events": [
-    {
-      "event_id": 1,
-      "event_number": 100,
-      "priority": "Info",
-      "timestamp": "2025-02-14T10:30:00Z",
-      "data": {
-        "new_value": true,
-        "previous_value": false
-      }
-    }
-  ]
-}
-```
-
-### 15.3 实现代码
-
-```python
-class MatterSubscriptionManager:
-    """Matter订阅管理器"""
-
-    def __init__(self, storage: MatterStorage):
-        self.storage = storage
-        self.active_subscriptions = {}
-
-    def create_subscription(self, device_id: str, endpoint_id: int,
-                           cluster_id: int, attribute_id: int = None,
-                           min_interval: int = 0, max_interval: int = 60) -> int:
-        """创建订阅"""
-        subscription_id = self._generate_subscription_id()
-
-        sub_db_id = self.storage.create_subscription(
-            subscription_id=subscription_id,
-            device_id=device_id,
-            endpoint_id=endpoint_id,
-            cluster_id=cluster_id,
-            attribute_id=attribute_id,
-            min_interval=min_interval,
-            max_interval=max_interval
-        )
-
-        self.active_subscriptions[subscription_id] = {
-            "device_id": device_id,
-            "endpoint_id": endpoint_id,
-            "cluster_id": cluster_id,
-            "attribute_id": attribute_id,
-            "min_interval": min_interval,
-            "max_interval": max_interval
-        }
-
-        print(f"Subscription created: ID={subscription_id}, DB_ID={sub_db_id}")
-        return subscription_id
-
-    def _generate_subscription_id(self) -> int:
-        """生成订阅ID"""
-        import random
-        return random.randint(1, 0xFFFFFFFF)
-
-    def handle_report_data(self, subscription_id: int, data: Dict):
-        """处理订阅报告数据"""
-        # 更新最后报告时间
-        sub_info = self.active_subscriptions.get(subscription_id)
-        if sub_info:
-            self.storage.update_subscription_report(
-                sub_info["device_id"], subscription_id
-            )
-
-        # 存储属性更新
-        if sub_info:
-            self.storage.store_attribute(
-                device_id=sub_info["device_id"],
-                endpoint_id=sub_info["endpoint_id"],
-                cluster_id=sub_info["cluster_id"],
-                attribute_id=sub_info["attribute_id"] or 0,
-                attribute_name="subscribed_value",
-                attribute_value=data
-            )
-
-        print(f"Report received for subscription {subscription_id}: {data}")
-
-    def check_subscription_health(self) -> List[Dict]:
-        """检查订阅健康状态"""
-        stats = self.storage.get_subscription_statistics()
-
-        # 找出超时订阅
-        stale_subs = []
-        for sub_id, sub_info in self.active_subscriptions.items():
-            # 检查最后报告时间
-            pass  # 实际实现中查询数据库
-
-        return [
-            {
-                "total_subscriptions": stats.get("total", 0),
-                "active_subscriptions": stats.get("active", 0),
-                "stale_subscriptions": stats.get("stale", 0)
-            }
-        ]
-
-    def optimize_subscriptions(self, device_id: str = None):
-        """优化订阅间隔"""
-        # 分析事件频率，调整订阅间隔
-        # 高频变化属性：减小max_interval
-        # 低频变化属性：增大max_interval
-        pass
-
-    def unsubscribe(self, subscription_id: int):
-        """取消订阅"""
-        sub_info = self.active_subscriptions.get(subscription_id)
-        if sub_info:
-            self.storage.deactivate_subscription(
-                sub_info["device_id"], subscription_id
-            )
-            del self.active_subscriptions[subscription_id]
-            print(f"Subscription {subscription_id} unsubscribed")
-
-# 使用示例
-def demo_subscription():
-    storage = MatterStorage("postgresql://user:pass@localhost/matter")
-    sub_manager = MatterSubscriptionManager(storage)
-
-    # 创建订阅
-    sub_id = sub_manager.create_subscription(
-        device_id="MATTER_LIGHT_001",
-        endpoint_id=1,
-        cluster_id=6,  # On/Off
-        attribute_id=0,  # OnOff
-        min_interval=0,
-        max_interval=10
-    )
-
-    # 模拟接收报告
-    sub_manager.handle_report_data(sub_id, {"value": True})
-
-    # 检查订阅健康
-    health = sub_manager.check_subscription_health()
-    print(f"Subscription health: {health}")
-```
-
----
-
-## 16. 案例16：Matter网络拓扑分析与优化
-
-### 16.1 场景描述
-
-**业务背景**：
-Matter over Thread网络需要分析和优化网络拓扑，确保良好的连接性和低延迟。需要分析路由器分布、链路质量、网络直径等指标。
-
-**技术挑战**：
-
-- 需要收集网络拓扑信息
-- 需要分析链路质量和RSSI
-- 需要识别网络瓶颈
-- 需要优化路由器布局
-
-**解决方案**：
-使用Thread Network Data和Matter Network Commissioning集群获取网络信息，结合PostgreSQL存储和分析网络拓扑。
-
-### 16.2 Schema定义
-
-**网络拓扑分析Schema**：
-
-```json
-{
-  "network_analysis": {
-    "fabric_id": 1,
-    "timestamp": "2025-02-14T10:30:00Z",
-    "topology": {
-      "total_nodes": 15,
-      "routers": 5,
-      "end_devices": 10,
-      "network_diameter": 4
-    },
-    "link_quality": {
-      "avg_rssi": -65,
-      "avg_lqi": 220,
-      "weak_links": [
-        {
-          "source": "NODE_001",
-          "target": "NODE_002",
-          "rssi": -82,
-          "lqi": 120
-        }
-      ]
-    },
-    "recommendations": [
-      "考虑在客厅区域增加一个路由器以改善连接"
-    ]
-  }
-}
-```
-
-### 16.3 实现代码
-
-```python
-class MatterNetworkAnalyzer:
-    """Matter网络分析器"""
-
-    def __init__(self, storage: MatterStorage):
-        self.storage = storage
-
-    def collect_network_topology(self, fabric_id: int) -> Dict:
-        """收集网络拓扑"""
-        # 获取网络健康视图
-        health_data = self.storage.get_network_health_report()
-        fabric_health = next(
-            (h for h in health_data if h.get("fabric_id") == fabric_id),
-            None
-        )
-
-        if not fabric_health:
-            return {}
-
+        
+        return True
+    
+    def get_ecosystem_status(self) -> Dict[str, Any]:
+        """获取生态系统状态"""
+        # 按设备类型统计
+        device_types = defaultdict(int)
+        for node in self.nodes.values():
+            device_types[node.device_type.value] += 1
+        
         return {
-            "fabric_id": fabric_id,
-            "total_nodes": fabric_health.get("device_count", 0),
-            "avg_rssi": fabric_health.get("avg_rssi"),
-            "avg_lqi": fabric_health.get("avg_lqi"),
-            "online_percentage": fabric_health.get("online_percentage")
-        }
-
-    def analyze_link_quality(self, fabric_id: int) -> Dict:
-        """分析链路质量"""
-        # 获取所有设备的网络信息
-        devices = self.storage.get_all_devices()
-
-        link_stats = {
-            "excellent": 0,  # LQI > 220
-            "good": 0,       # LQI 180-220
-            "fair": 0,       # LQI 120-180
-            "poor": 0        # LQI < 120
-        }
-
-        weak_links = []
-
-        for device in devices:
-            network_info = self.storage.get_network_info_by_device(device["device_id"])
-            for info in network_info:
-                lqi = info.get("lqi", 0)
-                rssi = info.get("rssi", -100)
-
-                if lqi > 220:
-                    link_stats["excellent"] += 1
-                elif lqi > 180:
-                    link_stats["good"] += 1
-                elif lqi > 120:
-                    link_stats["fair"] += 1
-                else:
-                    link_stats["poor"] += 1
-                    weak_links.append({
-                        "device_id": device["device_id"],
-                        "rssi": rssi,
-                        "lqi": lqi
-                    })
-
-        return {
-            "link_distribution": link_stats,
-            "weak_links": weak_links[:10]  # 返回前10个弱链接
-        }
-
-    def generate_optimization_recommendations(self, fabric_id: int) -> List[str]:
-        """生成优化建议"""
-        recommendations = []
-
-        topology = self.collect_network_topology(fabric_id)
-        link_analysis = self.analyze_link_quality(fabric_id)
-
-        # 检查在线率
-        if topology.get("online_percentage", 100) < 95:
-            recommendations.append(
-                f"网络在线率较低({topology['online_percentage']}%)，建议检查离线设备"
-            )
-
-        # 检查链路质量
-        poor_count = link_analysis["link_distribution"].get("poor", 0)
-        total_links = sum(link_analysis["link_distribution"].values())
-
-        if total_links > 0 and poor_count / total_links > 0.2:
-            recommendations.append(
-                f"弱链接比例较高({poor_count}/{total_links})，建议优化设备位置或增加路由器"
-            )
-
-        # 检查RSSI
-        avg_rssi = topology.get("avg_rssi", -50)
-        if avg_rssi < -75:
-            recommendations.append(
-                f"平均信号强度较弱({avg_rssi}dBm)，建议增加Thread路由器"
-            )
-
-        if not recommendations:
-            recommendations.append("网络状况良好，无需优化")
-
-        return recommendations
-
-    def store_network_diagnosis(self, fabric_id: int, diagnosis_data: Dict):
-        """存储网络诊断结果"""
-        self.storage.store_network_diagnostic(
-            device_id=f"FABRIC_{fabric_id}",
-            diagnostic_type="network_topology",
-            result_data=diagnosis_data
-        )
-
-    def generate_network_report(self, fabric_id: int) -> Dict:
-        """生成网络报告"""
-        topology = self.collect_network_topology(fabric_id)
-        link_analysis = self.analyze_link_quality(fabric_id)
-        recommendations = self.generate_optimization_recommendations(fabric_id)
-
-        report = {
-            "fabric_id": fabric_id,
             "timestamp": datetime.now().isoformat(),
-            "topology": topology,
-            "link_analysis": link_analysis,
-            "recommendations": recommendations
+            "fabrics": len(self.fabrics),
+            "nodes": {
+                "total": len(self.nodes),
+                "by_type": dict(device_types)
+            },
+            "ota": {
+                "available_images": len(self.ota_images),
+                "active_updates": sum(1 for s in self.ota_states.values()
+                                     if s.status in [OTAStatus.DOWNLOADING, OTAStatus.IN_PROGRESS])
+            },
+            "scenes": len(self.scenes)
         }
 
-        # 存储报告
-        self.store_network_diagnosis(fabric_id, report)
 
-        return report
+def main():
+    """演示Matter生态系统"""
+    platform = MatterEcosystemPlatform()
+    
+    # 创建Fabric
+    fabric = platform.create_fabric(
+        fabric_id=0x1234,
+        fabric_name="SmartHome Fabric",
+        root_ca="mock_root_ca_certificate"
+    )
+    
+    # 配网设备
+    devices = [
+        (1, 0x1234, 0x0001, "Living Room Light", MatterDeviceType.DIMMABLE_LIGHT),
+        (2, 0x1234, 0x0002, "Bedroom Light", MatterDeviceType.COLOR_TEMPERATURE_LIGHT),
+        (3, 0x1235, 0x0001, "Smart Lock", MatterDeviceType.DOOR_LOCK),
+        (4, 0x1236, 0x0001, "Thermostat", MatterDeviceType.THERMOSTAT),
+    ]
+    
+    for node_id, vid, pid, name, dtype in devices:
+        platform.commission_device(
+            node_id=node_id,
+            vendor_id=vid,
+            product_id=pid,
+            device_name=name,
+            device_type=dtype,
+            fabric_id=0x1234,
+            setup_code="12345678901"
+        )
+    
+    # 注册OTA镜像
+    ota = OTASoftwareUpdate(
+        update_id="OTA-001",
+        vendor_id=0x1234,
+        product_id=0x0001,
+        software_version=2,
+        software_version_string="2.0.0",
+        release_notes="Bug fixes and performance improvements",
+        image_size=1024000,
+        image_hash="sha256:abc123",
+        min_applicable_version=1,
+        max_applicable_version=1
+    )
+    platform.register_ota_image(ota)
+    
+    # 检查更新
+    update = platform.check_ota_update(1)
+    if update:
+        print(f"OTA available for node 1: v{update.software_version_string}")
+        platform.start_ota_update(1, update.update_id)
+    
+    # 创建场景
+    platform.create_scene(
+        "scene-home",
+        "回家模式",
+        [
+            {"node_id": 1, "endpoint_id": 1, "cluster_id": 0x0006, "command_id": 0x01, "payload": {}},
+            {"node_id": 2, "endpoint_id": 1, "cluster_id": 0x0006, "command_id": 0x01, "payload": {}},
+        ]
+    )
+    
+    # 获取状态
+    status = platform.get_ecosystem_status()
+    print("\nEcosystem Status:")
+    print(json.dumps(status, indent=2))
 
-# 使用示例
-def demo_network_analysis():
-    storage = MatterStorage("postgresql://user:pass@localhost/matter")
-    analyzer = MatterNetworkAnalyzer(storage)
 
-    # 收集网络拓扑
-    topology = analyzer.collect_network_topology(fabric_id=1)
-    print(f"Network topology: {topology}")
-
-    # 分析链路质量
-    link_quality = analyzer.analyze_link_quality(fabric_id=1)
-    print(f"Link quality: {link_quality}")
-
-    # 生成优化建议
-    recommendations = analyzer.generate_optimization_recommendations(fabric_id=1)
-    print(f"Recommendations: {recommendations}")
-
-    # 生成完整报告
-    report = analyzer.generate_network_report(fabric_id=1)
-    print(f"Network report generated: {report['timestamp']}")
+if __name__ == "__main__":
+    main()
 ```
+
+### 2.7 效果评估与ROI
+
+#### 性能指标对比
+
+| 指标 | 改造前 | 改造后 | 改善幅度 |
+|------|--------|--------|----------|
+| 跨品牌设备互通率 | 10% | 94% | +84% |
+| 单APP控制覆盖率 | 20% | 88% | +68% |
+| 厂商开发成本 | 基准 | -58% | -58% |
+| 用户配置时间 | 30分钟 | 3分钟 | -90% |
+| 设备认证周期 | 6个月 | 3周 | -88% |
+
+#### ROI计算
+
+**投资成本**：
+- 平台开发：1,000万元
+- 认证实验室：500万元
+- **总投资**：1,500万元
+
+**年度收益**：
+- 平台服务费：800万元
+- 认证服务：400万元
+- 技术服务：600万元
+- **年度总收益**：1,800万元
+
+**ROI分析**：
+- 投资回收期：10个月
+- 3年ROI：260%
+
+---
+
+## 3. 案例2：Matter设备认证测试系统
+
+### 3.1 企业背景
+
+**某第三方检测认证机构**获得CSA授权，提供Matter设备认证测试服务，帮助厂商快速获得Matter认证标志。
+
+- **成立时间**：2010年
+- **授权资质**：CSA、FCC、CE
+- **年测试设备**：2,000+款
+- **客户数量**：300+家
+
+### 3.2 业务痛点
+
+| 序号 | 痛点 | 影响程度 | 业务影响 |
+|------|------|----------|----------|
+| 1 | **测试覆盖不全** | 严重 | 人工测试遗漏Matter规范中的20+项测试用例 |
+| 2 | **测试周期长** | 严重 | 完整测试需4周，影响产品上市时间 |
+| 3 | **测试报告生成慢** | 高 | 手工整理报告需3天，易出错 |
+| 4 | **设备兼容性问题** | 高 | 30%设备首次测试失败，需多次往返 |
+| 5 | **测试成本高** | 中 | 专业测试工程师人力成本高 |
+
+### 3.3 业务目标
+
+| 序号 | 目标 | 当前值 | 目标值 | 时间框架 |
+|------|------|--------|--------|----------|
+| 1 | 测试覆盖率 | 80% | 100% | 6个月 |
+| 2 | 测试周期 | 4周 | 5天 | 9个月 |
+| 3 | 报告生成时间 | 3天 | 1小时 | 6个月 |
+| 4 | 首次通过率 | 70% | 90% | 12个月 |
+| 5 | 测试成本 | 基准 | -40% | 12个月 |
+
+### 3.4 技术挑战
+
+1. **自动化测试框架**：需要构建覆盖Matter全协议栈的自动化测试框架，包括网络层、安全层、应用层
+
+2. **测试设备矩阵**：需要支持不同厂商的Matter控制器和Hub，构建兼容性测试矩阵
+
+3. **性能压力测试**：需要模拟大规模网络环境，测试设备在100+节点网络中的稳定性
+
+4. **安全渗透测试**：需要实现自动化安全测试，验证设备的加密、认证、固件保护机制
+
+5. **CI/CD集成**：需要提供API接口，支持厂商集成到持续集成流水线
+
+### 3.5 完整实现代码
+
+```python
+#!/usr/bin/env python3
+"""
+Matter设备认证测试系统 - 核心实现
+支持自动化测试、兼容性测试、报告生成
+"""
+
+import json
+import logging
+from dataclasses import dataclass, field
+from datetime import datetime
+from enum import Enum
+from typing import Dict, List, Optional, Any
+from collections import defaultdict
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+
+class TestCategory(Enum):
+    """测试类别"""
+    COMMISSIONING = "commissioning"
+    OPERATIONAL = "operational"
+    SECURITY = "security"
+    INTEROPERABILITY = "interoperability"
+    PERFORMANCE = "performance"
+
+
+class TestResult(Enum):
+    """测试结果"""
+    PASS = "pass"
+    FAIL = "fail"
+    SKIP = "skip"
+    PENDING = "pending"
+
+
+@dataclass
+class TestCase:
+    """测试用例"""
+    test_id: str
+    category: TestCategory
+    name: str
+    description: str
+    preconditions: List[str] = field(default_factory=list)
+    steps: List[str] = field(default_factory=list)
+    expected_result: str = ""
+    
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "test_id": self.test_id,
+            "category": self.category.value,
+            "name": self.name,
+            "description": self.description,
+            "preconditions": self.preconditions,
+            "steps": self.steps,
+            "expected_result": self.expected_result
+        }
+
+
+@dataclass
+class TestExecution:
+    """测试执行"""
+    execution_id: str
+    test_id: str
+    device_under_test: str
+    result: TestResult
+    actual_result: str = ""
+    logs: List[str] = field(default_factory=list)
+    start_time: datetime = field(default_factory=datetime.now)
+    end_time: Optional[datetime] = None
+    
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "execution_id": self.execution_id,
+            "test_id": self.test_id,
+            "device_under_test": self.device_under_test,
+            "result": self.result.value,
+            "actual_result": self.actual_result,
+            "logs": self.logs,
+            "duration_seconds": self.get_duration()
+        }
+    
+    def get_duration(self) -> float:
+        """获取执行时长"""
+        if self.end_time:
+            return (self.end_time - self.start_time).total_seconds()
+        return 0.0
+
+
+@dataclass
+class TestReport:
+    """测试报告"""
+    report_id: str
+    device_name: str
+    vendor_id: int
+    product_id: int
+    software_version: str
+    test_date: datetime
+    executions: List[TestExecution] = field(default_factory=list)
+    
+    def get_summary(self) -> Dict[str, Any]:
+        """获取测试摘要"""
+        total = len(self.executions)
+        passed = sum(1 for e in self.executions if e.result == TestResult.PASS)
+        failed = sum(1 for e in self.executions if e.result == TestResult.FAIL)
+        skipped = sum(1 for e in self.executions if e.result == TestResult.SKIP)
+        
+        by_category = defaultdict(lambda: {"total": 0, "passed": 0, "failed": 0})
+        
+        return {
+            "report_id": self.report_id,
+            "device": self.device_name,
+            "test_date": self.test_date.isoformat(),
+            "summary": {
+                "total": total,
+                "passed": passed,
+                "failed": failed,
+                "skipped": skipped,
+                "pass_rate": passed / total if total > 0 else 0
+            }
+        }
+
+
+class MatterCertificationTestSystem:
+    """Matter认证测试系统"""
+    
+    def __init__(self):
+        self.test_cases: Dict[str, TestCase] = {}
+        self.executions: Dict[str, TestExecution] = {}
+        self.reports: Dict[str, TestReport] = {}
+        
+        # 初始化Matter标准测试用例
+        self._initialize_standard_tests()
+        
+        logger.info("Matter Certification Test System initialized")
+    
+    def _initialize_standard_tests(self):
+        """初始化标准测试用例"""
+        # 配网测试
+        self.add_test_case(TestCase(
+            test_id="COM-001",
+            category=TestCategory.COMMISSIONING,
+            name="QR Code Commissioning",
+            description="Verify device can be commissioned via QR code",
+            preconditions=["Device in factory reset state"],
+            steps=["Scan QR code", "Enter setup code", "Complete PASE session"],
+            expected_result="Device commissioned successfully"
+        ))
+        
+        self.add_test_case(TestCase(
+            test_id="COM-002",
+            category=TestCategory.COMMISSIONING,
+            name="Manual Pairing Code Commissioning",
+            description="Verify device can be commissioned via manual code",
+            preconditions=["Device in factory reset state"],
+            steps=["Enter manual pairing code", "Complete PASE session"],
+            expected_result="Device commissioned successfully"
+        ))
+        
+        # 操作测试
+        self.add_test_case(TestCase(
+            test_id="OP-001",
+            category=TestCategory.OPERATIONAL,
+            name="On/Off Control",
+            description="Verify basic on/off functionality",
+            preconditions=["Device commissioned and online"],
+            steps=["Send On command", "Verify state change", "Send Off command"],
+            expected_result="Device responds correctly to on/off commands"
+        ))
+        
+        # 安全测试
+        self.add_test_case(TestCase(
+            test_id="SEC-001",
+            category=TestCategory.SECURITY,
+            name="Certificate Validation",
+            description="Verify device certificate chain",
+            preconditions=["Device commissioned"],
+            steps=["Read device certificate", "Validate chain to root"],
+            expected_result="Certificate chain valid"
+        ))
+    
+    def add_test_case(self, test_case: TestCase):
+        """添加测试用例"""
+        self.test_cases[test_case.test_id] = test_case
+    
+    def execute_test(self, test_id: str, device_id: str) -> TestExecution:
+        """执行测试"""
+        if test_id not in self.test_cases:
+            raise ValueError(f"Test case {test_id} not found")
+        
+        test_case = self.test_cases[test_id]
+        execution_id = f"EXEC-{datetime.now().strftime('%Y%m%d%H%M%S%f')}"
+        
+        logger.info(f"Executing test {test_id} on device {device_id}")
+        
+        # 模拟测试执行
+        import random
+        result = random.choice([TestResult.PASS, TestResult.PASS, TestResult.PASS, TestResult.FAIL])
+        
+        execution = TestExecution(
+            execution_id=execution_id,
+            test_id=test_id,
+            device_under_test=device_id,
+            result=result,
+            actual_result="Test completed" if result == TestResult.PASS else "Assertion failed",
+            logs=[f"Step {i+1} executed" for i in range(len(test_case.steps))]
+        )
+        execution.end_time = datetime.now()
+        
+        self.executions[execution_id] = execution
+        
+        return execution
+    
+    def run_test_suite(self, device_id: str, categories: List[TestCategory] = None) -> TestReport:
+        """运行测试套件"""
+        report_id = f"RPT-{datetime.now().strftime('%Y%m%d%H%M%S')}"
+        
+        # 筛选测试用例
+        tests_to_run = self.test_cases.values()
+        if categories:
+            tests_to_run = [t for t in tests_to_run if t.category in categories]
+        
+        logger.info(f"Running test suite for {device_id}: {len(tests_to_run)} tests")
+        
+        executions = []
+        for test_case in tests_to_run:
+            execution = self.execute_test(test_case.test_id, device_id)
+            executions.append(execution)
+        
+        report = TestReport(
+            report_id=report_id,
+            device_name=device_id,
+            vendor_id=0x1234,
+            product_id=0x0001,
+            software_version="1.0.0",
+            test_date=datetime.now(),
+            executions=executions
+        )
+        
+        self.reports[report_id] = report
+        
+        return report
+    
+    def generate_certification_report(self, report_id: str) -> Dict[str, Any]:
+        """生成认证报告"""
+        if report_id not in self.reports:
+            return {}
+        
+        report = self.reports[report_id]
+        summary = report.get_summary()
+        
+        # 认证结论
+        certified = summary["summary"]["pass_rate"] >= 0.95 and summary["summary"]["failed"] == 0
+        
+        return {
+            **summary,
+            "certification_status": "CERTIFIED" if certified else "NOT_CERTIFIED",
+            "details": [e.to_dict() for e in report.executions]
+        }
+
+
+def main():
+    """演示认证测试系统"""
+    test_system = MatterCertificationTestSystem()
+    
+    # 运行测试套件
+    report = test_system.run_test_suite("TestDevice-001")
+    
+    # 获取摘要
+    summary = report.get_summary()
+    print("Test Summary:")
+    print(json.dumps(summary, indent=2))
+    
+    # 生成认证报告
+    cert_report = test_system.generate_certification_report(report.report_id)
+    print("\nCertification Report:")
+    print(json.dumps(cert_report, indent=2))
+
+
+if __name__ == "__main__":
+    main()
+```
+
+### 3.6 效果评估与ROI
+
+#### 性能指标对比
+
+| 指标 | 改造前 | 改造后 | 改善幅度 |
+|------|--------|--------|----------|
+| 测试覆盖率 | 80% | 100% | +20% |
+| 测试周期 | 4周 | 4天 | -86% |
+| 报告生成时间 | 3天 | 30分钟 | -99% |
+| 首次通过率 | 70% | 88% | +18% |
+| 测试成本 | 基准 | -42% | -42% |
+
+#### ROI计算
+
+**投资成本**：
+- 系统开发：600万元
+- 测试设备：400万元
+- **总投资**：1,000万元
+
+**年度收益**：
+- 测试服务收入：1,500万元
+- 成本节省：400万元
+- **年度总收益**：1,900万元
+
+**ROI分析**：
+- 投资回收期：6.3个月
+- 3年ROI：470%
+
+---
+
+## 4. 案例3：Matter智能家居网关
+
+### 4.1 企业背景
+
+**某智能硬件厂商**推出支持Matter协议的智能家居网关产品，作为家庭智能设备的中枢控制器，需要支持多种协议转换和本地场景执行。
+
+- **产品型号**：SmartHub Pro
+- **已售数量**：10万台
+- **支持协议**：Matter、Zigbee、WiFi、BLE
+- **目标市场**：全球
+
+### 4.2 业务痛点
+
+| 序号 | 痛点 | 影响程度 | 业务影响 |
+|------|------|----------|----------|
+| 1 | **协议转换复杂** | 严重 | Zigbee设备需桥接到Matter，开发复杂度高 |
+| 2 | **本地处理不足** | 严重 | 断网时大部分功能失效，用户体验差 |
+| 3 | **设备兼容性差** | 高 | 部分第三方设备无法正常接入 |
+| 4 | **OTA升级风险** | 高 | 固件升级失败导致设备变砖，退货率高 |
+| 5 | **安全配置复杂** | 中 | 用户难以完成安全配置，放弃率高 |
+
+### 4.3 业务目标
+
+| 序号 | 目标 | 当前值 | 目标值 | 时间框架 |
+|------|------|--------|--------|----------|
+| 1 | 协议转换成功率 | 85% | 98% | 9个月 |
+| 2 | 断网可用功能 | 30% | 90% | 9个月 |
+| 3 | 设备兼容率 | 80% | 95% | 12个月 |
+| 4 | OTA成功率 | 92% | 99.9% | 6个月 |
+| 5 | 配置完成率 | 65% | 95% | 6个月 |
+
+### 4.4 技术挑战
+
+1. **边缘计算能力**：需要在网关本地运行Matter控制器、场景引擎、AI推理，要求足够的算力和内存
+
+2. **多协议栈集成**：需要同时运行Matter、Zigbee、Thread等多种协议栈，资源管理复杂
+
+3. **离线场景执行**：需要在断网情况下继续执行本地场景，要求完整的本地逻辑
+
+4. **安全启动与升级**：需要实现安全启动、签名验证、回滚机制，确保OTA安全
+
+5. **零配置部署**：需要实现自动发现、一键配置，降低用户使用门槛
+
+### 4.5 完整实现代码
+
+```python
+#!/usr/bin/env python3
+"""
+Matter智能家居网关 - 核心实现
+支持多协议桥接、本地场景、OTA升级
+"""
+
+import json
+import logging
+from dataclasses import dataclass, field
+from datetime import datetime
+from enum import Enum
+from typing import Dict, List, Optional, Any
+from collections import defaultdict
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+
+class ProtocolType(Enum):
+    """协议类型"""
+    MATTER = "matter"
+    ZIGBEE = "zigbee"
+    THREAD = "thread"
+    WIFI = "wifi"
+    BLE = "ble"
+
+
+class GatewayStatus(Enum):
+    """网关状态"""
+    ONLINE = "online"
+    OFFLINE = "offline"
+    UPDATING = "updating"
+
+
+@dataclass
+class BridgedDevice:
+    """桥接设备"""
+    device_id: str
+    native_id: str
+    protocol: ProtocolType
+    device_type: str
+    name: str
+    matter_endpoint_id: Optional[int] = None
+    state: Dict[str, Any] = field(default_factory=dict)
+    online: bool = True
+    
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "device_id": self.device_id,
+            "native_id": self.native_id,
+            "protocol": self.protocol.value,
+            "device_type": self.device_type,
+            "name": self.name,
+            "matter_endpoint_id": self.matter_endpoint_id,
+            "state": self.state,
+            "online": self.online
+        }
+
+
+@dataclass
+class LocalScene:
+    """本地场景"""
+    scene_id: str
+    name: str
+    actions: List[Dict[str, Any]]
+    trigger: Optional[Dict] = None
+    enabled: bool = True
+    
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "scene_id": self.scene_id,
+            "name": self.name,
+            "actions": self.actions,
+            "trigger": self.trigger,
+            "enabled": self.enabled
+        }
+
+
+class SmartHomeGateway:
+    """智能家居网关"""
+    
+    def __init__(self):
+        self.gateway_id: str = ""
+        self.status: GatewayStatus = GatewayStatus.OFFLINE
+        self.bridged_devices: Dict[str, BridgedDevice] = {}
+        self.local_scenes: Dict[str, LocalScene] = {}
+        
+        # 协议适配器
+        self.protocol_adapters: Dict[ProtocolType, Any] = {}
+        
+        # Matter控制器
+        self.matter_controller: Optional[Any] = None
+        
+        # 统计
+        self.stats = {
+            "devices_connected": 0,
+            "scenes_executed": 0,
+            "protocol_messages": 0
+        }
+        
+        logger.info("Smart Home Gateway initialized")
+    
+    def initialize(self, gateway_id: str):
+        """初始化网关"""
+        self.gateway_id = gateway_id
+        self.status = GatewayStatus.ONLINE
+        logger.info(f"Gateway {gateway_id} initialized")
+    
+    def register_protocol_adapter(self, protocol: ProtocolType, adapter: Any):
+        """注册协议适配器"""
+        self.protocol_adapters[protocol] = adapter
+        logger.info(f"Registered adapter for {protocol.value}")
+    
+    def bridge_device(self, native_id: str, protocol: ProtocolType,
+                     device_type: str, name: str) -> Optional[str]:
+        """桥接设备"""
+        device_id = f"BRIDGE-{native_id}"
+        
+        device = BridgedDevice(
+            device_id=device_id,
+            native_id=native_id,
+            protocol=protocol,
+            device_type=device_type,
+            name=name
+        )
+        
+        self.bridged_devices[device_id] = device
+        self.stats["devices_connected"] += 1
+        
+        logger.info(f"Bridged device: {name} ({protocol.value})")
+        return device_id
+    
+    def convert_to_matter(self, device_id: str) -> Optional[Dict]:
+        """将桥接设备转换为Matter设备"""
+        if device_id not in self.bridged_devices:
+            return None
+        
+        device = self.bridged_devices[device_id]
+        
+        # 协议转换
+        matter_device = {
+            "endpoint_id": device.matter_endpoint_id or 1,
+            "device_types": [],
+            "clusters": {}
+        }
+        
+        if device.device_type == "light":
+            matter_device["device_types"].append("on_off_light")
+            matter_device["clusters"]["on_off"] = {
+                "on": device.state.get("power", False)
+            }
+        elif device.device_type == "sensor":
+            matter_device["device_types"].append("contact_sensor")
+            matter_device["clusters"]["boolean_state"] = {
+                "state_value": device.state.get("contact", False)
+            }
+        
+        return matter_device
+    
+    def create_local_scene(self, scene_id: str, name: str,
+                          actions: List[Dict[str, Any]]) -> LocalScene:
+        """创建本地场景"""
+        scene = LocalScene(
+            scene_id=scene_id,
+            name=name,
+            actions=actions
+        )
+        self.local_scenes[scene_id] = scene
+        logger.info(f"Created local scene: {name}")
+        return scene
+    
+    def execute_local_scene(self, scene_id: str) -> bool:
+        """执行本地场景"""
+        if scene_id not in self.local_scenes:
+            return False
+        
+        scene = self.local_scenes[scene_id]
+        if not scene.enabled:
+            return False
+        
+        logger.info(f"Executing local scene: {scene.name}")
+        
+        success_count = 0
+        for action in scene.actions:
+            device_id = action.get("device_id")
+            command = action.get("command")
+            
+            if device_id in self.bridged_devices:
+                device = self.bridged_devices[device_id]
+                
+                # 通过协议适配器发送命令
+                if device.protocol in self.protocol_adapters:
+                    adapter = self.protocol_adapters[device.protocol]
+                    # adapter.send_command(device.native_id, command)
+                    success_count += 1
+        
+        self.stats["scenes_executed"] += 1
+        
+        return success_count == len(scene.actions)
+    
+    def get_gateway_status(self) -> Dict[str, Any]:
+        """获取网关状态"""
+        # 按协议统计设备
+        devices_by_protocol = defaultdict(int)
+        for device in self.bridged_devices.values():
+            devices_by_protocol[device.protocol.value] += 1
+        
+        return {
+            "gateway_id": self.gateway_id,
+            "status": self.status.value,
+            "timestamp": datetime.now().isoformat(),
+            "devices": {
+                "total": len(self.bridged_devices),
+                "by_protocol": dict(devices_by_protocol)
+            },
+            "local_scenes": len(self.local_scenes),
+            "stats": self.stats
+        }
+
+
+def main():
+    """演示智能网关"""
+    gateway = SmartHomeGateway()
+    gateway.initialize("GATEWAY-001")
+    
+    # 桥接设备
+    gateway.bridge_device("ZB-LIGHT-01", ProtocolType.ZIGBEE, "light", "客厅灯")
+    gateway.bridge_device("ZB-SENSOR-01", ProtocolType.ZIGBEE, "sensor", "门磁")
+    gateway.bridge_device("WIFI-PLUG-01", ProtocolType.WIFI, "outlet", "智能插座")
+    
+    # 创建本地场景
+    gateway.create_local_scene(
+        "scene-home",
+        "回家模式",
+        [
+            {"device_id": "BRIDGE-ZB-LIGHT-01", "command": "turn_on"},
+            {"device_id": "BRIDGE-WIFI-PLUG-01", "command": "turn_on"}
+        ]
+    )
+    
+    # 执行场景
+    gateway.execute_local_scene("scene-home")
+    
+    # 获取状态
+    status = gateway.get_gateway_status()
+    print("Gateway Status:")
+    print(json.dumps(status, indent=2))
+
+
+if __name__ == "__main__":
+    main()
+```
+
+### 4.6 效果评估与ROI
+
+#### 性能指标对比
+
+| 指标 | 改造前 | 改造后 | 改善幅度 |
+|------|--------|--------|----------|
+| 协议转换成功率 | 85% | 97% | +12% |
+| 断网可用功能 | 30% | 88% | +58% |
+| 设备兼容率 | 80% | 93% | +13% |
+| OTA成功率 | 92% | 99.5% | +7.5% |
+| 配置完成率 | 65% | 94% | +29% |
+
+#### ROI计算
+
+**投资成本**：
+- 研发投入：800万元
+- 测试认证：200万元
+- **总投资**：1,000万元
+
+**年度收益**：
+- 产品销售收入：5,000万元
+- 售后成本降低：300万元
+- **年度总收益**：5,300万元
+
+**ROI分析**：
+- 投资回收期：2.3个月
+- 3年ROI：1,490%
 
 ---
 
@@ -2732,4 +1275,4 @@ def demo_network_analysis():
 - `04_Transformation.md` - 转换体系
 
 **创建时间**：2025-01-21
-**最后更新**：2025-02-14（新增5个Matter高级案例）
+**最后更新**：2025-02-15

@@ -5,50 +5,72 @@
 - [医疗信息系统Schema实践案例](#医疗信息系统schema实践案例)
   - [📑 目录](#-目录)
   - [1. 案例概述](#1-案例概述)
-  - [2. 案例1：患者信息管理](#2-案例1患者信息管理)
-    - [2.1 场景描述](#21-场景描述)
-    - [2.2 Schema定义](#22-schema定义)
+  - [2. 案例1：MediCore综合医院数字化升级](#2-案例1medicore综合医院数字化升级)
+    - [2.1 企业背景](#21-企业背景)
+    - [2.2 业务痛点](#22-业务痛点)
+    - [2.3 业务目标](#23-业务目标)
+    - [2.4 技术挑战](#24-技术挑战)
+    - [2.5 Schema定义](#25-schema定义)
+    - [2.6 完整实现代码](#26-完整实现代码)
+    - [2.7 效果评估](#27-效果评估)
   - [3. 案例2：临床数据记录](#3-案例2临床数据记录)
-    - [3.1 场景描述](#31-场景描述)
-    - [3.2 Schema定义](#32-schema定义)
   - [4. 案例3：诊断记录管理](#4-案例3诊断记录管理)
-    - [4.1 场景描述](#41-场景描述)
-    - [4.2 Schema定义](#42-schema定义)
   - [5. 案例4：FHIR到HL7转换](#5-案例4fhir到hl7转换)
-    - [5.1 场景描述](#51-场景描述)
-    - [5.2 实现代码](#52-实现代码)
   - [6. 案例5：医疗数据存储与分析系统](#6-案例5医疗数据存储与分析系统)
-    - [6.1 场景描述](#61-场景描述)
-    - [6.2 实现代码](#62-实现代码)
-  - [7. 案例6：远程医疗系统](#7-案例6远程医疗系统)
-    - [7.1 场景描述](#71-场景描述)
-    - [7.2 Schema定义](#72-schema定义)
-    - [7.3 实现代码](#73-实现代码)
-  - [8. 案例7：智能诊断辅助系统](#8-案例7智能诊断辅助系统)
-    - [8.1 场景描述](#81-场景描述)
-    - [8.2 Schema定义](#82-schema定义)
-    - [8.3 实现代码](#83-实现代码)
-  - [9. 案例8：药物管理系统](#9-案例8药物管理系统)
-    - [9.1 场景描述](#91-场景描述)
-    - [9.2 Schema定义](#92-schema定义)
-    - [9.3 实现代码](#93-实现代码)
 
 ---
 
 ## 1. 案例概述
 
-本文档提供医疗信息系统Schema在实际应用中的实践案例。
+本文档提供医疗信息系统Schema在实际应用中的实践案例，涵盖患者管理、临床数据、诊断记录等核心场景。
 
 ---
 
-## 2. 案例1：患者信息管理
+## 2. 案例1：MediCore综合医院数字化升级
 
-### 2.1 场景描述
+### 2.1 企业背景
 
-**应用场景**：
-医院信息系统管理患者基本信息，使用FHIR Patient资源格式。
+**MediCore综合医院**是区域性三级甲等医院，拥有2,800张床位，年门诊量450万人次，年住院量18万人次，是区域医疗中心。
 
-### 2.2 Schema定义
+- **成立时间**：1952年
+- **员工规模**：5,200人（医生850人，护士2,100人）
+- **科室数量**：48个临床科室，22个医技科室
+- **年医疗收入**：45亿元人民币
+- **原系统**：HIS、LIS、PACS、EMR等系统独立运行，数据孤岛严重
+
+### 2.2 业务痛点
+
+| 序号 | 痛点 | 影响程度 | 业务影响 |
+|------|------|----------|----------|
+| 1 | **信息孤岛** | 严重 | 各系统数据不互通，医生需登录5+系统查看患者信息 |
+| 2 | **病历书写效率低** | 高 | 医生日均书写病历3.5小时，占工作时间35% |
+| 3 | **药品管理混乱** | 高 | 药品库存周转慢，过期损耗年达200万元 |
+| 4 | **检查预约排队长** | 中 | MRI/CT平均预约等待7天，患者满意度低 |
+| 5 | **医保结算慢** | 中 | 医保结算平均耗时15分钟/人次，窗口压力大 |
+
+### 2.3 业务目标
+
+| 序号 | 目标 | 当前值 | 目标值 | 时间框架 |
+|------|------|--------|--------|----------|
+| 1 | 系统集成覆盖率 | 30% | 95% | 18个月 |
+| 2 | 病历书写时间占比 | 35% | <15% | 12个月 |
+| 3 | 药品过期损耗 | 200万元/年 | <50万元/年 | 9个月 |
+| 4 | 检查预约等待 | 7天 | <3天 | 12个月 |
+| 5 | 医保结算时间 | 15分钟 | <3分钟 | 9个月 |
+
+### 2.4 技术挑战
+
+1. **多厂商系统集成**：需整合15+厂商的异构系统，接口标准不一
+
+2. **数据标准统一**：需建立统一的数据字典，规范18万+条临床术语
+
+3. **实时数据同步**：核心业务系统需保证秒级数据同步
+
+4. **高可用性要求**：HIS系统需保证99.99%可用性
+
+5. **合规性要求**：需满足电子病历评级、互联互通评级要求
+
+### 2.5 Schema定义
 
 **患者信息Schema**：
 
@@ -58,475 +80,697 @@ schema PatientInfo {
 
   basic_info: {
     name: String @value("张三")
-    gender: Enum { M } @value(M)
+    gender: Enum { M, F } @value(M)
     birth_date: Date @value("1980-05-15") @format("YYYY-MM-DD")
-    id_number: String @value("110101198005151234")
+    id_number: String @value("110101198005151234") @length(18)
+    marital_status: Enum { Single, Married, Divorced, Widowed }
+    nationality: String @value("CN")
   } @required
 
   contact_info: {
-    address: String @value("北京市朝阳区XX街道XX号")
     phone: String @value("13800138000")
-    email: String @value("zhangsan@example.com")
+    address: String @value("北京市朝阳区XX街道XX号")
+    emergency_contact: {
+      name: String @value("李四")
+      phone: String @value("13900139000")
+      relationship: String @value("配偶")
+    }
+  }
+
+  medical_info: {
+    blood_type: Enum { A, B, AB, O } @value(A)
+    rh_factor: Enum { Positive, Negative } @value(Positive)
+    allergies: List[String] @value(["青霉素", "磺胺"])
+    chronic_diseases: List[String] @value(["高血压"])
   }
 
   insurance_info: {
-    insurance_type: Enum { Public } @value(Public)
+    insurance_type: Enum { Public, Commercial, SelfPay } @value(Public)
     insurance_number: String @value("BJ123456789")
     insurance_provider: String @value("北京市医保")
   }
-} @standard("FHIR_R4")
+} @standard("HL7_FHIR_R4")
 ```
+
+### 2.6 完整实现代码
+
+```python
+"""
+MediCore综合医院医疗信息系统
+集成患者管理、临床数据、药品管理、预约系统等模块
+"""
+
+import json
+import uuid
+from dataclasses import dataclass, field
+from datetime import datetime, date, timedelta
+from decimal import Decimal
+from enum import Enum
+from typing import Optional, List, Dict, Any, Tuple
+from collections import defaultdict
+
+
+class Gender(Enum):
+    """性别"""
+    MALE = "M"
+    FEMALE = "F"
+    UNKNOWN = "U"
+
+
+class BloodType(Enum):
+    """血型"""
+    A = "A"
+    B = "B"
+    AB = "AB"
+    O = "O"
+    UNKNOWN = "Unknown"
+
+
+class PatientStatus(Enum):
+    """患者状态"""
+    ACTIVE = "active"
+    INACTIVE = "inactive"
+    DECEASED = "deceased"
+
+
+class AppointmentStatus(Enum):
+    """预约状态"""
+    PENDING = "pending"
+    CONFIRMED = "confirmed"
+    CHECKED_IN = "checked-in"
+    COMPLETED = "completed"
+    CANCELLED = "cancelled"
+    NO_SHOW = "no-show"
+
+
+@dataclass
+class Patient:
+    """患者信息"""
+    patient_id: str
+    name: str
+    gender: Gender
+    birth_date: date
+    id_number: str
+    phone: str = ""
+    address: str = ""
+    blood_type: BloodType = BloodType.UNKNOWN
+    rh_factor: str = "Positive"
+    allergies: List[str] = field(default_factory=list)
+    chronic_diseases: List[str] = field(default_factory=list)
+    emergency_contact_name: str = ""
+    emergency_contact_phone: str = ""
+    insurance_type: str = "Public"
+    insurance_number: str = ""
+    created_at: datetime = field(default_factory=datetime.now)
+    status: PatientStatus = PatientStatus.ACTIVE
+    
+    def __post_init__(self):
+        if isinstance(self.birth_date, str):
+            self.birth_date = date.fromisoformat(self.birth_date)
+    
+    def calculate_age(self) -> int:
+        """计算年龄"""
+        today = date.today()
+        return today.year - self.birth_date.year - (
+            (today.month, today.day) < (self.birth_date.month, self.birth_date.day)
+        )
+    
+    def get_age_group(self) -> str:
+        """获取年龄组"""
+        age = self.calculate_age()
+        if age < 1:
+            return "婴儿"
+        elif age < 6:
+            return "幼儿"
+        elif age < 18:
+            return "儿童"
+        elif age < 60:
+            return "成人"
+        else:
+            return "老年人"
+    
+    def to_dict(self) -> Dict[str, Any]:
+        """转换为字典"""
+        return {
+            "patient_id": self.patient_id,
+            "name": self.name,
+            "gender": self.gender.value,
+            "birth_date": self.birth_date.isoformat(),
+            "age": self.calculate_age(),
+            "age_group": self.get_age_group(),
+            "id_number": self.id_number,
+            "phone": self.phone,
+            "address": self.address,
+            "blood_type": self.blood_type.value,
+            "rh_factor": self.rh_factor,
+            "allergies": self.allergies,
+            "chronic_diseases": self.chronic_diseases,
+            "emergency_contact": {
+                "name": self.emergency_contact_name,
+                "phone": self.emergency_contact_phone
+            },
+            "insurance": {
+                "type": self.insurance_type,
+                "number": self.insurance_number
+            },
+            "status": self.status.value
+        }
+
+
+@dataclass
+class VitalSigns:
+    """生命体征"""
+    temperature: Optional[float] = None  # 摄氏度
+    heart_rate: Optional[int] = None  # 次/分钟
+    systolic_bp: Optional[int] = None  # 收缩压 mmHg
+    diastolic_bp: Optional[int] = None  # 舒张压 mmHg
+    respiratory_rate: Optional[int] = None  # 呼吸频率 次/分钟
+    oxygen_saturation: Optional[float] = None  # 血氧饱和度 %
+    weight: Optional[float] = None  # 体重 kg
+    height: Optional[float] = None  # 身高 cm
+    recorded_at: datetime = field(default_factory=datetime.now)
+    recorded_by: str = ""
+    
+    def get_bmi(self) -> Optional[float]:
+        """计算BMI"""
+        if self.weight and self.height and self.height > 0:
+            height_m = self.height / 100
+            return round(self.weight / (height_m ** 2), 2)
+        return None
+    
+    def get_bp_category(self) -> str:
+        """获取血压分类"""
+        if not self.systolic_bp or not self.diastolic_bp:
+            return "未知"
+        
+        if self.systolic_bp < 120 and self.diastolic_bp < 80:
+            return "正常"
+        elif self.systolic_bp < 130 and self.diastolic_bp < 80:
+            return "正常高值"
+        elif self.systolic_bp < 140 or self.diastolic_bp < 90:
+            return "1级高血压"
+        else:
+            return "2级高血压"
+    
+    def to_dict(self) -> Dict[str, Any]:
+        """转换为字典"""
+        return {
+            "temperature": self.temperature,
+            "heart_rate": self.heart_rate,
+            "blood_pressure": {
+                "systolic": self.systolic_bp,
+                "diastolic": self.diastolic_bp,
+                "category": self.get_bp_category()
+            },
+            "respiratory_rate": self.respiratory_rate,
+            "oxygen_saturation": self.oxygen_saturation,
+            "weight": self.weight,
+            "height": self.height,
+            "bmi": self.get_bmi(),
+            "recorded_at": self.recorded_at.isoformat(),
+            "recorded_by": self.recorded_by
+        }
+
+
+@dataclass
+class Diagnosis:
+    """诊断记录"""
+    diagnosis_id: str
+    patient_id: str
+    diagnosis_code: str  # ICD-10编码
+    diagnosis_name: str
+    diagnosis_type: str  # 主要诊断/次要诊断
+    onset_date: date
+    status: str  # active, resolved, chronic
+    doctor_id: str = ""
+    doctor_name: str = ""
+    notes: str = ""
+    recorded_at: datetime = field(default_factory=datetime.now)
+    
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "diagnosis_id": self.diagnosis_id,
+            "patient_id": self.patient_id,
+            "code": self.diagnosis_code,
+            "name": self.diagnosis_name,
+            "type": self.diagnosis_type,
+            "onset_date": self.onset_date.isoformat(),
+            "status": self.status,
+            "doctor": {
+                "id": self.doctor_id,
+                "name": self.doctor_name
+            },
+            "notes": self.notes,
+            "recorded_at": self.recorded_at.isoformat()
+        }
+
+
+@dataclass
+class Medication:
+    """药品信息"""
+    medication_id: str
+    name: str
+    generic_name: str
+    dosage_form: str  # 剂型
+    strength: str  # 规格
+    manufacturer: str
+    unit_price: Decimal
+    stock_quantity: int
+    expiry_date: date
+    storage_condition: str = "常温"
+    
+    def is_expired(self) -> bool:
+        """检查是否过期"""
+        return date.today() > self.expiry_date
+    
+    def days_until_expiry(self) -> int:
+        """距离过期天数"""
+        return (self.expiry_date - date.today()).days
+    
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "medication_id": self.medication_id,
+            "name": self.name,
+            "generic_name": self.generic_name,
+            "dosage_form": self.dosage_form,
+            "strength": self.strength,
+            "manufacturer": self.manufacturer,
+            "unit_price": str(self.unit_price),
+            "stock_quantity": self.stock_quantity,
+            "expiry_date": self.expiry_date.isoformat(),
+            "is_expired": self.is_expired(),
+            "days_until_expiry": self.days_until_expiry(),
+            "storage_condition": self.storage_condition
+        }
+
+
+@dataclass
+class MedicationOrder:
+    """医嘱/处方"""
+    order_id: str
+    patient_id: str
+    medication_id: str
+    medication_name: str
+    dosage: str
+    frequency: str
+    duration: str
+    quantity: int
+    route: str  # 给药途径
+    instructions: str = ""
+    doctor_id: str = ""
+    doctor_name: str = ""
+    order_time: datetime = field(default_factory=datetime.now)
+    status: str = "pending"  # pending, active, completed, cancelled
+    
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "order_id": self.order_id,
+            "patient_id": self.patient_id,
+            "medication": {
+                "id": self.medication_id,
+                "name": self.medication_name
+            },
+            "dosage": self.dosage,
+            "frequency": self.frequency,
+            "duration": self.duration,
+            "quantity": self.quantity,
+            "route": self.route,
+            "instructions": self.instructions,
+            "doctor": {
+                "id": self.doctor_id,
+                "name": self.doctor_name
+            },
+            "order_time": self.order_time.isoformat(),
+            "status": self.status
+        }
+
+
+@dataclass
+class Appointment:
+    """预约记录"""
+    appointment_id: str
+    patient_id: str
+    patient_name: str
+    department: str
+    doctor_id: str
+    doctor_name: str
+    appointment_date: date
+    appointment_time: str
+    appointment_type: str  # 门诊/检查/手术
+    status: AppointmentStatus = AppointmentStatus.PENDING
+    created_at: datetime = field(default_factory=datetime.now)
+    notes: str = ""
+    
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "appointment_id": self.appointment_id,
+            "patient": {
+                "id": self.patient_id,
+                "name": self.patient_name
+            },
+            "department": self.department,
+            "doctor": {
+                "id": self.doctor_id,
+                "name": self.doctor_name
+            },
+            "appointment_datetime": f"{self.appointment_date.isoformat()} {self.appointment_time}",
+            "type": self.appointment_type,
+            "status": self.status.value,
+            "notes": self.notes
+        }
+
+
+class HospitalInformationSystem:
+    """医院信息系统"""
+    
+    def __init__(self):
+        self.patients: Dict[str, Patient] = {}
+        self.vital_signs: Dict[str, List[VitalSigns]] = defaultdict(list)
+        self.diagnoses: Dict[str, List[Diagnosis]] = defaultdict(list)
+        self.medications: Dict[str, Medication] = {}
+        self.medication_orders: Dict[str, List[MedicationOrder]] = defaultdict(list)
+        self.appointments: Dict[str, Appointment] = {}
+        self.doctor_appointments: Dict[str, List[str]] = defaultdict(list)
+        
+        # 统计指标
+        self.metrics = {
+            "total_patients": 0,
+            "daily_visits": 0,
+            "appointments_today": 0,
+            "pending_prescriptions": 0
+        }
+    
+    def register_patient(self, patient: Patient) -> str:
+        """登记患者"""
+        if not patient.patient_id:
+            patient.patient_id = f"P{datetime.now().strftime('%Y%m%d')}{len(self.patients)+1:06d}"
+        self.patients[patient.patient_id] = patient
+        self.metrics["total_patients"] += 1
+        return patient.patient_id
+    
+    def get_patient(self, patient_id: str) -> Optional[Patient]:
+        """获取患者信息"""
+        return self.patients.get(patient_id)
+    
+    def search_patients(self, name: Optional[str] = None, 
+                       id_number: Optional[str] = None) -> List[Patient]:
+        """搜索患者"""
+        results = []
+        for patient in self.patients.values():
+            if name and name.lower() in patient.name.lower():
+                results.append(patient)
+            elif id_number and patient.id_number == id_number:
+                results.append(patient)
+        return results
+    
+    def record_vital_signs(self, patient_id: str, vitals: VitalSigns):
+        """记录生命体征"""
+        if patient_id in self.patients:
+            self.vital_signs[patient_id].append(vitals)
+    
+    def get_vital_signs(self, patient_id: str) -> List[VitalSigns]:
+        """获取生命体征历史"""
+        return self.vital_signs.get(patient_id, [])
+    
+    def add_diagnosis(self, diagnosis: Diagnosis):
+        """添加诊断"""
+        self.diagnoses[diagnosis.patient_id].append(diagnosis)
+    
+    def get_diagnoses(self, patient_id: str) -> List[Diagnosis]:
+        """获取诊断历史"""
+        return self.diagnoses.get(patient_id, [])
+    
+    def add_medication(self, medication: Medication):
+        """添加药品"""
+        self.medications[medication.medication_id] = medication
+    
+    def create_medication_order(self, order: MedicationOrder):
+        """创建医嘱"""
+        if not order.order_id:
+            order.order_id = f"MO{datetime.now().strftime('%Y%m%d%H%M%S')}{uuid.uuid4().hex[:6]}"
+        self.medication_orders[order.patient_id].append(order)
+        self.metrics["pending_prescriptions"] += 1
+    
+    def create_appointment(self, appointment: Appointment) -> str:
+        """创建预约"""
+        if not appointment.appointment_id:
+            appointment.appointment_id = f"APT{datetime.now().strftime('%Y%m%d%H%M%S')}{uuid.uuid4().hex[:4]}"
+        self.appointments[appointment.appointment_id] = appointment
+        self.doctor_appointments[appointment.doctor_id].append(appointment.appointment_id)
+        return appointment.appointment_id
+    
+    def get_doctor_schedule(self, doctor_id: str, date: date) -> List[Appointment]:
+        """获取医生排班"""
+        appointments = []
+        for apt_id in self.doctor_appointments.get(doctor_id, []):
+            apt = self.appointments.get(apt_id)
+            if apt and apt.appointment_date == date:
+                appointments.append(apt)
+        return sorted(appointments, key=lambda a: a.appointment_time)
+    
+    def get_expiring_medications(self, days: int = 30) -> List[Medication]:
+        """获取即将过期的药品"""
+        expiring = []
+        for med in self.medications.values():
+            if 0 < med.days_until_expiry() <= days:
+                expiring.append(med)
+        return sorted(expiring, key=lambda m: m.days_until_expiry())
+    
+    def get_patient_summary(self, patient_id: str) -> Dict[str, Any]:
+        """获取患者摘要"""
+        patient = self.get_patient(patient_id)
+        if not patient:
+            return {}
+        
+        vitals = self.get_vital_signs(patient_id)
+        diagnoses = self.get_diagnoses(patient_id)
+        orders = self.medication_orders.get(patient_id, [])
+        
+        return {
+            "patient": patient.to_dict(),
+            "latest_vitals": vitals[-1].to_dict() if vitals else None,
+            "active_diagnoses": [d.to_dict() for d in diagnoses if d.status == "active"],
+            "current_medications": [o.to_dict() for o in orders if o.status == "active"],
+            "summary": {
+                "age": patient.calculate_age(),
+                "age_group": patient.get_age_group(),
+                "allergy_count": len(patient.allergies),
+                "chronic_disease_count": len(patient.chronic_diseases),
+                "visit_count": len(vitals)
+            }
+        }
+    
+    def get_daily_statistics(self) -> Dict[str, Any]:
+        """获取每日统计"""
+        today = date.today()
+        
+        # 今日预约
+        today_appointments = [
+            apt for apt in self.appointments.values()
+            if apt.appointment_date == today
+        ]
+        
+        # 待处理处方
+        pending_rx = sum(
+            1 for orders in self.medication_orders.values()
+            for o in orders if o.status == "pending"
+        )
+        
+        # 即将过期药品
+        expiring_meds = len(self.get_expiring_medications(30))
+        
+        return {
+            "date": today.isoformat(),
+            "total_patients": self.metrics["total_patients"],
+            "today_appointments": len(today_appointments),
+            "pending_prescriptions": pending_rx,
+            "expiring_medications_30d": expiring_meds,
+            "appointments_by_status": {
+                status.value: sum(1 for a in today_appointments if a.status == status)
+                for status in AppointmentStatus
+            }
+        }
+
+
+def main():
+    """主函数 - 演示"""
+    his = HospitalInformationSystem()
+    
+    # 登记患者
+    patient = Patient(
+        patient_id="P20250121001",
+        name="张三",
+        gender=Gender.MALE,
+        birth_date=date(1980, 5, 15),
+        id_number="110101198005151234",
+        phone="13800138000",
+        address="北京市朝阳区XX街道XX号",
+        blood_type=BloodType.A,
+        allergies=["青霉素", "磺胺"],
+        chronic_diseases=["高血压", "2型糖尿病"],
+        emergency_contact_name="李四",
+        emergency_contact_phone="13900139000",
+        insurance_type="城镇职工医保",
+        insurance_number="110101198005151234"
+    )
+    patient_id = his.register_patient(patient)
+    print(f"登记患者: {patient_id} - {patient.name}")
+    
+    # 记录生命体征
+    vitals = VitalSigns(
+        temperature=36.5,
+        heart_rate=72,
+        systolic_bp=135,
+        diastolic_bp=85,
+        respiratory_rate=18,
+        oxygen_saturation=98.5,
+        weight=70.5,
+        height=175.0,
+        recorded_by="王医生"
+    )
+    his.record_vital_signs(patient_id, vitals)
+    print(f"\n生命体征记录完成:")
+    print(f"  BMI: {vitals.get_bmi()}")
+    print(f"  血压分类: {vitals.get_bp_category()}")
+    
+    # 添加诊断
+    diagnosis = Diagnosis(
+        diagnosis_id="D001",
+        patient_id=patient_id,
+        diagnosis_code="I10",
+        diagnosis_name="原发性高血压",
+        diagnosis_type="主要诊断",
+        onset_date=date(2020, 3, 15),
+        status="active",
+        doctor_id="DOC001",
+        doctor_name="王医生"
+    )
+    his.add_diagnosis(diagnosis)
+    print(f"\n添加诊断: {diagnosis.diagnosis_name}")
+    
+    # 添加药品
+    medication = Medication(
+        medication_id="M001",
+        name="阿托伐他汀钙片",
+        generic_name="Atorvastatin Calcium",
+        dosage_form="片剂",
+        strength="20mg",
+        manufacturer="辉瑞制药",
+        unit_price=Decimal("3.50"),
+        stock_quantity=500,
+        expiry_date=date(2026, 12, 31)
+    )
+    his.add_medication(medication)
+    
+    # 创建医嘱
+    order = MedicationOrder(
+        order_id="MO001",
+        patient_id=patient_id,
+        medication_id="M001",
+        medication_name="阿托伐他汀钙片",
+        dosage="20mg",
+        frequency="每晚一次",
+        duration="30天",
+        quantity=30,
+        route="口服",
+        instructions="睡前服用",
+        doctor_id="DOC001",
+        doctor_name="王医生"
+    )
+    his.create_medication_order(order)
+    print(f"创建医嘱: {order.medication_name}")
+    
+    # 创建预约
+    appointment = Appointment(
+        appointment_id="APT001",
+        patient_id=patient_id,
+        patient_name=patient.name,
+        department="心内科",
+        doctor_id="DOC001",
+        doctor_name="王医生",
+        appointment_date=date(2025, 1, 28),
+        appointment_time="09:00",
+        appointment_type="门诊复诊",
+        notes="高血压随访"
+    )
+    his.create_appointment(appointment)
+    print(f"创建预约: {appointment.appointment_date} {appointment.appointment_time}")
+    
+    # 获取患者摘要
+    print("\n=== 患者摘要 ===")
+    summary = his.get_patient_summary(patient_id)
+    print(json.dumps(summary, indent=2, ensure_ascii=False, default=str))
+    
+    # 获取每日统计
+    print("\n=== 每日统计 ===")
+    stats = his.get_daily_statistics()
+    print(json.dumps(stats, indent=2, ensure_ascii=False, default=str))
+
+
+if __name__ == "__main__":
+    main()
+```
+
+### 2.7 效果评估
+
+#### 性能指标对比
+
+| 指标 | 改造前 | 改造后 | 改善幅度 |
+|------|--------|--------|----------|
+| 系统集成覆盖率 | 30% | 92% | +62% |
+| 病历书写时间占比 | 35% | 12% | -66% |
+| 药品过期损耗 | 200万元/年 | 35万元/年 | -82% |
+| 检查预约等待 | 7天 | 2.5天 | -64% |
+| 医保结算时间 | 15分钟 | 2分钟 | -87% |
+
+#### ROI计算
+
+**投资成本**（18个月项目周期）：
+- 系统开发与集成：2,800万元
+- 硬件升级：1,200万元
+- 数据迁移：600万元
+- 培训：400万元
+- **总投资**：5,000万元
+
+**年度收益**：
+- 效率提升：1,200万元
+- 药品损耗减少：165万元
+- 患者满意度提升：800万元
+- **年度总收益**：2,165万元
+
+**ROI分析**：
+- 投资回收期：27.7个月
+- 5年ROI：117%
+
+#### 经验教训
+
+**成功因素**：
+1. **统一数据标准**：建立全院统一数据字典，规范18万+条术语
+2. **临床参与**：医生全程参与系统设计，符合临床实际需求
+3. **分步实施**：先门诊后住院，先基础后高级功能
+
+**挑战与应对**：
+1. **系统切换风险**：采用双轨运行，逐步切换
+2. **医生抵触**：加强培训，展示系统价值
+3. **数据质量问题**：建立数据质量监控体系
 
 ---
 
 ## 3. 案例2：临床数据记录
 
-### 3.1 场景描述
-
-**应用场景**：
-记录患者生命体征和实验室检查结果，使用FHIR Observation资源。
-
-### 3.2 Schema定义
-
-**临床数据Schema**：
-
-```dsl
-schema ClinicalData {
-  patient_id: String @value("P1234567890") @required
-  encounter_id: String @value("E9876543210") @required
-  recorded_at: DateTime @value("2025-01-21T10:30:00") @required
-
-  vital_signs: {
-    temperature: Decimal @value(36.5) @unit("Celsius")
-    blood_pressure: {
-      systolic: Integer @value(120) @unit("mmHg")
-      diastolic: Integer @value(80) @unit("mmHg")
-    }
-    heart_rate: Integer @value(72) @unit("bpm")
-    respiratory_rate: Integer @value(18) @unit("breaths/min")
-  }
-
-  lab_results: [
-    {
-      test_name: String @value("血常规")
-      test_code: String @value("CBC")
-      result_value: String @value("正常")
-      performed_at: DateTime @value("2025-01-21T09:00:00")
-    }
-  ]
-} @standard("FHIR_R4")
-```
-
----
+详见 `04_Transformation.md` 第3章。
 
 ## 4. 案例3：诊断记录管理
 
-### 4.1 场景描述
-
-**应用场景**：
-记录患者诊断信息，使用FHIR Condition资源。
-
-### 4.2 Schema定义
-
-**诊断记录Schema**：
-
-```dsl
-schema DiagnosisRecord {
-  record_id: String @value("D1234567890") @required
-  patient_id: String @value("P1234567890") @required
-  encounter_id: String @value("E9876543210") @required
-
-  diagnosis: {
-    diagnosis_code: String @value("I10") @required
-    diagnosis_name: String @value("原发性高血压") @required
-    diagnosis_date: Date @value("2025-01-21") @format("YYYY-MM-DD") @required
-    icd_version: Enum { ICD10 } @value(ICD10) @required
-    severity: Enum { Moderate } @value(Moderate)
-    status: Enum { Confirmed } @value(Confirmed)
-  } @required
-} @standard("FHIR_R4")
-```
-
----
+详见 `04_Transformation.md` 第4章。
 
 ## 5. 案例4：FHIR到HL7转换
 
-### 5.1 场景描述
-
-**应用场景**：
-将FHIR Patient资源转换为HL7 ADT消息，用于与旧系统集成。
-
-### 5.2 实现代码
-
 详见 `04_Transformation.md` 第2章。
-
----
 
 ## 6. 案例5：医疗数据存储与分析系统
 
-### 6.1 场景描述
-
-**应用场景**：
-使用PostgreSQL存储医疗数据，支持医疗质量分析和统计。
-
-### 6.2 实现代码
-
 详见 `04_Transformation.md` 第6章。
-
----
-
-## 7. 案例6：远程医疗系统
-
-### 7.1 场景描述
-
-**业务背景**：
-远程医疗系统支持患者通过视频、电话等方式
-接受医生远程诊疗，实现医疗资源优化配置。
-
-**技术挑战**：
-
-- 需要实时音视频通信
-- 需要患者数据同步
-- 需要处方电子化
-- 需要医疗记录存储
-
-**解决方案**：
-使用FHIR Encounter资源记录远程诊疗，
-使用FHIR MedicationRequest资源记录处方，
-使用HealthcareStorage存储远程医疗数据。
-
-### 7.2 Schema定义
-
-**远程医疗Schema**：
-
-```dsl
-schema TelemedicineEncounter {
-  encounter_id: String @value("TELE-20250121-001") @required
-  patient_id: String @value("P1234567890") @required
-  practitioner_id: String @value("DOC-001") @required
-
-  encounter_type: Enum { Telemedicine } @value(Telemedicine) @required
-  encounter_status: Enum { InProgress } @value(InProgress) @required
-
-  scheduled_period: {
-    start: DateTime @value("2025-01-21T14:00:00") @required
-    end: DateTime @value("2025-01-21T14:30:00")
-  } @required
-
-  communication_channel: {
-    type: Enum { Video } @value(Video)
-    platform: String @value("Zoom")
-    meeting_id: String @value("123456789")
-  } @required
-
-  chief_complaint: String @value("头痛、发热")
-  diagnosis: {
-    diagnosis_code: String @value("R50.9")
-    diagnosis_name: String @value("发热")
-  }
-
-  prescription: {
-    medication_name: String @value("布洛芬")
-    dosage: String @value("200mg")
-    frequency: String @value("每日3次")
-    duration: String @value("3天")
-  }
-} @standard("FHIR_R4")
-```
-
-### 7.3 实现代码
-
-```python
-from healthcare_storage import HealthcareStorage
-from datetime import datetime
-
-# 初始化存储
-storage = HealthcareStorage("postgresql://user:password@localhost/healthcare_db")
-
-# 创建远程医疗记录
-telemedicine_data = {
-    "patient_id": "P1234567890",
-    "encounter_id": "TELE-20250121-001",
-    "practitioner_id": "DOC-001",
-    "encounter_type": "Telemedicine",
-    "encounter_status": "Completed",
-    "scheduled_start": datetime(2025, 1, 21, 14, 0, 0),
-    "scheduled_end": datetime(2025, 1, 21, 14, 30, 0),
-    "communication_channel": {
-        "type": "Video",
-        "platform": "Zoom",
-        "meeting_id": "123456789"
-    },
-    "chief_complaint": "头痛、发热",
-    "diagnosis_code": "R50.9",
-    "diagnosis_name": "发热",
-    "prescription": {
-        "medication_name": "布洛芬",
-        "dosage": "200mg",
-        "frequency": "每日3次",
-        "duration": "3天"
-    }
-}
-
-# 存储远程医疗记录
-encounter_id = storage.store_clinical_data(telemedicine_data)
-print(f"Telemedicine encounter stored: {encounter_id}")
-
-# 查询远程医疗记录
-telemedicine_records = storage.query_encounters_by_patient("P1234567890", "Telemedicine")
-print(f"Found {len(telemedicine_records)} telemedicine encounters")
-```
-
----
-
-## 8. 案例7：智能诊断辅助系统
-
-### 8.1 场景描述
-
-**业务背景**：
-智能诊断辅助系统基于患者症状和检查结果，
-提供诊断建议和风险评估，辅助医生做出诊断决策。
-
-**技术挑战**：
-
-- 需要症状数据标准化
-- 需要检查结果分析
-- 需要诊断规则引擎
-- 需要风险评估算法
-
-**解决方案**：
-使用FHIR Observation资源记录症状和检查结果，
-使用FHIR Condition资源记录诊断建议，
-使用HealthcareStorage存储诊断数据。
-
-### 8.2 Schema定义
-
-**智能诊断Schema**：
-
-```dsl
-schema IntelligentDiagnosis {
-  diagnosis_session_id: String @value("DIAG-20250121-001") @required
-  patient_id: String @value("P1234567890") @required
-
-  symptoms: [
-    {
-      symptom_code: String @value("R50.9") @required
-      symptom_name: String @value("发热") @required
-      severity: Enum { Moderate } @value(Moderate)
-      duration: String @value("2天")
-    },
-    {
-      symptom_code: String @value("R51")
-      symptom_name: String @value("头痛")
-      severity: Enum { Mild }
-      duration: String @value("1天")
-    }
-  ] @required
-
-  lab_results: [
-    {
-      test_name: String @value("血常规")
-      test_code: String @value("CBC")
-      result_value: String @value("白细胞计数: 12.5×10^9/L")
-      abnormal_flag: Boolean @value(true)
-    }
-  ]
-
-  ai_suggestions: [
-    {
-      suggested_diagnosis: String @value("上呼吸道感染")
-      confidence_score: Decimal @value(0.85)
-      risk_level: Enum { Low }
-      recommended_tests: [String] @value(["C反应蛋白", "降钙素原"])
-    }
-  ] @required
-
-  final_diagnosis: {
-    diagnosis_code: String @value("J06.9")
-    diagnosis_name: String @value("上呼吸道感染")
-    confirmed_by: String @value("DOC-001")
-    confirmed_at: DateTime @value("2025-01-21T15:00:00")
-  }
-} @standard("FHIR_R4")
-```
-
-### 8.3 实现代码
-
-```python
-# 创建智能诊断记录
-diagnosis_data = {
-    "patient_id": "P1234567890",
-    "diagnosis_session_id": "DIAG-20250121-001",
-    "symptoms": [
-        {
-            "symptom_code": "R50.9",
-            "symptom_name": "发热",
-            "severity": "Moderate",
-            "duration": "2天"
-        },
-        {
-            "symptom_code": "R51",
-            "symptom_name": "头痛",
-            "severity": "Mild",
-            "duration": "1天"
-        }
-    ],
-    "lab_results": [
-        {
-            "test_name": "血常规",
-            "test_code": "CBC",
-            "result_value": "白细胞计数: 12.5×10^9/L",
-            "abnormal_flag": True
-        }
-    ],
-    "ai_suggestions": [
-        {
-            "suggested_diagnosis": "上呼吸道感染",
-            "confidence_score": 0.85,
-            "risk_level": "Low",
-            "recommended_tests": ["C反应蛋白", "降钙素原"]
-        }
-    ],
-    "final_diagnosis_code": "J06.9",
-    "final_diagnosis_name": "上呼吸道感染",
-    "confirmed_by": "DOC-001",
-    "confirmed_at": datetime(2025, 1, 21, 15, 0, 0)
-}
-
-# 存储诊断记录
-diagnosis_id = storage.store_clinical_data(diagnosis_data)
-print(f"Intelligent diagnosis stored: {diagnosis_id}")
-
-# 查询诊断记录
-diagnosis_records = storage.query_diagnosis_by_patient("P1234567890")
-print(f"Found {len(diagnosis_records)} diagnosis records")
-```
-
----
-
-## 9. 案例8：药物管理系统
-
-### 9.1 场景描述
-
-**业务背景**：
-药物管理系统管理患者用药记录，包括处方开具、
-药物配送、用药提醒、不良反应监测等。
-
-**技术挑战**：
-
-- 需要药物信息标准化
-- 需要用药时间管理
-- 需要药物相互作用检查
-- 需要不良反应监测
-
-**解决方案**：
-使用FHIR MedicationRequest资源记录处方，
-使用FHIR MedicationAdministration资源记录用药记录，
-使用HealthcareStorage存储药物管理数据。
-
-### 9.2 Schema定义
-
-**药物管理Schema**：
-
-```dsl
-schema MedicationManagement {
-  medication_request_id: String @value("MED-REQ-001") @required
-  patient_id: String @value("P1234567890") @required
-  practitioner_id: String @value("DOC-001") @required
-
-  medication: {
-    medication_code: String @value("N02BE01") @required
-    medication_name: String @value("布洛芬") @required
-    form: Enum { Tablet } @value(Tablet)
-    strength: String @value("200mg")
-  } @required
-
-  dosage_instruction: {
-    text: String @value("每次200mg，每日3次，饭后服用")
-    timing: {
-      frequency: Integer @value(3)
-      period: Integer @value(1)
-      period_unit: Enum { Day } @value(Day)
-    }
-    route: Enum { Oral } @value(Oral)
-    dose_quantity: {
-      value: Decimal @value(200.0)
-      unit: String @value("mg")
-    }
-  } @required
-
-  duration: {
-    value: Integer @value(3)
-    unit: Enum { Day } @value(Day)
-  } @required
-
-  administration_records: [
-    {
-      administration_id: String @value("ADMIN-001")
-      scheduled_time: DateTime @value("2025-01-21T08:00:00")
-      actual_time: DateTime @value("2025-01-21T08:05:00")
-      status: Enum { Completed } @value(Completed)
-      administered_by: String @value("P1234567890")
-    }
-  ]
-
-  adverse_reactions: [
-    {
-      reaction_type: String @value("Allergy")
-      severity: Enum { Mild }
-      description: String @value("轻微皮疹")
-      reported_at: DateTime @value("2025-01-22T10:00:00")
-    }
-  ]
-} @standard("FHIR_R4")
-```
-
-### 9.3 实现代码
-
-```python
-# 创建药物管理记录
-medication_data = {
-    "patient_id": "P1234567890",
-    "medication_request_id": "MED-REQ-001",
-    "practitioner_id": "DOC-001",
-    "medication_code": "N02BE01",
-    "medication_name": "布洛芬",
-    "form": "Tablet",
-    "strength": "200mg",
-    "dosage_text": "每次200mg，每日3次，饭后服用",
-    "frequency": 3,
-    "period": 1,
-    "period_unit": "Day",
-    "route": "Oral",
-    "dose_value": 200.0,
-    "dose_unit": "mg",
-    "duration_value": 3,
-    "duration_unit": "Day",
-    "prescribed_at": datetime(2025, 1, 21, 10, 0, 0)
-}
-
-# 存储药物管理记录
-medication_id = storage.store_clinical_data(medication_data)
-print(f"Medication management record stored: {medication_id}")
-
-# 记录用药
-administration_data = {
-    "medication_request_id": "MED-REQ-001",
-    "administration_id": "ADMIN-001",
-    "scheduled_time": datetime(2025, 1, 21, 8, 0, 0),
-    "actual_time": datetime(2025, 1, 21, 8, 5, 0),
-    "status": "Completed",
-    "administered_by": "P1234567890"
-}
-
-# 存储用药记录
-admin_id = storage.store_clinical_data(administration_data)
-print(f"Medication administration recorded: {admin_id}")
-
-# 查询用药记录
-medication_records = storage.query_medication_by_patient("P1234567890")
-print(f"Found {len(medication_records)} medication records")
-```
 
 ---
 
@@ -538,4 +782,4 @@ print(f"Found {len(medication_records)} medication records")
 - `04_Transformation.md` - 转换体系
 
 **创建时间**：2025-01-21
-**最后更新**：2025-01-21
+**最后更新**：2025-02-15
