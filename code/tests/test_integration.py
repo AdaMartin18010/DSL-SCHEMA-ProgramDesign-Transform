@@ -13,15 +13,18 @@ from usl import USLParser, USLValidator
 
 def check_database_available():
     """检查数据库是否可用"""
+    import psycopg2
     try:
-        # 尝试连接多模态KG数据库
-        storage = MultimodalKGStorage(
-            database_url='postgresql://test:test@localhost:5432/test_multimodal_kg'
+        # 尝试连接 PostgreSQL
+        conn = psycopg2.connect(
+            host='localhost',
+            port=5432,
+            user='test',
+            password='test',
+            dbname='test_multimodal_kg',
+            connect_timeout=2
         )
-        # 尝试连接时序KG数据库
-        temporal = TemporalKGStorage(
-            database_url='postgresql://test:test@localhost:5432/test_temporal_kg'
-        )
+        conn.close()
         return True
     except Exception:
         return False
@@ -105,10 +108,8 @@ def test_end_to_end_workflow():
     schema PaymentSchema {
       field amount: Decimal {
         required: true
-        constraint: {
-          min: 0
-          max: 1000000
-        }
+        min: 0
+        max: 1000000
       }
     }
     """

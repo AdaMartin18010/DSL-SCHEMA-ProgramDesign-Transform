@@ -67,12 +67,11 @@ class MultimodalFusion:
             min_dim = min(text_emb.shape[0], image_emb.shape[0])
             
             if text_emb.shape[0] > min_dim:
-                pca = PCA(n_components=min_dim)
-                text_emb = pca.fit_transform(text_emb.reshape(1, -1))[0]
+                # 简单降维：取前min_dim个元素（单样本时不能用PCA）
+                text_emb = text_emb[:min_dim]
             
             if image_emb.shape[0] > min_dim:
-                pca = PCA(n_components=min_dim)
-                image_emb = pca.fit_transform(image_emb.reshape(1, -1))[0]
+                image_emb = image_emb[:min_dim]
         
         # 加权平均
         fused = text_weight * text_emb + image_weight * image_emb
@@ -92,12 +91,10 @@ class MultimodalFusion:
             min_dim = min(text_emb.shape[0], image_emb.shape[0])
             
             if text_emb.shape[0] > min_dim:
-                pca = PCA(n_components=min_dim)
-                text_emb = pca.fit_transform(text_emb.reshape(1, -1))[0]
+                text_emb = text_emb[:min_dim]
             
             if image_emb.shape[0] > min_dim:
-                pca = PCA(n_components=min_dim)
-                image_emb = pca.fit_transform(image_emb.reshape(1, -1))[0]
+                image_emb = image_emb[:min_dim]
         
         # 加权融合
         fused = (attention_weights[0] * text_emb +

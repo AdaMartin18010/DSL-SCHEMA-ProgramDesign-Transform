@@ -16,7 +16,9 @@ def check_database_available():
         storage = HierarchicalKGStorage(
             database_url='postgresql://test:test@localhost:5432/test_hierarchical_kg'
         )
-        return True
+        # 实际测试连接
+        result = storage.initialize_database()
+        return result is True
     except Exception:
         return False
 
