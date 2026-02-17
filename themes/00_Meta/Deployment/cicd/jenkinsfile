@@ -1,0 +1,32 @@
+pipeline {
+    agent any
+    
+    stages {
+        stage('Test') {
+            steps {
+                sh 'pip install -r requirements.txt'
+                sh 'pytest --junitxml=test-results.xml'
+            }
+            post {
+                always {
+                    junit 'test-results.xml'
+                }
+            }
+        }
+        
+        stage('Build') {
+            steps {
+                sh 'docker build -t schema-platform:$BUILD_NUMBER .'
+            }
+        }
+        
+        stage('Deploy') {
+            when {
+                branch 'main'
+            }
+            steps {
+                sh 'kubectl apply -f k8s/'
+            }
+        }
+    }
+}

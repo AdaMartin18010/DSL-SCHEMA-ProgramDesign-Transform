@@ -1,0 +1,52 @@
+# Default values for schema-platform
+
+replicaCount: 3
+
+image:
+  repository: schema-platform
+  tag: latest
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 8000
+
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt
+  hosts:
+    - host: api.schema-platform.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: schema-platform-tls
+      hosts:
+        - api.schema-platform.com
+
+resources:
+  limits:
+    cpu: 1000m
+    memory: 1Gi
+  requests:
+    cpu: 250m
+    memory: 256Mi
+
+autoscaling:
+  enabled: true
+  minReplicas: 3
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 80
+
+postgresql:
+  enabled: true
+  auth:
+    username: schema
+    database: schema_platform
+
+redis:
+  enabled: true
+  architecture: standalone

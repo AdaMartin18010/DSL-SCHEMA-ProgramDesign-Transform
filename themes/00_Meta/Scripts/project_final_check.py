@@ -86,7 +86,8 @@ class ProjectFinalCheck:
             "README.md",
             "GETTING_STARTED.md",
             "FAQ.md",
-            "NAVIGATION_GUIDE.md"
+            "NAVIGATION_GUIDE.md",
+            "PROJECT_STRUCTURE.md"
         ]
         
         for doc in required_docs:
@@ -108,10 +109,29 @@ class ProjectFinalCheck:
                 recommendations.append("部分主题缺少README.md")
         
         # 检查Meta文档
-        meta_docs = list((self.themes_dir / "00_Meta").rglob("*.md")) if (self.themes_dir / "00_Meta").exists() else []
+        meta_dir = self.themes_dir / "00_Meta"
+        meta_docs = list(meta_dir.rglob("*.md")) if meta_dir.exists() else []
         details.append(f"Meta文档: {len(meta_docs)}")
         
-        score = min(100, 80 + len(details) * 2)
+        # 检查docs目录
+        docs_dir = meta_dir / "docs"
+        if docs_dir.exists():
+            guide_docs = list(docs_dir.glob("*.md"))
+            details.append(f"指南文档: {len(guide_docs)}")
+        
+        # 检查API文档
+        api_dir = meta_dir / "API"
+        if api_dir.exists():
+            api_docs = list(api_dir.glob("*.yaml")) + list(api_dir.glob("*.md"))
+            details.append(f"API文档: {len(api_docs)}")
+        
+        # 检查Theory文档
+        theory_dir = meta_dir / "Theory"
+        if theory_dir.exists():
+            theory_docs = list(theory_dir.glob("*.md"))
+            details.append(f"理论文档: {len(theory_docs)}")
+        
+        score = min(100, 78 + len(details) * 2)
         passed = score >= 85
         
         return CheckResult(
@@ -145,14 +165,27 @@ class ProjectFinalCheck:
                 "matrix_generator.py",
                 "cli_tool.py",
                 "performance_monitor.py",
-                "batch_processor.py"
+                "batch_processor.py",
+                "hierarchy_mapper.py",
+                "relationship_analyzer.py",
+                "mapping_correctness_verifier.py"
             ]
+            
+            for tool in key_tools:
+                if (tools_dir / tool).exists():
+                    details.append(f"{tool} ✓")
             
             missing_tools = [t for t in key_tools if not (tools_dir / t).exists()]
             if missing_tools:
                 recommendations.append(f"缺少工具: {', '.join(missing_tools)}")
         
-        score = min(100, 85 + len(details) * 3)
+        # 检查Scripts目录
+        scripts_dir = self.themes_dir / "00_Meta" / "Scripts"
+        if scripts_dir.exists():
+            script_files = list(scripts_dir.glob("*.py"))
+            details.append(f"脚本文件: {len(script_files)}")
+        
+        score = min(100, 80 + len(details) * 2)
         passed = score >= 80
         
         return CheckResult(
@@ -186,12 +219,27 @@ class ProjectFinalCheck:
             if has_e2e:
                 details.append("E2E测试 ✓")
             
+            # 统计各类型测试文件
+            if has_unit:
+                unit_tests = list((tests_dir / "unit").glob("test_*.py"))
+                details.append(f"单元测试文件: {len(unit_tests)}")
+            
+            if has_integration:
+                int_tests = list((tests_dir / "integration").glob("test_*.py"))
+                details.append(f"集成测试文件: {len(int_tests)}")
+            
             if not has_unit:
                 recommendations.append("建议添加单元测试")
         else:
             recommendations.append("缺少测试目录")
         
-        score = min(100, 70 + len(details) * 5)
+        # 检查Tests目录（大写）
+        tests_dir_alt = self.themes_dir / "00_Meta" / "Tests"
+        if tests_dir_alt.exists():
+            test_files_alt = list(tests_dir_alt.rglob("test_*.py"))
+            details.append(f"Tests目录: {len(test_files_alt)} 文件")
+        
+        score = min(100, 65 + len(details) * 5)
         passed = score >= 70
         
         return CheckResult(
@@ -208,11 +256,25 @@ class ProjectFinalCheck:
         recommendations = []
         
         # 检查标准对齐文档
-        standards_doc = self.themes_dir / "00_Meta" / "Standards_Compliance" / "Standards_Alignment_2025.md"
-        if standards_doc.exists():
-            details.append("标准对齐文档 ✓")
+        standards_dir = self.themes_dir / "00_Meta" / "Standards_Compliance"
+        if standards_dir.exists():
+            standards_docs = list(standards_dir.glob("*.md"))
+            details.append(f"标准文档: {len(standards_docs)}")
+            
+            # 检查关键标准文档
+            key_standards = [
+                "Standards_Alignment_2025.md",
+                "ISO_Compliance.md",
+                "W3C_Compliance.md",
+                "IETF_Compliance.md",
+                "Industry_Compliance.md"
+            ]
+            
+            for std in key_standards:
+                if (standards_dir / std).exists():
+                    details.append(f"{std} ✓")
         else:
-            recommendations.append("缺少标准对齐文档")
+            recommendations.append("缺少标准合规目录")
         
         # 检查API规范文件
         api_dir = self.themes_dir / "00_Meta" / "API"
@@ -228,7 +290,7 @@ class ProjectFinalCheck:
             if not openapi_file.exists():
                 recommendations.append("缺少OpenAPI规范")
         
-        score = min(100, 80 + len(details) * 4)
+        score = min(100, 76 + len(details) * 3)
         passed = score >= 80
         
         return CheckResult(
@@ -265,12 +327,31 @@ class ProjectFinalCheck:
             terraform_dir = deployment_dir / "terraform"
             if terraform_dir.exists():
                 details.append("Terraform配置 ✓")
+                # 统计Terraform文件
+                tf_files = list(terraform_dir.rglob("*.tf"))
+                details.append(f"Terraform文件: {len(tf_files)}")
             else:
                 recommendations.append("缺少Terraform配置")
+            
+            # Helm
+            helm_dir = deployment_dir / "helm"
+            if helm_dir.exists():
+                details.append("Helm配置 ✓")
+                if (helm_dir / "Chart.yaml").exists():
+                    details.append("Chart.yaml ✓")
+                if (helm_dir / "values.yaml").exists():
+                    details.append("values.yaml ✓")
+            
+            # CI/CD
+            cicd_dir = deployment_dir / "cicd"
+            if cicd_dir.exists():
+                details.append("CI/CD配置 ✓")
+                cicd_files = list(cicd_dir.glob("*"))
+                details.append(f"CI/CD文件: {len(cicd_files)}")
         else:
             recommendations.append("缺少部署目录")
         
-        score = min(100, 75 + len(details) * 8)
+        score = min(100, 70 + len(details) * 4)
         passed = score >= 75
         
         return CheckResult(

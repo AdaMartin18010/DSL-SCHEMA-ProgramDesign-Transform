@@ -1,0 +1,23 @@
+apiVersion: v2
+name: schema-platform
+description: A Helm chart for the DSL Schema Platform
+type: application
+version: 2.3.0
+appVersion: "2.3.0"
+keywords:
+  - schema
+  - dsl
+  - validation
+  - transformation
+home: https://github.com/DSL-Schema-Platform
+sources:
+  - https://github.com/DSL-Schema-Platform
+dependencies:
+  - name: postgresql
+    version: "12.x"
+    repository: "https://charts.bitnami.com/bitnami"
+    condition: postgresql.enabled
+  - name: redis
+    version: "17.x"
+    repository: "https://charts.bitnami.com/bitnami"
+    condition: redis.enabled
