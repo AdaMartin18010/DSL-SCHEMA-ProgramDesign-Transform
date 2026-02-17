@@ -1,0 +1,75 @@
+# Azure Container Instances Deployment
+# =====================================
+# 
+# Azure容器实例部署配置
+# 
+# 部署命令:
+#   az deployment group create --resource-group myRG --template-file azure-deploy.yaml
+
+apiVersion: 2019-12-01
+location: eastus
+properties:
+  containers:
+    - name: schema-api
+      properties:
+        image: dslschema.azurecr.io/api:latest
+        resources:
+          requests:
+            cpu: 1
+            memoryInGb: 1.5
+        ports:
+          - port: 8000
+            protocol: TCP
+        environmentVariables:
+          - name: APP_ENV
+            value: production
+          - name: DATABASE_URL
+            secureValue: <secure-db-url>
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+    
+    - name: schema-worker
+      properties:
+        image: dslschema.azurecr.io/worker:latest
+        resources:
+          requests:
+            cpu: 0.5
+            memoryInGb: 1
+        environmentVariables:
+          - name: CELERY_BROKER_URL
+            secureValue: <secure-redis-url>
+  
+  imageRegistryCredentials:
+    - server: dslschema.azurecr.io
+      username: <acr-username>
+      password: <acr-password>
+  
+  ipAddress:
+    type: Public
+    ports:
+      - port: 8000
+        protocol: TCP
+    dnsNameLabel: dsl-schema-api
+  
+  osType: Linux
+  
+  volumes:
+    - name: data-volume
+      azureFile:
+        shareName: schema-data
+        storageAccountName: dslschemastorage
+        storageAccountKey: <storage-key>
+
+tags:
+  environment: production
+  project: dsl-schema

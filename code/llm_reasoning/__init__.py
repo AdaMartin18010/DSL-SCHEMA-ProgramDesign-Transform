@@ -14,8 +14,12 @@ from .embedding import KGEmbedding, EmbeddingStore
 from .chain_builder import ReasoningChainBuilder, ReasoningStep
 from .validator import ResultValidator, ValidationResult
 
+# 便捷别名
+LLMReasoningEngine = LLMInterface
+
 __all__ = [
     'LLMInterface',
+    'LLMReasoningEngine',
     'OpenAILLM',
     'AnthropicLLM',
     'ReasoningResult',

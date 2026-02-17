@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  schema-tools:
+    build:
+      context: ..
+      dockerfile: Docker/Dockerfile
+    container_name: schema-tools
+    volumes:
+      - ./data:/app/data
+      - ./output:/app/output
+    environment:
+      - PYTHONUNBUFFERED=1
+    command: python Tools/schema_validator.py --help
+
+  schema-validator:
+    build:
+      context: ..
+      dockerfile: Docker/Dockerfile
+    container_name: schema-validator
+    volumes:
+      - ./schemas:/app/schemas:ro
+      - ./data:/app/data:ro
+    command: >
+      python Tools/schema_validator.py
+      -s /app/schemas/schema.json
+      -d /app/data/data.json
+      --quality-check
+
+  matrix-generator:
+    build:
+      context: ..
+      dockerfile: Docker/Dockerfile
+    container_name: matrix-generator
+    volumes:
+      - ./output:/app/output
+    command: >
+      python Tools/matrix_generator.py

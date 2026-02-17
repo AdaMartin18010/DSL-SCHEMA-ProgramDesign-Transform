@@ -8,6 +8,8 @@
     - [1.1 标准关系](#11-标准关系)
   - [2. 国际标准](#2-国际标准)
     - [2.1 IEC 61131-3:2025](#21-iec-61131-32025)
+      - [2.1.1 IEC 61131-3:2025 详细Schema映射](#211-iec-61131-32025-详细schema映射)
+      - [2.1.2 厂商适配状态追踪](#212-厂商适配状态追踪)
     - [2.2 IEC 61499:2012](#22-iec-614992012)
     - [2.3 ISO/IEC 14977:1996](#23-isoiec-149771996)
   - [3. 国家标准](#3-国家标准)
@@ -134,22 +136,22 @@ IEC 61131-3明确定义了程序结构、数据类型、变量声明等Schema要
 schema Property_Definition {
   name: Identifier
   type: DataType
-  
+
   getter: FunctionBlock {
     inputs: []
     outputs: [{ name: "VALUE", type: Property.type }]
     implementation: ST_Code
   }
-  
+
   setter: Optional[FunctionBlock] {
     inputs: [{ name: "VALUE", type: Property.type }]
     outputs: []
     implementation: ST_Code
     validation: Optional[Validation_Logic]
   }
-  
+
   access_level: Enum { public, protected, private }
-  
+
   metadata: {
     description: Optional[String]
     unit: Optional[String]
@@ -170,7 +172,7 @@ schema Synchronization_Primitives {
       state: Enum { unlocked, locked }
     }
   }
-  
+
   semaphores: List[Semaphore] {
     semaphore: {
       name: Identifier
@@ -193,7 +195,7 @@ schema Unicode_String_Types {
     characters: List[Unicode_Character]
     byte_length: UInt32
   }
-  
+
   uchar: {
     encoding: "UTF-8"
     code_point: UInt32  // Unicode码点
@@ -217,6 +219,7 @@ schema Unicode_String_Types {
 | **Mitsubishi** | GX Works3 | ⚠️ 评估中 | 2026 | - |
 
 **Schema迁移建议**：
+
 1. 新开发项目建议使用第四版Schema
 2. 现有项目迁移需评估工具支持度
 3. 避免使用已删除的IL语言

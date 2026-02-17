@@ -1,0 +1,521 @@
+openapi: 3.1.2
+info:
+  title: DSL Schema API
+  version: 2.1.0
+  description: |
+    DSL Schema设计与转换平台API
+    
+    完全对齐OpenAPI 3.1.2规范
+    支持JSON Schema 2025-01验证
+  contact:
+    name: DSL Schema Team
+    email: team@dsl-schema.io
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://api.dsl-schema.io/v2
+    description: Production
+  - url: https://staging-api.dsl-schema.io/v2
+    description: Staging
+  - url: http://localhost:8000/api/v1
+    description: Local Development
+
+tags:
+  - name: Validation
+    description: Schema验证服务
+  - name: Matrix
+    description: 概念-属性矩阵
+  - name: Search
+    description: 全文搜索
+  - name: ML
+    description: 机器学习推荐
+  - name: Themes
+    description: 主题管理
+  - name: System
+    description: 系统服务
+
+paths:
+  /health:
+    get:
+      tags: [System]
+      operationId: getHealth
+      summary: 健康检查
+      description: 检查API服务健康状态
+      responses:
+        '200':
+          description: 服务健康
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [healthy, degraded]
+                  version:
+                    type: string
+                  timestamp:
+                    type: string
+                    format: date-time
+
+  /ready:
+    get:
+      tags: [System]
+      operationId: getReadiness
+      summary: 就绪检查
+      description: 检查服务是否就绪接收流量
+      responses:
+        '200':
+          description: 服务就绪
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ready:
+                    type: boolean
+                  checks:
+                    type: object
+                    additionalProperties:
+                      type: boolean
+
+  /schemas/validate:
+    post:
+      tags: [Validation]
+      operationId: validateSchema
+      summary: 验证Schema
+      description: 验证Schema结构和合规性
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ValidationRequest'
+      responses:
+        '200':
+          description: 验证成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /schemas/validate/{validationId}:
+    get:
+      tags: [Validation]
+      operationId: getValidationResult
+      summary: 获取验证结果
+      parameters:
+        - name: validationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: 验证结果
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationResult'
+
+  /matrix/generate:
+    post:
+      tags: [Matrix]
+      operationId: generateMatrix
+      summary: 生成概念-属性矩阵
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MatrixRequest'
+      responses:
+        '202':
+          description: 任务已接受
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  taskId:
+                    type: string
+                    format: uuid
+                  status:
+                    type: string
+                    enum: [accepted, processing]
+
+  /matrix/result/{taskId}:
+    get:
+      tags: [Matrix]
+      operationId: getMatrixResult
+      summary: 获取矩阵结果
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: 矩阵结果
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MatrixResult'
+
+  /search:
+    post:
+      tags: [Search]
+      operationId: search
+      summary: 全文搜索
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SearchRequest'
+      responses:
+        '200':
+          description: 搜索结果
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchResult'
+
+  /ml/recommend:
+    post:
+      tags: [ML]
+      operationId: getRecommendation
+      summary: 获取转换策略推荐
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecommendationRequest'
+      responses:
+        '200':
+          description: 推荐结果
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecommendationResponse'
+
+  /themes:
+    get:
+      tags: [Themes]
+      operationId: listThemes
+      summary: 列出所有主题
+      responses:
+        '200':
+          description: 主题列表
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Theme'
+
+  /themes/{themeId}:
+    get:
+      tags: [Themes]
+      operationId: getTheme
+      summary: 获取主题详情
+      parameters:
+        - name: themeId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 主题详情
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ThemeDetail'
+
+components:
+  schemas:
+    ValidationRequest:
+      type: object
+      required: [schema, schemaType]
+      properties:
+        schema:
+          type: object
+          description: 要验证的Schema
+        schemaType:
+          type: string
+          enum: [json_schema, xml_schema, openapi, asyncapi, graphql]
+        standards:
+          type: array
+          items:
+            type: string
+            enum: [iso20022, fhir, opc_ua, gs1, w3c_vc, iso21838]
+        options:
+          type: object
+          properties:
+            strictMode:
+              type: boolean
+            checkReferences:
+              type: boolean
+            checkCircular:
+              type: boolean
+
+    ValidationResponse:
+      type: object
+      properties:
+        valid:
+          type: boolean
+        validationId:
+          type: string
+          format: uuid
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/ValidationError'
+        warnings:
+          type: array
+          items:
+            $ref: '#/components/schemas/ValidationWarning'
+        compliance:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/ComplianceReport'
+
+    ValidationResult:
+      allOf:
+        - $ref: '#/components/schemas/ValidationResponse'
+        - type: object
+          properties:
+            status:
+              type: string
+              enum: [pending, processing, completed, failed]
+            createdAt:
+              type: string
+              format: date-time
+            completedAt:
+              type: string
+              format: date-time
+
+    ValidationError:
+      type: object
+      properties:
+        path:
+          type: string
+        message:
+          type: string
+        code:
+          type: string
+        severity:
+          type: string
+          enum: [error, warning, info]
+
+    ValidationWarning:
+      allOf:
+        - $ref: '#/components/schemas/ValidationError'
+
+    ComplianceReport:
+      type: object
+      properties:
+        compliant:
+          type: boolean
+        score:
+          type: number
+          minimum: 0
+          maximum: 100
+        issues:
+          type: array
+          items:
+            type: object
+            properties:
+              rule:
+                type: string
+              message:
+                type: string
+              severity:
+                type: string
+
+    MatrixRequest:
+      type: object
+      properties:
+        themes:
+          type: array
+          items:
+            type: string
+        dimensions:
+          type: array
+          items:
+            type: string
+            enum: [theory, application, standards, tools, industry]
+        includeSimilarity:
+          type: boolean
+
+    MatrixResult:
+      type: object
+      properties:
+        taskId:
+          type: string
+        status:
+          type: string
+        themes:
+          type: array
+          items:
+            type: string
+        matrix:
+          type: object
+          additionalProperties:
+            type: object
+        similarityMatrix:
+          type: object
+
+    SearchRequest:
+      type: object
+      required: [query]
+      properties:
+        query:
+          type: string
+          minLength: 1
+        filters:
+          type: object
+          properties:
+            type:
+              type: array
+              items:
+                type: string
+            theme:
+              type: string
+        pagination:
+          type: object
+          properties:
+            page:
+              type: integer
+              minimum: 1
+            perPage:
+              type: integer
+              minimum: 1
+              maximum: 100
+
+    SearchResult:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/SearchItem'
+        total:
+          type: integer
+        page:
+          type: integer
+        perPage:
+          type: integer
+
+    SearchItem:
+      type: object
+      properties:
+        title:
+          type: string
+        path:
+          type: string
+        excerpt:
+          type: string
+        type:
+          type: string
+
+    RecommendationRequest:
+      type: object
+      properties:
+        task:
+          type: string
+          enum: [transformation_strategy, schema_similarity, anomaly_detection]
+        input:
+          type: object
+
+    RecommendationResponse:
+      type: object
+      properties:
+        recommendation:
+          type: string
+        confidence:
+          type: number
+          minimum: 0
+          maximum: 1
+        alternatives:
+          type: array
+          items:
+            type: object
+            properties:
+              option:
+                type: string
+              confidence:
+                type: number
+
+    Theme:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        documentCount:
+          type: integer
+
+    ThemeDetail:
+      allOf:
+        - $ref: '#/components/schemas/Theme'
+        - type: object
+          properties:
+            concepts:
+              type: array
+              items:
+                type: string
+            standards:
+              type: array
+              items:
+                type: string
+            documents:
+              type: array
+              items:
+                type: object
+                properties:
+                  title:
+                    type: string
+                  path:
+                    type: string
+
+  responses:
+    BadRequest:
+      description: 无效请求
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              message:
+                type: string
+
+    ValidationError:
+      description: 验证错误
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object

@@ -5,7 +5,7 @@ Schema版本管理数据模型
 """
 
 from sqlalchemy import Column, Integer, String, Text, DateTime, JSON, ForeignKey
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import relationship
 from datetime import datetime
 

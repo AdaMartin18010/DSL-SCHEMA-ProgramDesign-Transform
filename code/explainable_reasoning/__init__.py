@@ -15,8 +15,12 @@ from .models import (
     ReasoningStep
 )
 
+# 便捷别名
+ExplainableReasoner = ExplainableReasoningStorage
+
 __all__ = [
     'ExplainableReasoningStorage',
+    'ExplainableReasoner',
     'RuleBasedReasoning',
     'ReasoningPathRecorder',
     'ReasoningExplanation',

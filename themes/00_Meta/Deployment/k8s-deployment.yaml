@@ -1,0 +1,497 @@
+# Kubernetes Deployment for DSL Schema Tools
+# ==========================================
+# 
+# 此配置用于在Kubernetes集群上部署Schema验证工具和相关服务
+#
+# 部署命令:
+#   kubectl apply -f k8s-deployment.yaml
+#
+# 查看状态:
+#   kubectl get pods -l app=schema-tools
+#   kubectl logs -l app=schema-tools
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: dsl-schema
+  labels:
+    name: dsl-schema
+    app.kubernetes.io/name: dsl-schema
+    app.kubernetes.io/component: namespace
+
+---
+# ConfigMap - 配置文件
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: schema-config
+  namespace: dsl-schema
+data:
+  config.yaml: |
+    app:
+      name: "DSL Schema Tools"
+      version: "2.0.0"
+      environment: "production"
+    
+    server:
+      host: "0.0.0.0"
+      port: 8000
+      workers: 4
+      timeout: 30
+    
+    validation:
+      max_file_size: "10MB"
+      supported_formats:
+        - json_schema
+        - xml_schema
+        - openapi
+        - protobuf
+      strict_mode: true
+      cache_results: true
+    
+    matrix:
+      dimensions:
+        - theory
+        - application
+        - standards
+        - tools
+        - industry
+      similarity_threshold: 0.7
+    
+    storage:
+      type: "redis"
+      redis:
+        host: "redis"
+        port: 6379
+        db: 0
+      postgres:
+        host: "postgres"
+        port: 5432
+        database: "schema_db"
+    
+    logging:
+      level: "INFO"
+      format: "json"
+      output: "stdout"
+
+---
+# Secret - 敏感配置（实际使用时应加密）
+apiVersion: v1
+kind: Secret
+metadata:
+  name: schema-secrets
+  namespace: dsl-schema
+type: Opaque
+data:
+  # base64 编码的值
+  db_password: c2NoZW1hX3Bhc3N3b3JkMTIz  # schema_password123
+  api_key: c2tfbGl2ZV9hYmNkZWZnaGlqa2w=  # sk_live_abcdefghijkl
+  jwt_secret: c3VwZXJfc2VjcmV0X2tleV9mb3JfanN3dA==  # super_secret_key_for_jwt
+
+---
+# PersistentVolumeClaim - 数据存储
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: schema-data-pvc
+  namespace: dsl-schema
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: standard
+
+---
+# Deployment - 主应用
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: schema-api
+  namespace: dsl-schema
+  labels:
+    app: schema-tools
+    component: api
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: schema-tools
+      component: api
+  template:
+    metadata:
+      labels:
+        app: schema-tools
+        component: api
+    spec:
+      containers:
+        - name: api
+          image: dsl-schema/api:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8000
+              name: http
+              protocol: TCP
+          env:
+            - name: APP_ENV
+              value: "production"
+            - name: CONFIG_PATH
+              value: "/app/config/config.yaml"
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: schema-secrets
+                  key: db_password
+            - name: API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: schema-secrets
+                  key: api_key
+          volumeMounts:
+            - name: config
+              mountPath: /app/config
+            - name: data
+              mountPath: /app/data
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 5
+      volumes:
+        - name: config
+          configMap:
+            name: schema-config
+        - name: data
+          persistentVolumeClaim:
+            claimName: schema-data-pvc
+
+---
+# Service - API服务
+apiVersion: v1
+kind: Service
+metadata:
+  name: schema-api-service
+  namespace: dsl-schema
+  labels:
+    app: schema-tools
+    component: api
+spec:
+  type: ClusterIP
+  selector:
+    app: schema-tools
+    component: api
+  ports:
+    - port: 80
+      targetPort: 8000
+      protocol: TCP
+      name: http
+
+---
+# Deployment - 工作进程（异步任务）
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: schema-worker
+  namespace: dsl-schema
+  labels:
+    app: schema-tools
+    component: worker
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: schema-tools
+      component: worker
+  template:
+    metadata:
+      labels:
+        app: schema-tools
+        component: worker
+    spec:
+      containers:
+        - name: worker
+          image: dsl-schema/worker:latest
+          imagePullPolicy: Always
+          env:
+            - name: CELERY_BROKER_URL
+              value: "redis://redis:6379/0"
+            - name: CELERY_RESULT_BACKEND
+              value: "redis://redis:6379/0"
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: schema-secrets
+                  key: db_password
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "500m"
+            limits:
+              memory: "1Gi"
+              cpu: "1000m"
+
+---
+# Deployment - ML推荐服务
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: schema-ml
+  namespace: dsl-schema
+  labels:
+    app: schema-tools
+    component: ml
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: schema-tools
+      component: ml
+  template:
+    metadata:
+      labels:
+        app: schema-tools
+        component: ml
+    spec:
+      containers:
+        - name: ml
+          image: dsl-schema/ml:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 5000
+              name: http
+          resources:
+            requests:
+              memory: "1Gi"
+              cpu: "500m"
+            limits:
+              memory: "2Gi"
+              cpu: "1000m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 5000
+            initialDelaySeconds: 60
+            periodSeconds: 30
+
+---
+# Service - ML服务
+apiVersion: v1
+kind: Service
+metadata:
+  name: schema-ml-service
+  namespace: dsl-schema
+spec:
+  selector:
+    app: schema-tools
+    component: ml
+  ports:
+    - port: 5000
+      targetPort: 5000
+
+---
+# HorizontalPodAutoscaler - 自动扩缩容
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: schema-api-hpa
+  namespace: dsl-schema
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: schema-api
+  minReplicas: 3
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+        - type: Percent
+          value: 10
+          periodSeconds: 60
+    scaleUp:
+      stabilizationWindowSeconds: 60
+      policies:
+        - type: Percent
+          value: 50
+          periodSeconds: 60
+
+---
+# Ingress - 外部访问
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: schema-ingress
+  namespace: dsl-schema
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  tls:
+    - hosts:
+        - api.dsl-schema.io
+        - ml.dsl-schema.io
+      secretName: schema-tls
+  rules:
+    - host: api.dsl-schema.io
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: schema-api-service
+                port:
+                  number: 80
+    - host: ml.dsl-schema.io
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: schema-ml-service
+                port:
+                  number: 5000
+
+---
+# CronJob - 定时任务（如数据清理、报告生成）
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: schema-daily-cleanup
+  namespace: dsl-schema
+spec:
+  schedule: "0 2 * * *"  # 每天凌晨2点
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: cleanup
+              image: dsl-schema/cleanup:latest
+              env:
+                - name: DB_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: schema-secrets
+                      key: db_password
+              args:
+                - "--days=30"
+                - "--dry-run=false"
+          restartPolicy: OnFailure
+
+---
+# NetworkPolicy - 网络隔离
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: schema-network-policy
+  namespace: dsl-schema
+spec:
+  podSelector:
+    matchLabels:
+      app: schema-tools
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: ingress-nginx
+      ports:
+        - protocol: TCP
+          port: 8000
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app: redis
+      ports:
+        - protocol: TCP
+          port: 6379
+    - to:
+        - podSelector:
+            matchLabels:
+              app: postgres
+      ports:
+        - protocol: TCP
+          port: 5432
+
+---
+# ServiceAccount - 服务账户
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: schema-service-account
+  namespace: dsl-schema
+  labels:
+    app: schema-tools
+
+---
+# Role - 角色权限
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  namespace: dsl-schema
+  name: schema-role
+rules:
+  - apiGroups: [""]
+    resources: ["configmaps", "secrets"]
+    verbs: ["get", "list"]
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "watch"]
+
+---
+# RoleBinding - 角色绑定
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: schema-role-binding
+  namespace: dsl-schema
+subjects:
+  - kind: ServiceAccount
+    name: schema-service-account
+    namespace: dsl-schema
+roleRef:
+  kind: Role
+  name: schema-role
+  apiGroup: rbac.authorization.k8s.io

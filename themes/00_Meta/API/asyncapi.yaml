@@ -1,0 +1,205 @@
+asyncapi: 3.0.0
+info:
+  title: DSL Schema Event API
+  version: 2.1.0
+  description: |
+    异步事件驱动的DSL Schema处理API
+    
+    对齐AsyncAPI 3.0.0规范
+    支持实时验证事件、矩阵生成事件等
+  contact:
+    name: DSL Schema Team
+    email: team@dsl-schema.io
+
+servers:
+  production:
+    host: events.dsl-schema.io:443
+    protocol: wss
+    description: WebSocket生产服务器
+  development:
+    host: localhost:8080
+    protocol: ws
+    description: WebSocket开发服务器
+  kafka:
+    host: kafka.dsl-schema.io:9092
+    protocol: kafka
+    description: Kafka消息队列
+
+channels:
+  schemaValidated:
+    address: schema.validated
+    messages:
+      schemaValidated:
+        $ref: '#/components/messages/SchemaValidated'
+    description: Schema验证完成事件
+  
+  matrixGenerated:
+    address: matrix.generated
+    messages:
+      matrixGenerated:
+        $ref: '#/components/messages/MatrixGenerated'
+    description: 矩阵生成完成事件
+  
+  validationProgress:
+    address: validation.progress
+    messages:
+      progressUpdate:
+        $ref: '#/components/messages/ValidationProgress'
+    description: 验证进度更新
+  
+  systemEvents:
+    address: system.events
+    messages:
+      systemEvent:
+        $ref: '#/components/messages/SystemEvent'
+    description: 系统级事件
+
+operations:
+  onSchemaValidated:
+    action: receive
+    channel:
+      $ref: '#/channels/schemaValidated'
+    messages:
+      - $ref: '#/channels/schemaValidated/messages/schemaValidated'
+    description: 订阅Schema验证完成事件
+  
+  onMatrixGenerated:
+    action: receive
+    channel:
+      $ref: '#/channels/matrixGenerated'
+    messages:
+      - $ref: '#/channels/matrixGenerated/messages/matrixGenerated'
+    description: 订阅矩阵生成完成事件
+  
+  onValidationProgress:
+    action: receive
+    channel:
+      $ref: '#/channels/validationProgress'
+    messages:
+      - $ref: '#/channels/validationProgress/messages/progressUpdate'
+    description: 订阅验证进度更新
+  
+  onSystemEvent:
+    action: receive
+    channel:
+      $ref: '#/channels/systemEvents'
+    messages:
+      - $ref: '#/channels/systemEvents/messages/systemEvent'
+    description: 订阅系统事件
+
+components:
+  messages:
+    SchemaValidated:
+      name: SchemaValidated
+      contentType: application/json
+      payload:
+        type: object
+        required: [validationId, schemaId, valid, timestamp]
+        properties:
+          eventType:
+            type: string
+            const: schema.validated
+          validationId:
+            type: string
+            format: uuid
+            description: 验证任务ID
+          schemaId:
+            type: string
+            description: Schema标识符
+          valid:
+            type: boolean
+            description: 验证是否通过
+          errorCount:
+            type: integer
+            minimum: 0
+          warningCount:
+            type: integer
+            minimum: 0
+          timestamp:
+            type: string
+            format: date-time
+          duration:
+            type: integer
+            description: 处理耗时（毫秒）
+
+    MatrixGenerated:
+      name: MatrixGenerated
+      contentType: application/json
+      payload:
+        type: object
+        required: [taskId, status, timestamp]
+        properties:
+          eventType:
+            type: string
+            const: matrix.generated
+          taskId:
+            type: string
+            format: uuid
+          status:
+            type: string
+            enum: [completed, failed, partial]
+          themes:
+            type: array
+            items:
+              type: string
+          resultSummary:
+            type: object
+            properties:
+              totalConcepts:
+                type: integer
+              totalProperties:
+                type: integer
+              similarityComputed:
+                type: boolean
+          timestamp:
+            type: string
+            format: date-time
+
+    ValidationProgress:
+      name: ValidationProgress
+      contentType: application/json
+      payload:
+        type: object
+        required: [validationId, progress]
+        properties:
+          eventType:
+            type: string
+            const: validation.progress
+          validationId:
+            type: string
+          progress:
+            type: integer
+            minimum: 0
+            maximum: 100
+            description: 进度百分比
+          stage:
+            type: string
+            enum: [parsing, validation, compliance_check, completed]
+          message:
+            type: string
+            description: 当前阶段描述
+          timestamp:
+            type: string
+            format: date-time
+
+    SystemEvent:
+      name: SystemEvent
+      contentType: application/json
+      payload:
+        type: object
+        required: [eventType, severity, timestamp]
+        properties:
+          eventType:
+            type: string
+            enum: [system.startup, system.shutdown, error, warning, info]
+          severity:
+            type: string
+            enum: [critical, high, medium, low, info]
+          message:
+            type: string
+          details:
+            type: object
+            additionalProperties: true
+          timestamp:
+            type: string
+            format: date-time

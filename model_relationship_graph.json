@@ -1,0 +1,90 @@
+{
+  "nodes": [
+    {
+      "id": "00_Meta_tool_batch_processor",
+      "name": "batch_processor",
+      "type": "tool",
+      "group": 3
+    },
+    {
+      "id": "00_Meta_tool_cli_tool",
+      "name": "cli_tool",
+      "type": "tool",
+      "group": 3
+    },
+    {
+      "id": "00_Meta_tool_enhanced_validator",
+      "name": "enhanced_validator",
+      "type": "tool",
+      "group": 3
+    },
+    {
+      "id": "00_Meta_tool_hierarchy_mapper",
+      "name": "hierarchy_mapper",
+      "type": "tool",
+      "group": 3
+    },
+    {
+      "id": "00_Meta_tool_mapping_validator",
+      "name": "mapping_validator",
+      "type": "tool",
+      "group": 3
+    },
+    {
+      "id": "00_Meta_tool_matrix_generator",
+      "name": "matrix_generator",
+      "type": "tool",
+      "group": 3
+    },
+    {
+      "id": "00_Meta_tool_performance_monitor",
+      "name": "performance_monitor",
+      "type": "tool",
+      "group": 3
+    },
+    {
+      "id": "00_Meta_tool_relationship_analyzer",
+      "name": "relationship_analyzer",
+      "type": "tool",
+      "group": 3
+    },
+    {
+      "id": "00_Meta_tool_schema_validator",
+      "name": "schema_validator",
+      "type": "tool",
+      "group": 3
+    },
+    {
+      "id": "00_Meta_tool_schema_visualizer",
+      "name": "schema_visualizer",
+      "type": "tool",
+      "group": 3
+    }
+  ],
+  "links": [
+    {
+      "source": "00_Meta_tool_enhanced_validator",
+      "target": "00_Meta_tool_mapping_validator",
+      "type": "composition",
+      "value": 0.5700000000000001
+    },
+    {
+      "source": "00_Meta_tool_enhanced_validator",
+      "target": "00_Meta_tool_schema_validator",
+      "type": "composition",
+      "value": 0.5765217391304348
+    },
+    {
+      "source": "00_Meta_tool_mapping_validator",
+      "target": "00_Meta_tool_schema_validator",
+      "type": "composition",
+      "value": 0.6104761904761905
+    },
+    {
+      "source": "00_Meta_tool_schema_validator",
+      "target": "00_Meta_tool_schema_visualizer",
+      "type": "composition",
+      "value": 0.5836363636363637
+    }
+  ]
+}

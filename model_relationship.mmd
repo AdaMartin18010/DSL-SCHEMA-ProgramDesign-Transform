@@ -1,0 +1,17 @@
+graph TB
+    subgraph L3 [Data Model]
+        00_Meta_tool_batch_processor[batch_processor]
+        00_Meta_tool_cli_tool[cli_tool]
+        00_Meta_tool_enhanced_validator[enhanced_validator]
+        00_Meta_tool_hierarchy_mapper[hierarchy_mapper]
+        00_Meta_tool_mapping_validator[mapping_validator]
+        00_Meta_tool_matrix_generator[matrix_generator]
+        00_Meta_tool_performance_monitor[performance_monitor]
+        00_Meta_tool_relationship_analyzer[relationship_analyzer]
+        00_Meta_tool_schema_validator[schema_validator]
+        00_Meta_tool_schema_visualizer[schema_visualizer]
+    end
+    00_Meta_tool_enhanced_validator -->|◦| 00_Meta_tool_mapping_validator
+    00_Meta_tool_enhanced_validator -->|◦| 00_Meta_tool_schema_validator
+    00_Meta_tool_mapping_validator -->|◦| 00_Meta_tool_schema_validator
+    00_Meta_tool_schema_validator -->|◦| 00_Meta_tool_schema_visualizer

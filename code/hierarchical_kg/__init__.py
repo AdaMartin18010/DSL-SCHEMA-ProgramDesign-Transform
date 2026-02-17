@@ -13,8 +13,12 @@ from .models import (
     AbstractionRelation
 )
 
+# 便捷别名
+HierarchicalKG = HierarchicalKGStorage
+
 __all__ = [
     'HierarchicalKGStorage',
+    'HierarchicalKG',
     'KnowledgeAbstraction',
     'HierarchicalReasoning',
     'HierarchicalQuery',

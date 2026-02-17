@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Schema Tools - Web Interface</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .card h2 {
+            color: #667eea;
+            margin-bottom: 1rem;
+        }
+        
+        textarea {
+            width: 100%;
+            min-height: 200px;
+            padding: 1rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 14px;
+            resize: vertical;
+        }
+        
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            margin-top: 1rem;
+        }
+        
+        button:hover {
+            background: #5568d3;
+        }
+        
+        .result {
+            margin-top: 1rem;
+            padding: 1rem;
+            border-radius: 4px;
+            display: none;
+        }
+        
+        .result.success {
+            background: #d4edda;
+            color: #155724;
+            display: block;
+        }
+        
+        .result.error {
+            background: #f8d7da;
+            color: #721c24;
+            display: block;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+        
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🔧 Schema Tools</h1>
+        <p>Web Interface for Schema Validation and Transformation</p>
+    </div>
+    
+    <div class="container">
+        <div class="card">
+            <h2>Schema Validator</h2>
+            <div class="grid">
+                <div>
+                    <h3>Schema (JSON)</h3>
+                    <textarea id="schema" placeholder='{"type": "object", "properties": {...}}'></textarea>
+                </div>
+                <div>
+                    <h3>Data (JSON)</h3>
+                    <textarea id="data" placeholder='{"name": "John", "age": 30}'></textarea>
+                </div>
+            </div>
+            <button onclick="validate()">Validate</button>
+            <div id="result" class="result"></div>
+        </div>
+        
+        <div class="card">
+            <h2>Quick Links</h2>
+            <ul>
+                <li><a href="../INDEX.md">Documentation Index</a></li>
+                <li><a href="../QUICK_REFERENCE.md">Quick Reference</a></li>
+                <li><a href="../FAQ.md">FAQ</a></li>
+            </ul>
+        </div>
+    </div>
+    
+    <script>
+        async function validate() {
+            const schema = document.getElementById('schema').value;
+            const data = document.getElementById('data').value;
+            const resultDiv = document.getElementById('result');
+            
+            try {
+                const response = await fetch('/api/v1/validate', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        schema: JSON.parse(schema),
+                        document: JSON.parse(data)
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.valid) {
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = '✅ Validation Passed!';
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = `❌ Validation Failed: ${result.error_count} errors`;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ Error: ${error.message}`;
+            }
+        }
+    </script>
+</body>
+</html>

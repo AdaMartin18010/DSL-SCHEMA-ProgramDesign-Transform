@@ -1,0 +1,69 @@
+{
+  "app": {
+    "name": "DSL Schema Tools",
+    "version": "2.0.0",
+    "description": "Domain-Specific Language Schema Design and Transformation Platform"
+  },
+  "navigation": {
+    "home": "Home",
+    "themes": "Themes",
+    "tools": "Tools",
+    "api": "API",
+    "documentation": "Documentation",
+    "search": "Search",
+    "settings": "Settings"
+  },
+  "validation": {
+    "title": "Schema Validation",
+    "upload": "Upload Schema",
+    "validate": "Validate",
+    "results": "Validation Results",
+    "passed": "Passed",
+    "failed": "Failed",
+    "warnings": "Warnings",
+    "errors": "Errors",
+    "schemaType": "Schema Type",
+    "standardCompliance": "Standard Compliance",
+    "bestPractices": "Best Practices"
+  },
+  "matrix": {
+    "title": "Concept-Property Matrix",
+    "generate": "Generate Matrix",
+    "dimensions": "Dimensions",
+    "similarity": "Similarity Analysis",
+    "export": "Export Matrix"
+  },
+  "search": {
+    "title": "Search",
+    "placeholder": "Search documents, schemas...",
+    "filters": "Filters",
+    "results": "Results",
+    "noResults": "No results found",
+    "advancedSearch": "Advanced Search"
+  },
+  "themes": {
+    "list": "Theme List",
+    "details": "Theme Details",
+    "documents": "Documents",
+    "concepts": "Concepts",
+    "standards": "Standards"
+  },
+  "errors": {
+    "generic": "An error occurred",
+    "notFound": "Not found",
+    "validationFailed": "Validation failed",
+    "serverError": "Server error",
+    "networkError": "Network error"
+  },
+  "buttons": {
+    "submit": "Submit",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "close": "Close",
+    "back": "Back",
+    "next": "Next"
+  }
+}

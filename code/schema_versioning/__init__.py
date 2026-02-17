@@ -16,9 +16,13 @@ from .models import (
     CompatibilityCheck
 )
 
+# 便捷别名
+SchemaVersionManager = SchemaVersionControl
+
 __all__ = [
     'SchemaVersioningStorage',
     'SchemaVersionControl',
+    'SchemaVersionManager',
     'SchemaEvolutionTracker',
     'CompatibilityChecker',
     'SchemaMigrationTool',

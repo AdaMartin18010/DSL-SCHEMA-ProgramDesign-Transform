@@ -11,7 +11,7 @@
     - [2.3 解决方案](#23-解决方案)
     - [2.4 完整代码实现](#24-完整代码实现)
     - [2.5 效果评估](#25-效果评估)
-  - [3. 案例2：IoT设备Prometheus监控系统](#3-案例2iot设备prometheus监控)
+  - [3. 案例2：IoT设备Prometheus监控系统](#3-案例2iot设备prometheus监控系统)
     - [3.1 业务背景](#31-业务背景)
     - [3.2 技术挑战](#32-技术挑战)
     - [3.3 解决方案](#33-解决方案)
@@ -94,6 +94,7 @@
 ### 2.3 解决方案
 
 **架构设计**：
+
 - 采用OpenTelemetry标准采集Metrics、Logs、Traces三类数据
 - 部署OpenTelemetry Collector进行数据收集、处理和导出
 - 使用Jaeger存储追踪数据，VictoriaMetrics存储指标数据
@@ -161,7 +162,7 @@ class Resource:
     deployment_environment: str
     host_name: str = ""
     attributes: Dict[str, str] = field(default_factory=dict)
-    
+
     def to_dict(self) -> Dict:
         return {
             "service.name": self.service_name,
@@ -182,11 +183,11 @@ class Metric:
     labels: Dict[str, str] = field(default_factory=dict)
     timestamp: Optional[datetime] = None
     resource: Optional[Resource] = None
-    
+
     def __post_init__(self):
         if self.timestamp is None:
             self.timestamp = datetime.now()
-    
+
     def to_otlp_format(self) -> Dict:
         """转换为OTLP格式"""
         return {
@@ -214,12 +215,12 @@ class Span:
     status: StatusCode = StatusCode.UNSET
     events: List[Dict] = field(default_factory=list)
     resource: Optional[Resource] = None
-    
+
     def end(self, status: StatusCode = StatusCode.OK):
         """结束Span"""
         self.end_time = datetime.now()
         self.status = status
-    
+
     def add_event(self, name: str, attributes: Dict = None):
         """添加事件"""
         self.events.append({
@@ -227,7 +228,7 @@ class Span:
             "timestamp": datetime.now().isoformat(),
             "attributes": attributes or {}
         })
-    
+
     def duration_ms(self) -> float:
         """获取Span持续时间（毫秒）"""
         if self.end_time:
@@ -246,7 +247,7 @@ class LogRecord:
     timestamp: datetime
     attributes: Dict[str, Any] = field(default_factory=dict)
     resource: Optional[Resource] = None
-    
+
     def to_otlp_format(self) -> Dict:
         """转换为OTLP格式"""
         return {
@@ -263,13 +264,13 @@ class LogRecord:
 
 class Tracer:
     """追踪器 - 管理Span创建和上下文传播"""
-    
+
     def __init__(self, resource: Resource):
         self.resource = resource
         self._current_span: Optional[Span] = None
         self._span_stack: List[Span] = []
-    
-    def start_span(self, name: str, kind: SpanKind = SpanKind.INTERNAL, 
+
+    def start_span(self, name: str, kind: SpanKind = SpanKind.INTERNAL,
                    parent_span_id: Optional[str] = None) -> Span:
         """开始一个新的Span"""
         span = Span(
@@ -284,20 +285,20 @@ class Tracer:
         self._span_stack.append(span)
         self._current_span = span
         return span
-    
+
     def end_span(self, span: Span, status: StatusCode = StatusCode.OK):
         """结束Span"""
         span.end(status)
         if span in self._span_stack:
             self._span_stack.remove(span)
         self._current_span = self._span_stack[-1] if self._span_stack else None
-    
+
     def _get_or_create_trace_id(self) -> str:
         """获取或创建Trace ID"""
         if self._current_span:
             return self._current_span.trace_id
         return str(uuid.uuid4().hex)[:32]
-    
+
     def get_current_context(self) -> Dict:
         """获取当前追踪上下文"""
         if self._current_span:
@@ -310,21 +311,21 @@ class Tracer:
 
 class Meter:
     """计量器 - 管理指标收集"""
-    
+
     def __init__(self, resource: Resource):
         self.resource = resource
         self._counters: Dict[str, float] = defaultdict(float)
         self._gauges: Dict[str, float] = {}
         self._histograms: Dict[str, List[float]] = defaultdict(list)
-    
+
     def create_counter(self, name: str, unit: str = "1") -> 'Counter':
         """创建计数器"""
         return Counter(name, unit, self.resource, self._counters)
-    
+
     def create_gauge(self, name: str, unit: str = "1") -> 'Gauge':
         """创建仪表盘"""
         return Gauge(name, unit, self.resource, self._gauges)
-    
+
     def create_histogram(self, name: str, unit: str = "ms") -> 'Histogram':
         """创建直方图"""
         return Histogram(name, unit, self.resource, self._histograms)
@@ -332,19 +333,19 @@ class Meter:
 
 class Counter:
     """计数器实现"""
-    
+
     def __init__(self, name: str, unit: str, resource: Resource, storage: Dict):
         self.name = name
         self.unit = unit
         self.resource = resource
         self._storage = storage
-    
+
     def add(self, value: float, labels: Dict[str, str] = None):
         """增加值"""
         label_key = json.dumps(labels or {}, sort_keys=True)
         key = f"{self.name}:{label_key}"
         self._storage[key] += value
-    
+
     def get_value(self, labels: Dict[str, str] = None) -> float:
         """获取当前值"""
         label_key = json.dumps(labels or {}, sort_keys=True)
@@ -354,19 +355,19 @@ class Counter:
 
 class Gauge:
     """仪表盘实现"""
-    
+
     def __init__(self, name: str, unit: str, resource: Resource, storage: Dict):
         self.name = name
         self.unit = unit
         self.resource = resource
         self._storage = storage
-    
+
     def set(self, value: float, labels: Dict[str, str] = None):
         """设置值"""
         label_key = json.dumps(labels or {}, sort_keys=True)
         key = f"{self.name}:{label_key}"
         self._storage[key] = value
-    
+
     def get_value(self, labels: Dict[str, str] = None) -> float:
         """获取当前值"""
         label_key = json.dumps(labels or {}, sort_keys=True)
@@ -376,19 +377,19 @@ class Gauge:
 
 class Histogram:
     """直方图实现"""
-    
+
     def __init__(self, name: str, unit: str, resource: Resource, storage: Dict):
         self.name = name
         self.unit = unit
         self.resource = resource
         self._storage = storage
-    
+
     def record(self, value: float, labels: Dict[str, str] = None):
         """记录值"""
         label_key = json.dumps(labels or {}, sort_keys=True)
         key = f"{self.name}:{label_key}"
         self._storage[key].append(value)
-    
+
     def get_statistics(self, labels: Dict[str, str] = None) -> Dict:
         """获取统计信息"""
         label_key = json.dumps(labels or {}, sort_keys=True)
@@ -407,7 +408,7 @@ class Histogram:
 
 class ObservabilityCollector:
     """可观测性数据收集器 - 统一收集指标、日志、追踪"""
-    
+
     def __init__(self, service_name: str, service_version: str, environment: str = "production"):
         self.resource = Resource(
             service_name=service_name,
@@ -417,18 +418,18 @@ class ObservabilityCollector:
         )
         self.tracer = Tracer(self.resource)
         self.meter = Meter(self.resource)
-        
+
         self._metrics: List[Metric] = []
         self._spans: List[Span] = []
         self._logs: List[LogRecord] = []
         self._lock = threading.Lock()
-        
+
         # 启动后台导出线程
         self._executor = ThreadPoolExecutor(max_workers=2)
         self._running = True
         self._export_interval = 10  # 秒
         threading.Thread(target=self._periodic_export, daemon=True).start()
-    
+
     def record_log(self, severity: str, body: str, attributes: Dict = None):
         """记录日志"""
         context = self.tracer.get_current_context()
@@ -445,8 +446,8 @@ class ObservabilityCollector:
         with self._lock:
             self._logs.append(log)
         logger.info(f"[{severity}] {body}")
-    
-    def record_metric(self, name: str, metric_type: MetricType, value: float, 
+
+    def record_metric(self, name: str, metric_type: MetricType, value: float,
                      unit: str = "1", labels: Dict = None):
         """记录指标"""
         metric = Metric(
@@ -460,17 +461,17 @@ class ObservabilityCollector:
         )
         with self._lock:
             self._metrics.append(metric)
-    
+
     def start_span(self, name: str, kind: SpanKind = SpanKind.INTERNAL) -> Span:
         """开始Span"""
         return self.tracer.start_span(name, kind)
-    
+
     def end_span(self, span: Span, status: StatusCode = StatusCode.OK):
         """结束Span并保存"""
         self.tracer.end_span(span, status)
         with self._lock:
             self._spans.append(span)
-    
+
     def trace_function(self, name: str, kind: SpanKind = SpanKind.INTERNAL):
         """函数追踪装饰器"""
         def decorator(func: Callable):
@@ -488,13 +489,13 @@ class ObservabilityCollector:
                     raise
             return wrapper
         return decorator
-    
+
     def _periodic_export(self):
         """定期导出数据"""
         while self._running:
             time.sleep(self._export_interval)
             self._export_data()
-    
+
     def _export_data(self):
         """导出数据到存储"""
         with self._lock:
@@ -504,10 +505,10 @@ class ObservabilityCollector:
             self._metrics.clear()
             self._spans.clear()
             self._logs.clear()
-        
+
         # 模拟导出到后端存储
         logger.info(f"Exported {len(metrics)} metrics, {len(spans)} spans, {len(logs)} logs")
-    
+
     def get_observability_summary(self) -> Dict:
         """获取可观测性摘要"""
         with self._lock:
@@ -518,7 +519,7 @@ class ObservabilityCollector:
                 "pending_logs": len(self._logs),
                 "metric_types": defaultdict(int)
             }
-    
+
     def shutdown(self):
         """关闭收集器"""
         self._running = False
@@ -535,31 +536,31 @@ def simulate_ecommerce_service():
         service_version="v2.3.1",
         environment="production"
     )
-    
+
     # 创建指标
     request_counter = collector.meter.create_counter("http_requests_total")
     latency_histogram = collector.meter.create_histogram("http_request_duration_ms")
     active_orders = collector.meter.create_gauge("active_orders")
-    
+
     @collector.trace_function("create_order", SpanKind.SERVER)
     def create_order(user_id: str, amount: float):
         """创建订单业务函数"""
         collector.record_log("INFO", f"Creating order for user {user_id}", {"amount": amount})
-        
+
         # 模拟业务处理
         processing_time = random.uniform(50, 200)
         time.sleep(processing_time / 1000)
-        
+
         # 记录指标
         request_counter.add(1, {"method": "POST", "endpoint": "/orders"})
         latency_histogram.record(processing_time, {"endpoint": "/orders"})
         active_orders.set(random.randint(100, 500))
-        
+
         order_id = str(uuid.uuid4())[:8]
         collector.record_log("INFO", f"Order {order_id} created successfully")
-        
+
         return {"order_id": order_id, "status": "created"}
-    
+
     @collector.trace_function("process_payment", SpanKind.CLIENT)
     def process_payment(order_id: str, amount: float):
         """处理支付"""
@@ -573,7 +574,7 @@ def simulate_ecommerce_service():
         except Exception as e:
             collector.end_span(span, StatusCode.ERROR)
             raise
-    
+
     # 模拟10个请求
     collector.record_log("INFO", "Starting order service simulation")
     for i in range(10):
@@ -582,7 +583,7 @@ def simulate_ecommerce_service():
             process_payment(result["order_id"], 100.0)
         except Exception as e:
             collector.record_log("ERROR", f"Request failed: {e}")
-    
+
     # 输出统计
     summary = collector.get_observability_summary()
     print("\n" + "="*60)
@@ -591,13 +592,13 @@ def simulate_ecommerce_service():
     print(f"  待导出指标: {summary['pending_metrics']}")
     print(f"  待导出Span: {summary['pending_spans']}")
     print(f"  待导出日志: {summary['pending_logs']}")
-    
+
     # 输出指标统计
     print("\n指标统计:")
     print(f"  请求总数: {request_counter.get_value({'method': 'POST', 'endpoint': '/orders'})}")
     print(f"  延迟统计: {latency_histogram.get_statistics({'endpoint': '/orders'})}")
     print(f"  当前活跃订单: {active_orders.get_value()}")
-    
+
     collector.shutdown()
 
 
@@ -623,7 +624,7 @@ if __name__ == '__main__':
 1. **直接经济收益**：
    - 年度故障损失减少约1200万元（故障处理时间缩短80%，业务中断时间减少）
    - 运维人力成本节省约300万元/年（自动化监控减少人工巡检工作量）
-   
+
 2. **运营效率提升**：
    - 运维团队人均可管理服务数从15个提升至50个（+233%）
    - 故障响应SLA达成率从75%提升至99.2%
@@ -645,6 +646,7 @@ if __name__ == '__main__':
 3. **数据关联规范**：统一使用TraceID作为关联键，建立标签命名规范，避免后期数据关联困难
 4. **性能影响监控**：Agent本身需要被监控，初期曾因Agent CPU占用过高影响业务，后通过优化解决
 5. **组织协同**：可观测性不仅是技术问题，需要开发、运维、SRE团队共同制定SLO和告警策略
+
 ---
 
 ## 3. 案例2：IoT设备Prometheus监控系统
@@ -681,6 +683,7 @@ if __name__ == '__main__':
 ### 3.3 解决方案
 
 **架构设计**：
+
 - 采用Prometheus + Thanos架构实现高可用时序数据存储
 - 边缘部署Prometheus Agent进行本地采集和预处理
 - 使用MQTT Broker作为设备数据接入层
@@ -743,7 +746,7 @@ class Device:
     labels: Dict[str, str] = field(default_factory=dict)
     last_seen: Optional[datetime] = None
     status: DeviceStatus = DeviceStatus.OFFLINE
-    
+
     def get_labels_dict(self) -> Dict[str, str]:
         """获取完整的标签字典"""
         return {
@@ -766,7 +769,7 @@ class MetricSample:
     timestamp: datetime
     metric_type: MetricType = MetricType.GAUGE
     help_text: str = ""
-    
+
     def to_prometheus_format(self) -> str:
         """转换为Prometheus exposition格式"""
         label_str = ",".join([f'{k}="{v}"' for k, v in sorted(self.labels.items())])
@@ -785,7 +788,7 @@ class AlertRule:
     severity: str  # critical, warning, info
     summary: str
     description: str
-    
+
     def evaluate(self, metric_value: float, threshold: float) -> bool:
         """评估告警条件"""
         if ">" in self.expr:
@@ -814,13 +817,13 @@ class Alert:
 
 class DeviceRegistry:
     """设备注册中心"""
-    
+
     def __init__(self):
         self._devices: Dict[str, Device] = {}
         self._lock = Lock()
         self._type_index: Dict[str, Set[str]] = defaultdict(set)
         self._city_index: Dict[str, Set[str]] = defaultdict(set)
-    
+
     def register(self, device: Device):
         """注册设备"""
         with self._lock:
@@ -828,29 +831,29 @@ class DeviceRegistry:
             self._type_index[device.device_type].add(device.device_id)
             self._city_index[device.location.get("city", "unknown")].add(device.device_id)
         logger.info(f"Device registered: {device.device_id}")
-    
+
     def get_device(self, device_id: str) -> Optional[Device]:
         """获取设备"""
         with self._lock:
             return self._devices.get(device_id)
-    
+
     def get_devices_by_type(self, device_type: str) -> List[Device]:
         """按类型获取设备"""
         with self._lock:
             return [self._devices[did] for did in self._type_index.get(device_type, [])]
-    
+
     def update_status(self, device_id: str, status: DeviceStatus):
         """更新设备状态"""
         with self._lock:
             if device_id in self._devices:
                 self._devices[device_id].status = status
                 self._devices[device_id].last_seen = datetime.now()
-    
+
     def get_all_devices(self) -> List[Device]:
         """获取所有设备"""
         with self._lock:
             return list(self._devices.values())
-    
+
     def get_offline_devices(self, timeout_seconds: int = 300) -> List[Device]:
         """获取离线设备"""
         now = datetime.now()
@@ -864,7 +867,7 @@ class DeviceRegistry:
 
 class MetricsCollector:
     """指标采集器 - 模拟从IoT设备采集指标"""
-    
+
     def __init__(self, registry: DeviceRegistry):
         self.registry = registry
         self._running = False
@@ -880,17 +883,17 @@ class MetricsCollector:
             "device_power_level": {"type": MetricType.GAUGE, "unit": "percent", "help": "Battery/power level"},
             "device_request_count": {"type": MetricType.COUNTER, "unit": "1", "help": "Request count"},
         }
-    
+
     def start(self):
         """启动采集"""
         self._running = True
         Thread(target=self._collect_loop, daemon=True).start()
         logger.info("Metrics collector started")
-    
+
     def stop(self):
         """停止采集"""
         self._running = False
-    
+
     def _collect_loop(self):
         """采集循环"""
         while self._running:
@@ -903,13 +906,13 @@ class MetricsCollector:
                     except queue.Full:
                         logger.warning("Metrics queue full, dropping sample")
             time.sleep(self._collect_interval)
-    
+
     def _generate_device_metrics(self, device: Device) -> List[MetricSample]:
         """生成设备指标（模拟）"""
         now = datetime.now()
         samples = []
         labels = device.get_labels_dict()
-        
+
         # 根据设备类型生成不同的指标
         if device.device_type == "streetlight":
             samples.append(MetricSample(
@@ -928,7 +931,7 @@ class MetricsCollector:
                 metric_type=MetricType.GAUGE,
                 help_text="Power consumption in watts"
             ))
-        
+
         elif device.device_type == "sensor":
             samples.append(MetricSample(
                 name="device_temperature",
@@ -952,7 +955,7 @@ class MetricsCollector:
                 metric_type=MetricType.GAUGE,
                 help_text="PM2.5 concentration"
             ))
-        
+
         # 通用指标
         samples.append(MetricSample(
             name="device_uptime",
@@ -975,9 +978,9 @@ class MetricsCollector:
             timestamp=now,
             metric_type=MetricType.GAUGE
         ))
-        
+
         return samples
-    
+
     def get_samples_batch(self, batch_size: int = 1000) -> List[MetricSample]:
         """批量获取样本"""
         samples = []
@@ -991,7 +994,7 @@ class MetricsCollector:
 
 class AlertManager:
     """告警管理器"""
-    
+
     def __init__(self, registry: DeviceRegistry):
         self.registry = registry
         self._rules: List[AlertRule] = []
@@ -1000,32 +1003,32 @@ class AlertManager:
         self._lock = Lock()
         self._eval_interval = 30  # 评估间隔(秒)
         self._running = False
-    
+
     def add_rule(self, rule: AlertRule):
         """添加告警规则"""
         self._rules.append(rule)
         logger.info(f"Alert rule added: {rule.name}")
-    
+
     def start(self):
         """启动告警评估"""
         self._running = True
         Thread(target=self._eval_loop, daemon=True).start()
-    
+
     def stop(self):
         """停止告警评估"""
         self._running = False
-    
+
     def _eval_loop(self):
         """评估循环"""
         while self._running:
             self._evaluate_rules()
             time.sleep(self._eval_interval)
-    
+
     def _evaluate_rules(self):
         """评估所有规则"""
         # 模拟基于当前指标的告警评估
         pass
-    
+
     def evaluate_metric(self, device_id: str, metric_name: str, value: float):
         """评估单个指标"""
         for rule in self._rules:
@@ -1033,13 +1036,13 @@ class AlertManager:
                 threshold = self._extract_threshold(rule.expr)
                 if rule.evaluate(value, threshold):
                     self._fire_alert(rule, device_id, value)
-    
+
     def _extract_threshold(self, expr: str) -> float:
         """从表达式中提取阈值"""
         import re
         match = re.search(r'\d+\.?\d*', expr)
         return float(match.group()) if match else 0.0
-    
+
     def _fire_alert(self, rule: AlertRule, device_id: str, value: float):
         """触发告警"""
         alert_id = f"{rule.name}:{device_id}"
@@ -1061,7 +1064,7 @@ class AlertManager:
                 )
                 self._active_alerts[alert_id] = alert
                 logger.warning(f"ALERT FIRING: {rule.name} for device {device_id}, value={value:.2f}")
-    
+
     def resolve_alert(self, alert_id: str):
         """解决告警"""
         with self._lock:
@@ -1071,7 +1074,7 @@ class AlertManager:
                 alert.ends_at = datetime.now()
                 self._alert_history.append(alert)
                 logger.info(f"ALERT RESOLVED: {alert.rule_name} for device {alert.device_id}")
-    
+
     def get_active_alerts(self) -> List[Alert]:
         """获取活跃告警"""
         with self._lock:
@@ -1080,7 +1083,7 @@ class AlertManager:
 
 class PrometheusRemoteWriter:
     """Prometheus远程写入器 - 将指标发送到远程存储"""
-    
+
     def __init__(self, endpoint: str = "http://localhost:9090/api/v1/write"):
         self.endpoint = endpoint
         self._batch_size = 1000
@@ -1089,37 +1092,37 @@ class PrometheusRemoteWriter:
         self._buffer: List[MetricSample] = []
         self._lock = Lock()
         self._samples_sent = 0
-    
+
     def start(self):
         """启动写入器"""
         self._running = True
         Thread(target=self._flush_loop, daemon=True).start()
-    
+
     def stop(self):
         """停止写入器"""
         self._running = False
         self._flush()
-    
+
     def write(self, sample: MetricSample):
         """写入样本"""
         with self._lock:
             self._buffer.append(sample)
             if len(self._buffer) >= self._batch_size:
                 self._flush()
-    
+
     def write_batch(self, samples: List[MetricSample]):
         """批量写入"""
         with self._lock:
             self._buffer.extend(samples)
             if len(self._buffer) >= self._batch_size:
                 self._flush()
-    
+
     def _flush_loop(self):
         """定期刷新循环"""
         while self._running:
             time.sleep(self._flush_interval)
             self._flush()
-    
+
     def _flush(self):
         """刷新缓冲区到远程存储"""
         with self._lock:
@@ -1127,7 +1130,7 @@ class PrometheusRemoteWriter:
                 return
             batch = self._buffer[:self._batch_size]
             self._buffer = self._buffer[self._batch_size:]
-        
+
         # 模拟发送
         self._samples_sent += len(batch)
         logger.info(f"Flushed {len(batch)} samples to remote storage. Total: {self._samples_sent}")
@@ -1135,20 +1138,20 @@ class PrometheusRemoteWriter:
 
 class IoTMonitoringSystem:
     """IoT监控系统主类"""
-    
+
     def __init__(self):
         self.registry = DeviceRegistry()
         self.collector = MetricsCollector(self.registry)
         self.alert_manager = AlertManager(self.registry)
         self.remote_writer = PrometheusRemoteWriter()
         self._running = False
-    
+
     def initialize_devices(self, count: int = 100):
         """初始化模拟设备"""
         device_types = ["streetlight", "sensor", "camera", "meter"]
         manufacturers = ["Huawei", "Dahua", "Hikvision", "Siemens"]
         cities = ["Beijing", "Shanghai", "Shenzhen", "Guangzhou", "Hangzhou"]
-        
+
         for i in range(count):
             device = Device(
                 device_id=f"DEV{str(i).zfill(6)}",
@@ -1164,7 +1167,7 @@ class IoTMonitoringSystem:
             )
             self.registry.register(device)
         logger.info(f"Initialized {count} devices")
-    
+
     def setup_alert_rules(self):
         """设置告警规则"""
         rules = [
@@ -1203,32 +1206,32 @@ class IoTMonitoringSystem:
         ]
         for rule in rules:
             self.alert_manager.add_rule(rule)
-    
+
     def start(self):
         """启动系统"""
         self._running = True
         self.collector.start()
         self.alert_manager.start()
         self.remote_writer.start()
-        
+
         # 启动指标处理线程
         Thread(target=self._process_metrics, daemon=True).start()
         logger.info("IoT Monitoring System started")
-    
+
     def stop(self):
         """停止系统"""
         self._running = False
         self.collector.stop()
         self.alert_manager.stop()
         self.remote_writer.stop()
-    
+
     def _process_metrics(self):
         """处理指标 - 获取采集的指标并发送到远程存储"""
         while self._running:
             samples = self.collector.get_samples_batch(batch_size=1000)
             if samples:
                 self.remote_writer.write_batch(samples)
-                
+
                 # 评估告警
                 for sample in samples:
                     if sample.name in ["device_temperature", "device_power_level", "device_network_signal"]:
@@ -1238,13 +1241,13 @@ class IoTMonitoringSystem:
                             sample.value
                         )
             time.sleep(1)
-    
+
     def get_system_status(self) -> Dict:
         """获取系统状态"""
         devices = self.registry.get_all_devices()
         offline_devices = self.registry.get_offline_devices()
         active_alerts = self.alert_manager.get_active_alerts()
-        
+
         return {
             "total_devices": len(devices),
             "offline_devices": len(offline_devices),
@@ -1260,16 +1263,16 @@ class IoTMonitoringSystem:
 def demo_iot_monitoring():
     """演示IoT监控系统"""
     system = IoTMonitoringSystem()
-    
+
     # 初始化100个设备
     system.initialize_devices(count=100)
-    
+
     # 设置告警规则
     system.setup_alert_rules()
-    
+
     # 启动系统
     system.start()
-    
+
     try:
         # 运行60秒
         for i in range(6):
@@ -1283,14 +1286,14 @@ def demo_iot_monitoring():
             print(f"  活跃告警: {status['active_alerts']}")
             print(f"  严重告警: {status['critical_alerts']}")
             print(f"  已发送样本: {status['samples_sent']}")
-            
+
             # 显示活跃告警
             alerts = system.alert_manager.get_active_alerts()
             if alerts:
                 print("\n  当前告警:")
                 for alert in alerts[:3]:  # 只显示前3个
                     print(f"    - [{alert.severity.upper()}] {alert.rule_name}: {alert.annotations.get('summary', '')}")
-    
+
     finally:
         system.stop()
         print("\n" + "="*60)
@@ -1380,6 +1383,7 @@ if __name__ == '__main__':
 ### 4.3 解决方案
 
 **架构设计**：
+
 - 采用分层存储：热数据（SSD，7天）+ 温数据（HDD，30天）+ 冷数据（对象存储，5年）
 - 使用ClickHouse存储指标数据，Elasticsearch存储日志，Ceph存储追踪数据
 - 实现数据自动降级：7天→30天→1年→5年，不同层级不同压缩策略
@@ -1448,7 +1452,7 @@ class TimeSeriesPoint:
     value: float
     labels: Dict[str, str] = field(default_factory=dict)
     data_type: DataType = DataType.METRIC
-    
+
     def to_storage_format(self) -> bytes:
         """转换为存储格式"""
         data = {
@@ -1458,7 +1462,7 @@ class TimeSeriesPoint:
             "l": self.labels
         }
         return json.dumps(data, separators=(',', ':')).encode('utf-8')
-    
+
     @classmethod
     def from_storage_format(cls, data: bytes) -> 'TimeSeriesPoint':
         """从存储格式解析"""
@@ -1482,7 +1486,7 @@ class LogEntry:
     trace_id: Optional[str]
     span_id: Optional[str]
     labels: Dict[str, str] = field(default_factory=dict)
-    
+
     def to_storage_format(self) -> bytes:
         """转换为存储格式"""
         data = {
@@ -1500,9 +1504,9 @@ class LogEntry:
 
 class CompressionEngine:
     """压缩引擎"""
-    
+
     SUPPORTED_ALGORITHMS = ['none', 'gzip', 'zstd']
-    
+
     @staticmethod
     def compress(data: bytes, algorithm: str = 'gzip') -> Tuple[bytes, str]:
         """压缩数据"""
@@ -1513,7 +1517,7 @@ class CompressionEngine:
         elif algorithm == 'zstd':
             return gzip.compress(data, compresslevel=3), 'zstd'
         return data, 'none'
-    
+
     @staticmethod
     def decompress(data: bytes, algorithm: str) -> bytes:
         """解压缩数据"""
@@ -1526,7 +1530,7 @@ class CompressionEngine:
 
 class StorageBackend:
     """存储后端抽象基类"""
-    
+
     def __init__(self, name: str, tier: DataTier):
         self.name = name
         self.tier = tier
@@ -1534,7 +1538,7 @@ class StorageBackend:
         self._metadata: Dict[str, Dict] = {}
         self._lock = threading.RLock()
         self._size_bytes = 0
-    
+
     def write(self, key: str, data: bytes, metadata: Dict = None) -> bool:
         """写入数据"""
         with self._lock:
@@ -1542,12 +1546,12 @@ class StorageBackend:
             self._metadata[key] = metadata or {}
             self._size_bytes += len(data)
         return True
-    
+
     def read(self, key: str) -> Optional[bytes]:
         """读取数据"""
         with self._lock:
             return self._storage.get(key)
-    
+
     def delete(self, key: str) -> bool:
         """删除数据"""
         with self._lock:
@@ -1557,8 +1561,8 @@ class StorageBackend:
                 del self._metadata[key]
                 return True
         return False
-    
-    def query(self, prefix: str = None, start_time: datetime = None, 
+
+    def query(self, prefix: str = None, start_time: datetime = None,
               end_time: datetime = None) -> List[Dict]:
         """查询数据"""
         results = []
@@ -1572,7 +1576,7 @@ class StorageBackend:
                     continue
                 results.append({"key": key, "metadata": meta})
         return results
-    
+
     def get_stats(self) -> Dict:
         """获取统计信息"""
         with self._lock:
@@ -1587,7 +1591,7 @@ class StorageBackend:
 
 class TieredStorageManager:
     """分层存储管理器"""
-    
+
     def __init__(self):
         self.backends: Dict[DataTier, StorageBackend] = {
             DataTier.HOT: StorageBackend("hot_ssd", DataTier.HOT),
@@ -1595,7 +1599,7 @@ class TieredStorageManager:
             DataTier.COLD: StorageBackend("cold_object", DataTier.COLD),
             DataTier.ARCHIVE: StorageBackend("archive_tape", DataTier.ARCHIVE)
         }
-        
+
         self.policies: Dict[DataType, Dict[DataTier, StoragePolicy]] = {
             DataType.METRIC: {
                 DataTier.HOT: StoragePolicy(DataTier.HOT, 7, 'none', 2, ['metric_name', 'timestamp']),
@@ -1616,20 +1620,20 @@ class TieredStorageManager:
                 DataTier.ARCHIVE: StoragePolicy(DataTier.ARCHIVE, 365, 'gzip', 1, [])
             }
         }
-        
+
         self.compression = CompressionEngine()
         self._tier_downgrade_interval = 3600  # 1小时检查一次
         self._running = False
         self._executor = ThreadPoolExecutor(max_workers=4)
-    
-    def store(self, data_type: DataType, key: str, data: bytes, 
+
+    def store(self, data_type: DataType, key: str, data: bytes,
               timestamp: datetime, metadata: Dict = None) -> bool:
         """存储数据 - 自动路由到合适的层级"""
         tier = self._determine_tier(data_type, timestamp)
         policy = self.policies[data_type][tier]
-        
+
         compressed_data, algo = self.compression.compress(data, policy.compression)
-        
+
         meta = {
             "data_type": data_type.value,
             "original_size": len(data),
@@ -1640,20 +1644,20 @@ class TieredStorageManager:
             "tier": tier.value,
             **(metadata or {})
         }
-        
+
         backend = self.backends[tier]
         return backend.write(key, compressed_data, meta)
-    
+
     def _determine_tier(self, data_type: DataType, timestamp: datetime) -> DataTier:
         """确定数据应存储的层级"""
         age_days = (datetime.now() - timestamp).days
-        
+
         for tier in [DataTier.HOT, DataTier.WARM, DataTier.COLD]:
             policy = self.policies[data_type][tier]
             if age_days < policy.retention_days:
                 return tier
         return DataTier.ARCHIVE
-    
+
     def retrieve(self, key: str, data_type: DataType) -> Optional[bytes]:
         """检索数据 - 自动在所有层级查找"""
         for tier in DataTier:
@@ -1664,25 +1668,25 @@ class TieredStorageManager:
                 algo = meta.get('compression_algorithm', 'none')
                 return self.compression.decompress(data, algo)
         return None
-    
-    def query_by_time_range(self, data_type: DataType, start: datetime, 
+
+    def query_by_time_range(self, data_type: DataType, start: datetime,
                            end: datetime, filters: Dict = None) -> List[Dict]:
         """按时间范围查询"""
         results = []
-        
+
         tiers_to_query = set()
         for tier in DataTier:
             policy = self.policies[data_type][tier]
             tier_start = datetime.now() - timedelta(days=policy.retention_days)
             if end >= tier_start:
                 tiers_to_query.add(tier)
-        
+
         futures = []
         for tier in tiers_to_query:
             backend = self.backends[tier]
             future = self._executor.submit(backend.query, None, start, end)
             futures.append((tier, future))
-        
+
         for tier, future in futures:
             try:
                 tier_results = future.result(timeout=5)
@@ -1691,26 +1695,26 @@ class TieredStorageManager:
                 results.extend(tier_results)
             except Exception as e:
                 logger.error(f"Query failed for tier {tier}: {e}")
-        
+
         return results
-    
+
     def start_lifecycle_manager(self):
         """启动生命周期管理器"""
         self._running = True
         threading.Thread(target=self._lifecycle_loop, daemon=True).start()
         logger.info("Lifecycle manager started")
-    
+
     def stop_lifecycle_manager(self):
         """停止生命周期管理器"""
         self._running = False
-    
+
     def _lifecycle_loop(self):
         """生命周期管理循环"""
         while self._running:
             self._execute_tier_downgrade()
             self._execute_data_expiration()
             time.sleep(self._tier_downgrade_interval)
-    
+
     def _execute_tier_downgrade(self):
         """执行层级降级"""
         logger.info("Executing tier downgrade...")
@@ -1718,7 +1722,7 @@ class TieredStorageManager:
             for source_tier in [DataTier.HOT, DataTier.WARM, DataTier.COLD]:
                 policy = self.policies[data_type][source_tier]
                 backend = self.backends[source_tier]
-                
+
                 with backend._lock:
                     keys_to_downgrade = []
                     for key, meta in backend._metadata.items():
@@ -1727,46 +1731,46 @@ class TieredStorageManager:
                         timestamp = meta.get('timestamp')
                         if timestamp and (datetime.now() - timestamp).days >= policy.retention_days:
                             keys_to_downgrade.append(key)
-                
+
                 for key in keys_to_downgrade[:100]:
                     self._downgrade_data(key, data_type, source_tier)
-    
+
     def _downgrade_data(self, key: str, data_type: DataType, from_tier: DataTier):
         """降级数据到更低层级"""
         source_backend = self.backends[from_tier]
         data = source_backend.read(key)
         meta = source_backend._metadata.get(key, {})
-        
+
         if data is None:
             return
-        
+
         algo = meta.get('compression_algorithm', 'none')
         original_data = self.compression.decompress(data, algo)
         timestamp = meta.get('timestamp', datetime.now())
-        
-        self.store(data_type, key, original_data, timestamp, 
+
+        self.store(data_type, key, original_data, timestamp,
                   {k: v for k, v in meta.items() if k not in ['tier', 'compression_algorithm']})
-        
+
         source_backend.delete(key)
         logger.debug(f"Downgraded {key} from {from_tier.value}")
-    
+
     def _execute_data_expiration(self):
         """执行数据过期删除"""
         for data_type in DataType:
             archive_policy = self.policies[data_type][DataTier.ARCHIVE]
             backend = self.backends[DataTier.ARCHIVE]
-            
+
             with backend._lock:
                 keys_to_delete = []
                 for key, meta in backend._metadata.items():
                     timestamp = meta.get('timestamp')
                     if timestamp and (datetime.now() - timestamp).days >= archive_policy.retention_days:
                         keys_to_delete.append(key)
-                
+
                 for key in keys_to_delete:
                     backend.delete(key)
                     logger.info(f"Expired and deleted: {key}")
-    
+
     def get_storage_stats(self) -> Dict:
         """获取存储统计"""
         stats = {
@@ -1775,39 +1779,39 @@ class TieredStorageManager:
             "total_size_mb": 0,
             "compression_stats": defaultdict(lambda: {"original": 0, "compressed": 0})
         }
-        
+
         for tier, backend in self.backends.items():
             backend_stats = backend.get_stats()
             stats["backends"][tier.value] = backend_stats
             stats["total_keys"] += backend_stats["total_keys"]
             stats["total_size_mb"] += backend_stats["size_mb"]
-            
+
             with backend._lock:
                 for meta in backend._metadata.values():
                     algo = meta.get('compression_algorithm', 'none')
                     stats["compression_stats"][algo]["original"] += meta.get('original_size', 0)
                     stats["compression_stats"][algo]["compressed"] += meta.get('compressed_size', 0)
-        
+
         return stats
 
 
 class QueryEngine:
     """查询引擎 - 统一查询接口"""
-    
+
     def __init__(self, storage_manager: TieredStorageManager):
         self.storage = storage_manager
         self._query_cache: Dict[str, Any] = {}
         self._cache_ttl = 60
-    
+
     def query_metrics(self, metric_name: str, start: datetime, end: datetime,
                      labels: Dict = None, aggregation: str = None) -> Dict:
         """查询指标数据"""
         cache_key = f"metric:{metric_name}:{start.isoformat()}:{end.isoformat()}"
         if cache_key in self._query_cache:
             return self._query_cache[cache_key]
-        
+
         results = self.storage.query_by_time_range(DataType.METRIC, start, end)
-        
+
         points = []
         for item in results:
             data = self.storage.retrieve(item['key'], DataType.METRIC)
@@ -1817,9 +1821,9 @@ class QueryEngine:
                     if labels and not all(point.labels.get(k) == v for k, v in labels.items()):
                         continue
                     points.append(point)
-        
+
         points.sort(key=lambda p: p.timestamp)
-        
+
         values = [p.value for p in points]
         result = {
             "metric_name": metric_name,
@@ -1831,18 +1835,18 @@ class QueryEngine:
                 "avg": sum(values) / len(values) if values else 0,
                 "sum": sum(values)
             },
-            "series": [{"timestamp": p.timestamp.isoformat(), "value": p.value, "labels": p.labels} 
+            "series": [{"timestamp": p.timestamp.isoformat(), "value": p.value, "labels": p.labels}
                       for p in points[:1000]]
         }
-        
+
         self._query_cache[cache_key] = result
         return result
-    
-    def query_logs(self, service: str, level: str = None, 
+
+    def query_logs(self, service: str, level: str = None,
                   start: datetime = None, end: datetime = None,
                   keyword: str = None, limit: int = 100) -> List[Dict]:
         """查询日志"""
-        results = self.storage.query_by_time_range(DataType.LOG, start or datetime.now() - timedelta(hours=1), 
+        results = self.storage.query_by_time_range(DataType.LOG, start or datetime.now() - timedelta(hours=1),
                                                    end or datetime.now())
         logs = []
         for item in results:
@@ -1862,7 +1866,7 @@ class QueryEngine:
                         "trace_id": log_obj.get('tid')
                     })
         return logs[:limit]
-    
+
     def get_trace(self, trace_id: str) -> Optional[Dict]:
         """获取完整调用链"""
         for tier in DataTier:
@@ -1887,10 +1891,10 @@ def demo_storage_system():
     storage = TieredStorageManager()
     query_engine = QueryEngine(storage)
     storage.start_lifecycle_manager()
-    
+
     try:
         now = datetime.now()
-        
+
         logger.info("Writing recent data (hot tier)...")
         for i in range(1000):
             point = TimeSeriesPoint(
@@ -1901,7 +1905,7 @@ def demo_storage_system():
             )
             key = f"metric:{point.metric_name}:{point.timestamp.timestamp()}:{i}"
             storage.store(DataType.METRIC, key, point.to_storage_format(), point.timestamp)
-        
+
         logger.info("Writing 15-day-old data (warm tier)...")
         for i in range(500):
             point = TimeSeriesPoint(
@@ -1912,7 +1916,7 @@ def demo_storage_system():
             )
             key = f"metric:{point.metric_name}:{point.timestamp.timestamp()}:{i}"
             storage.store(DataType.METRIC, key, point.to_storage_format(), point.timestamp)
-        
+
         logger.info("Writing log data...")
         for i in range(500):
             log = LogEntry(
@@ -1926,7 +1930,7 @@ def demo_storage_system():
             )
             key = f"log:{log.service}:{log.timestamp.timestamp()}:{i}"
             storage.store(DataType.LOG, key, log.to_storage_format(), log.timestamp)
-        
+
         time.sleep(1)
         print("\n" + "="*60)
         print("存储系统统计:")
@@ -1935,13 +1939,13 @@ def demo_storage_system():
             print(f"  [{tier.upper()}]")
             print(f"    键数量: {tier_stats['total_keys']}")
             print(f"    存储大小: {tier_stats['size_mb']:.2f} MB")
-        
+
         print(f"\n总键数量: {stats['total_keys']}")
         print(f"总存储大小: {stats['total_size_mb']:.2f} MB")
-        
+
         print("\n" + "="*60)
         print("查询演示:")
-        
+
         result = query_engine.query_metrics(
             "cpu_usage",
             now - timedelta(hours=1),
@@ -1952,7 +1956,7 @@ def demo_storage_system():
         print(f"  数据点数: {result['points_count']}")
         print(f"  平均值: {result['statistics']['avg']:.2f}")
         print(f"  最大值: {result['statistics']['max']:.2f}")
-        
+
         logs = query_engine.query_logs(
             service="payment-service",
             level="ERROR",
@@ -1962,7 +1966,7 @@ def demo_storage_system():
         print(f"\n日志查询结果 (ERROR级别): {len(logs)} 条")
         for log in logs[:3]:
             print(f"  [{log['level']}] {log['message'][:50]}...")
-    
+
     finally:
         storage.stop_lifecycle_manager()
         print("\n" + "="*60)
@@ -2054,6 +2058,7 @@ if __name__ == '__main__':
 ### 5.3 解决方案
 
 **架构设计**：
+
 - 采用流式处理架构实时处理告警流
 - 构建服务依赖图谱，基于图算法进行告警关联
 - 使用LSTM神经网络进行时序异常检测
@@ -2124,7 +2129,7 @@ class Alert:
     annotations: Dict[str, str] = field(default_factory=dict)
     correlation_id: Optional[str] = None
     root_cause_score: float = 0.0
-    
+
     def duration_seconds(self) -> int:
         """告警持续时间"""
         end = self.ends_at or datetime.now()
@@ -2142,14 +2147,14 @@ class AlertGroup:
     common_labels: Dict[str, str] = field(default_factory=dict)
     severity: AlertSeverity = AlertSeverity.MEDIUM
     root_cause_alert: Optional[Alert] = None
-    
+
     def add_alert(self, alert: Alert):
         """添加告警到组"""
         self.alerts.append(alert)
         self.updated_at = datetime.now()
         alert.correlation_id = self.group_id
-        
-        severity_order = [AlertSeverity.INFO, AlertSeverity.LOW, 
+
+        severity_order = [AlertSeverity.INFO, AlertSeverity.LOW,
                          AlertSeverity.MEDIUM, AlertSeverity.HIGH, AlertSeverity.CRITICAL]
         if severity_order.index(alert.severity) > severity_order.index(self.severity):
             self.severity = alert.severity
@@ -2157,19 +2162,19 @@ class AlertGroup:
 
 class ServiceDependencyGraph:
     """服务依赖图谱"""
-    
+
     def __init__(self):
         self._nodes: Set[str] = set()
         self._edges: Dict[str, Set[str]] = defaultdict(set)
         self._reverse_edges: Dict[str, Set[str]] = defaultdict(set)
         self._edge_weights: Dict[Tuple[str, str], float] = {}
         self._lock = Lock()
-    
+
     def add_service(self, service_name: str):
         """添加服务节点"""
         with self._lock:
             self._nodes.add(service_name)
-    
+
     def add_dependency(self, from_service: str, to_service: str, weight: float = 1.0):
         """添加依赖关系"""
         with self._lock:
@@ -2178,62 +2183,62 @@ class ServiceDependencyGraph:
             self._edges[from_service].add(to_service)
             self._reverse_edges[to_service].add(from_service)
             self._edge_weights[(from_service, to_service)] = weight
-    
+
     def get_upstream(self, service: str) -> List[Tuple[str, float]]:
         """获取上游依赖（被该服务依赖的服务）"""
         with self._lock:
-            return [(s, self._edge_weights.get((service, s), 1.0)) 
+            return [(s, self._edge_weights.get((service, s), 1.0))
                    for s in self._edges.get(service, [])]
-    
+
     def get_downstream(self, service: str) -> List[Tuple[str, float]]:
         """获取下游依赖（依赖该服务的服务）"""
         with self._lock:
-            return [(s, self._edge_weights.get((s, service), 1.0)) 
+            return [(s, self._edge_weights.get((s, service), 1.0))
                    for s in self._reverse_edges.get(service, [])]
-    
+
     def find_impact_radius(self, service: str, max_depth: int = 3) -> Dict[str, float]:
         """查找影响半径内的所有服务及其影响权重"""
         impacted = {service: 1.0}
         queue = deque([(service, 1.0, 0)])
         visited = {service}
-        
+
         while queue:
             current, weight, depth = queue.popleft()
             if depth >= max_depth:
                 continue
-            
+
             for downstream, edge_weight in self.get_downstream(current):
                 if downstream not in visited:
                     visited.add(downstream)
                     new_weight = weight * edge_weight * 0.8
                     impacted[downstream] = new_weight
                     queue.append((downstream, new_weight, depth + 1))
-        
+
         return impacted
-    
+
     def calculate_root_cause_score(self, service: str, all_alerts: List[Alert]) -> float:
         """计算服务的根因可能性评分"""
         score = 0.0
-        
+
         upstream = self.get_upstream(service)
         upstream_alerts = sum(1 for a in all_alerts if a.service in [s for s, _ in upstream])
         score += upstream_alerts * 0.3
-        
+
         downstream = self.get_downstream(service)
         score += len(downstream) * 0.2
-        
+
         service_alert = next((a for a in all_alerts if a.service == service), None)
         if service_alert:
             earliest = min(a.starts_at for a in all_alerts)
             if service_alert.starts_at == earliest:
                 score += 0.5
-        
+
         return min(score, 1.0)
 
 
 class AlertAggregator:
     """告警聚合器"""
-    
+
     def __init__(self, dependency_graph: ServiceDependencyGraph):
         self.graph = dependency_graph
         self._groups: Dict[str, AlertGroup] = {}
@@ -2241,7 +2246,7 @@ class AlertAggregator:
         self._lock = Lock()
         self._group_window = 300
         self._similarity_threshold = 0.8
-    
+
     def process_alert(self, alert: Alert) -> Optional[AlertGroup]:
         """处理新告警，返回聚合后的组"""
         with self._lock:
@@ -2250,7 +2255,7 @@ class AlertAggregator:
                     group.add_alert(alert)
                     self._alert_to_group[alert.alert_id] = group.group_id
                     return group
-            
+
             group_id = str(uuid.uuid4())[:8]
             group = AlertGroup(
                 group_id=group_id,
@@ -2262,12 +2267,12 @@ class AlertAggregator:
             self._groups[group_id] = group
             self._alert_to_group[alert.alert_id] = group_id
             return group
-    
+
     def _should_merge(self, alert: Alert, group: AlertGroup) -> bool:
         """判断告警是否应该合并到组"""
         if (alert.starts_at - group.updated_at).seconds > self._group_window:
             return False
-        
+
         for existing_alert in group.alerts:
             if alert.service == existing_alert.service:
                 return True
@@ -2275,10 +2280,10 @@ class AlertAggregator:
                 return True
             if existing_alert.service in [s for s, _ in self.graph.get_upstream(alert.service)]:
                 return True
-        
+
         similarity = self._calculate_similarity(alert.labels, group.common_labels)
         return similarity >= self._similarity_threshold
-    
+
     def _calculate_similarity(self, labels1: Dict, labels2: Dict) -> float:
         """计算标签相似度"""
         if not labels1 or not labels2:
@@ -2288,42 +2293,42 @@ class AlertAggregator:
             return 0.0
         matching = sum(1 for k in common_keys if labels1.get(k) == labels2.get(k))
         return matching / len(common_keys)
-    
+
     def _generate_group_name(self, alert: Alert) -> str:
         """生成组名"""
         return f"{alert.service}_{alert.name}_{alert.starts_at.strftime('%H%M')}"
-    
+
     def _extract_common_labels(self, alert: Alert) -> Dict:
         """提取公共标签"""
-        return {k: v for k, v in alert.labels.items() 
+        return {k: v for k, v in alert.labels.items()
                 if k in ['datacenter', 'cluster', 'namespace', 'app']}
-    
+
     def analyze_root_cause(self, group_id: str) -> Optional[Alert]:
         """分析告警组的根因"""
         with self._lock:
             group = self._groups.get(group_id)
             if not group or len(group.alerts) < 2:
                 return None
-            
+
             max_score = 0.0
             root_cause = None
-            
+
             for alert in group.alerts:
                 score = self.graph.calculate_root_cause_score(alert.service, group.alerts)
                 alert.root_cause_score = score
                 if score > max_score:
                     max_score = score
                     root_cause = alert
-            
+
             group.root_cause_alert = root_cause
             return root_cause
-    
+
     def get_active_groups(self) -> List[AlertGroup]:
         """获取活跃告警组"""
         with self._lock:
             cutoff = datetime.now() - timedelta(seconds=self._group_window * 2)
             return [g for g in self._groups.values() if g.updated_at > cutoff]
-    
+
     def get_stats(self) -> Dict:
         """获取统计信息"""
         with self._lock:
@@ -2337,13 +2342,13 @@ class AlertAggregator:
 
 class AlertSuppressor:
     """告警抑制器"""
-    
+
     def __init__(self):
         self._suppression_rules: List[Dict] = []
         self._maintenance_windows: List[Dict] = []
         self._recent_alerts: deque = deque(maxlen=1000)
         self._lock = Lock()
-    
+
     def add_suppression_rule(self, name: str, condition: Dict, duration: int):
         """添加抑制规则"""
         rule = {
@@ -2355,7 +2360,7 @@ class AlertSuppressor:
         with self._lock:
             self._suppression_rules.append(rule)
         logger.info(f"Suppression rule added: {name}")
-    
+
     def add_maintenance_window(self, service: str, start: datetime, end: datetime, reason: str):
         """添加维护窗口"""
         window = {
@@ -2366,47 +2371,47 @@ class AlertSuppressor:
         }
         with self._lock:
             self._maintenance_windows.append(window)
-    
+
     def should_suppress(self, alert: Alert) -> Tuple[bool, str]:
         """判断是否应该抑制告警"""
         with self._lock:
             now = datetime.now()
             for window in self._maintenance_windows:
-                if (alert.service == window["service"] and 
+                if (alert.service == window["service"] and
                     window["start"] <= now <= window["end"]):
                     return True, f"Maintenance window: {window['reason']}"
-            
+
             for rule in self._suppression_rules:
-                match = all(alert.labels.get(k) == v or alert.service == v 
+                match = all(alert.labels.get(k) == v or alert.service == v
                            for k, v in rule["condition"].items())
                 if match:
                     age = (now - rule["created_at"]).total_seconds()
                     if age < rule["duration"]:
                         return True, f"Suppression rule: {rule['name']}"
-            
+
             for recent in self._recent_alerts:
-                if (recent["name"] == alert.name and 
+                if (recent["name"] == alert.name and
                     recent["service"] == alert.service and
                     (now - recent["time"]).seconds < 300):
                     return True, "Duplicate alert (deduplication)"
-            
+
             self._recent_alerts.append({
                 "name": alert.name,
                 "service": alert.service,
                 "time": now
             })
-            
+
         return False, ""
 
 
 class AlertPredictor:
     """告警预测器 - 基于时序数据预测潜在故障"""
-    
+
     def __init__(self):
         self._metric_history: Dict[str, deque] = defaultdict(lambda: deque(maxlen=1440))
         self._prediction_models: Dict[str, Any] = {}
         self._lock = Lock()
-    
+
     def feed_metric(self, metric_name: str, service: str, value: float, timestamp: datetime):
         """喂入时序数据"""
         key = f"{service}:{metric_name}"
@@ -2415,44 +2420,44 @@ class AlertPredictor:
                 "timestamp": timestamp,
                 "value": value
             })
-    
+
     def predict(self, metric_name: str, service: str, threshold: float) -> Optional[Dict]:
         """预测未来趋势"""
         key = f"{service}:{metric_name}"
         with self._lock:
             history = list(self._metric_history[key])
-        
+
         if len(history) < 60:
             return None
-        
+
         values = [h["value"] for h in history[-60:]]
         n = len(values)
-        
+
         x = list(range(n))
         x_mean = sum(x) / n
         y_mean = sum(values) / n
-        
+
         numerator = sum((x[i] - x_mean) * (values[i] - y_mean) for i in range(n))
         denominator = sum((xi - x_mean) ** 2 for xi in x)
-        
+
         if denominator == 0:
             slope = 0
         else:
             slope = numerator / denominator
-        
+
         intercept = y_mean - slope * x_mean
-        
+
         future_values = [slope * (n + i) + intercept for i in range(1, 6)]
-        
+
         will_breach = any(v > threshold for v in future_values)
         time_to_breach = None
-        
+
         if will_breach and slope > 0:
             for i, v in enumerate(future_values):
                 if v > threshold:
                     time_to_breach = (i + 1) * 60
                     break
-        
+
         return {
             "service": service,
             "metric": metric_name,
@@ -2467,18 +2472,18 @@ class AlertPredictor:
 
 class IntelligentAlertManager:
     """智能告警管理器主类"""
-    
+
     def __init__(self):
         self.graph = ServiceDependencyGraph()
         self.aggregator = AlertAggregator(self.graph)
         self.suppressor = AlertSuppressor()
         self.predictor = AlertPredictor()
-        
+
         self._alerts: Dict[str, Alert] = {}
         self._notification_handlers: List[Callable] = []
         self._running = False
         self._lock = Lock()
-    
+
     def register_service(self, name: str, upstream_dependencies: List[str] = None):
         """注册服务"""
         self.graph.add_service(name)
@@ -2486,11 +2491,11 @@ class IntelligentAlertManager:
             for dep in upstream_dependencies:
                 self.graph.add_dependency(name, dep)
         logger.info(f"Service registered: {name}")
-    
+
     def add_notification_handler(self, handler: Callable):
         """添加通知处理器"""
         self._notification_handlers.append(handler)
-    
+
     def process_alert(self, name: str, service: str, severity: AlertSeverity,
                      value: float, threshold: float, message: str,
                      labels: Dict = None) -> Optional[AlertGroup]:
@@ -2508,27 +2513,27 @@ class IntelligentAlertManager:
             starts_at=datetime.now(),
             labels=labels or {}
         )
-        
+
         should_suppress, reason = self.suppressor.should_suppress(alert)
         if should_suppress:
             alert.status = AlertStatus.SUPPRESSED
             logger.info(f"Alert suppressed: {alert.alert_id}, reason: {reason}")
             return None
-        
+
         with self._lock:
             self._alerts[alert.alert_id] = alert
-        
+
         group = self.aggregator.process_alert(alert)
-        
+
         if len(group.alerts) >= 3 and not group.root_cause_alert:
             root_cause = self.aggregator.analyze_root_cause(group.group_id)
             if root_cause:
                 logger.info(f"Root cause identified: {root_cause.service} - {root_cause.message}")
-        
+
         self._notify(alert, group)
-        
+
         return group
-    
+
     def _notify(self, alert: Alert, group: AlertGroup):
         """发送通知"""
         for handler in self._notification_handlers:
@@ -2536,23 +2541,23 @@ class IntelligentAlertManager:
                 handler(alert, group)
             except Exception as e:
                 logger.error(f"Notification handler failed: {e}")
-    
+
     def resolve_alert(self, alert_id: str):
         """解决告警"""
         with self._lock:
             if alert_id in self._alerts:
                 self._alerts[alert_id].status = AlertStatus.RESOLVED
                 self._alerts[alert_id].ends_at = datetime.now()
-    
+
     def get_dashboard_summary(self) -> Dict:
         """获取仪表盘摘要"""
         with self._lock:
             firing = [a for a in self._alerts.values() if a.status == AlertStatus.FIRING]
             critical = [a for a in firing if a.severity == AlertSeverity.CRITICAL]
-            
+
         groups = self.aggregator.get_active_groups()
         with_root_cause = sum(1 for g in groups if g.root_cause_alert)
-        
+
         return {
             "total_alerts": len(self._alerts),
             "firing_alerts": len(firing),
@@ -2562,7 +2567,7 @@ class IntelligentAlertManager:
             "suppression_rate": self._calculate_suppression_rate(),
             "aggregator_stats": self.aggregator.get_stats()
         }
-    
+
     def _calculate_suppression_rate(self) -> float:
         """计算抑制率"""
         with self._lock:
@@ -2576,38 +2581,38 @@ class IntelligentAlertManager:
 def demo_alert_system():
     """演示智能告警系统"""
     manager = IntelligentAlertManager()
-    
+
     manager.register_service("api-gateway", ["order-service"])
     manager.register_service("order-service", ["payment-service", "inventory-service"])
     manager.register_service("payment-service", ["database"])
     manager.register_service("inventory-service", ["database"])
     manager.register_service("database", [])
-    
+
     def print_notification(alert: Alert, group: AlertGroup):
         if group.root_cause_alert == alert:
             print(f"  [ROOT CAUSE] {alert.service}: {alert.message}")
         else:
             print(f"  {alert.service}: {alert.message}")
-    
+
     manager.add_notification_handler(print_notification)
-    
+
     manager.suppressor.add_suppression_rule(
         "test-environment",
         {"environment": "test"},
         3600
     )
-    
+
     manager.suppressor.add_maintenance_window(
         "payment-service",
         datetime.now() - timedelta(minutes=30),
         datetime.now() + timedelta(minutes=30),
         "Scheduled maintenance"
     )
-    
+
     print("="*60)
     print("模拟故障场景：数据库故障引发连锁反应")
     print("="*60)
-    
+
     time.sleep(0.1)
     manager.process_alert(
         name="DatabaseConnectionError",
@@ -2618,7 +2623,7 @@ def demo_alert_system():
         message="Database connection pool exhausted",
         labels={"datacenter": "dc1", "instance": "db-01"}
     )
-    
+
     time.sleep(0.5)
     manager.process_alert(
         name="PaymentTimeout",
@@ -2629,7 +2634,7 @@ def demo_alert_system():
         message="Payment processing timeout",
         labels={"datacenter": "dc1", "instance": "payment-01"}
     )
-    
+
     time.sleep(0.3)
     manager.process_alert(
         name="InventoryQueryFailed",
@@ -2640,7 +2645,7 @@ def demo_alert_system():
         message="Inventory query failed",
         labels={"datacenter": "dc1", "instance": "inventory-01"}
     )
-    
+
     time.sleep(0.2)
     manager.process_alert(
         name="OrderProcessingError",
@@ -2651,7 +2656,7 @@ def demo_alert_system():
         message="Order processing error rate high",
         labels={"datacenter": "dc1", "instance": "order-01"}
     )
-    
+
     time.sleep(0.1)
     manager.process_alert(
         name="HighLatency",
@@ -2662,7 +2667,7 @@ def demo_alert_system():
         message="API response latency high",
         labels={"datacenter": "dc1", "instance": "gateway-01"}
     )
-    
+
     manager.process_alert(
         name="TestAlert",
         service="test-service",
@@ -2672,7 +2677,7 @@ def demo_alert_system():
         message="Test alert",
         labels={"environment": "test"}
     )
-    
+
     print("\n" + "="*60)
     print("告警处理结果:")
     summary = manager.get_dashboard_summary()
@@ -2682,7 +2687,7 @@ def demo_alert_system():
     print(f"  活跃告警组: {summary['active_groups']}")
     print(f"  已识别根因: {summary['groups_with_root_cause']}")
     print(f"  告警抑制率: {summary['suppression_rate']*100:.1f}%")
-    
+
     print("\n告警组详情:")
     for group in manager.aggregator.get_active_groups():
         print(f"  组 {group.group_id}:")
@@ -2777,6 +2782,7 @@ if __name__ == '__main__':
 ### 6.3 解决方案
 
 **架构设计**：
+
 - 前端采用React + ECharts + WebGL实现高性能可视化
 - 后端使用WebSocket推送实时数据
 - 数据预聚合：原始数据→秒级→分钟级→小时级多级聚合
@@ -2835,7 +2841,7 @@ class DataPoint:
     timestamp: datetime
     value: float
     labels: Dict[str, str] = field(default_factory=dict)
-    
+
     def to_dict(self) -> Dict:
         return {
             "timestamp": int(self.timestamp.timestamp() * 1000),
@@ -2877,50 +2883,50 @@ class Dashboard:
 
 class DataSource:
     """数据源抽象"""
-    
+
     def __init__(self, name: str, data_type: str):
         self.name = name
         self.data_type = data_type
         self._data_cache: Dict[str, List[DataPoint]] = defaultdict(list)
         self._lock = threading.RLock()
-    
-    def query(self, query: str, start: datetime, end: datetime, 
+
+    def query(self, query: str, start: datetime, end: datetime,
               filters: Dict = None) -> List[DataPoint]:
         """查询数据"""
         cache_key = f"{query}:{start.isoformat()}:{end.isoformat()}"
-        
+
         with self._lock:
             if cache_key in self._data_cache:
                 return self._data_cache[cache_key]
-        
+
         points = self._generate_mock_data(query, start, end, filters)
-        
+
         with self._lock:
             self._data_cache[cache_key] = points
-        
+
         return points
-    
-    def _generate_mock_data(self, query: str, start: datetime, 
+
+    def _generate_mock_data(self, query: str, start: datetime,
                            end: datetime, filters: Dict) -> List[DataPoint]:
         """生成模拟数据"""
         points = []
         current = start
         interval = timedelta(seconds=60)
-        
+
         while current <= end:
             value = self._calculate_value(query, current)
             labels = filters or {}
             points.append(DataPoint(timestamp=current, value=value, labels=labels))
             current += interval
-        
+
         return points
-    
+
     def _calculate_value(self, query: str, timestamp: datetime) -> float:
         """计算指标值"""
         base = 50
         hour_factor = abs(12 - timestamp.hour) / 12
         noise = random.uniform(-10, 10)
-        
+
         if "cpu" in query.lower():
             return min(100, max(0, base * hour_factor + 20 + noise))
         elif "memory" in query.lower():
@@ -2929,7 +2935,7 @@ class DataSource:
             return 25 + hour_factor * 15 + noise / 2
         else:
             return base + noise
-    
+
     def get_realtime_value(self, query: str) -> DataPoint:
         """获取实时值"""
         return DataPoint(
@@ -2941,15 +2947,15 @@ class DataSource:
 
 class ChartRenderer:
     """图表渲染器"""
-    
+
     def __init__(self, data_source: DataSource):
         self.data_source = data_source
-    
+
     def render(self, config: ChartConfig) -> Dict[str, Any]:
         """渲染图表"""
         start, end = self._parse_time_range(config.time_range)
         points = self.data_source.query(config.query, start, end, config.filters)
-        
+
         if config.chart_type == ChartType.LINE:
             return self._render_line_chart(config, points)
         elif config.chart_type == ChartType.BAR:
@@ -2964,7 +2970,7 @@ class ChartRenderer:
             return self._render_table(config, points)
         else:
             return self._render_line_chart(config, points)
-    
+
     def _parse_time_range(self, time_range: TimeRange) -> tuple:
         """解析时间范围"""
         end = datetime.now()
@@ -2978,12 +2984,12 @@ class ChartRenderer:
         }
         start = end - deltas.get(time_range, timedelta(hours=1))
         return start, end
-    
+
     def _render_line_chart(self, config: ChartConfig, points: List[DataPoint]) -> Dict:
         """渲染折线图"""
         x_data = [p.timestamp.strftime("%H:%M") for p in points]
         y_data = [p.value for p in points]
-        
+
         return {
             "type": "line",
             "title": {"text": config.title},
@@ -2998,17 +3004,17 @@ class ChartRenderer:
             }],
             "tooltip": {"trigger": "axis"}
         }
-    
+
     def _render_bar_chart(self, config: ChartConfig, points: List[DataPoint]) -> Dict:
         """渲染柱状图"""
         hourly = defaultdict(list)
         for p in points:
             hour = p.timestamp.hour
             hourly[hour].append(p.value)
-        
+
         x_data = [f"{h:02d}:00" for h in sorted(hourly.keys())]
         y_data = [sum(hourly[h]) / len(hourly[h]) for h in sorted(hourly.keys())]
-        
+
         return {
             "type": "bar",
             "title": {"text": config.title},
@@ -3016,7 +3022,7 @@ class ChartRenderer:
             "yAxis": {"type": "value"},
             "series": [{"name": config.query, "type": "bar", "data": y_data}]
         }
-    
+
     def _render_pie_chart(self, config: ChartConfig, points: List[DataPoint]) -> Dict:
         """渲染饼图"""
         segments = {"Low": 0, "Medium": 0, "High": 0}
@@ -3027,9 +3033,9 @@ class ChartRenderer:
                 segments["Medium"] += 1
             else:
                 segments["High"] += 1
-        
+
         data = [{"name": k, "value": v} for k, v in segments.items()]
-        
+
         return {
             "type": "pie",
             "title": {"text": config.title},
@@ -3039,11 +3045,11 @@ class ChartRenderer:
                 "data": data
             }]
         }
-    
+
     def _render_gauge_chart(self, config: ChartConfig, points: List[DataPoint]) -> Dict:
         """渲染仪表盘"""
         current_value = points[-1].value if points else 0
-        
+
         return {
             "type": "gauge",
             "title": {"text": config.title},
@@ -3059,7 +3065,7 @@ class ChartRenderer:
                 }
             }]
         }
-    
+
     def _render_heatmap(self, config: ChartConfig, points: List[DataPoint]) -> Dict:
         """渲染热力图"""
         data = []
@@ -3067,9 +3073,9 @@ class ChartRenderer:
             for hour in range(24):
                 value = random.uniform(0, 100)
                 data.append([day, hour, round(value, 1)])
-        
+
         days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
-        
+
         return {
             "type": "heatmap",
             "title": {"text": config.title},
@@ -3078,7 +3084,7 @@ class ChartRenderer:
             "visualMap": {"min": 0, "max": 100, "calculable": True},
             "series": [{"type": "heatmap", "data": data}]
         }
-    
+
     def _render_table(self, config: ChartConfig, points: List[DataPoint]) -> Dict:
         """渲染表格"""
         headers = ["Time", "Value", "Status"]
@@ -3086,7 +3092,7 @@ class ChartRenderer:
         for p in points[-10:]:
             status = "Normal" if p.value < 70 else "Warning" if p.value < 90 else "Critical"
             rows.append([p.timestamp.strftime("%Y-%m-%d %H:%M:%S"), round(p.value, 2), status])
-        
+
         return {
             "type": "table",
             "title": {"text": config.title},
@@ -3097,39 +3103,39 @@ class ChartRenderer:
 
 class RealtimeDataPusher:
     """实时数据推送器"""
-    
+
     def __init__(self, data_source: DataSource):
         self.data_source = data_source
         self._subscribers: Dict[str, List[Callable]] = defaultdict(list)
         self._running = False
         self._lock = threading.Lock()
-    
+
     def subscribe(self, chart_id: str, callback: Callable):
         """订阅图表实时数据"""
         with self._lock:
             self._subscribers[chart_id].append(callback)
-    
+
     def unsubscribe(self, chart_id: str, callback: Callable):
         """取消订阅"""
         with self._lock:
             if callback in self._subscribers[chart_id]:
                 self._subscribers[chart_id].remove(callback)
-    
+
     def start(self):
         """启动推送服务"""
         self._running = True
         threading.Thread(target=self._push_loop, daemon=True).start()
-    
+
     def stop(self):
         """停止推送服务"""
         self._running = False
-    
+
     def _push_loop(self):
         """推送循环"""
         while self._running:
             with self._lock:
                 subscribers_copy = dict(self._subscribers)
-            
+
             for chart_id, callbacks in subscribers_copy.items():
                 point = self.data_source.get_realtime_value(f"metric_{chart_id}")
                 data = {
@@ -3137,26 +3143,26 @@ class RealtimeDataPusher:
                     "timestamp": int(point.timestamp.timestamp() * 1000),
                     "value": point.value
                 }
-                
+
                 for callback in callbacks:
                     try:
                         callback(data)
                     except Exception as e:
                         print(f"Push error: {e}")
-            
+
             time.sleep(5)
 
 
 class DashboardManager:
     """仪表盘管理器"""
-    
+
     def __init__(self, data_source: DataSource):
         self.data_source = data_source
         self.renderer = ChartRenderer(data_source)
         self.pusher = RealtimeDataPusher(data_source)
         self._dashboards: Dict[str, Dashboard] = {}
         self._user_roles: Dict[str, List[str]] = defaultdict(list)
-    
+
     def create_dashboard(self, name: str, description: str, owner: str,
                         allowed_roles: List[str] = None) -> Dashboard:
         """创建仪表盘"""
@@ -3169,30 +3175,30 @@ class DashboardManager:
         )
         self._dashboards[dashboard.dashboard_id] = dashboard
         return dashboard
-    
+
     def add_chart(self, dashboard_id: str, chart_config: ChartConfig) -> bool:
         """添加图表到仪表盘"""
         if dashboard_id not in self._dashboards:
             return False
         self._dashboards[dashboard_id].charts.append(chart_config)
         return True
-    
+
     def render_dashboard(self, dashboard_id: str, user_role: str) -> Optional[Dict]:
         """渲染整个仪表盘"""
         dashboard = self._dashboards.get(dashboard_id)
         if not dashboard:
             return None
-        
+
         if not dashboard.is_public and user_role not in dashboard.allowed_roles:
             return {"error": "Access denied"}
-        
+
         charts_data = []
         for chart in dashboard.charts:
             chart_data = self.renderer.render(chart)
             chart_data["chart_id"] = chart.chart_id
             chart_data["refresh_interval"] = chart.refresh_interval
             charts_data.append(chart_data)
-        
+
         return {
             "dashboard_id": dashboard.dashboard_id,
             "name": dashboard.name,
@@ -3200,7 +3206,7 @@ class DashboardManager:
             "charts": charts_data,
             "layout": dashboard.layout
         }
-    
+
     def get_dashboard_list(self, user_role: str) -> List[Dict]:
         """获取仪表盘列表"""
         result = []
@@ -3217,7 +3223,7 @@ class DashboardManager:
 
 class PermissionManager:
     """权限管理器"""
-    
+
     def __init__(self):
         self._roles: Dict[str, List[str]] = {
             "admin": ["view", "edit", "delete", "share", "create"],
@@ -3226,13 +3232,13 @@ class PermissionManager:
             "operator": ["view", "acknowledge_alert"]
         }
         self._user_roles: Dict[str, List[str]] = defaultdict(list)
-    
+
     def assign_role(self, user_id: str, role: str):
         """分配角色"""
         if role not in self._roles:
             raise ValueError(f"Unknown role: {role}")
         self._user_roles[user_id].append(role)
-    
+
     def check_permission(self, user_id: str, permission: str) -> bool:
         """检查权限"""
         user_roles = self._user_roles.get(user_id, [])
@@ -3244,24 +3250,24 @@ class PermissionManager:
 
 class VisualizationPlatform:
     """可视化平台主类"""
-    
+
     def __init__(self):
         self.data_source = DataSource("main", "timeseries")
         self.dashboard_manager = DashboardManager(self.data_source)
         self.permission_manager = PermissionManager()
         self._running = False
-    
+
     def start(self):
         """启动平台"""
         self._running = True
         self.dashboard_manager.pusher.start()
         print("Visualization Platform started")
-    
+
     def stop(self):
         """停止平台"""
         self._running = False
         self.dashboard_manager.pusher.stop()
-    
+
     def create_production_dashboard(self) -> Dashboard:
         """创建生产监控仪表盘"""
         dashboard = self.dashboard_manager.create_dashboard(
@@ -3270,7 +3276,7 @@ class VisualizationPlatform:
             owner="admin",
             allowed_roles=["admin", "editor", "viewer", "operator"]
         )
-        
+
         # CPU使用率折线图
         self.dashboard_manager.add_chart(dashboard.dashboard_id, ChartConfig(
             chart_id="chart_001",
@@ -3282,7 +3288,7 @@ class VisualizationPlatform:
             refresh_interval=30,
             filters={"datacenter": "all"}
         ))
-        
+
         # 内存使用率仪表盘
         self.dashboard_manager.add_chart(dashboard.dashboard_id, ChartConfig(
             chart_id="chart_002",
@@ -3293,7 +3299,7 @@ class VisualizationPlatform:
             time_range=TimeRange.LAST_5M,
             refresh_interval=10
         ))
-        
+
         # 告警分布饼图
         self.dashboard_manager.add_chart(dashboard.dashboard_id, ChartConfig(
             chart_id="chart_003",
@@ -3304,7 +3310,7 @@ class VisualizationPlatform:
             time_range=TimeRange.LAST_24H,
             refresh_interval=300
         ))
-        
+
         # 实时数据表格
         self.dashboard_manager.add_chart(dashboard.dashboard_id, ChartConfig(
             chart_id="chart_004",
@@ -3315,7 +3321,7 @@ class VisualizationPlatform:
             time_range=TimeRange.LAST_15M,
             refresh_interval=60
         ))
-        
+
         # 热力图
         self.dashboard_manager.add_chart(dashboard.dashboard_id, ChartConfig(
             chart_id="chart_005",
@@ -3326,7 +3332,7 @@ class VisualizationPlatform:
             time_range=TimeRange.LAST_7D,
             refresh_interval=600
         ))
-        
+
         return dashboard
 
 
@@ -3336,24 +3342,24 @@ def demo_visualization_platform():
     """演示可视化平台"""
     platform = VisualizationPlatform()
     platform.start()
-    
+
     # 创建生产仪表盘
     dashboard = platform.create_production_dashboard()
-    
+
     print("="*60)
     print("可视化平台演示")
     print("="*60)
-    
+
     # 获取仪表盘列表
     print("\n仪表盘列表:")
     dashboards = platform.dashboard_manager.get_dashboard_list("viewer")
     for d in dashboards:
         print(f"  - {d['name']} ({d['dashboard_id']})")
-    
+
     # 渲染仪表盘
     print(f"\n渲染仪表盘: {dashboard.name}")
     rendered = platform.dashboard_manager.render_dashboard(dashboard.dashboard_id, "viewer")
-    
+
     if rendered and "error" not in rendered:
         print(f"  包含图表数量: {len(rendered['charts'])}")
         print("\n图表详情:")
@@ -3366,20 +3372,20 @@ def demo_visualization_platform():
                 print(f"    数据点: {len(chart['series'][0]['data'])}")
             elif chart['type'] == 'table':
                 print(f"    行数: {len(chart['rows'])}")
-    
+
     # 模拟实时数据推送
     print("\n模拟实时数据推送 (5秒):")
     received_data = []
-    
+
     def on_data(data):
         received_data.append(data)
         print(f"  收到更新: chart={data['chart_id']}, value={data['value']:.2f}")
-    
+
     platform.dashboard_manager.pusher.subscribe("chart_002", on_data)
     time.sleep(5)
-    
+
     print(f"\n共收到 {len(received_data)} 条实时更新")
-    
+
     platform.stop()
     print("\n" + "="*60)
     print("可视化平台已停止")
@@ -3441,5 +3447,5 @@ if __name__ == '__main__':
 - `03_Standards.md` - 标准对标
 - `04_Transformation.md` - 转换体系
 
-**创建时间**：2025-01-21  
+**创建时间**：2025-01-21
 **最后更新**：2025-01-21

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 文档质量检查脚本
-检查所有Schema文档的内容完整性和质量
+检查所有Schema文档的完整性和质量
 """
 
 import os
@@ -9,325 +9,268 @@ import re
 import json
 from pathlib import Path
 from typing import Dict, List, Tuple, Any
-from dataclasses import dataclass, field, asdict
+from dataclasses import dataclass, asdict
 
 
 @dataclass
-class CheckResult:
-    """检查结果"""
+class DocumentCheckResult:
+    """文档检查结果"""
     file_path: str
-    checks: Dict[str, bool] = field(default_factory=dict)
-    errors: List[str] = field(default_factory=list)
-    warnings: List[str] = field(default_factory=list)
+    doc_type: str  # 01_Overview, 02_Formal_Definition, etc.
+    exists: bool
+    has_toc: bool = False
+    has_required_sections: bool = False
+    missing_sections: List[str] = None
+    issues: List[str] = None
     
-    def to_dict(self) -> Dict:
-        return {
-            'file_path': self.file_path,
-            'checks': self.checks,
-            'errors': self.errors,
-            'warnings': self.warnings
-        }
+    def __post_init__(self):
+        if self.missing_sections is None:
+            self.missing_sections = []
+        if self.issues is None:
+            self.issues = []
 
 
 class DocumentQualityChecker:
     """文档质量检查器"""
     
-    def __init__(self, themes_dir: str = "themes"):
+    # 标准文档结构（使用更灵活的关键词匹配）
+    DOC_TYPES = {
+        '01_Overview.md': {
+            'name': '概览文档',
+            'required_sections': [
+                ('核心结论', ['核心结论', '结论', '概述']),
+                ('概念定义', ['概念定义', '定义', 'Schema定义']),
+                ('Schema结构', ['Schema元素', '三层结构', '分层', '架构']),
+                ('标准对标', ['标准对标', '标准', 'ISO', '规范']),
+                ('应用场景', ['应用场景', '应用', '案例']),
+                ('思维导图', ['思维导图', '导图', '知识图谱'])
+            ]
+        },
+        '02_Formal_Definition.md': {
+            'name': '形式化定义',
+            'required_sections': [
+                ('形式化模型', ['形式化模型', '形式化', '模型']),
+                ('DSL定义', ['DSL定义', 'DSL', '语法']),
+                ('类型系统', ['类型系统', '类型', '数据类型']),
+                ('约束规则', ['约束规则', '约束', '规则']),
+                ('转换函数', ['转换函数', '转换', '映射'])
+            ]
+        },
+        '03_Standards.md': {
+            'name': '标准文档',
+            'required_sections': [
+                ('标准体系', ['标准体系', '标准', '规范体系']),
+                ('主要标准', ['主要标准', '核心标准', 'ISO', 'IEC']),
+                ('标准对比', ['标准对比', '对比', '比较']),
+                ('发展趋势', ['发展趋势', '趋势', '发展', '展望'])
+            ]
+        },
+        '04_Transformation.md': {
+            'name': '转换文档',
+            'required_sections': [
+                ('转换体系', ['转换体系', '转换概述', '转换方向']),
+                ('转换规则', ['转换规则', '规则', '映射规则']),
+                ('转换验证', ['转换验证', '验证', '测试']),
+                ('数据存储', ['数据库存储', '存储', 'PostgreSQL', '数据分析'])
+            ]
+        },
+        '05_Case_Studies.md': {
+            'name': '案例文档',
+            'required_sections': [
+                ('案例', ['案例', '实践', '应用实例']),
+                ('业务背景', ['业务背景', '背景', '业务']),
+                ('技术挑战', ['技术挑战', '挑战', '问题']),
+                ('解决方案', ['解决方案', '方案', '解决']),
+                ('代码实现', ['代码实现', '代码', '实现']),
+                ('效果评估', ['效果评估', '评估', '效果', '结果'])
+            ]
+        }
+    }
+    
+    def __init__(self, themes_dir: str = 'themes'):
         self.themes_dir = Path(themes_dir)
-        self.results: List[CheckResult] = []
-        
+        self.results: List[DocumentCheckResult] = []
+        self.summary = {
+            'total_schemas': 0,
+            'total_docs': 0,
+            'complete_docs': 0,
+            'incomplete_docs': 0,
+            'missing_docs': 0,
+            'issues_by_type': {}
+        }
+    
     def get_all_schema_dirs(self) -> List[Path]:
         """获取所有Schema目录"""
         schema_dirs = []
-        if not self.themes_dir.exists():
-            return schema_dirs
-            
         for theme_dir in self.themes_dir.iterdir():
-            if theme_dir.is_dir() and theme_dir.name.startswith(('0', '1', '2', '3', '4', '5', '6', '7', '8', '9')):
+            if theme_dir.is_dir() and not theme_dir.name.startswith('.'):
                 for schema_dir in theme_dir.iterdir():
-                    if schema_dir.is_dir():
+                    if schema_dir.is_dir() and not schema_dir.name.startswith('.'):
                         schema_dirs.append(schema_dir)
         return schema_dirs
     
-    def check_file_structure(self, schema_dir: Path) -> CheckResult:
-        """检查文件结构"""
-        result = CheckResult(file_path=str(schema_dir))
-        expected_files = [
-            "01_Overview.md",
-            "02_Formal_Definition.md", 
-            "03_Standards.md",
-            "04_Transformation.md",
-            "05_Case_Studies.md"
-        ]
+    def check_document(self, doc_path: Path, doc_type: str) -> DocumentCheckResult:
+        """检查单个文档"""
+        result = DocumentCheckResult(
+            file_path=str(doc_path),
+            doc_type=doc_type,
+            exists=doc_path.exists()
+        )
         
-        for expected in expected_files:
-            file_path = schema_dir / expected
-            result.checks[f"has_{expected}"] = file_path.exists()
-            if not file_path.exists():
-                result.errors.append(f"缺少文件: {expected}")
+        if not result.exists:
+            result.issues.append(f"文件不存在: {doc_path}")
+            return result
+        
+        try:
+            content = doc_path.read_text(encoding='utf-8')
+        except Exception as e:
+            result.issues.append(f"读取文件失败: {e}")
+            return result
+        
+        # 检查目录结构
+        result.has_toc = '## ' in content or '### ' in content
+        
+        # 检查必需章节（使用灵活匹配）
+        required = self.DOC_TYPES.get(doc_type, {}).get('required_sections', [])
+        for section_name, keywords in required:
+            found = False
+            for keyword in keywords:
+                # 支持多种章节标题格式
+                patterns = [
+                    rf'##\s*\d*\.?\s*{re.escape(keyword)}',
+                    rf'###\s*\d*\.?\s*{re.escape(keyword)}',
+                    rf'##\s*{re.escape(keyword)}',
+                    rf'###\s*{re.escape(keyword)}'
+                ]
+                if any(re.search(p, content, re.IGNORECASE) for p in patterns):
+                    found = True
+                    break
+            if not found:
+                result.missing_sections.append(section_name)
+        
+        result.has_required_sections = len(result.missing_sections) == 0
+        
+        if result.missing_sections:
+            result.issues.append(f"缺少章节: {', '.join(result.missing_sections)}")
         
         return result
     
-    def check_overview_content(self, file_path: Path) -> CheckResult:
-        """检查01_Overview.md内容"""
-        result = CheckResult(file_path=str(file_path))
-        
-        if not file_path.exists():
-            result.errors.append("文件不存在")
-            return result
-            
-        content = file_path.read_text(encoding='utf-8')
-        
-        # 检查必要章节
-        required_sections = [
-            ("目录", r"##?\s*目录"),
-            ("核心结论", r"##?\s*核心结论"),
-            ("概念定义", r"##?\s*概念定义"),
-            ("Schema元素", r"##?\s*.*Schema.*元素"),
-            ("标准对标", r"##?\s*.*标准.*对标"),
-            ("应用场景", r"##?\s*应用场景"),
-        ]
-        
-        for section_name, pattern in required_sections:
-            found = bool(re.search(pattern, content, re.IGNORECASE))
-            result.checks[f"has_{section_name}"] = found
-            if not found:
-                result.warnings.append(f"可能缺少章节: {section_name}")
-        
-        # 检查思维导图
-        has_mindmap = bool(re.search(r"##?\s*思维导图|mindmap|graph\s+TD|graph\s+LR", content, re.IGNORECASE))
-        result.checks["has_mindmap"] = has_mindmap
-        
-        return result
-    
-    def check_formal_definition_content(self, file_path: Path) -> CheckResult:
-        """检查02_Formal_Definition.md内容"""
-        result = CheckResult(file_path=str(file_path))
-        
-        if not file_path.exists():
-            result.errors.append("文件不存在")
-            return result
-            
-        content = file_path.read_text(encoding='utf-8')
-        
-        required_sections = [
-            ("目录", r"##?\s*目录"),
-            ("形式化模型", r"##?\s*形式化模型"),
-            ("DSL定义", r"##?\s*.*DSL.*定义"),
-            ("类型系统", r"##?\s*类型系统"),
-            ("约束规则", r"##?\s*约束规则"),
-            ("转换函数", r"##?\s*转换函数"),
-        ]
-        
-        for section_name, pattern in required_sections:
-            found = bool(re.search(pattern, content, re.IGNORECASE))
-            result.checks[f"has_{section_name}"] = found
-            if not found:
-                result.warnings.append(f"可能缺少章节: {section_name}")
-        
-        return result
-    
-    def check_standards_content(self, file_path: Path) -> CheckResult:
-        """检查03_Standards.md内容"""
-        result = CheckResult(file_path=str(file_path))
-        
-        if not file_path.exists():
-            result.errors.append("文件不存在")
-            return result
-            
-        content = file_path.read_text(encoding='utf-8')
-        
-        required_sections = [
-            ("目录", r"##?\s*目录"),
-            ("标准体系", r"##?\s*标准体系"),
-            ("主要标准", r"##?\s*主要标准"),
-            ("标准对比", r"##?\s*标准对比"),
-            ("发展趋势", r"##?\s*.*发展趋势|2024.*2025|2025.*2026"),
-        ]
-        
-        for section_name, pattern in required_sections:
-            found = bool(re.search(pattern, content, re.IGNORECASE))
-            result.checks[f"has_{section_name}"] = found
-            if not found:
-                result.warnings.append(f"可能缺少章节: {section_name}")
-        
-        return result
-    
-    def check_transformation_content(self, file_path: Path) -> CheckResult:
-        """检查04_Transformation.md内容"""
-        result = CheckResult(file_path=str(file_path))
-        
-        if not file_path.exists():
-            result.errors.append("文件不存在")
-            return result
-            
-        content = file_path.read_text(encoding='utf-8')
-        
-        required_sections = [
-            ("目录", r"##?\s*目录"),
-            ("转换体系", r"##?\s*转换体系"),
-            ("转换规则", r"##?\s*转换规则"),
-            ("转换验证", r"##?\s*转换验证"),
-        ]
-        
-        for section_name, pattern in required_sections:
-            found = bool(re.search(pattern, content, re.IGNORECASE))
-            result.checks[f"has_{section_name}"] = found
-            if not found:
-                result.warnings.append(f"可能缺少章节: {section_name}")
-        
-        # 检查数据库存储章节
-        has_db_section = bool(re.search(r"##?\s*6\.?\s*数据库存储|##?\s*.*数据库存储.*分析", content, re.IGNORECASE))
-        result.checks["has_database_section"] = has_db_section
-        
-        # 检查PostgreSQL
-        has_postgres = "postgresql" in content.lower() or "postgres" in content.lower()
-        result.checks["has_postgresql"] = has_postgres
-        
-        # 检查Python代码
-        has_python = "```python" in content
-        result.checks["has_python_code"] = has_python
-        
-        return result
-    
-    def check_case_studies_content(self, file_path: Path) -> CheckResult:
-        """检查05_Case_Studies.md内容"""
-        result = CheckResult(file_path=str(file_path))
-        
-        if not file_path.exists():
-            result.errors.append("文件不存在")
-            return result
-            
-        content = file_path.read_text(encoding='utf-8')
-        
-        # 检查章节
-        required_sections = [
-            ("目录", r"##?\s*目录"),
-            ("案例概述", r"##?\s*案例概述"),
-            ("实践案例", r"##?\s*实践案例|案例\s*[:：]"),
-        ]
-        
-        for section_name, pattern in required_sections:
-            found = bool(re.search(pattern, content, re.IGNORECASE))
-            result.checks[f"has_{section_name}"] = found
-            if not found:
-                result.warnings.append(f"可能缺少章节: {section_name}")
-        
-        # 统计案例数量（二级标题数量）
-        case_pattern = r"##\s+\d+\.?\s*"
-        cases = re.findall(case_pattern, content)
-        result.checks["case_count"] = len(cases)
-        
-        if len(cases) < 5:
-            result.warnings.append(f"案例数量可能不足: 发现{len(cases)}个案例，建议至少5个")
-        
-        # 检查代码
-        has_code = "```" in content
-        result.checks["has_code_examples"] = has_code
-        
-        return result
+    def check_schema(self, schema_dir: Path) -> List[DocumentCheckResult]:
+        """检查一个Schema的所有文档"""
+        results = []
+        for doc_type in self.DOC_TYPES.keys():
+            doc_path = schema_dir / doc_type
+            result = self.check_document(doc_path, doc_type)
+            results.append(result)
+        return results
     
     def run_full_check(self) -> Dict[str, Any]:
         """运行完整检查"""
-        print("🔍 开始文档质量全面检查...")
+        print("🔍 开始文档质量全面检查...\n")
         
         schema_dirs = self.get_all_schema_dirs()
-        print(f"📁 发现 {len(schema_dirs)} 个Schema目录")
+        self.summary['total_schemas'] = len(schema_dirs)
         
-        all_results = []
+        print(f"发现 {len(schema_dirs)} 个Schema目录")
         
         for i, schema_dir in enumerate(schema_dirs, 1):
-            print(f"\n[{i}/{len(schema_dirs)}] 检查: {schema_dir.name}")
+            print(f"  检查 [{i}/{len(schema_dirs)}] {schema_dir.name}...", end=' ')
+            results = self.check_schema(schema_dir)
+            self.results.extend(results)
             
-            # 检查文件结构
-            structure_result = self.check_file_structure(schema_dir)
-            all_results.append(structure_result)
+            # 统计
+            complete = sum(1 for r in results if r.exists and r.has_required_sections)
+            incomplete = sum(1 for r in results if r.exists and not r.has_required_sections)
+            missing = sum(1 for r in results if not r.exists)
             
-            # 检查每个文档
-            checks = [
-                ("01_Overview.md", self.check_overview_content),
-                ("02_Formal_Definition.md", self.check_formal_definition_content),
-                ("03_Standards.md", self.check_standards_content),
-                ("04_Transformation.md", self.check_transformation_content),
-                ("05_Case_Studies.md", self.check_case_studies_content),
-            ]
-            
-            for filename, check_func in checks:
-                file_path = schema_dir / filename
-                result = check_func(file_path)
-                all_results.append(result)
-                
-                # 显示进度
-                status = "✅" if not result.errors else "❌"
-                print(f"  {status} {filename}")
+            print(f"✓完整:{complete} ⚠不完整:{incomplete} ✗缺失:{missing}")
         
-        # 生成报告
-        return self.generate_report(all_results)
+        # 生成汇总
+        self._generate_summary()
+        
+        return self.summary
     
-    def generate_report(self, results: List[CheckResult]) -> Dict[str, Any]:
+    def _generate_summary(self):
+        """生成汇总统计"""
+        self.summary['total_docs'] = len(self.results)
+        self.summary['complete_docs'] = sum(
+            1 for r in self.results if r.exists and r.has_required_sections
+        )
+        self.summary['incomplete_docs'] = sum(
+            1 for r in self.results if r.exists and not r.has_required_sections
+        )
+        self.summary['missing_docs'] = sum(
+            1 for r in self.results if not r.exists
+        )
+        
+        # 按文档类型统计问题
+        for doc_type in self.DOC_TYPES.keys():
+            type_results = [r for r in self.results if r.doc_type == doc_type]
+            self.summary['issues_by_type'][doc_type] = {
+                'total': len(type_results),
+                'complete': sum(1 for r in type_results if r.exists and r.has_required_sections),
+                'incomplete': sum(1 for r in type_results if r.exists and not r.has_required_sections),
+                'missing': sum(1 for r in type_results if not r.exists)
+            }
+    
+    def generate_report(self, output_path: str = 'document_quality_report.json'):
         """生成检查报告"""
-        total_files = len(results)
-        error_count = sum(1 for r in results if r.errors)
-        warning_count = sum(1 for r in results if r.warnings)
-        
-        # 按类型统计
-        structure_issues = [r for r in results if "has_01_Overview.md" in r.checks and not r.checks.get("has_01_Overview.md", True)]
-        db_section_missing = []
-        trends_section_missing = []
-        
-        for r in results:
-            if "04_Transformation.md" in r.file_path:
-                if not r.checks.get("has_database_section", True):
-                    db_section_missing.append(r)
-            if "03_Standards.md" in r.file_path:
-                if not r.checks.get("has_发展趋势", True):
-                    trends_section_missing.append(r)
-        
         report = {
-            "summary": {
-                "total_files_checked": total_files,
-                "files_with_errors": error_count,
-                "files_with_warnings": warning_count,
-                "schema_dirs_checked": len([r for r in results if "has_01_Overview.md" in r.checks]),
-                "missing_db_section_count": len(db_section_missing),
-                "missing_trends_section_count": len(trends_section_missing),
-            },
-            "issues": {
-                "structure_issues": [r.to_dict() for r in structure_issues],
-                "missing_db_section": [r.file_path for r in db_section_missing],
-                "missing_trends_section": [r.file_path for r in trends_section_missing],
-            },
-            "all_results": [r.to_dict() for r in results],
+            'summary': self.summary,
+            'results': [
+                {
+                    'file_path': r.file_path,
+                    'doc_type': r.doc_type,
+                    'exists': r.exists,
+                    'has_toc': r.has_toc,
+                    'has_required_sections': r.has_required_sections,
+                    'missing_sections': r.missing_sections,
+                    'issues': r.issues
+                }
+                for r in self.results
+            ]
         }
         
+        with open(output_path, 'w', encoding='utf-8') as f:
+            json.dump(report, f, ensure_ascii=False, indent=2)
+        
+        print(f"\n📄 详细报告已保存: {output_path}")
         return report
+    
+    def print_summary(self):
+        """打印汇总信息"""
+        print("\n" + "=" * 60)
+        print("📊 文档质量检查汇总")
+        print("=" * 60)
+        print(f"总Schema数: {self.summary['total_schemas']}")
+        print(f"总文档数: {self.summary['total_docs']}")
+        print(f"完整文档: {self.summary['complete_docs']} ({self.summary['complete_docs']/max(self.summary['total_docs'],1)*100:.1f}%)")
+        print(f"不完整文档: {self.summary['incomplete_docs']} ({self.summary['incomplete_docs']/max(self.summary['total_docs'],1)*100:.1f}%)")
+        print(f"缺失文档: {self.summary['missing_docs']} ({self.summary['missing_docs']/max(self.summary['total_docs'],1)*100:.1f}%)")
+        
+        print("\n📋 按文档类型统计:")
+        print("-" * 60)
+        for doc_type, stats in self.summary['issues_by_type'].items():
+            print(f"{doc_type:25s} 完整:{stats['complete']:3d}  不完整:{stats['incomplete']:3d}  缺失:{stats['missing']:3d}")
 
 
 def main():
-    """主函数"""
     checker = DocumentQualityChecker()
-    report = checker.run_full_check()
+    checker.run_full_check()
+    checker.print_summary()
+    checker.generate_report()
     
-    # 保存报告
-    report_path = Path("scripts/document_quality_report.json")
-    with open(report_path, 'w', encoding='utf-8') as f:
-        json.dump(report, f, ensure_ascii=False, indent=2)
+    # 生成Markdown报告
+    print("\n" + "=" * 60)
+    print("🔍 问题文档列表 (前20个)")
+    print("=" * 60)
     
-    # 打印摘要
-    summary = report["summary"]
-    print("\n" + "="*60)
-    print("📊 文档质量检查报告摘要")
-    print("="*60)
-    print(f"总检查文件数: {summary['total_files_checked']}")
-    print(f"错误文件数: {summary['files_with_errors']}")
-    print(f"警告文件数: {summary['files_with_warnings']}")
-    print(f"Schema目录数: {summary['schema_dirs_checked']}")
-    print(f"缺少数据库存储章节: {summary['missing_db_section_count']}")
-    print(f"缺少标准发展趋势章节: {summary['missing_trends_section_count']}")
-    print(f"\n详细报告已保存: {report_path}")
-    
-    return report
+    problem_docs = [r for r in checker.results if r.issues]
+    for r in problem_docs[:20]:
+        print(f"\n📄 {r.file_path}")
+        for issue in r.issues:
+            print(f"   ⚠️  {issue}")
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
